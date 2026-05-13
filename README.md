@@ -1,58 +1,38 @@
 # OrcaXCare
 
-Fullstack project for WDP301 (MERN + optional React Native). Team members clone this repo and work in `client`, `server`, and later `mobile`.
+MERN (WDP301): `client` (React + Vite), `server` (Express + Mongoose). React Native có thể thêm sau nếu môn yêu cầu.
 
-## Repository layout
+| Thư mục | Nội dung |
+|----------|----------|
+| `client/` | Web UI |
+| `server/` | REST API + MongoDB |
+| `docs/` | SRS, SDS, biên bản, release |
 
-| Path | Purpose |
-|------|---------|
-| `client/` | React (Vite) web app |
-| `server/` | Node.js + Express API, MongoDB (Mongoose) |
-| `mobile/` | React Native app (scaffold when ready) |
-| `docs/srs/` | Software Requirements Specification |
-| `docs/sds/` | Software Design Specification |
-| `docs/meeting-notes/` | Meeting minutes |
-| `docs/release/` | Release notes, final submission assets |
+## MongoDB Atlas (nhóm)
 
-## Quick start
+Một cluster free, tạo user + Network Access, copy URI `mongodb+srv://.../<tên-db>?retryWrites=true&w=majority`. Mỗi người tạo `server/.env` từ `.env.example`, **không** commit `.env`.
 
-### Server
+## Chạy local
 
 ```bash
-cd server
-cp .env.example .env
-npm install
-npm run dev
+cd server && cp .env.example .env   # Windows: copy .env.example .env
+# Sửa MONGODB_URI trong server/.env
+npm install && npm run dev
 ```
 
-### Client
+Terminal khác:
 
 ```bash
-cd client
-npm install
-npm run dev
+cd client && npm install && npm run dev
 ```
 
-Set `VITE_API_URL` in `client/.env` if the API is not the default (see `client/.env.example`).
+`VITE_API_URL`: xem `client/.env.example` (dev mặc định dùng proxy trong `vite.config.js`).
 
-## Publish to GitHub
-
-1. Create an empty repository on GitHub (no README if you already have one here).
-2. From this folder:
+## GitHub / GitLab
 
 ```bash
-cd OrcaXCare
-git init
-git add .
-git commit -m "Initial project structure for OrcaXCare"
-git branch -M main
-git remote add origin https://github.com/<your-org>/<repo>.git
+git remote add origin <url-repo>
 git push -u origin main
 ```
 
-Course materials often require **GitLab**; you can add a second remote or mirror the repo to GitLab if your lecturer asks for it.
-
-## Team workflow
-
-- Track work in GitHub **Issues** / **Projects** (or GitLab Issues + Milestones per iteration).
-- Use feature branches and pull requests; keep `docs/` updated each iteration for SRS and SDS.
+Môn hay dùng GitLab — có thể thêm remote hoặc mirror tương tự.
