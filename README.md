@@ -1,6 +1,6 @@
 # OrcaXCare
 
-MERN (WDP301): `client` (React + Vite), `server` (Express + Mongoose). React Native có thể thêm sau nếu môn yêu cầu.
+MERN (WDP301): `client` (React + Vite), `server` (Express + Mongoose).
 
 | Thư mục | Nội dung |
 |----------|----------|
