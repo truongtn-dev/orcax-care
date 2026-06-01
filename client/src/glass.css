@@ -1,0 +1,385 @@
+/* ─── Apple Glass UI overrides ───────────────────────────── */
+
+.page {
+  background: transparent;
+  overflow-x: clip;
+}
+
+.page-auth {
+  background: transparent;
+}
+
+/* Header */
+.app-header {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border-light);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.app-header-scrolled {
+  background: var(--glass-bg-solid);
+  border-bottom-color: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.nav-link-active {
+  background: rgba(8, 145, 178, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.avatar-btn {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
+.menu-toggle {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border-light);
+}
+
+.dropdown {
+  background: var(--glass-bg-solid);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.dropdown-header {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom-color: var(--glass-border-light);
+}
+
+/* Footer */
+.app-footer {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--glass-border);
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.footer-grid {
+  border-bottom-color: var(--glass-border-light);
+}
+
+/* Cards */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow-card);
+}
+
+.card-hover:hover {
+  background: var(--glass-bg-strong);
+  border-color: rgba(8, 145, 178, 0.25);
+  box-shadow: var(--glass-shadow-hover);
+  transform: translateY(-3px);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(180deg, #0e9fbf 0%, #0891b2 100%);
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.35), 0 1px 0 rgba(255, 255, 255, 0.2) inset;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(180deg, #10aacf 0%, #0e9fbf 100%);
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.4), 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.btn-outline {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-color: var(--glass-border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.btn-outline:hover {
+  background: var(--glass-bg-strong);
+  border-color: rgba(8, 145, 178, 0.35);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.btn-white {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Forms */
+.form input,
+.form select,
+.form textarea,
+.filters-row input,
+.filters-row select {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.form input:focus,
+.form select:focus,
+.form textarea:focus,
+.filters-row input:focus,
+.filters-row select:focus {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(8, 145, 178, 0.5);
+  box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.12), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+.input-readonly,
+.form input:disabled {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Alerts */
+.alert-error {
+  background: rgba(255, 59, 48, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.alert-success {
+  background: rgba(48, 209, 88, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Auth */
+.auth-form-panel {
+  background: transparent;
+}
+
+.auth-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-hover);
+  border-radius: var(--radius-xl);
+}
+
+.auth-brand-badge {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.feature-icon {
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Landing */
+.hero-section {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.92) 0%, rgba(14, 116, 144, 0.88) 45%, rgba(19, 78, 74, 0.95) 100%);
+  backdrop-filter: blur(4px);
+}
+
+.hero-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.feature-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
+.feature-card:hover {
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-glow);
+}
+
+.section-alt {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.cta-section {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.9) 0%, rgba(13, 148, 136, 0.92) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.step-number {
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.35), 0 1px 0 rgba(255, 255, 255, 0.3) inset;
+}
+
+/* Dashboard */
+.dashboard-welcome {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.88) 0%, rgba(13, 148, 136, 0.92) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.dashboard-role-badge {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.info-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-left: 3px solid var(--color-primary);
+  box-shadow: var(--glass-shadow-card);
+}
+
+/* Search */
+.filters-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.chip {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+}
+
+.chip-active {
+  background: rgba(8, 145, 178, 0.14);
+  border-color: rgba(8, 145, 178, 0.35);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+.doctor-card:hover {
+  background: var(--glass-bg-strong);
+}
+
+.shortcut-icon,
+.feature-icon-wrap {
+  background: rgba(8, 145, 178, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(8, 145, 178, 0.15);
+}
+
+.logo-accent {
+  color: var(--color-primary);
+}
+
+.logo-icon {
+  color: var(--color-primary);
+}
+
+/* Auth brand panel — frosted glass over gradient */
+.auth-brand {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.88) 0%, rgba(13, 148, 136, 0.85) 50%, rgba(17, 94, 89, 0.92) 100%);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+}
+
+.doctor-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
+/* Mobile nav glass panel */
+@media (max-width: 768px) {
+  .nav {
+    background: var(--glass-bg-solid);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+  }
+
+  .nav-overlay {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.25);
+  }
+}
+
+.profile-form-card {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+}
+
+.account-section {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.form-section + .form-section {
+  border-top-color: var(--glass-border-light);
+}
+
+.form-actions {
+  border-top-color: var(--glass-border-light);
+}
+
+.form-footer {
+  border-top-color: var(--glass-border-light);
+}
+
+.auth-loading-screen {
+  background: transparent;
+}
+
+.empty-state-icon {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border-light);
+}
