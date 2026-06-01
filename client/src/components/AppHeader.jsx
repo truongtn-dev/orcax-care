@@ -152,6 +152,9 @@ export default function AppHeader() {
                         {dashboardLabel}
                       </Link>
                     )}
+                    <Link to="/profile" role="menuitem" onClick={() => setUserMenuOpen(false)}>
+                      Edit Profile
+                    </Link>
                     <Link to="/change-password" role="menuitem" onClick={() => setUserMenuOpen(false)}>
                       Change Password
                     </Link>

@@ -5,6 +5,17 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 const SHORTCUTS = [
   {
+    to: "/profile",
+    title: "Edit Profile",
+    description: "Update your name, phone, and personal details.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
+    ),
+  },
+  {
     to: "/search-doctors",
     title: "Search Doctors",
     description: "Find specialists by name, specialty, or department.",

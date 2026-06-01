@@ -8,6 +8,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
 import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
 import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
 import ChangePasswordPage from "./pages/ChangePasswordPage.jsx";
+import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
@@ -32,6 +33,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient", "doctor", "admin"]}>
                 <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute roles={["patient", "doctor", "admin"]}>
+                <EditProfilePage />
               </ProtectedRoute>
             }
           />
