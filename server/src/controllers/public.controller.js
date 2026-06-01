@@ -22,8 +22,9 @@ export async function listDepartments(req, res) {
 
 export async function searchDoctors(req, res) {
   try {
-    const { name, specialtyId, departmentId, page, limit } = req.query;
+    const { q, name, specialtyId, departmentId, page, limit } = req.query;
     const result = await DoctorSearchService.searchDoctors({
+      q,
       name,
       specialtyId,
       departmentId,

@@ -7,7 +7,7 @@ export default function SearchDoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [filters, setFilters] = useState({
-    name: "",
+    q: "",
     specialtyId: "",
     departmentId: "",
     page: 1,
@@ -51,7 +51,7 @@ export default function SearchDoctorsPage() {
   };
 
   const clearFilters = () => {
-    const next = { name: "", specialtyId: "", departmentId: "", page: 1, limit: 12 };
+    const next = { q: "", specialtyId: "", departmentId: "", page: 1, limit: 12 };
     setFilters(next);
     search(next);
   };
@@ -60,25 +60,26 @@ export default function SearchDoctorsPage() {
     <PageLayout>
       <div className="page-header">
         <h1>Find Doctors</h1>
-        <p>Search by name, specialty, or department to find the right specialist for your needs.</p>
+        <p>Search by doctor name, specialty, or department to find the right specialist.</p>
       </div>
 
       <div className="card filters-card">
         <div className="filters-row">
           <input
             type="search"
-            placeholder="Search by doctor name…"
-            value={filters.name}
-            onChange={(e) => setFilters((f) => ({ ...f, name: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && applySearch({ name: filters.name })}
+            placeholder="Search doctors, specialty, department…"
+            value={filters.q}
+            onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+            onKeyDown={(e) => e.key === "Enter" && applySearch({ q: filters.q })}
           />
-          <button type="button" className="btn btn-primary" onClick={() => applySearch({})}>
+          <button type="button" className="btn btn-primary" onClick={() => applySearch({ q: filters.q })}>
             Search
           </button>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
             Clear
           </button>
         </div>
+
         <div className="filters-row">
           <select
             value={filters.specialtyId}
