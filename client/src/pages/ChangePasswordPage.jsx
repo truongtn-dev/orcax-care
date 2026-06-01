@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import FormField from "../components/FormField.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { firstFormError, validateChangePasswordForm } from "../utils/validation.js";
+import { firstFormError, getFieldError, validateChangePasswordForm } from "../utils/validation.js";
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -23,6 +24,14 @@ export default function ChangePasswordPage() {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setFieldErrors((prev) => ({ ...prev, [e.target.name]: undefined }));
     setError("");
+  };
+
+  const onBlur = (e) => {
+    const { name, value } = e.target;
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: getFieldError("changePassword", name, { ...form, [name]: value }),
+    }));
   };
 
   const onSubmit = async (e) => {
@@ -51,8 +60,6 @@ export default function ChangePasswordPage() {
     }
   };
 
-  const fieldError = (name) => fieldErrors[name];
-
   return (
     <PageLayout>
       <div className="page-header">
@@ -64,46 +71,39 @@ export default function ChangePasswordPage() {
         <form onSubmit={onSubmit} className="form" noValidate>
           {error && <div className="alert alert-error">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
-          <label>
-            Current password
-            <input
-              type="password"
-              name="currentPassword"
-              value={form.currentPassword}
-              onChange={onChange}
-              placeholder="Enter current password"
-              autoComplete="current-password"
-            />
-            {fieldError("currentPassword") && (
-              <span className="field-error">{fieldError("currentPassword")}</span>
-            )}
-          </label>
-          <label>
-            New password
-            <input
-              type="password"
-              name="newPassword"
-              value={form.newPassword}
-              onChange={onChange}
-              placeholder="Min. 8 characters, letters & numbers"
-              autoComplete="new-password"
-            />
-            {fieldError("newPassword") && <span className="field-error">{fieldError("newPassword")}</span>}
-          </label>
-          <label>
-            Confirm new password
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={onChange}
-              placeholder="Re-enter new password"
-              autoComplete="new-password"
-            />
-            {fieldError("confirmPassword") && (
-              <span className="field-error">{fieldError("confirmPassword")}</span>
-            )}
-          </label>
+          <FormField
+            label="Current password"
+            type="password"
+            name="currentPassword"
+            value={form.currentPassword}
+            onChange={onChange}
+            onBlur={onBlur}
+            error={fieldErrors.currentPassword}
+            placeholder="Enter current password"
+            autoComplete="current-password"
+          />
+          <FormField
+            label="New password"
+            type="password"
+            name="newPassword"
+            value={form.newPassword}
+            onChange={onChange}
+            onBlur={onBlur}
+            error={fieldErrors.newPassword}
+            placeholder="Min. 8 characters, letters & numbers"
+            autoComplete="new-password"
+          />
+          <FormField
+            label="Confirm new password"
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={onChange}
+            onBlur={onBlur}
+            error={fieldErrors.confirmPassword}
+            placeholder="Re-enter new password"
+            autoComplete="new-password"
+          />
           <button type="submit" className="btn btn-primary btn-block" disabled={loading || Boolean(success)}>
             {loading ? "Saving…" : "Update Password"}
           </button>

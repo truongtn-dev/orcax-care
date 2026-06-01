@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthPageLayout from "../components/AuthPageLayout.jsx";
+import FormField from "../components/FormField.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
-import { firstFormError, validateRegisterForm } from "../utils/validation.js";
+import { firstFormError, getFieldError, validateRegisterForm } from "../utils/validation.js";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
@@ -24,6 +25,14 @@ export default function RegisterPage() {
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
     setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
     setError("");
+  };
+
+  const onBlur = (e) => {
+    const { name, value } = e.target;
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: getFieldError("register", name, { ...form, [name]: value }),
+    }));
   };
 
   const onSubmit = async (e) => {
@@ -59,84 +68,77 @@ export default function RegisterPage() {
     }
   };
 
-  const fieldError = (name) => fieldErrors[name];
-
   return (
     <AuthPageLayout title="Create account" subtitle="Register as a patient on OrcaXCare">
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
-        <label>
-          Full name
-          <input
-            name="fullName"
-            value={form.fullName}
-            onChange={onChange}
-            placeholder="Nguyen Van A"
-            aria-invalid={Boolean(fieldError("fullName"))}
-          />
-          {fieldError("fullName") && <span className="field-error">{fieldError("fullName")}</span>}
-        </label>
+        <FormField
+          label="Full name"
+          name="fullName"
+          value={form.fullName}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={fieldErrors.fullName}
+          placeholder="Nguyen Van A"
+          autoComplete="name"
+        />
 
-        <label>
-          Email address
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={onChange}
-            placeholder="you@example.com"
-            aria-invalid={Boolean(fieldError("email"))}
-          />
-          {fieldError("email") && <span className="field-error">{fieldError("email")}</span>}
-        </label>
+        <FormField
+          label="Email address"
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={fieldErrors.email}
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
 
-        <label>
-          Phone number
-          <input
-            name="phone"
-            value={form.phone}
-            onChange={onChange}
-            placeholder="0901234567"
-            aria-invalid={Boolean(fieldError("phone"))}
-          />
-          {fieldError("phone") && <span className="field-error">{fieldError("phone")}</span>}
-        </label>
+        <FormField
+          label="Phone number"
+          name="phone"
+          type="tel"
+          value={form.phone}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={fieldErrors.phone}
+          placeholder="0901234567"
+          autoComplete="tel"
+          hint="Optional — 8 to 20 digits"
+        />
 
-        <label>
-          Password
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={onChange}
-            placeholder="Min. 8 characters, letters & numbers"
-            aria-invalid={Boolean(fieldError("password"))}
-          />
-          {fieldError("password") && <span className="field-error">{fieldError("password")}</span>}
-        </label>
+        <FormField
+          label="Password"
+          type="password"
+          name="password"
+          value={form.password}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={fieldErrors.password}
+          placeholder="Min. 8 characters, letters & numbers"
+          autoComplete="new-password"
+        />
 
-        <label>
-          Confirm password
-          <input
-            type="password"
-            name="confirmPassword"
-            value={form.confirmPassword}
-            onChange={onChange}
-            placeholder="Re-enter password"
-            aria-invalid={Boolean(fieldError("confirmPassword"))}
-          />
-          {fieldError("confirmPassword") && (
-            <span className="field-error">{fieldError("confirmPassword")}</span>
-          )}
-        </label>
+        <FormField
+          label="Confirm password"
+          type="password"
+          name="confirmPassword"
+          value={form.confirmPassword}
+          onChange={onChange}
+          onBlur={onBlur}
+          error={fieldErrors.confirmPassword}
+          placeholder="Re-enter password"
+          autoComplete="new-password"
+        />
 
         <label className="checkbox-row">
           <input type="checkbox" name="terms" checked={form.terms} onChange={onChange} />
           I accept the terms and conditions
         </label>
-        {fieldError("terms") && <span className="field-error">{fieldError("terms")}</span>}
+        {fieldErrors.terms && <span className="field-error">{fieldErrors.terms}</span>}
 
         <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
           {loading ? "Creating account…" : "Create Account"}

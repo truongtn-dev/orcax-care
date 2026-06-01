@@ -15,6 +15,7 @@ import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import "./App.css";
 import "./glass.css";
+import "./scroll-reveal.css";
 
 export default function App() {
   return (
