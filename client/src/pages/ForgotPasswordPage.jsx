@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import AuthPageLayout from "../components/AuthPageLayout.jsx";
+import FormField from "../components/FormField.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
-import { validateEmail } from "../utils/validation.js";
+import { getFieldError, validateEmail } from "../utils/validation.js";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,12 +18,14 @@ export default function ForgotPasswordPage() {
     setError("");
     setMessage("");
 
-    const emailError = validateEmail(email);
-    if (emailError) {
-      setError(emailError);
+    const emailErr = validateEmail(email);
+    if (emailErr) {
+      setFieldError(emailErr);
+      setError(emailErr);
       return;
     }
 
+    setFieldError("");
     setLoading(true);
     try {
       const { data } = await AuthApiClient.forgotPassword(email.trim());
@@ -41,15 +45,21 @@ export default function ForgotPasswordPage() {
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         {message && <div className="alert alert-success">{message}</div>}
-        <label>
-          Email address
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-          />
-        </label>
+        <FormField
+          label="Email address"
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setFieldError("");
+            setError("");
+          }}
+          onBlur={(e) => setFieldError(getFieldError("forgotPassword", "email", { email: e.target.value }))}
+          error={fieldError}
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
         <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
           {loading ? "Sending…" : "Send Reset Link"}
         </button>

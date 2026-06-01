@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PageLayout from "../components/PageLayout.jsx";
+import ScrollReveal from "../components/ScrollReveal.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -58,12 +59,13 @@ export default function SearchDoctorsPage() {
 
   return (
     <PageLayout>
-      <div className="page-header">
+      <ScrollReveal className="page-header" variant="up">
         <h1>Find Doctors</h1>
         <p>Search by doctor name, specialty, or department to find the right specialist.</p>
-      </div>
+      </ScrollReveal>
 
-      <div className="card filters-card">
+      <ScrollReveal variant="up" delay={80}>
+        <div className="card filters-card">
         <div className="filters-row">
           <input
             type="search"
@@ -122,7 +124,8 @@ export default function SearchDoctorsPage() {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </ScrollReveal>
 
       {error && <div className="alert alert-error">{error}</div>}
 
@@ -134,7 +137,8 @@ export default function SearchDoctorsPage() {
       )}
 
       {!loading && result.items.length === 0 && (
-        <div className="empty-state card">
+        <ScrollReveal variant="scale">
+          <div className="empty-state card">
           <div className="empty-state-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <circle cx="11" cy="11" r="8" />
@@ -146,24 +150,27 @@ export default function SearchDoctorsPage() {
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
             Clear Filters
           </button>
-        </div>
+          </div>
+        </ScrollReveal>
       )}
 
-      <div className="doctor-grid">
-        {result.items.map((doc) => (
-          <article key={doc._id} className="card doctor-card card-hover">
-            <div className="doctor-avatar">{doc.fullName?.charAt(0)?.toUpperCase() || "D"}</div>
-            <div>
-              <h3>{doc.fullName}</h3>
-              {doc.specialty?.name && <p className="doctor-meta">{doc.specialty.name}</p>}
-              {doc.department?.name && <p className="doctor-meta">{doc.department.name}</p>}
-              <p className="doctor-bio">{doc.bio || "No bio available."}</p>
-            </div>
-          </article>
-        ))}
+      <div className="doctor-grid scroll-stagger-grid">
+        {!loading &&
+          result.items.map((doc, i) => (
+            <ScrollReveal key={doc._id} as="article" className="card doctor-card card-hover" variant="float" delay={(i % 6) * 80}>
+              <div className="doctor-avatar">{doc.fullName?.charAt(0)?.toUpperCase() || "D"}</div>
+              <div>
+                <h3>{doc.fullName}</h3>
+                {doc.specialty?.name && <p className="doctor-meta">{doc.specialty.name}</p>}
+                {doc.department?.name && <p className="doctor-meta">{doc.department.name}</p>}
+                <p className="doctor-bio">{doc.bio || "No bio available."}</p>
+              </div>
+            </ScrollReveal>
+          ))}
       </div>
 
       {result.totalPages > 1 && (
+        <ScrollReveal variant="up" delay={100}>
         <div className="pagination">
           <button
             type="button"
@@ -185,6 +192,7 @@ export default function SearchDoctorsPage() {
             Next
           </button>
         </div>
+        </ScrollReveal>
       )}
     </PageLayout>
   );

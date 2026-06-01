@@ -1,5 +1,6 @@
 ﻿import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import ScrollReveal from "../components/ScrollReveal.jsx";
 import ResendVerificationForm from "../components/ResendVerificationForm.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -44,28 +45,34 @@ export default function PatientDashboardPage() {
 
   return (
     <PageLayout>
-      <div className="dashboard-welcome">
-        <h1>Welcome back, {fullName?.split(" ")[0] || "Patient"}</h1>
-        <p>Your health portal is ready. Explore services and manage your account below.</p>
-        <span className="dashboard-role-badge">Patient</span>
-      </div>
+      <ScrollReveal variant="up">
+        <div className="dashboard-welcome">
+          <h1>Welcome back, {fullName?.split(" ")[0] || "Patient"}</h1>
+          <p>Your health portal is ready. Explore services and manage your account below.</p>
+          <span className="dashboard-role-badge">Patient</span>
+        </div>
+      </ScrollReveal>
 
-      <div className="shortcut-grid">
-        {SHORTCUTS.map((s) => (
-          <Link key={s.to} to={s.to} className="card shortcut card-hover">
-            <div className="shortcut-icon">{s.icon}</div>
-            <h3>{s.title}</h3>
-            <p>{s.description}</p>
-            <span className="shortcut-arrow">Open ΓåÆ</span>
-          </Link>
+      <div className="shortcut-grid scroll-stagger-grid">
+        {SHORTCUTS.map((s, i) => (
+          <ScrollReveal key={s.to} variant="float" delay={i * 100}>
+            <Link to={s.to} className="card shortcut card-hover">
+              <div className="shortcut-icon">{s.icon}</div>
+              <h3>{s.title}</h3>
+              <p>{s.description}</p>
+              <span className="shortcut-arrow">Open →</span>
+            </Link>
+          </ScrollReveal>
         ))}
       </div>
 
-      <div className="card account-section">
+      <ScrollReveal variant="up" delay={120}>
+        <div className="card account-section">
         <h3>Account Settings</h3>
         <p className="muted">Signed in as {email || "your account"}</p>
         <ResendVerificationForm defaultEmail={email} />
-      </div>
+        </div>
+      </ScrollReveal>
     </PageLayout>
   );
 }

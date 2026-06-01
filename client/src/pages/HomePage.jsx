@@ -1,6 +1,9 @@
+import { useRef } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import ScrollReveal from "../components/ScrollReveal.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useHeroParallax } from "../hooks/useHeroParallax.js";
 
 const FEATURES = [
   {
@@ -43,7 +46,9 @@ const STEPS = [
 ];
 
 export default function HomePage() {
+  const heroRef = useRef(null);
   const { fullName, isAuthenticated, role } = useAuth();
+  useHeroParallax(heroRef);
 
   const dashboardPath =
     role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "patient" ? "/patient" : null;
@@ -51,19 +56,19 @@ export default function HomePage() {
   return (
     <PageLayout fullWidth>
       <div className="landing">
-        <section className="hero-section">
+        <section className="hero-section" ref={heroRef}>
           <div className="hero-shapes" aria-hidden="true">
             <div className="hero-shape hero-shape-1" />
             <div className="hero-shape hero-shape-2" />
           </div>
 
           <div className="hero-content">
-            <div className="hero-badge">
+            <div className="hero-badge hero-animate-in">
               <span className="hero-badge-dot" />
               Healthcare Platform · 2026
             </div>
 
-            <h1>
+            <h1 className="hero-animate-in hero-animate-in-delay-1">
               {fullName ? (
                 <>Welcome back, {fullName.split(" ")[0]}</>
               ) : (
@@ -71,13 +76,13 @@ export default function HomePage() {
               )}
             </h1>
 
-            <p className="hero-sub">
+            <p className="hero-sub hero-animate-in hero-animate-in-delay-2">
               {isAuthenticated
                 ? "Your OrcaXCare portal is ready. Search doctors, manage your profile, and access care services from one place."
                 : "Connect with verified doctors, manage appointments, and take control of your health journey — all in one modern portal."}
             </p>
 
-            <div className="hero-actions">
+            <div className="hero-actions hero-animate-in hero-animate-in-delay-3">
               <Link to="/search-doctors" className="btn btn-white btn-lg">
                 Find Doctors
               </Link>
@@ -93,7 +98,7 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="hero-stats">
+            <div className="hero-stats hero-animate-in hero-animate-in-delay-4">
               <div className="hero-stat">
                 <span className="hero-stat-value">500+</span>
                 <span className="hero-stat-label">Doctors</span>
@@ -111,42 +116,42 @@ export default function HomePage() {
         </section>
 
         <section className="section">
-          <div className="section-header">
+          <ScrollReveal className="section-header" variant="up">
             <span className="section-label">Why OrcaXCare</span>
             <h2>Everything you need for modern healthcare</h2>
             <p>A thoughtfully designed platform that puts patients first while empowering doctors and administrators.</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="features-grid">
-            {FEATURES.map((f) => (
-              <article key={f.title} className="feature-card">
+          <div className="features-grid scroll-stagger-grid">
+            {FEATURES.map((f, i) => (
+              <ScrollReveal key={f.title} as="article" className="feature-card" variant="float" delay={i * 120}>
                 <div className="feature-icon-wrap">{f.icon}</div>
                 <h3>{f.title}</h3>
                 <p>{f.description}</p>
-              </article>
+              </ScrollReveal>
             ))}
           </div>
         </section>
 
         <section className="section section-alt">
-          <div className="section-header">
+          <ScrollReveal className="section-header" variant="up">
             <span className="section-label">How it works</span>
             <h2>Get started in three simple steps</h2>
             <p>From registration to finding the right doctor — we've streamlined every step.</p>
-          </div>
+          </ScrollReveal>
 
-          <div className="steps-grid">
+          <div className="steps-grid scroll-stagger-grid">
             {STEPS.map((step, i) => (
-              <div key={step.title} className="step-card">
+              <ScrollReveal key={step.title} className="step-card" variant="scale" delay={i * 140}>
                 <div className="step-number">{i + 1}</div>
                 <h3>{step.title}</h3>
                 <p>{step.description}</p>
-              </div>
+              </ScrollReveal>
             ))}
           </div>
         </section>
 
-        <section className="cta-section">
+        <ScrollReveal className="cta-section" variant="scale" delay={80}>
           <h2>Ready to take control of your health?</h2>
           <p>Join thousands of patients who trust OrcaXCare for their healthcare needs.</p>
           <div className="cta-actions">
@@ -157,7 +162,7 @@ export default function HomePage() {
               Browse Doctors
             </Link>
           </div>
-        </section>
+        </ScrollReveal>
       </div>
     </PageLayout>
   );

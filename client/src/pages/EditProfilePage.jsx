@@ -120,88 +120,94 @@ export default function EditProfilePage() {
 
             <fieldset className="form-section">
               <legend>Account</legend>
-              <label>
-                Full name
-                <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Your full name" />
-              </label>
-              <label>
-                Email
-                <input name="email" value={form.email} readOnly disabled className="input-readonly" />
-              </label>
-              <label>
-                Phone number
-                <input name="phone" value={form.phone} onChange={onChange} placeholder="0901234567" />
-              </label>
+              <div className="form-grid">
+                <label>
+                  Full name
+                  <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Your full name" />
+                </label>
+                <label>
+                  Phone number
+                  <input name="phone" value={form.phone} onChange={onChange} placeholder="0901234567" />
+                </label>
+                <label className="form-grid-span-2">
+                  Email
+                  <input name="email" value={form.email} readOnly disabled className="input-readonly" />
+                </label>
+              </div>
             </fieldset>
 
             {role === "patient" && (
               <fieldset className="form-section">
                 <legend>Patient details</legend>
-                <label>
-                  Date of birth
-                  <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
-                </label>
-                <label>
-                  Gender
-                  <select name="gender" value={form.gender} onChange={onChange}>
-                    {GENDER_OPTIONS.map((opt) => (
-                      <option key={opt.value || "none"} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Address
-                  <input name="address" value={form.address} onChange={onChange} placeholder="City, district, street…" />
-                </label>
-                <label>
-                  Emergency contact name
-                  <input
-                    name="emergencyContactName"
-                    value={form.emergencyContactName}
-                    onChange={onChange}
-                    placeholder="Contact person name"
-                  />
-                </label>
-                <label>
-                  Emergency contact phone
-                  <input
-                    name="emergencyContactPhone"
-                    value={form.emergencyContactPhone}
-                    onChange={onChange}
-                    placeholder="Phone number"
-                  />
-                </label>
+                <div className="form-grid">
+                  <label>
+                    Date of birth
+                    <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
+                  </label>
+                  <label>
+                    Gender
+                    <select name="gender" value={form.gender} onChange={onChange}>
+                      {GENDER_OPTIONS.map((opt) => (
+                        <option key={opt.value || "none"} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="form-grid-span-2">
+                    Address
+                    <input name="address" value={form.address} onChange={onChange} placeholder="City, district, street…" />
+                  </label>
+                  <label>
+                    Emergency contact name
+                    <input
+                      name="emergencyContactName"
+                      value={form.emergencyContactName}
+                      onChange={onChange}
+                      placeholder="Contact person name"
+                    />
+                  </label>
+                  <label>
+                    Emergency contact phone
+                    <input
+                      name="emergencyContactPhone"
+                      value={form.emergencyContactPhone}
+                      onChange={onChange}
+                      placeholder="Phone number"
+                    />
+                  </label>
+                </div>
               </fieldset>
             )}
 
             {role === "doctor" && (
               <fieldset className="form-section">
                 <legend>Doctor details</legend>
-                <label>
-                  License number
-                  <input name="licenseNo" value={form.licenseNo} readOnly disabled className="input-readonly" />
-                </label>
-                <label>
-                  Specialty
-                  <input name="specialtyName" value={form.specialtyName} readOnly disabled className="input-readonly" />
-                </label>
-                <label>
-                  Department
-                  <input name="departmentName" value={form.departmentName} readOnly disabled className="input-readonly" />
-                </label>
-                <label>
-                  Professional bio
-                  <textarea
-                    name="bio"
-                    value={form.bio}
-                    onChange={onChange}
-                    rows={4}
-                    placeholder="Brief introduction for patients…"
-                    maxLength={1000}
-                  />
-                </label>
+                <div className="form-grid">
+                  <label>
+                    License number
+                    <input name="licenseNo" value={form.licenseNo} readOnly disabled className="input-readonly" />
+                  </label>
+                  <label>
+                    Specialty
+                    <input name="specialtyName" value={form.specialtyName} readOnly disabled className="input-readonly" />
+                  </label>
+                  <label className="form-grid-span-2">
+                    Department
+                    <input name="departmentName" value={form.departmentName} readOnly disabled className="input-readonly" />
+                  </label>
+                  <label className="form-grid-span-2">
+                    Professional bio
+                    <textarea
+                      name="bio"
+                      value={form.bio}
+                      onChange={onChange}
+                      rows={4}
+                      placeholder="Brief introduction for patients…"
+                      maxLength={1000}
+                    />
+                  </label>
+                </div>
               </fieldset>
             )}
 
