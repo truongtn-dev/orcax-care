@@ -1,33 +1,66 @@
-import { useEffect, useState } from 'react'
-import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage.jsx";
+import ResetPasswordPage from "./pages/ResetPasswordPage.jsx";
+import VerifyEmailPage from "./pages/VerifyEmailPage.jsx";
+import ChangePasswordPage from "./pages/ChangePasswordPage.jsx";
+import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
+import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
+import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
+import "./App.css";
 
-const apiBase = import.meta.env.VITE_API_URL || ''
-
-function App() {
-  const [health, setHealth] = useState(null)
-
-  useEffect(() => {
-    const url = apiBase ? `${apiBase}/health` : '/health'
-    fetch(url)
-      .then((r) => r.json())
-      .then(setHealth)
-      .catch(() => setHealth({ ok: false, message: 'API unreachable' }))
-  }, [])
-
+export default function App() {
   return (
-    <main className="app">
-      <h1>OrcaXCare</h1>
-      <p className="muted">WDP301 · React (Vite) + Express + MongoDB</p>
-      <section className="card">
-        <h2>API status</h2>
-        <pre>{health ? JSON.stringify(health, null, 2) : 'Loading…'}</pre>
-        <p className="hint">
-          Start the server from <code>server/</code> and optionally set{' '}
-          <code>VITE_API_URL</code> in <code>client/.env</code>.
-        </p>
-      </section>
-    </main>
-  )
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/search-doctors" element={<SearchDoctorsPage />} />
+          <Route
+            path="/change-password"
+            element={
+              <ProtectedRoute roles={["patient", "doctor", "admin"]}>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
-
-export default App

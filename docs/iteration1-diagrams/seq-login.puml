@@ -1,0 +1,35 @@
+@startuml SDS_Login
+title SDS — Login (ORCX-001)
+autonumber
+
+actor User
+participant "LoginPage\n(React)" as UI
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UserRepository" as UR
+database "MongoDB" as DB
+
+User -> UI : enter email, password
+UI -> AC : POST /api/auth/login\n{email, password}
+AC -> AS : login(email, password)
+AS -> UR : findByEmail(email)
+UR -> DB : users.findOne({email})
+DB --> UR : user doc
+UR --> AS : user
+AS -> AS : bcrypt.compare(password, hash)
+alt invalid credentials
+  AS --> AC : throw 401
+  AC --> UI : 401 Unauthorized
+  UI --> User : show error message
+else account inactive / not verified
+  AS --> AC : throw 403
+  AC --> UI : 403 Forbidden
+else success
+  AS -> AS : sign JWT(role, userId)
+  AS --> AC : { accessToken, role, fullName }
+  AC --> UI : 200 OK + token
+  UI -> UI : store token (localStorage)
+  UI --> User : redirect by role\n(patient / admin dashboard)
+end
+
+@enduml
