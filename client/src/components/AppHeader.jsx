@@ -33,9 +33,10 @@ export default function AppHeader() {
     };
   }, [menuOpen]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login", { replace: true });
+    window.history.replaceState(null, "", "/login");
   };
 
   const dashboardLink =

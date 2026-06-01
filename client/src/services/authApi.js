@@ -1,8 +1,8 @@
 import { api } from "./api.js";
 
 export const AuthApiClient = {
-  login(email, password) {
-    return api.post("/api/auth/login", { email, password });
+  login(email, password, rememberMe = false) {
+    return api.post("/api/auth/login", { email, password, rememberMe });
   },
 
   register(payload) {
@@ -33,14 +33,18 @@ export const AuthApiClient = {
     return api.get("/api/auth/me");
   },
 
-  storeToken(accessToken, rememberMe = false) {
+  logout() {
+    return api.post("/api/auth/logout");
+  },
+
+  storeToken(accessToken, rememberMe = false, tokenType = "Token") {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("accessToken");
-    if (rememberMe) {
-      localStorage.setItem("accessToken", accessToken);
-    } else {
-      sessionStorage.setItem("accessToken", accessToken);
-    }
+    localStorage.removeItem("tokenType");
+    sessionStorage.removeItem("tokenType");
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem("accessToken", accessToken);
+    storage.setItem("tokenType", tokenType);
   },
 
   getToken() {
@@ -50,16 +54,21 @@ export const AuthApiClient = {
   removeToken() {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("accessToken");
+    localStorage.removeItem("tokenType");
+    sessionStorage.removeItem("tokenType");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
     sessionStorage.removeItem("userRole");
     sessionStorage.removeItem("userName");
+    sessionStorage.removeItem("userEmail");
   },
 
-  storeUserMeta(role, fullName, rememberMe = false) {
+  storeUserMeta(role, fullName, rememberMe = false, email = "") {
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem("userRole", role);
     storage.setItem("userName", fullName || "");
+    storage.setItem("userEmail", email || "");
   },
 
   getUserRole() {
@@ -68,6 +77,10 @@ export const AuthApiClient = {
 
   getUserName() {
     return localStorage.getItem("userName") || sessionStorage.getItem("userName");
+  },
+
+  getUserEmail() {
+    return localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail");
   },
 
   isAuthenticated() {

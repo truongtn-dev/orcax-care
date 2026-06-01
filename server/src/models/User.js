@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
     isEmailVerified: { type: Boolean, default: false },
+    isLocked: { type: Boolean, default: false },
     lastLoginAt: { type: Date, default: null },
     passwordChangedAt: { type: Date, default: null },
     lastVerificationSentAt: { type: Date, default: null },

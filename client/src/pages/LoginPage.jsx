@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthPageLayout from "../components/AuthPageLayout.jsx";
+import ResendVerificationForm from "../components/ResendVerificationForm.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { AuthApiClient } from "../services/authApi.js";
-import { getApiErrorMessage } from "../services/api.js";
+import { getApiErrorCode, getApiErrorMessage } from "../services/api.js";
+import { firstFormError, validateLoginForm } from "../utils/validation.js";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -11,12 +13,13 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resendMsg, setResendMsg] = useState("");
   const [showResend, setShowResend] = useState(false);
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
+    setError("");
+    setShowResend(false);
   };
 
   const redirectByRole = (role) => {
@@ -29,33 +32,34 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setShowResend(false);
+
+    const fieldErrors = validateLoginForm(form);
+    const firstError = firstFormError(fieldErrors);
+    if (firstError) {
+      setError(firstError);
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data } = await AuthApiClient.login(form.email, form.password);
+      const { data } = await AuthApiClient.login(form.email, form.password, form.rememberMe);
       loginSuccess(data, form.rememberMe);
       redirectByRole(data.role);
     } catch (err) {
+      const code = getApiErrorCode(err);
       const msg = getApiErrorMessage(err);
       setError(msg);
-      if (msg.toLowerCase().includes("verify")) setShowResend(true);
+      if (code === "EMAIL_NOT_VERIFIED" || msg.toLowerCase().includes("verify")) {
+        setShowResend(true);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const onResend = async () => {
-    setResendMsg("");
-    try {
-      const { data } = await AuthApiClient.resendVerification(form.email);
-      setResendMsg(data.message);
-    } catch (err) {
-      setResendMsg(getApiErrorMessage(err));
-    }
-  };
-
   return (
     <AuthPageLayout title="Welcome back" subtitle="Sign in to your OrcaXCare account">
-      <form onSubmit={onSubmit} className="form">
+      <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         <label>
           Email address
@@ -64,7 +68,6 @@ export default function LoginPage() {
             name="email"
             value={form.email}
             onChange={onChange}
-            required
             autoComplete="email"
             placeholder="you@example.com"
           />
@@ -76,7 +79,6 @@ export default function LoginPage() {
             name="password"
             value={form.password}
             onChange={onChange}
-            required
             autoComplete="current-password"
             placeholder="Enter your password"
           />
@@ -89,14 +91,13 @@ export default function LoginPage() {
           {loading ? "Signing in…" : "Sign In"}
         </button>
       </form>
+
       {showResend && (
         <div className="resend-box">
-          <button type="button" className="btn btn-outline btn-sm btn-block" onClick={onResend}>
-            Resend verification email
-          </button>
-          {resendMsg && <p className="hint">{resendMsg}</p>}
+          <ResendVerificationForm defaultEmail={form.email} compact />
         </div>
       )}
+
       <p className="form-footer">
         <Link to="/forgot-password">Forgot password?</Link>
         {" · "}

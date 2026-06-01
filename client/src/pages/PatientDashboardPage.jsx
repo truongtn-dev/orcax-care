@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import ResendVerificationForm from "../components/ResendVerificationForm.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const SHORTCUTS = [
@@ -28,7 +29,7 @@ const SHORTCUTS = [
 ];
 
 export default function PatientDashboardPage() {
-  const { fullName } = useAuth();
+  const { fullName, email } = useAuth();
 
   return (
     <PageLayout>
@@ -44,9 +45,15 @@ export default function PatientDashboardPage() {
             <div className="shortcut-icon">{s.icon}</div>
             <h3>{s.title}</h3>
             <p>{s.description}</p>
-            <span className="shortcut-arrow">Open →</span>
+            <span className="shortcut-arrow">Open ΓåÆ</span>
           </Link>
         ))}
+      </div>
+
+      <div className="card account-section">
+        <h3>Account Settings</h3>
+        <p className="muted">Signed in as {email || "your account"}</p>
+        <ResendVerificationForm defaultEmail={email} />
       </div>
     </PageLayout>
   );

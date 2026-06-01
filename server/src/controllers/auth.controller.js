@@ -6,8 +6,8 @@ function sendResult(res, result) {
 
 export async function login(req, res) {
   try {
-    const { email, password } = req.body;
-    return sendResult(res, await AuthService.login(email, password));
+    const { email, password, rememberMe } = req.body;
+    return sendResult(res, await AuthService.login(email, password, Boolean(rememberMe)));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
@@ -72,10 +72,20 @@ export async function changePassword(req, res) {
   }
 }
 
+export async function logout(req, res) {
+  try {
+    return sendResult(res, await AuthService.logout(req.authToken));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 export async function me(req, res) {
-  return res.json({
-    userId: req.user.userId,
-    role: req.user.role,
-    email: req.user.email,
-  });
+  try {
+    return sendResult(res, await AuthService.getMe(req.user.userId));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
 }

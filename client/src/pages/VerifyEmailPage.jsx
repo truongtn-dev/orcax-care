@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import AuthPageLayout from "../components/AuthPageLayout.jsx";
+import ResendVerificationForm from "../components/ResendVerificationForm.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -10,8 +11,7 @@ export default function VerifyEmailPage() {
   const token = params.get("token") || "";
   const [status, setStatus] = useState("loading");
   const [message, setMessage] = useState("");
-  const [resendEmail, setResendEmail] = useState("");
-  const [resendMsg, setResendMsg] = useState("");
+  const verifyStarted = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -19,6 +19,10 @@ export default function VerifyEmailPage() {
       setMessage("Missing verification token.");
       return;
     }
+
+    if (verifyStarted.current) return;
+    verifyStarted.current = true;
+
     AuthApiClient.verifyEmail(token)
       .then(({ data }) => {
         setStatus("success");
@@ -30,17 +34,6 @@ export default function VerifyEmailPage() {
         setMessage(getApiErrorMessage(err));
       });
   }, [token, navigate]);
-
-  const onResend = async (e) => {
-    e.preventDefault();
-    setResendMsg("");
-    try {
-      const { data } = await AuthApiClient.resendVerification(resendEmail);
-      setResendMsg(data.message);
-    } catch (err) {
-      setResendMsg(getApiErrorMessage(err));
-    }
-  };
 
   return (
     <AuthPageLayout title="Verify email" subtitle="Confirming your email address">
@@ -54,22 +47,10 @@ export default function VerifyEmailPage() {
       {status === "error" && (
         <>
           <div className="alert alert-error">{message}</div>
-          <form onSubmit={onResend} className="form resend-inline">
-            <label>
-              Resend verification to
-              <input
-                type="email"
-                value={resendEmail}
-                onChange={(e) => setResendEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-              />
-            </label>
-            <button type="submit" className="btn btn-outline btn-block">
-              Resend Verification Email
-            </button>
-            {resendMsg && <p className="hint">{resendMsg}</p>}
-          </form>
+          <p className="muted resend-description">
+            Link có thể đã hết hạn hoặc server vừa restart (memory DB). Gửi lại email xác nhận bên dưới.
+          </p>
+          <ResendVerificationForm compact />
         </>
       )}
       <p className="form-footer">

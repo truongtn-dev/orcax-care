@@ -20,5 +20,6 @@ authRouter.post("/forgot-password", AuthController.forgotPassword);
 authRouter.post("/reset-password", AuthController.resetPassword);
 authRouter.get("/verify-email", AuthController.verifyEmail);
 authRouter.post("/resend-verification", resendLimiter, AuthController.resendVerification);
+authRouter.post("/logout", authMiddleware, AuthController.logout);
 authRouter.put("/change-password", authMiddleware, AuthController.changePassword);
 authRouter.get("/me", authMiddleware, AuthController.me);
