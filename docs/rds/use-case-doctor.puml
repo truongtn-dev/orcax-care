@@ -1,0 +1,49 @@
+@startuml OrcaXCare_Doctor
+left to right direction
+
+actor Doctor
+
+rectangle "OrcaXCare" {
+  usecase "Login\n(ORCX-05)" as Login
+
+  usecase "Logout\n(ORCX-06)" as UC06
+  usecase "Manage Profile\n(ORCX-07)" as UC07
+  usecase "View Profile\n(ORCX-08)" as UC08
+  usecase "Edit Profile\n(ORCX-09)" as UC09
+
+  usecase "View Appointment List\n(ORCX-30)" as UC30
+
+  usecase "Manage Consultation\n(ORCX-31)" as UC31
+  usecase "View Patient EMR\n(ORCX-32)" as UC32
+  usecase "Enter Diagnosis\n(ORCX-33)" as UC33
+  usecase "Prescribe Medication\n(ORCX-34)" as UC34
+  usecase "Export Prescription PDF\n(ORCX-35)" as UC35
+  usecase "Upload Medical Images\n(ORCX-36)" as UC36
+
+  usecase "Manage Waiting Queue\n(ORCX-37)" as UC37
+  usecase "Call Next Patient\n(ORCX-38)" as UC38
+}
+
+Doctor --> UC06
+Doctor --> UC07
+Doctor --> UC30
+Doctor --> UC31
+Doctor --> UC37
+
+UC07 ..> Login : <<include>>
+UC30 ..> Login : <<include>>
+UC31 ..> Login : <<include>>
+UC37 ..> Login : <<include>>
+
+UC08 ..> UC07 : <<extend>>
+UC09 ..> UC07 : <<extend>>
+
+UC32 ..> UC31 : <<extend>>
+UC33 ..> UC31 : <<extend>>
+UC34 ..> UC31 : <<extend>>
+UC35 ..> UC31 : <<extend>>
+UC36 ..> UC31 : <<extend>>
+
+UC38 ..> UC37 : <<extend>>
+
+@enduml

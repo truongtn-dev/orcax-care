@@ -1,0 +1,31 @@
+@startuml SDS_CreateDoctor
+title SDS — Create Doctor (ORCX-027)
+autonumber
+
+actor Admin
+participant "DoctorFormPage" as UI
+participant "DoctorController" as DC
+participant "DoctorService" as DS
+participant "UserRepository" as UR
+participant "DoctorRepository" as DR
+database "MongoDB" as DB
+
+Admin -> UI : fill doctor + account fields
+UI -> DC : POST /api/admin/doctors\nAuthorization: Bearer
+DC -> DC : authorize(role=admin)
+DC -> DS : createDoctor(dto)
+DS -> UR : existsByEmail(dto.email)
+UR -> DB : users.findOne
+alt duplicate email
+  DS --> DC : 409
+else ok
+  DS -> UR : createUser({role: doctor})
+  UR -> DB : users.insertOne
+  DS -> DR : createDoctor({userId, specialtyId, departmentId, ...})
+  DR -> DB : doctors.insertOne
+  DS --> DC : doctor + user ids
+  DC --> UI : 201 Created
+  UI --> Admin : toast + navigate to list
+end
+
+@enduml

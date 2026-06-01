@@ -1,0 +1,56 @@
+@startuml OrcaXCare_Admin
+left to right direction
+
+actor Admin
+
+rectangle "OrcaXCare" {
+  usecase "Login\n(ORCX-05)" as Login
+
+  usecase "Logout\n(ORCX-06)" as UC06
+
+  usecase "Manage Doctors\n(ORCX-40)" as UC40
+  usecase "Add Doctor\n(ORCX-41)" as UC41
+  usecase "Edit Doctor\n(ORCX-42)" as UC42
+  usecase "Deactivate Doctor\n(ORCX-43)" as UC43
+  usecase "View Doctor List\n(ORCX-44)" as UC44
+
+  usecase "Manage Specialties\n(ORCX-45)" as UC45
+  usecase "Add Specialty\n(ORCX-46)" as UC46
+  usecase "Edit Specialty\n(ORCX-47)" as UC47
+  usecase "View Specialty List\n(ORCX-48)" as UC48
+
+  usecase "Manage User Accounts\n(ORCX-49)" as UC49
+  usecase "Manage Clinics\n(ORCX-50)" as UC50
+  usecase "Manage Pharmacy Inventory\n(ORCX-51)" as UC51
+  usecase "View Revenue Report\n(ORCX-52)" as UC52
+  usecase "Manage Complaints\n(ORCX-53)" as UC53
+}
+
+Admin --> UC06
+Admin --> UC40
+Admin --> UC45
+Admin --> UC49
+Admin --> UC50
+Admin --> UC51
+Admin --> UC52
+Admin --> UC53
+
+UC06 ..> Login : <<include>>
+UC40 ..> Login : <<include>>
+UC45 ..> Login : <<include>>
+UC49 ..> Login : <<include>>
+UC50 ..> Login : <<include>>
+UC51 ..> Login : <<include>>
+UC52 ..> Login : <<include>>
+UC53 ..> Login : <<include>>
+
+UC41 ..> UC40 : <<extend>>
+UC42 ..> UC40 : <<extend>>
+UC43 ..> UC40 : <<extend>>
+UC44 ..> UC40 : <<extend>>
+
+UC46 ..> UC45 : <<extend>>
+UC47 ..> UC45 : <<extend>>
+UC48 ..> UC45 : <<extend>>
+
+@enduml

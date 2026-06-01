@@ -1,0 +1,10 @@
+﻿#,Parent_ID,Screen_Function,Feature,Description,In_Charge,Status,Sprint,SRS,SDS,LOC,Code_Demo_Comments,Complexity,Quality
+10,4,Portal + API,Register API,Validate payload; hash password; create user + role.,TruongNTCE180140,To Do,2,SRS §,SDS §,55,Invalid email returns 400.,Medium,
+11,4,Portal + API,Login + JWT issue,Compare hash; sign access token; optional refresh stub.,TruongNTCE180140,To Do,2,SRS §,SDS §,55,Postman returns Bearer token.,Medium,
+12,4,Portal + API,Client login/register UI,"Forms, client validation, store token, redirect by role.",TruongNTCE180140,To Do,2,SRS §,SDS §,40,Short screen capture of flow.,Medium,
+16,6,Portal — Profile,Profile GET/PATCH API,Own-profile only; partial updates.,TruongNTCE180140,To Do,2,SRS §,SDS §,35,403 for other users’ ids.,Medium,
+17,6,Portal — Profile,Avatar upload,Multipart or URL field; size/type validation.,TruongNTCE180140,To Do,2,SRS §,SDS §,30,Avatar updates in header.,Medium,
+18,6,Portal — Profile,Profile form UI,React form + schema validation + success toast.,TruongNTCE180140,To Do,2,SRS §,SDS §,25,Validated form demo.,Standard,
+34,12,Server — RBAC,Permission matrix constants,Role → allowed actions map in code.,TanhNTCE182341,To Do,2,SRS §,SDS §,35,Table in README or MD.,Standard,
+35,12,Server — RBAC,requireRole middleware,Composable guards for routes.,TanhNTCE182341,To Do,2,SRS §,SDS §,40,403 on wrong role.,Medium,
+36,12,Server — RBAC,Resource ownership checks,EMR/stock examples; tests for happy/deny.,TanhNTCE182341,To Do,2,SRS §,SDS §,25,Matrix demo.,Standard,
