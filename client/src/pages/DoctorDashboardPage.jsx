@@ -6,12 +6,18 @@ export default function DoctorDashboardPage() {
 
   return (
     <PageLayout>
-      <div className="dashboard">
-        <h1>Doctor Dashboard</h1>
-        <p className="muted">Welcome, {fullName || "Doctor"}.</p>
-        <div className="card">
-          <p>Doctor console shell for Iteration 1. Clinical modules arrive in Iteration 2.</p>
-        </div>
+      <div className="dashboard-welcome">
+        <h1>Doctor Portal</h1>
+        <p>Welcome, Dr. {fullName?.split(" ").slice(-1)[0] || fullName || "Doctor"}. Your clinical workspace awaits.</p>
+        <span className="dashboard-role-badge">Doctor</span>
+      </div>
+
+      <div className="card info-panel">
+        <h3 style={{ marginBottom: "0.75rem" }}>Iteration 1 — Foundation</h3>
+        <p>
+          This is your doctor console shell for Iteration 1. Appointment management, patient records, and clinical
+          modules will arrive in Iteration 2.
+        </p>
       </div>
     </PageLayout>
   );

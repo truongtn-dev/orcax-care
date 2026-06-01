@@ -58,9 +58,9 @@ export default function SearchDoctorsPage() {
 
   return (
     <PageLayout>
-      <div className="search-header">
-        <h1>Search Doctors</h1>
-        <p className="muted">Find doctors by name, specialty, or department</p>
+      <div className="page-header">
+        <h1>Find Doctors</h1>
+        <p>Search by name, specialty, or department to find the right specialist for your needs.</p>
       </div>
 
       <div className="card filters-card">
@@ -76,7 +76,7 @@ export default function SearchDoctorsPage() {
             Search
           </button>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear filters
+            Clear
           </button>
         </div>
         <div className="filters-row">
@@ -103,45 +103,59 @@ export default function SearchDoctorsPage() {
             ))}
           </select>
         </div>
-        <div className="chip-row">
-          {specialties.slice(0, 5).map((s) => (
-            <button
-              key={s._id}
-              type="button"
-              className={`chip ${filters.specialtyId === s._id ? "chip-active" : ""}`}
-              onClick={() =>
-                applySearch({
-                  specialtyId: filters.specialtyId === s._id ? "" : s._id,
-                })
-              }
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
+        {specialties.length > 0 && (
+          <div className="chip-row">
+            {specialties.slice(0, 6).map((s) => (
+              <button
+                key={s._id}
+                type="button"
+                className={`chip ${filters.specialtyId === s._id ? "chip-active" : ""}`}
+                onClick={() =>
+                  applySearch({
+                    specialtyId: filters.specialtyId === s._id ? "" : s._id,
+                  })
+                }
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
-      {loading && <p className="muted">Loading doctors…</p>}
+
+      {loading && (
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          Loading doctors…
+        </div>
+      )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
+          <div className="empty-state-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </div>
           <h3>No doctors found</h3>
-          <p>Try adjusting your search or filters.</p>
+          <p>Try adjusting your search criteria or clearing filters.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear filters
+            Clear Filters
           </button>
         </div>
       )}
 
       <div className="doctor-grid">
         {result.items.map((doc) => (
-          <article key={doc._id} className="card doctor-card">
-            <div className="doctor-avatar">{doc.fullName?.charAt(0) || "D"}</div>
+          <article key={doc._id} className="card doctor-card card-hover">
+            <div className="doctor-avatar">{doc.fullName?.charAt(0)?.toUpperCase() || "D"}</div>
             <div>
               <h3>{doc.fullName}</h3>
-              <p className="doctor-meta">{doc.specialty?.name}</p>
-              <p className="doctor-meta">{doc.department?.name}</p>
+              {doc.specialty?.name && <p className="doctor-meta">{doc.specialty.name}</p>}
+              {doc.department?.name && <p className="doctor-meta">{doc.department.name}</p>}
               <p className="doctor-bio">{doc.bio || "No bio available."}</p>
             </div>
           </article>
@@ -158,8 +172,8 @@ export default function SearchDoctorsPage() {
           >
             Previous
           </button>
-          <span>
-            Page {result.page} of {result.totalPages} ({result.total} doctors)
+          <span className="pagination-info">
+            Page {result.page} of {result.totalPages} · {result.total} doctors
           </span>
           <button
             type="button"

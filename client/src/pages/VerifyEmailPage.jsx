@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import PageLayout from "../components/PageLayout.jsx";
+import AuthPageLayout from "../components/AuthPageLayout.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -43,35 +43,38 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <PageLayout narrow>
-      <div className="card auth-card">
-        <h1>Verify Email</h1>
-        {status === "loading" && <p className="muted">Verifying your email…</p>}
-        {status === "success" && <div className="alert alert-success">{message}</div>}
-        {status === "error" && (
-          <>
-            <div className="alert alert-error">{message}</div>
-            <form onSubmit={onResend} className="form resend-inline">
-              <label>
-                Resend to email
-                <input
-                  type="email"
-                  value={resendEmail}
-                  onChange={(e) => setResendEmail(e.target.value)}
-                  required
-                />
-              </label>
-              <button type="submit" className="btn btn-outline">
-                Resend verification
-              </button>
-              {resendMsg && <p className="hint">{resendMsg}</p>}
-            </form>
-          </>
-        )}
-        <p className="form-footer">
-          <Link to="/login">Go to Login</Link>
-        </p>
-      </div>
-    </PageLayout>
+    <AuthPageLayout title="Verify email" subtitle="Confirming your email address">
+      {status === "loading" && (
+        <div className="loading-state">
+          <div className="loading-spinner" />
+          Verifying your email…
+        </div>
+      )}
+      {status === "success" && <div className="alert alert-success">{message}</div>}
+      {status === "error" && (
+        <>
+          <div className="alert alert-error">{message}</div>
+          <form onSubmit={onResend} className="form resend-inline">
+            <label>
+              Resend verification to
+              <input
+                type="email"
+                value={resendEmail}
+                onChange={(e) => setResendEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+              />
+            </label>
+            <button type="submit" className="btn btn-outline btn-block">
+              Resend Verification Email
+            </button>
+            {resendMsg && <p className="hint">{resendMsg}</p>}
+          </form>
+        </>
+      )}
+      <p className="form-footer">
+        <Link to="/login">Go to Sign In</Link>
+      </p>
+    </AuthPageLayout>
   );
 }

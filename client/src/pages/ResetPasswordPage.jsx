@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import PageLayout from "../components/PageLayout.jsx";
+import AuthPageLayout from "../components/AuthPageLayout.jsx";
 import { AuthApiClient } from "../services/authApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -41,41 +41,39 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <PageLayout narrow>
-      <div className="card auth-card">
-        <h1>Reset Password</h1>
-        <p className="muted">Choose a new password for your account</p>
-        <form onSubmit={onSubmit} className="form">
-          {error && <div className="alert alert-error">{error}</div>}
-          {success && <div className="alert alert-success">{success}</div>}
-          <label>
-            New password
-            <input
-              type="password"
-              name="newPassword"
-              value={form.newPassword}
-              onChange={onChange}
-              required
-            />
-          </label>
-          <label>
-            Confirm new password
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={onChange}
-              required
-            />
-          </label>
-          <button type="submit" className="btn btn-primary btn-block" disabled={loading || !token}>
-            {loading ? "Updating…" : "Update password"}
-          </button>
-        </form>
-        <p className="form-footer">
-          <Link to="/login">Back to Login</Link>
-        </p>
-      </div>
-    </PageLayout>
+    <AuthPageLayout title="Reset password" subtitle="Choose a strong new password for your account">
+      <form onSubmit={onSubmit} className="form">
+        {error && <div className="alert alert-error">{error}</div>}
+        {success && <div className="alert alert-success">{success}</div>}
+        <label>
+          New password
+          <input
+            type="password"
+            name="newPassword"
+            value={form.newPassword}
+            onChange={onChange}
+            required
+            placeholder="Min. 8 characters"
+          />
+        </label>
+        <label>
+          Confirm new password
+          <input
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={onChange}
+            required
+            placeholder="Re-enter new password"
+          />
+        </label>
+        <button type="submit" className="btn btn-primary btn-block" disabled={loading || !token}>
+          {loading ? "Updating…" : "Update Password"}
+        </button>
+      </form>
+      <p className="form-footer">
+        <Link to="/login">Back to Sign In</Link>
+      </p>
+    </AuthPageLayout>
   );
 }

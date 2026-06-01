@@ -43,10 +43,13 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <PageLayout narrow>
-      <div className="card auth-card">
+    <PageLayout>
+      <div className="page-header">
         <h1>Change Password</h1>
-        <p className="muted">Update your password while logged in</p>
+        <p>Update your account security. You will be signed out after a successful change.</p>
+      </div>
+
+      <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
         <form onSubmit={onSubmit} className="form">
           {error && <div className="alert alert-error">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
@@ -58,11 +61,19 @@ export default function ChangePasswordPage() {
               value={form.currentPassword}
               onChange={onChange}
               required
+              placeholder="Enter current password"
             />
           </label>
           <label>
             New password
-            <input type="password" name="newPassword" value={form.newPassword} onChange={onChange} required />
+            <input
+              type="password"
+              name="newPassword"
+              value={form.newPassword}
+              onChange={onChange}
+              required
+              placeholder="Min. 8 characters"
+            />
           </label>
           <label>
             Confirm new password
@@ -72,10 +83,11 @@ export default function ChangePasswordPage() {
               value={form.confirmPassword}
               onChange={onChange}
               required
+              placeholder="Re-enter new password"
             />
           </label>
           <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-            {loading ? "Saving…" : "Change password"}
+            {loading ? "Saving…" : "Update Password"}
           </button>
         </form>
       </div>
