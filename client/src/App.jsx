@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+﻿import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -13,6 +13,7 @@ import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import "./App.css";
+import "./glass.css";
 
 export default function App() {
   return (
