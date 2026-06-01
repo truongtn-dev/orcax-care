@@ -1,3 +1,3 @@
 # OrcaXCare — client
 
-React (Vite). Chạy: `npm install` → `npm run dev`. Cấu hình API: xem `.env.example`.
+React (Vite). Run: `npm install` then `npm run dev`. API configuration: see `.env.example`.

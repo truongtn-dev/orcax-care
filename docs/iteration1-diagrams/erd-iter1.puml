@@ -1,0 +1,94 @@
+@startuml OrcaXCare_Iter1_ERD
+title Iteration 1 — Database (core entities)
+skinparam linetype ortho
+
+entity "users" as users {
+  * _id : ObjectId <<PK>>
+  --
+  email : string <<unique>>
+  passwordHash : string
+  role : enum(patient|doctor|admin)
+  fullName : string
+  phone : string
+  isActive : boolean
+  isEmailVerified : boolean
+  lastLoginAt : datetime
+  createdAt / updatedAt
+}
+
+entity "patients" as patients {
+  * _id : ObjectId <<PK>>
+  --
+  userId : ObjectId <<FK>>
+  dateOfBirth : date
+  gender : string
+  address : string
+  emergencyContact : string
+  avatarUrl : string
+  isActive : boolean
+}
+
+entity "doctors" as doctors {
+  * _id : ObjectId <<PK>>
+  --
+  userId : ObjectId <<FK>>
+  specialtyId : ObjectId <<FK>>
+  departmentId : ObjectId <<FK>>
+  licenseNo : string
+  bio : string
+  photoUrl : string
+  isActive : boolean
+}
+
+entity "specialties" as specialties {
+  * _id : ObjectId <<PK>>
+  --
+  code : string <<unique>>
+  name : string <<unique>>
+  description : string
+  isActive : boolean
+}
+
+entity "departments" as departments {
+  * _id : ObjectId <<PK>>
+  --
+  name : string
+  location : string
+  phone : string
+  isActive : boolean
+}
+
+entity "clinic_rooms" as rooms {
+  * _id : ObjectId <<PK>>
+  --
+  departmentId : ObjectId <<FK>>
+  roomCode : string
+  floor : string
+  isActive : boolean
+}
+
+entity "email_verification_tokens" as evt {
+  * _id : ObjectId <<PK>>
+  --
+  userId : ObjectId <<FK>>
+  token : string
+  expiresAt : datetime
+}
+
+entity "password_reset_tokens" as prt {
+  * _id : ObjectId <<PK>>
+  --
+  userId : ObjectId <<FK>>
+  token : string
+  expiresAt : datetime
+}
+
+users ||--o| patients : patient profile
+users ||--o| doctors : doctor profile
+specialties ||--o{ doctors
+departments ||--o{ doctors
+departments ||--o{ rooms
+users ||--o{ evt
+users ||--o{ prt
+
+@enduml

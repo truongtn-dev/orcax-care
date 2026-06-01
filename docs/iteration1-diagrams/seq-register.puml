@@ -1,0 +1,46 @@
+@startuml SDS_Register
+title SDS — Register Account + Verify Email (ORCX-003, ORCX-005)
+autonumber
+
+actor Guest
+participant "RegisterPage" as UI
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UserRepository" as UR
+participant "MailService" as MS
+database "MongoDB" as DB
+
+Guest -> UI : submit registration form
+UI -> AC : POST /api/auth/register
+AC -> AS : registerPatient(dto)
+AS -> UR : existsByEmail(email)
+UR -> DB : users.findOne({email})
+DB --> UR : null | existing
+alt email exists
+  AS --> AC : 409 Conflict
+  AC --> UI : duplicate email
+else new user
+  AS -> AS : hash password
+  AS -> UR : createUser({role: patient, isEmailVerified: false})
+  UR -> DB : users.insertOne(...)
+  AS -> AS : createVerificationToken(userId)
+  UR -> DB : email_verification_tokens.insertOne(...)
+  AS -> MS : sendVerificationEmail(email, link)
+  MS --> AS : sent (stub)
+  AS --> AC : 201 Created
+  AC --> UI : success — check email
+end
+
+== Verify Email (ORCX-005) ==
+Guest -> UI : open link ?token=...
+UI -> AC : GET /api/auth/verify-email?token=
+AC -> AS : verifyEmail(token)
+AS -> UR : findValidToken(token)
+UR -> DB : find token + check expiresAt
+AS -> UR : updateUser(isEmailVerified: true)
+UR -> DB : users.updateOne(...)
+AS --> AC : 200 OK
+AC --> UI : account activated
+UI --> Guest : redirect to Login
+
+@enduml
