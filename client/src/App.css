@@ -1888,6 +1888,16 @@
   color: var(--color-navy);
 }
 
+.shortcut-badge {
+  width: fit-content;
+  padding: 0.1875rem 0.625rem;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .shortcut p {
   font-size: 0.875rem;
   color: var(--color-text-secondary);
@@ -1899,6 +1909,14 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-primary);
+}
+
+.account-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .info-panel {

@@ -11,6 +11,7 @@ import ChangePasswordPage from "./pages/ChangePasswordPage.jsx";
 import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
+import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
@@ -58,6 +59,30 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/book"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientPortalPlaceholderPage type="book" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/appointments"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientPortalPlaceholderPage type="appointments" />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/wallet"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientPortalPlaceholderPage type="wallet" />
               </ProtectedRoute>
             }
           />
