@@ -48,7 +48,7 @@ export default function VerifyEmailPage() {
         <>
           <div className="alert alert-error">{message}</div>
           <p className="muted resend-description">
-            Link có thể đã hết hạn hoặc server vừa restart (memory DB). Gửi lại email xác nhận bên dưới.
+            Link có thể đã hết hạn. Gửi lại email xác nhận bên dưới.
           </p>
           <ResendVerificationForm compact />
         </>
