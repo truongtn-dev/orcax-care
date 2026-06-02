@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import LogoIcon from "./LogoIcon.jsx";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
@@ -51,18 +52,7 @@ export default function AppHeader() {
     <header className={`app-header ${scrolled ? "app-header-scrolled" : ""}`}>
       <div className="header-inner">
         <Link to="/" className="logo">
-          <span className="logo-icon" aria-hidden="true">
-            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.12" />
-              <path
-                d="M8 16c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <path d="M16 8v16M10 13h12M10 19h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </span>
+          <LogoIcon />
           <span className="logo-text">
             Orca<span className="logo-accent">X</span>Care
           </span>

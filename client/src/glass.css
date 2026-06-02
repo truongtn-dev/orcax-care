@@ -324,6 +324,65 @@
   -webkit-backdrop-filter: blur(24px) saturate(160%);
 }
 
+.search-hero {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.search-input-wrap {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.search-sidebar {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
+.custom-select-trigger {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+}
+
+.custom-select-menu {
+  background: var(--glass-bg-solid);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.doctor-card-premium {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
+.doctor-card-premium:hover {
+  background: var(--glass-bg-solid);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.search-empty {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.search-pagination-shell {
+  background: var(--glass-bg-solid);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-card);
+}
+
 .doctor-card {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
