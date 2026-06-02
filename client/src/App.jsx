@@ -1,4 +1,4 @@
-﻿import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -32,7 +32,7 @@ export default function App() {
           <Route
             path="/change-password"
             element={
-              <ProtectedRoute roles={["patient", "doctor", "admin"]}>
+              <ProtectedRoute roles={["patient", "doctor", "admin", "staff"]}>
                 <ChangePasswordPage />
               </ProtectedRoute>
             }
@@ -40,7 +40,7 @@ export default function App() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute roles={["patient", "doctor", "admin"]}>
+              <ProtectedRoute roles={["patient", "doctor", "admin", "staff"]}>
                 <EditProfilePage />
               </ProtectedRoute>
             }

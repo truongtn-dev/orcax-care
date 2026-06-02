@@ -71,7 +71,7 @@ export async function runSeed() {
       });
     }
     await Doctor.findOneAndUpdate(
-      { licenseNo: doc.licenseNo },
+      { userId: user._id },
       {
         userId: user._id,
         specialtyId: specMap[doc.specialty],
