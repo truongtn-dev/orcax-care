@@ -6,9 +6,6 @@ function sendResult(res, result) {
 }
 
 
-
-
-
 export async function createStaffAccount(req, res) {
   try {
     return sendResult(res, await AdminService.createStaffAccount(req.body));

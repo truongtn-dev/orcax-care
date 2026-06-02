@@ -357,3 +357,22 @@
   from { transform: translateX(120%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+
+/* ─── Sortable Table Headers ────────────────────────────── */
+
+.sortable-header {
+  position: relative;
+  transition: background-color var(--transition), color var(--transition);
+}
+
+.sortable-header:hover {
+  background: rgba(255, 255, 255, 0.75) !important;
+  color: var(--color-primary) !important;
+}
+
+.sort-indicator {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.7rem;
+  color: var(--color-primary);
+}

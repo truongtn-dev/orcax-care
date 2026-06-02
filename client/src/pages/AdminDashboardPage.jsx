@@ -16,6 +16,7 @@ export default function AdminDashboardPage() {
   
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [deptSort, setDeptSort] = useState({ key: "name", direction: "asc" });
 
   
   const [users, setUsers] = useState([]);
@@ -90,6 +91,15 @@ export default function AdminDashboardPage() {
       console.error("Failed to load master catalogs:", err);
     }
   }, []);
+
+  const handleDeptSort = (key) => {
+    setDeptSort((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   useEffect(() => {
     loadMasterData();
@@ -808,15 +818,71 @@ export default function AdminDashboardPage() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Department Name</th>
-                    <th>Doctors Count</th>
-                    <th>Location / Block</th>
+                    <th 
+                      onClick={() => handleDeptSort("name")} 
+                      className="sortable-header"
+                      title="Sort by Department Name"
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Department Name 
+                      {deptSort.key === "name" && (
+                        <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                    <th 
+                      onClick={() => handleDeptSort("doctorsCount")} 
+                      className="sortable-header"
+                      title="Sort by Doctors Count"
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Doctors Count 
+                      {deptSort.key === "doctorsCount" && (
+                        <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
+                    <th 
+                      onClick={() => handleDeptSort("location")} 
+                      className="sortable-header"
+                      title="Sort by Location"
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Location / Block 
+                      {deptSort.key === "location" && (
+                        <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
                     <th>Phone Support</th>
-                    <th>Status</th>
+                    <th 
+                      onClick={() => handleDeptSort("status")} 
+                      className="sortable-header"
+                      title="Sort by Status"
+                      style={{ cursor: "pointer", userSelect: "none" }}
+                    >
+                      Status 
+                      {deptSort.key === "status" && (
+                        <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
+                      )}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {[...departments].sort((a, b) => a.name.localeCompare(b.name)).map((dept) => {
+                  {[...departments].sort((a, b) => {
+                    let compare = 0;
+                    if (deptSort.key === "name") {
+                      compare = a.name.localeCompare(b.name);
+                    } else if (deptSort.key === "doctorsCount") {
+                      const countA = allDoctorsForCount.filter(doc => doc.departmentId === a._id || doc.department?._id === a._id).length;
+                      const countB = allDoctorsForCount.filter(doc => doc.departmentId === b._id || doc.department?._id === b._id).length;
+                      compare = countA - countB;
+                    } else if (deptSort.key === "location") {
+                      compare = (a.location || "").localeCompare(b.location || "");
+                    } else if (deptSort.key === "status") {
+                      const statusA = a.isActive ? "Active" : "Inactive";
+                      const statusB = b.isActive ? "Active" : "Inactive";
+                      compare = statusA.localeCompare(statusB);
+                    }
+                    return deptSort.direction === "asc" ? compare : -compare;
+                  }).map((dept) => {
                     const docCount = allDoctorsForCount.filter(doc => doc.departmentId === dept._id || doc.department?._id === dept._id).length;
                     return (
                       <tr key={dept._id}>
