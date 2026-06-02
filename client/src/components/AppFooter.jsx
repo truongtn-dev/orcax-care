@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import LogoIcon from "./LogoIcon.jsx";
 
 const QUICK_LINKS = [
   { to: "/", label: "Home" },
@@ -22,18 +23,7 @@ export default function AppFooter() {
         <div className="footer-grid">
           <div className="footer-brand">
             <Link to="/" className="footer-logo">
-              <span className="logo-icon" aria-hidden="true">
-                <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.15" />
-                  <path
-                    d="M8 16c0-4.418 3.582-8 8-8s8 3.582 8 8-3.582 8-8 8"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path d="M16 8v16M10 13h12M10 19h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </span>
+              <LogoIcon bgOpacity={0.15} />
               OrcaXCare
             </Link>
             <p className="footer-tagline">

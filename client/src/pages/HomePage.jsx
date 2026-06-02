@@ -5,10 +5,10 @@ import ScrollReveal from "../components/ScrollReveal.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useHeroParallax } from "../hooks/useHeroParallax.js";
 
-const FEATURES = [
+const BENEFITS = [
   {
-    title: "Find Specialists",
-    description: "Search doctors by name, specialty, or department — filter and discover the right care quickly.",
+    title: "Find the right doctor",
+    description: "Browse specialists, compare profiles, and choose someone you trust.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <circle cx="11" cy="11" r="8" />
@@ -17,8 +17,48 @@ const FEATURES = [
     ),
   },
   {
-    title: "Secure Accounts",
-    description: "Email verification, password reset, and role-based access keep your health data protected.",
+    title: "Book visits online",
+    description: "Pick a time slot, get confirmations, and change or cancel when plans shift.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path d="M16 2v4M8 2v4M3 10h18" />
+      </svg>
+    ),
+  },
+  {
+    title: "Easy, secure payments",
+    description: "Pay with wallet or popular gateways — always see what you paid and when.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <rect x="2" y="5" width="20" height="14" rx="2" />
+        <path d="M2 10h20" />
+      </svg>
+    ),
+  },
+  {
+    title: "Your records, together",
+    description: "Visit notes, test images, and prescriptions — organized so you are not lost in paper.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6M8 13h8M8 17h6" />
+      </svg>
+    ),
+  },
+  {
+    title: "Less waiting, more clarity",
+    description: "Know your queue status, get reminders, and find the nearest branch on a map.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+      </svg>
+    ),
+  },
+  {
+    title: "Private by design",
+    description: "Sign in safely, control your profile, and keep sensitive health information protected.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <rect x="3" y="11" width="18" height="11" rx="2" />
@@ -26,23 +66,21 @@ const FEATURES = [
       </svg>
     ),
   },
-  {
-    title: "Role-Based Portals",
-    description: "Dedicated dashboards for patients, doctors, and administrators — tailored to every user.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
-  },
 ];
 
 const STEPS = [
-  { title: "Create Account", description: "Register as a patient with email verification in minutes." },
-  { title: "Find Your Doctor", description: "Browse specialists, filter by department, and view profiles." },
-  { title: "Manage Your Care", description: "Access your dashboard, update security, and stay in control." },
+  {
+    title: "Create your account",
+    description: "Register in minutes and verify your email to get started.",
+  },
+  {
+    title: "Book with a doctor",
+    description: "Search, choose a time, and confirm — add insurance or pay when you are ready.",
+  },
+  {
+    title: "Visit & stay informed",
+    description: "Check in, follow your care, and access results and prescriptions afterward.",
+  },
 ];
 
 export default function HomePage() {
@@ -65,7 +103,7 @@ export default function HomePage() {
           <div className="hero-content">
             <div className="hero-badge hero-animate-in">
               <span className="hero-badge-dot" />
-              Healthcare Platform · 2026
+              Trusted digital healthcare
             </div>
 
             <h1 className="hero-animate-in hero-animate-in-delay-1">
@@ -78,8 +116,8 @@ export default function HomePage() {
 
             <p className="hero-sub hero-animate-in hero-animate-in-delay-2">
               {isAuthenticated
-                ? "Your OrcaXCare portal is ready. Search doctors, manage your profile, and access care services from one place."
-                : "Connect with verified doctors, manage appointments, and take control of your health journey — all in one modern portal."}
+                ? "Book appointments, manage your profile, and follow your care — all in one place."
+                : "Find doctors, book visits, pay online, and keep your health information organized — without the hassle."}
             </p>
 
             <div className="hero-actions hero-animate-in hero-animate-in-delay-3">
@@ -109,7 +147,7 @@ export default function HomePage() {
               </div>
               <div className="hero-stat">
                 <span className="hero-stat-value">24/7</span>
-                <span className="hero-stat-label">Support</span>
+                <span className="hero-stat-label">Online access</span>
               </div>
             </div>
           </div>
@@ -118,16 +156,19 @@ export default function HomePage() {
         <section className="section">
           <ScrollReveal className="section-header" variant="up">
             <span className="section-label">Why OrcaXCare</span>
-            <h2>Everything you need for modern healthcare</h2>
-            <p>A thoughtfully designed platform that puts patients first while empowering doctors and administrators.</p>
+            <h2>Care that fits real life</h2>
+            <p>
+              No technical jargon — just what matters: finding a doctor, getting to your appointment, and staying on top
+              of your health afterward.
+            </p>
           </ScrollReveal>
 
           <div className="features-grid scroll-stagger-grid">
-            {FEATURES.map((f, i) => (
-              <ScrollReveal key={f.title} as="article" className="feature-card" variant="float" delay={i * 120}>
-                <div className="feature-icon-wrap">{f.icon}</div>
-                <h3>{f.title}</h3>
-                <p>{f.description}</p>
+            {BENEFITS.map((item, i) => (
+              <ScrollReveal key={item.title} as="article" className="feature-card" variant="float" delay={i * 100}>
+                <div className="feature-icon-wrap">{item.icon}</div>
+                <h3>{item.title}</h3>
+                <p>{item.description}</p>
               </ScrollReveal>
             ))}
           </div>
@@ -136,8 +177,8 @@ export default function HomePage() {
         <section className="section section-alt">
           <ScrollReveal className="section-header" variant="up">
             <span className="section-label">How it works</span>
-            <h2>Get started in three simple steps</h2>
-            <p>From registration to finding the right doctor — we've streamlined every step.</p>
+            <h2>Three steps to get started</h2>
+            <p>From your first sign-up to your next follow-up — straightforward at every stage.</p>
           </ScrollReveal>
 
           <div className="steps-grid scroll-stagger-grid">
@@ -153,7 +194,7 @@ export default function HomePage() {
 
         <ScrollReveal className="cta-section" variant="scale" delay={80}>
           <h2>Ready to take control of your health?</h2>
-          <p>Join thousands of patients who trust OrcaXCare for their healthcare needs.</p>
+          <p>Create a free account or browse doctors — it only takes a minute to begin.</p>
           <div className="cta-actions">
             <Link to="/register" className="btn btn-white btn-lg">
               Register Now
