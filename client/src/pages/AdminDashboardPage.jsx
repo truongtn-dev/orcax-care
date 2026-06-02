@@ -114,6 +114,50 @@ export default function AdminDashboardPage() {
             <span className="shortcut-arrow">Mở →</span>
           </Link>
         </ScrollReveal>
+
+        <ScrollReveal variant="float" delay={320}>
+          <Link to="/admin/doctors" className="card shortcut card-hover">
+            <div className="shortcut-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0" />
+                <path d="M6 21v-2a6 6 0 0 1 12 0v2" />
+                <path d="M19 8h3" />
+                <path d="M20.5 6.5v3" />
+              </svg>
+            </div>
+            <h3>Quản lý bác sĩ</h3>
+            <p>Xem danh sách, lọc và cập nhật chuyên khoa/khoa phòng của bác sĩ.</p>
+            <span className="shortcut-arrow">Mở →</span>
+          </Link>
+        </ScrollReveal>
+
+        <ScrollReveal variant="float" delay={400}>
+          <Link to="/admin/patients" className="card shortcut card-hover">
+            <div className="shortcut-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+                <circle cx="9.5" cy="7" r="4" />
+                <path d="M19 8v6" />
+                <path d="M16 11h6" />
+              </svg>
+            </div>
+            <h3>Patient Profiles</h3>
+            <p>Find patients and update address, date of birth, gender and emergency contact.</p>
+            <span className="shortcut-arrow">Open →</span>
+          </Link>
+        </ScrollReveal>
       </div>
 
       <ScrollReveal variant="up" delay={100}>

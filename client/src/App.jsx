@@ -14,8 +14,12 @@ import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
+import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
+import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
 import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
 import DepartmentDetailPage from "./pages/admin/DepartmentDetailPage.jsx";
+import PatientEditPage from "./pages/admin/PatientEditPage.jsx";
+import PatientsListPage from "./pages/admin/PatientsListPage.jsx";
 import SpecialtiesListPage from "./pages/admin/SpecialtiesListPage.jsx";
 import "./App.css";
 import "./glass.css";
@@ -78,6 +82,38 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <SpecialtiesListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <DoctorsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/doctors/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <DoctorEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patients"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <PatientsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patients/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <PatientEditPage />
               </ProtectedRoute>
             }
           />

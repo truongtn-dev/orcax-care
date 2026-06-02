@@ -34,6 +34,14 @@ export default function DepartmentDetailPage() {
 
   return (
     <PageLayout>
+      <nav className="admin-breadcrumb" aria-label="Điều hướng">
+        <Link to="/admin">Quản trị</Link>
+        <span>/</span>
+        <Link to="/admin/departments/new">Khoa/phòng ban</Link>
+        <span>/</span>
+        <span>Chi tiết</span>
+      </nav>
+
       <div className="page-header">
         <h1>Chi tiết khoa/phòng ban</h1>
         <p>Thông tin khoa/phòng ban kèm tổng quan bác sĩ.</p>
@@ -81,7 +89,48 @@ export default function DepartmentDetailPage() {
                 <span>Bác sĩ đang hoạt động</span>
                 <strong>{detail.summary.activeDoctors}</strong>
               </div>
+              <div>
+                <span>Tổng số phòng</span>
+                <strong>{detail.summary.totalRooms}</strong>
+              </div>
+              <div>
+                <span>Phòng đang hoạt động</span>
+                <strong>{detail.summary.activeRooms}</strong>
+              </div>
             </div>
+          </div>
+
+          <div className="card admin-table-card">
+            <h3>Phòng thuộc khoa/phòng ban</h3>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Tên phòng</th>
+                  <th>Tầng</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {detail.rooms.map((room) => (
+                  <tr key={room._id}>
+                    <td>{room.name}</td>
+                    <td>{room.floor || "-"}</td>
+                    <td>
+                      <span className={`status-pill ${room.isActive ? "status-active" : ""}`}>
+                        {room.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {detail.rooms.length === 0 && (
+                  <tr>
+                    <td colSpan="3" className="empty-cell">
+                      Chưa có phòng nào thuộc khoa/phòng ban này.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
           <div className="card admin-table-card">

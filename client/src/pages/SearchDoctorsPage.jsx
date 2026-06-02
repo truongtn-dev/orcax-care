@@ -4,6 +4,10 @@ import ScrollReveal from "../components/ScrollReveal.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
+function getInitial(name) {
+  return name?.trim()?.charAt(0)?.toUpperCase() || "B";
+}
+
 export default function SearchDoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -14,7 +18,12 @@ export default function SearchDoctorsPage() {
     page: 1,
     limit: 12,
   });
-  const [result, setResult] = useState({ items: [], total: 0, totalPages: 1, page: 1 });
+  const [result, setResult] = useState({
+    items: [],
+    total: 0,
+    totalPages: 1,
+    page: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -42,7 +51,12 @@ export default function SearchDoctorsPage() {
   }, []);
 
   useEffect(() => {
-    loadMasters().then(() => search({ page: 1, limit: 12 }));
+    const initialize = async () => {
+      await loadMasters();
+      await search({ page: 1, limit: 12 });
+    };
+
+    void initialize();
   }, [loadMasters, search]);
 
   const applySearch = (patch) => {
@@ -52,7 +66,13 @@ export default function SearchDoctorsPage() {
   };
 
   const clearFilters = () => {
-    const next = { q: "", specialtyId: "", departmentId: "", page: 1, limit: 12 };
+    const next = {
+      q: "",
+      specialtyId: "",
+      departmentId: "",
+      page: 1,
+      limit: 12,
+    };
     setFilters(next);
     search(next);
   };
@@ -61,69 +81,82 @@ export default function SearchDoctorsPage() {
     <PageLayout>
       <ScrollReveal className="page-header" variant="up">
         <h1>Find Doctors</h1>
-        <p>Search by doctor name, specialty, or department to find the right specialist.</p>
+        <p>
+          Search by doctor name, specialty, or department to find the right
+          specialist.
+        </p>
       </ScrollReveal>
 
       <ScrollReveal variant="up" delay={80}>
         <div className="card filters-card">
-        <div className="filters-row">
-          <input
-            type="search"
-            placeholder="Search doctors, specialty, department…"
-            value={filters.q}
-            onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && applySearch({ q: filters.q })}
-          />
-          <button type="button" className="btn btn-primary" onClick={() => applySearch({ q: filters.q })}>
-            Search
-          </button>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear
-          </button>
-        </div>
-
-        <div className="filters-row">
-          <select
-            value={filters.specialtyId}
-            onChange={(e) => applySearch({ specialtyId: e.target.value })}
-          >
-            <option value="">All specialties</option>
-            {specialties.map((s) => (
-              <option key={s._id} value={s._id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filters.departmentId}
-            onChange={(e) => applySearch({ departmentId: e.target.value })}
-          >
-            <option value="">All departments</option>
-            {departments.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        {specialties.length > 0 && (
-          <div className="chip-row">
-            {specialties.slice(0, 6).map((s) => (
-              <button
-                key={s._id}
-                type="button"
-                className={`chip ${filters.specialtyId === s._id ? "chip-active" : ""}`}
-                onClick={() =>
-                  applySearch({
-                    specialtyId: filters.specialtyId === s._id ? "" : s._id,
-                  })
-                }
-              >
-                {s.name}
-              </button>
-            ))}
+          <div className="filters-row">
+            <input
+              type="search"
+              placeholder="Search doctors, specialty, department..."
+              value={filters.q}
+              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+              onKeyDown={(e) =>
+                e.key === "Enter" && applySearch({ q: filters.q })
+              }
+            />
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => applySearch({ q: filters.q })}
+            >
+              Search
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={clearFilters}
+            >
+              Clear
+            </button>
           </div>
-        )}
+
+          <div className="filters-row">
+            <select
+              value={filters.specialtyId}
+              onChange={(e) => applySearch({ specialtyId: e.target.value })}
+            >
+              <option value="">All specialties</option>
+              {specialties.map((s) => (
+                <option key={s._id} value={s._id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filters.departmentId}
+              onChange={(e) => applySearch({ departmentId: e.target.value })}
+            >
+              <option value="">All departments</option>
+              {departments.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          {specialties.length > 0 && (
+            <div className="chip-row">
+              {specialties.slice(0, 6).map((s) => (
+                <button
+                  key={s._id}
+                  type="button"
+                  className={`chip ${filters.specialtyId === s._id ? "chip-active" : ""}`}
+                  onClick={() =>
+                    applySearch({
+                      specialtyId: filters.specialtyId === s._id ? "" : s._id,
+                    })
+                  }
+                >
+                  {s.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </ScrollReveal>
 
@@ -132,24 +165,34 @@ export default function SearchDoctorsPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading doctors…
+          Loading doctors...
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <ScrollReveal variant="scale">
           <div className="empty-state card">
-          <div className="empty-state-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-          </div>
-          <h3>No doctors found</h3>
-          <p>Try adjusting your search criteria or clearing filters.</p>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear Filters
-          </button>
+            <div className="empty-state-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </div>
+            <h3>No doctors found</h3>
+            <p>Try adjusting your search criteria or clearing filters.</p>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
           </div>
         </ScrollReveal>
       )}
@@ -157,13 +200,40 @@ export default function SearchDoctorsPage() {
       <div className="doctor-grid scroll-stagger-grid">
         {!loading &&
           result.items.map((doc, i) => (
-            <ScrollReveal key={doc._id} as="article" className="card doctor-card card-hover" variant="float" delay={(i % 6) * 80}>
-              <div className="doctor-avatar">{doc.fullName?.charAt(0)?.toUpperCase() || "D"}</div>
-              <div>
-                <h3>{doc.fullName}</h3>
-                {doc.specialty?.name && <p className="doctor-meta">{doc.specialty.name}</p>}
-                {doc.department?.name && <p className="doctor-meta">{doc.department.name}</p>}
+            <ScrollReveal
+              key={doc._id}
+              as="article"
+              className="card doctor-card card-hover"
+              variant="float"
+              delay={(i % 6) * 80}
+            >
+              <div className="doctor-avatar" aria-hidden="true">
+                {doc.photoUrl ? (
+                  <img src={doc.photoUrl} alt="" />
+                ) : (
+                  getInitial(doc.fullName)
+                )}
+              </div>
+              <div className="doctor-card-body">
+                <div className="doctor-card-header">
+                  <h3>{doc.fullName}</h3>
+                  <span className="status-pill status-active">Available</span>
+                </div>
+                <div className="doctor-meta-row">
+                  {doc.specialty?.name && (
+                    <span className="doctor-meta">{doc.specialty.name}</span>
+                  )}
+                  {doc.department?.name && (
+                    <span className="doctor-meta doctor-meta-muted">
+                      {doc.department.name}
+                    </span>
+                  )}
+                </div>
                 <p className="doctor-bio">{doc.bio || "No bio available."}</p>
+                <div className="doctor-contact-row">
+                  {doc.phone && <span>Phone: {doc.phone}</span>}
+                  {doc.licenseNo && <span>License: {doc.licenseNo}</span>}
+                </div>
               </div>
             </ScrollReveal>
           ))}
@@ -171,27 +241,27 @@ export default function SearchDoctorsPage() {
 
       {result.totalPages > 1 && (
         <ScrollReveal variant="up" delay={100}>
-        <div className="pagination">
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page <= 1}
-            onClick={() => applySearch({ page: result.page - 1 })}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {result.page} of {result.totalPages} · {result.total} doctors
-          </span>
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page >= result.totalPages}
-            onClick={() => applySearch({ page: result.page + 1 })}
-          >
-            Next
-          </button>
-        </div>
+          <div className="pagination">
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={result.page <= 1}
+              onClick={() => applySearch({ page: result.page - 1 })}
+            >
+              Previous
+            </button>
+            <span className="pagination-info">
+              Page {result.page} of {result.totalPages} · {result.total} doctors
+            </span>
+            <button
+              type="button"
+              className="btn btn-outline"
+              disabled={result.page >= result.totalPages}
+              onClick={() => applySearch({ page: result.page + 1 })}
+            >
+              Next
+            </button>
+          </div>
         </ScrollReveal>
       )}
     </PageLayout>

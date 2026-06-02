@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
+import { Room } from "../models/Room.js";
 import { Specialty } from "../models/Specialty.js";
 import { invalidateSearchCache } from "./doctorSearch.service.js";
 import { validatePhoneOptional, validateRequired } from "../utils/validation.js";
@@ -29,12 +30,32 @@ function mapDepartment(department) {
   };
 }
 
+function mapRoom(room) {
+  return {
+    _id: room._id.toString(),
+    name: room.name,
+    floor: room.floor || "",
+    isActive: room.isActive,
+    createdAt: room.createdAt.toISOString(),
+    updatedAt: room.updatedAt.toISOString(),
+  };
+}
+
 export async function listSpecialties({ activeOnly = true } = {}) {
   const filter = activeOnly ? { isActive: true } : {};
   const specialties = await Specialty.find(filter).sort({ name: 1 }).lean();
   return {
     status: 200,
     body: { items: specialties.map(mapSpecialty) },
+  };
+}
+
+export async function listDepartments({ activeOnly = true } = {}) {
+  const filter = activeOnly ? { isActive: true } : {};
+  const departments = await Department.find(filter).sort({ name: 1 }).lean();
+  return {
+    status: 200,
+    body: { items: departments.map(mapDepartment) },
   };
 }
 
@@ -79,6 +100,7 @@ export async function getDepartmentDetail(id) {
     .populate("specialtyId", "name")
     .sort({ createdAt: 1 })
     .lean();
+  const rooms = await Room.find({ departmentId: department._id }).sort({ name: 1 }).lean();
 
   const mappedDoctors = doctors
     .map((doctor) => {
@@ -91,6 +113,7 @@ export async function getDepartmentDetail(id) {
       };
     })
     .sort((a, b) => a.fullName.localeCompare(b.fullName));
+  const mappedRooms = rooms.map(mapRoom);
 
   return {
     status: 200,
@@ -99,7 +122,10 @@ export async function getDepartmentDetail(id) {
       summary: {
         activeDoctors: mappedDoctors.filter((doctor) => doctor.isActive).length,
         totalDoctors: mappedDoctors.length,
+        activeRooms: mappedRooms.filter((room) => room.isActive).length,
+        totalRooms: mappedRooms.length,
       },
+      rooms: mappedRooms,
       doctors: mappedDoctors,
     },
   };

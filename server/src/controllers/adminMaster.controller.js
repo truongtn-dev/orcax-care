@@ -18,6 +18,20 @@ export async function listSpecialties(req, res) {
   }
 }
 
+export async function listDepartments(req, res) {
+  try {
+    return sendResult(
+      res,
+      await AdminMasterService.listDepartments({
+        activeOnly: req.query.activeOnly !== "false",
+      })
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+}
+
 export async function createDepartment(req, res) {
   try {
     return sendResult(res, await AdminMasterService.createDepartment(req.body));
