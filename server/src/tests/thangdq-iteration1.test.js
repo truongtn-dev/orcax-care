@@ -6,7 +6,10 @@ import path from "node:path";
 import { createApp } from "../app.js";
 import { connectDatabase, disconnectDatabase } from "../config/database.js";
 import { AuthToken } from "../models/AuthToken.js";
+import { Department } from "../models/Department.js";
+import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
+import { Specialty } from "../models/Specialty.js";
 import { User } from "../models/User.js";
 import { issueAuthToken } from "../services/token.service.js";
 import {
@@ -52,6 +55,9 @@ describe("ThangDQ Iteration 1 foundations", () => {
 
   beforeEach(async () => {
     await AuthToken.deleteMany({});
+    await Doctor.deleteMany({});
+    await Department.deleteMany({});
+    await Specialty.deleteMany({});
     await Patient.deleteMany({});
     await User.deleteMany({});
     admin = await User.create({
@@ -181,5 +187,155 @@ describe("ThangDQ Iteration 1 foundations", () => {
 
     assert.equal(res.status, 409);
     assert.deepEqual(await res.json(), { message: "Email đã được sử dụng" });
+  });
+
+  test("lists specialties with active-only filtering", async () => {
+    await Specialty.create([
+      { code: "ORTH", name: "Orthopedics", isActive: true },
+      { code: "CARD", name: "Cardiology", isActive: true },
+      { code: "DERM", name: "Dermatology", isActive: false },
+    ]);
+
+    const activeRes = await fetch(`${baseUrl}/api/admin/specialties`, {
+      headers: { Authorization: await authHeaderFor(admin) },
+    });
+
+    assert.equal(activeRes.status, 200);
+    const activeBody = await activeRes.json();
+    assert.deepEqual(
+      activeBody.items.map((item) => item.name),
+      ["Cardiology", "Orthopedics"]
+    );
+
+    const allRes = await fetch(`${baseUrl}/api/admin/specialties?activeOnly=false`, {
+      headers: { Authorization: await authHeaderFor(admin) },
+    });
+
+    assert.equal(allRes.status, 200);
+    const allBody = await allRes.json();
+    assert.deepEqual(
+      allBody.items.map((item) => item.name),
+      ["Cardiology", "Dermatology", "Orthopedics"]
+    );
+  });
+
+  test("creates department with required fields and duplicate protection", async () => {
+    const invalidRes = await fetch(`${baseUrl}/api/admin/departments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await authHeaderFor(admin),
+      },
+      body: JSON.stringify({ name: "Emergency", location: "Floor 1" }),
+    });
+
+    assert.equal(invalidRes.status, 400);
+    assert.deepEqual(await invalidRes.json(), { message: "Số điện thoại là bắt buộc" });
+
+    const createRes = await fetch(`${baseUrl}/api/admin/departments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await authHeaderFor(admin),
+      },
+      body: JSON.stringify({
+        name: "Emergency",
+        location: "Building A - Floor 1",
+        phone: "028-1234-2000",
+        isActive: true,
+      }),
+    });
+
+    assert.equal(createRes.status, 201);
+    const created = await createRes.json();
+    assert.equal(created.name, "Emergency");
+    assert.equal(created.location, "Building A - Floor 1");
+    assert.equal(created.phone, "028-1234-2000");
+    assert.equal(created.isActive, true);
+
+    const duplicateRes = await fetch(`${baseUrl}/api/admin/departments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await authHeaderFor(admin),
+      },
+      body: JSON.stringify({
+        name: "Emergency",
+        location: "Building B",
+        phone: "028-9999-9999",
+      }),
+    });
+
+    assert.equal(duplicateRes.status, 409);
+    assert.deepEqual(await duplicateRes.json(), { message: "Khoa/phòng ban đã tồn tại" });
+  });
+
+  test("loads department detail with doctor summary", async () => {
+    const specialty = await Specialty.create({
+      code: "CARD",
+      name: "Cardiology",
+      isActive: true,
+    });
+    const department = await Department.create({
+      name: "Internal Medicine",
+      location: "Building A - Floor 2",
+      phone: "028-1234-1001",
+      isActive: true,
+    });
+    const activeDoctorUser = await User.create({
+      email: "doctor.active@orcaxcare.com",
+      passwordHash: "hash",
+      role: "doctor",
+      fullName: "Dr. Active",
+      isActive: true,
+      isEmailVerified: true,
+      isLocked: false,
+    });
+    const inactiveDoctorUser = await User.create({
+      email: "doctor.inactive@orcaxcare.com",
+      passwordHash: "hash",
+      role: "doctor",
+      fullName: "Dr. Inactive",
+      isActive: true,
+      isEmailVerified: true,
+      isLocked: false,
+    });
+    await Doctor.create([
+      {
+        userId: activeDoctorUser._id,
+        specialtyId: specialty._id,
+        departmentId: department._id,
+        licenseNo: "LIC-ACTIVE",
+        isActive: true,
+      },
+      {
+        userId: inactiveDoctorUser._id,
+        specialtyId: specialty._id,
+        departmentId: department._id,
+        licenseNo: "LIC-INACTIVE",
+        isActive: false,
+      },
+    ]);
+
+    const res = await fetch(`${baseUrl}/api/admin/departments/${department._id}`, {
+      headers: { Authorization: await authHeaderFor(admin) },
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.department.name, "Internal Medicine");
+    assert.equal(body.summary.totalDoctors, 2);
+    assert.equal(body.summary.activeDoctors, 1);
+    assert.deepEqual(
+      body.doctors.map((doctor) => ({
+        fullName: doctor.fullName,
+        specialtyName: doctor.specialtyName,
+        isActive: doctor.isActive,
+      })),
+      [
+        { fullName: "Dr. Active", specialtyName: "Cardiology", isActive: true },
+        { fullName: "Dr. Inactive", specialtyName: "Cardiology", isActive: false },
+      ]
+    );
   });
 });

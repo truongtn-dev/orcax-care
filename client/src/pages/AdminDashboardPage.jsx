@@ -11,7 +11,10 @@ export default function AdminDashboardPage() {
       <ScrollReveal variant="up">
         <div className="dashboard-welcome">
           <h1>Bảng điều khiển quản trị</h1>
-          <p>Xin chào, {fullName || "Quản trị viên"}. Quản lý hệ thống OrcaXCare từ đây.</p>
+          <p>
+            Xin chào, {fullName || "Quản trị viên"}. Quản lý hệ thống OrcaXCare
+            từ đây.
+          </p>
           <span className="dashboard-role-badge">Quản trị viên</span>
         </div>
       </ScrollReveal>
@@ -20,7 +23,13 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="float">
           <Link to="/profile" className="card shortcut card-hover">
             <div className="shortcut-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                 <circle cx="12" cy="7" r="4" />
               </svg>
@@ -32,9 +41,15 @@ export default function AdminDashboardPage() {
         </ScrollReveal>
 
         <ScrollReveal variant="float" delay={80}>
-          <div className="card shortcut static-shortcut">
+          <div className="card shortcut card-hover">
             <div className="shortcut-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -43,10 +58,61 @@ export default function AdminDashboardPage() {
             </div>
             <h3>Cập nhật tài khoản</h3>
             <p>
-              Mở <code>/admin/accounts/:id/edit</code> với user id để sửa email, họ tên,
-              điện thoại và trạng thái.
+              Mở <code>/admin/accounts/:id/edit</code> với user id để sửa thông
+              tin.
             </p>
+            <span className="shortcut-arrow">Mở →</span>
           </div>
+        </ScrollReveal>
+
+        <ScrollReveal variant="float" delay={160}>
+          <Link to="/admin/specialties" className="card shortcut card-hover">
+            <div className="shortcut-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M4 7h16" />
+                <path d="M4 12h16" />
+                <path d="M4 17h10" />
+              </svg>
+            </div>
+            <h3>Chuyên khoa</h3>
+            <p>Xem dữ liệu chuyên khoa và lọc bản ghi đang hoạt động.</p>
+            <span className="shortcut-arrow">Mở →</span>
+          </Link>
+        </ScrollReveal>
+
+        <ScrollReveal variant="float" delay={240}>
+          <Link
+            to="/admin/departments/new"
+            className="card shortcut card-hover"
+          >
+            <div className="shortcut-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M3 21h18" />
+                <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16" />
+                <path d="M9 9h1" />
+                <path d="M14 9h1" />
+                <path d="M9 13h1" />
+                <path d="M14 13h1" />
+              </svg>
+            </div>
+            <h3>Tạo khoa/phòng ban</h3>
+            <p>
+              Thêm khoa/phòng ban mới với tên, vị trí, điện thoại và trạng thái.
+            </p>
+            <span className="shortcut-arrow">Mở →</span>
+          </Link>
         </ScrollReveal>
       </div>
 
@@ -54,8 +120,9 @@ export default function AdminDashboardPage() {
         <div className="card info-panel">
           <h3 style={{ marginBottom: "0.75rem" }}>Các module quản trị</h3>
           <p>
-            Module cập nhật tài khoản đã có nền API và màn hình chỉnh sửa. Các module chuyên khoa,
-            khoa/phòng ban và bác sĩ sẽ được triển khai ở các task tiếp theo.
+            Module cập nhật tài khoản, danh sách chuyên khoa và tạo/xem khoa
+            phòng ban đã có nền API và màn hình quản trị. Các module bác sĩ sẽ
+            được triển khai ở task tiếp theo.
           </p>
         </div>
       </ScrollReveal>

@@ -14,6 +14,9 @@ import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
+import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
+import DepartmentDetailPage from "./pages/admin/DepartmentDetailPage.jsx";
+import SpecialtiesListPage from "./pages/admin/SpecialtiesListPage.jsx";
 import "./App.css";
 import "./glass.css";
 import "./scroll-reveal.css";
@@ -67,6 +70,30 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AccountEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/specialties"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <SpecialtiesListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/departments/new"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <DepartmentCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/departments/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <DepartmentDetailPage />
               </ProtectedRoute>
             }
           />
