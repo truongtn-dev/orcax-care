@@ -633,6 +633,38 @@
   cursor: pointer;
 }
 
+.admin-detail-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.admin-detail-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.admin-detail-list div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-detail-list span {
+  color: var(--color-text-secondary);
+}
+
+.admin-detail-list strong {
+  color: var(--color-navy);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.static-shortcut {
+  cursor: default;
+}
+
 .alert {
   padding: 0.875rem 1rem;
   border-radius: var(--radius-md);

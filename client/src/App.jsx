@@ -13,6 +13,7 @@ import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
+import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
 import "./App.css";
 import "./glass.css";
 import "./scroll-reveal.css";
@@ -58,6 +59,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/accounts/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AccountEditPage />
               </ProtectedRoute>
             }
           />

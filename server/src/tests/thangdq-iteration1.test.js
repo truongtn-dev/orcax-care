@@ -116,4 +116,70 @@ describe("ThangDQ Iteration 1 foundations", () => {
     assert.equal(body.userId, patient._id.toString());
     assert.equal(body.email, "patient.task1@orcaxcare.com");
   });
+
+  test("loads account detail with linked patient profile", async () => {
+    const res = await fetch(`${baseUrl}/api/admin/accounts/${patient._id}`, {
+      headers: { Authorization: await authHeaderFor(admin) },
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body._id, patient._id.toString());
+    assert.equal(body.email, "patient.task1@orcaxcare.com");
+    assert.equal(body.role, "patient");
+    assert.equal(body.fullName, "Task One Patient");
+    assert.equal(body.phone, "");
+    assert.equal(body.isActive, true);
+    assert.equal(body.isLocked, false);
+    assert.equal(body.isEmailVerified, true);
+    assert.equal(typeof body.patientId, "string");
+    assert.equal(body.doctorId, null);
+  });
+
+  test("updates account contact fields and normalizes email", async () => {
+    const res = await fetch(`${baseUrl}/api/admin/accounts/${patient._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await authHeaderFor(admin),
+      },
+      body: JSON.stringify({
+        email: "  New.Patient@OrcaXCare.COM  ",
+        fullName: "Nguyen Van Moi",
+        phone: "090 123 4567",
+        isActive: false,
+      }),
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.email, "new.patient@orcaxcare.com");
+    assert.equal(body.fullName, "Nguyen Van Moi");
+    assert.equal(body.phone, "090 123 4567");
+    assert.equal(body.isActive, false);
+
+    const saved = await User.findById(patient._id).lean();
+    assert.equal(saved.email, "new.patient@orcaxcare.com");
+    assert.equal(saved.fullName, "Nguyen Van Moi");
+    assert.equal(saved.phone, "090 123 4567");
+    assert.equal(saved.isActive, false);
+  });
+
+  test("rejects duplicate account email updates", async () => {
+    const res = await fetch(`${baseUrl}/api/admin/accounts/${patient._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: await authHeaderFor(admin),
+      },
+      body: JSON.stringify({
+        email: admin.email,
+        fullName: "Task One Patient",
+        phone: "0900000000",
+      }),
+    });
+
+    assert.equal(res.status, 409);
+    assert.deepEqual(await res.json(), { message: "Email đã được sử dụng" });
+  });
 });
