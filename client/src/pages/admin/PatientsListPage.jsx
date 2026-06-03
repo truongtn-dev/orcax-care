@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
@@ -6,27 +6,44 @@ import { getApiErrorMessage } from "../../services/api.js";
 
 export default function PatientsListPage() {
   const [filters, setFilters] = useState({ q: "", activeOnly: false });
-  const [result, setResult] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
+  const [result, setResult] = useState({
+    items: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadPatients = useCallback(async (params) => {
-    setLoading(true);
-    setError("");
-    try {
-      const { data } = await AdminApiClient.getPatients(params);
-      setResult(data);
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-      setResult({ items: [], total: 0, page: 1, totalPages: 1 });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadPatients(filters);
-  }, [filters, loadPatients]);
+    let isMounted = true;
+
+    const loadPatients = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const { data } = await AdminApiClient.getPatients(filters);
+        if (isMounted) {
+          setResult(data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(getApiErrorMessage(err));
+          setResult({ items: [], total: 0, page: 1, totalPages: 1 });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadPatients();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [filters]);
 
   const onChange = (e) => {
     const { name, type, checked, value } = e.target;
@@ -49,7 +66,12 @@ export default function PatientsListPage() {
           Back to Admin
         </Link>
         <label className="checkbox-row">
-          <input type="checkbox" name="activeOnly" checked={filters.activeOnly} onChange={onChange} />
+          <input
+            type="checkbox"
+            name="activeOnly"
+            checked={filters.activeOnly}
+            onChange={onChange}
+          />
           Active profiles only
         </label>
       </div>
@@ -63,7 +85,11 @@ export default function PatientsListPage() {
             onChange={onChange}
             placeholder="Search name, email, phone, address..."
           />
-          <button type="button" className="btn btn-outline" onClick={() => setFilters({ q: "", activeOnly: false })}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => setFilters({ q: "", activeOnly: false })}
+          >
             Clear
           </button>
         </div>
@@ -101,12 +127,19 @@ export default function PatientsListPage() {
                   <td>{patient.profile.gender || "-"}</td>
                   <td>{patient.profile.address || "-"}</td>
                   <td>
-                    <span className={`status-pill ${patient.isActive && patient.accountIsActive ? "status-active" : ""}`}>
-                      {patient.isActive && patient.accountIsActive ? "Active" : "Inactive"}
+                    <span
+                      className={`status-pill ${patient.isActive && patient.accountIsActive ? "status-active" : ""}`}
+                    >
+                      {patient.isActive && patient.accountIsActive
+                        ? "Active"
+                        : "Inactive"}
                     </span>
                   </td>
                   <td>
-                    <Link className="btn btn-sm btn-outline" to={`/admin/patients/${patient._id}/edit`}>
+                    <Link
+                      className="btn btn-sm btn-outline"
+                      to={`/admin/patients/${patient._id}/edit`}
+                    >
                       Edit
                     </Link>
                   </td>

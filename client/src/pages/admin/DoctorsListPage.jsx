@@ -5,10 +5,20 @@ import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
 export default function DoctorsListPage() {
-  const [filters, setFilters] = useState({ q: "", specialtyId: "", departmentId: "", activeOnly: false });
+  const [filters, setFilters] = useState({
+    q: "",
+    specialtyId: "",
+    departmentId: "",
+    activeOnly: false,
+  });
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [result, setResult] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
+  const [result, setResult] = useState({
+    items: [],
+    total: 0,
+    page: 1,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -36,7 +46,11 @@ export default function DoctorsListPage() {
   }, []);
 
   useEffect(() => {
-    loadMasters().then(() => loadDoctors(filters));
+    const initializeData = async () => {
+      await loadMasters();
+      await loadDoctors(filters);
+    };
+    initializeData();
   }, [filters, loadDoctors, loadMasters]);
 
   const onChange = (e) => {
@@ -49,14 +63,23 @@ export default function DoctorsListPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ q: "", specialtyId: "", departmentId: "", activeOnly: false, page: 1 });
+    setFilters({
+      q: "",
+      specialtyId: "",
+      departmentId: "",
+      activeOnly: false,
+      page: 1,
+    });
   };
 
   return (
     <PageLayout>
       <div className="page-header">
         <h1>Danh sách bác sĩ</h1>
-        <p>Quản lý hồ sơ bác sĩ, chuyên khoa, khoa/phòng ban và trạng thái hiển thị cho bệnh nhân.</p>
+        <p>
+          Quản lý hồ sơ bác sĩ, chuyên khoa, khoa/phòng ban và trạng thái hiển
+          thị cho bệnh nhân.
+        </p>
       </div>
 
       <div className="card admin-toolbar">
@@ -77,7 +100,11 @@ export default function DoctorsListPage() {
             onChange={onChange}
             placeholder="Tìm tên, email, giấy phép..."
           />
-          <select name="specialtyId" value={filters.specialtyId} onChange={onChange}>
+          <select
+            name="specialtyId"
+            value={filters.specialtyId}
+            onChange={onChange}
+          >
             <option value="">Tất cả chuyên khoa</option>
             {specialties.map((specialty) => (
               <option key={specialty._id} value={specialty._id}>
@@ -85,7 +112,11 @@ export default function DoctorsListPage() {
               </option>
             ))}
           </select>
-          <select name="departmentId" value={filters.departmentId} onChange={onChange}>
+          <select
+            name="departmentId"
+            value={filters.departmentId}
+            onChange={onChange}
+          >
             <option value="">Tất cả khoa/phòng ban</option>
             {departments.map((department) => (
               <option key={department._id} value={department._id}>
@@ -96,10 +127,19 @@ export default function DoctorsListPage() {
         </div>
         <div className="filters-row">
           <label className="checkbox-row">
-            <input type="checkbox" name="activeOnly" checked={filters.activeOnly} onChange={onChange} />
+            <input
+              type="checkbox"
+              name="activeOnly"
+              checked={filters.activeOnly}
+              onChange={onChange}
+            />
             Chỉ hiện bác sĩ đang hoạt động
           </label>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={clearFilters}
+          >
             Xóa lọc
           </button>
         </div>
@@ -137,12 +177,19 @@ export default function DoctorsListPage() {
                   <td>{doctor.departmentName || "-"}</td>
                   <td>{doctor.licenseNo}</td>
                   <td>
-                    <span className={`status-pill ${doctor.isActive && doctor.accountIsActive ? "status-active" : ""}`}>
-                      {doctor.isActive && doctor.accountIsActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                    <span
+                      className={`status-pill ${doctor.isActive && doctor.accountIsActive ? "status-active" : ""}`}
+                    >
+                      {doctor.isActive && doctor.accountIsActive
+                        ? "Đang hoạt động"
+                        : "Ngừng hoạt động"}
                     </span>
                   </td>
                   <td>
-                    <Link className="btn btn-sm btn-outline" to={`/admin/doctors/${doctor._id}/edit`}>
+                    <Link
+                      className="btn btn-sm btn-outline"
+                      to={`/admin/doctors/${doctor._id}/edit`}
+                    >
                       Sửa
                     </Link>
                   </td>

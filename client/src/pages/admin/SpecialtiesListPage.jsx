@@ -14,7 +14,9 @@ export default function SpecialtiesListPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await AdminApiClient.getSpecialties({ activeOnly: nextActiveOnly });
+      const { data } = await AdminApiClient.getSpecialties({
+        activeOnly: nextActiveOnly,
+      });
       setItems(data.items || []);
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -25,7 +27,7 @@ export default function SpecialtiesListPage() {
   }, []);
 
   useEffect(() => {
-    loadSpecialties(activeOnly);
+    Promise.resolve().then(() => loadSpecialties(activeOnly));
   }, [activeOnly, loadSpecialties]);
 
   return (
@@ -75,8 +77,12 @@ export default function SpecialtiesListPage() {
                   <td>{specialty.name}</td>
                   <td>{specialty.description || "-"}</td>
                   <td>
-                    <span className={`status-pill ${specialty.isActive ? "status-active" : ""}`}>
-                      {specialty.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                    <span
+                      className={`status-pill ${specialty.isActive ? "status-active" : ""}`}
+                    >
+                      {specialty.isActive
+                        ? "Đang hoạt động"
+                        : "Ngừng hoạt động"}
                     </span>
                   </td>
                 </tr>
