@@ -26,6 +26,10 @@ function mapDoctor(doctor) {
     specialtyName: specialty.name || "",
     departmentId: department._id?.toString() || "",
     departmentName: department.name || "",
+    specialty: specialty._id
+      ? { _id: specialty._id.toString(), name: specialty.name || "", code: specialty.code || "" }
+      : null,
+    department: department._id ? { _id: department._id.toString(), name: department.name || "" } : null,
     licenseNo: doctor.licenseNo,
     bio: doctor.bio || "",
     photoUrl: doctor.photoUrl || "",
@@ -63,20 +67,27 @@ async function requireReference(Model, id, label) {
 
 export async function listDoctors({
   q = "",
+  name = "",
   specialtyId = "",
   departmentId = "",
   activeOnly = false,
+  isActive = "",
   page = 1,
   limit = 20,
 } = {}) {
   const filter = {};
-  if (isTrue(activeOnly)) filter.isActive = true;
+  const activeFilter = String(isActive || "").trim().toLowerCase();
+  if (activeFilter && activeFilter !== "all") {
+    filter.isActive = activeFilter === "true";
+  } else if (isTrue(activeOnly)) {
+    filter.isActive = true;
+  }
   if (specialtyId && isValidObjectId(specialtyId)) filter.specialtyId = specialtyId;
   if (departmentId && isValidObjectId(departmentId)) filter.departmentId = departmentId;
 
   let doctors = await doctorPopulate(Doctor.find(filter).sort({ createdAt: 1 })).lean();
 
-  const text = String(q || "").trim().toLowerCase();
+  const text = String(q || name || "").trim().toLowerCase();
   if (text) {
     doctors = doctors.filter((doctor) => {
       const user = doctor.userId || {};
