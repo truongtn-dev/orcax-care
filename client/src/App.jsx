@@ -12,6 +12,8 @@ import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
+import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
+import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
@@ -91,6 +93,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/account"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAccountPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/account/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminAccountDetailPage />
               </ProtectedRoute>
             }
           />

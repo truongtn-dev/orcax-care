@@ -15,6 +15,8 @@ adminRouter.get("/ping", (req, res) => {
   res.json({ ok: true, scope: "admin" });
 });
 
+adminRouter.get("/accounts", AdminAccountController.listAccounts);
+adminRouter.post("/accounts", AdminAccountController.createAccount);
 adminRouter.get("/accounts/:id", AdminAccountController.getAccount);
 adminRouter.put("/accounts/:id", AdminAccountController.updateAccount);
 

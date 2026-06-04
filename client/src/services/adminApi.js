@@ -1,6 +1,14 @@
 import { api } from "./api.js";
 
 export const AdminApiClient = {
+  listAccounts(params) {
+    return api.get("/api/admin/accounts", { params });
+  },
+
+  createAccount(payload) {
+    return api.post("/api/admin/accounts", payload);
+  },
+
   getAccount(id) {
     return api.get(`/api/admin/accounts/${id}`);
   },

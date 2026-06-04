@@ -95,6 +95,39 @@ export function validateResetPasswordForm(form) {
   return errors;
 }
 
+export function validateAdminCreateAccountForm(form) {
+  const errors = {};
+
+  if (!form.fullName?.trim()) errors.fullName = "Full name is required";
+
+  const emailError = validateEmail(form.email);
+  if (emailError) errors.email = emailError;
+
+  const passwordError = validatePasswordStrength(form.password);
+  if (passwordError) errors.password = passwordError;
+
+  if (!form.confirmPassword) {
+    errors.confirmPassword = "Please confirm your password";
+  } else if (form.password !== form.confirmPassword) {
+    errors.confirmPassword = "Passwords do not match";
+  }
+
+  if (form.phone?.trim()) {
+    const phoneError = validatePhone(form.phone);
+    if (phoneError) errors.phone = phoneError;
+  }
+
+  if (!form.role) errors.role = "Role is required";
+
+  if (form.role === "doctor") {
+    if (!form.specialtyId) errors.specialtyId = "Specialty is required";
+    if (!form.departmentId) errors.departmentId = "Department is required";
+    if (!form.licenseNo?.trim()) errors.licenseNo = "License number is required";
+  }
+
+  return errors;
+}
+
 export function firstFormError(errors) {
   return Object.values(errors)[0] || null;
 }
