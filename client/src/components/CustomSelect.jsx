@@ -22,8 +22,10 @@ export default function CustomSelect({
   value,
   onChange,
   options,
-  placeholder = "Select…",
+  placeholder = "Chọn…",
   className = "",
+  invalid = false,
+  disabled = false,
 }) {
   const autoId = useId();
   const id = idProp || autoId;
@@ -63,7 +65,15 @@ export default function CustomSelect({
   return (
     <div
       ref={rootRef}
-      className={`custom-select ${open ? "custom-select-open" : ""} ${className}`.trim()}
+      className={[
+        "custom-select",
+        open ? "custom-select-open" : "",
+        invalid ? "custom-select-invalid" : "",
+        disabled ? "custom-select-disabled" : "",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {label && (
         <label className="custom-select-label" htmlFor={`${id}-trigger`}>
@@ -78,6 +88,8 @@ export default function CustomSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
+        aria-invalid={invalid || undefined}
+        disabled={disabled}
         onClick={() => setOpen((v) => !v)}
       >
         <span className={`custom-select-value ${!selected ? "custom-select-value-placeholder" : ""}`}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CustomSelect from "../../components/CustomSelect.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -169,16 +170,12 @@ export default function PatientEditPage() {
                   Date of birth
                   <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
                 </label>
-                <label>
-                  Gender
-                  <select name="gender" value={form.gender} onChange={onChange}>
-                    {GENDER_OPTIONS.map((option) => (
-                      <option key={option.value || "none"} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CustomSelect
+                  label="Gender"
+                  value={form.gender}
+                  onChange={(gender) => onChange({ target: { name: "gender", value: gender } })}
+                  options={GENDER_OPTIONS}
+                />
                 <label className="form-grid-span-2">
                   Address
                   <input name="address" value={form.address} onChange={onChange} placeholder="City, district, street..." />

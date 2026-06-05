@@ -31,7 +31,7 @@ export default function DoctorSearchCard({ doctor }) {
           <span className={`doctor-card-initials ${photoUrl ? "doctor-card-initials-hidden" : ""}`}>
             {initials}
           </span>
-          <span className="doctor-card-status" title="Accepting appointments">
+          <span className="doctor-card-status" title="Đang nhận lịch hẹn">
             <span className="doctor-card-status-dot" />
           </span>
         </div>
@@ -63,7 +63,7 @@ export default function DoctorSearchCard({ doctor }) {
         )}
       </div>
 
-      <p className="doctor-card-premium-bio">{bio || "Experienced specialist dedicated to patient-centered care."}</p>
+      <p className="doctor-card-premium-bio">{bio || "Bác sĩ giàu kinh nghiệm, tận tâm chăm sóc sức khỏe người bệnh."}</p>
 
       <div className="doctor-card-premium-footer">
         <span className="doctor-card-verified">
@@ -71,10 +71,10 @@ export default function DoctorSearchCard({ doctor }) {
             <circle cx="12" cy="12" r="10" />
             <path d="m9 12 2 2 4-4" />
           </svg>
-          Verified profile
+          Hồ sơ đã xác minh
         </span>
         <Link to={`/doctor/${_id}`} className="btn btn-primary btn-sm doctor-card-cta">
-          View profile
+          Xem hồ sơ
         </Link>
       </div>
     </article>

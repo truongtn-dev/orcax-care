@@ -2,16 +2,16 @@ import { Link } from "react-router-dom";
 import LogoIcon from "./LogoIcon.jsx";
 
 const QUICK_LINKS = [
-  { to: "/", label: "Home" },
-  { to: "/search-doctors", label: "Find Doctors" },
-  { to: "/register", label: "Register" },
-  { to: "/login", label: "Login" },
+  { to: "/", label: "Trang chủ" },
+  { to: "/search-doctors", label: "Tìm bác sĩ" },
+  { to: "/register", label: "Đăng ký" },
+  { to: "/login", label: "Đăng nhập" },
 ];
 
 const SUPPORT_LINKS = [
-  { to: "/forgot-password", label: "Forgot Password" },
-  { to: "/verify-email", label: "Verify Email" },
-  { to: "/change-password", label: "Change Password" },
+  { to: "/forgot-password", label: "Quên mật khẩu" },
+  { to: "/verify-email", label: "Xác minh email" },
+  { to: "/change-password", label: "Đổi mật khẩu" },
 ];
 
 export default function AppFooter() {
@@ -27,13 +27,12 @@ export default function AppFooter() {
               OrcaXCare
             </Link>
             <p className="footer-tagline">
-              Trusted digital healthcare — connect with specialists, manage your health journey, and access care
-              anytime.
+              Nền tảng y tế số giúp bạn tìm bác sĩ, đặt lịch khám và quản lý hồ sơ sức khỏe mọi lúc, mọi nơi.
             </p>
           </div>
 
           <div className="footer-col">
-            <h4>Quick Links</h4>
+            <h4>Liên kết nhanh</h4>
             <ul>
               {QUICK_LINKS.map(({ to, label }) => (
                 <li key={to}>
@@ -44,7 +43,7 @@ export default function AppFooter() {
           </div>
 
           <div className="footer-col">
-            <h4>Account</h4>
+            <h4>Tài khoản</h4>
             <ul>
               {SUPPORT_LINKS.map(({ to, label }) => (
                 <li key={to}>
@@ -55,7 +54,7 @@ export default function AppFooter() {
           </div>
 
           <div className="footer-col">
-            <h4>Contact</h4>
+            <h4>Liên hệ</h4>
             <ul className="footer-contact">
               <li>
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -78,17 +77,17 @@ export default function AppFooter() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Ho Chi Minh City, Vietnam
+                Thành phố Hồ Chí Minh, Việt Nam
               </li>
             </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; {year} OrcaXCare. All rights reserved.</p>
+          <p>&copy; {year} OrcaXCare. Bảo lưu mọi quyền.</p>
           <div className="footer-bottom-links">
-            <a href="#privacy">Privacy Policy</a>
-            <a href="#terms">Terms of Service</a>
+            <a href="#privacy">Chính sách bảo mật</a>
+            <a href="#terms">Điều khoản dịch vụ</a>
           </div>
         </div>
       </div>

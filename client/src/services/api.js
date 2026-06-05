@@ -38,7 +38,7 @@ api.interceptors.response.use(
 );
 
 export function getApiErrorMessage(err) {
-  return err?.response?.data?.message || err?.message || "Something went wrong";
+  return err?.response?.data?.message || err?.message || "Đã xảy ra lỗi";
 }
 
 export function getApiErrorCode(err) {

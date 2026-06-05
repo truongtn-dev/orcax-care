@@ -63,8 +63,8 @@ export default function ChangePasswordPage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Change Password</h1>
-        <p>Update your account security. You will be signed out after a successful change.</p>
+        <h1>Đổi mật khẩu</h1>
+        <p>Thay đổi mật khẩu để bảo vệ tài khoản. Sau khi đổi thành công, bạn sẽ cần đăng nhập lại.</p>
       </div>
 
       <div className="card form-card-centered">
@@ -72,40 +72,40 @@ export default function ChangePasswordPage() {
           {error && <div className="alert alert-error">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
           <FormField
-            label="Current password"
+            label="Mật khẩu hiện tại"
             type="password"
             name="currentPassword"
             value={form.currentPassword}
             onChange={onChange}
             onBlur={onBlur}
             error={fieldErrors.currentPassword}
-            placeholder="Enter current password"
+            placeholder="Nhập mật khẩu hiện tại"
             autoComplete="current-password"
           />
           <FormField
-            label="New password"
+            label="Mật khẩu mới"
             type="password"
             name="newPassword"
             value={form.newPassword}
             onChange={onChange}
             onBlur={onBlur}
             error={fieldErrors.newPassword}
-            placeholder="Min. 8 characters, letters & numbers"
+            placeholder="Tối thiểu 8 ký tự, có chữ và số"
             autoComplete="new-password"
           />
           <FormField
-            label="Confirm new password"
+            label="Xác nhận mật khẩu mới"
             type="password"
             name="confirmPassword"
             value={form.confirmPassword}
             onChange={onChange}
             onBlur={onBlur}
             error={fieldErrors.confirmPassword}
-            placeholder="Re-enter new password"
+            placeholder="Nhập lại mật khẩu mới"
             autoComplete="new-password"
           />
           <button type="submit" className="btn btn-primary btn-block" disabled={loading || Boolean(success)}>
-            {loading ? "Saving…" : "Update Password"}
+            {loading ? "Đang lưu…" : "Cập nhật mật khẩu"}
           </button>
         </form>
       </div>

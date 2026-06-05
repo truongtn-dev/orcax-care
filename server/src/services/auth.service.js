@@ -23,38 +23,38 @@ function formatExpiresIn(ms) {
 export async function login(email, password, rememberMe = false) {
   const emailError = validateEmail(email);
   if (emailError) return { status: 400, body: { message: emailError } };
-  if (!password) return { status: 400, body: { message: "Password is required" } };
+  if (!password) return { status: 400, body: { message: "Mật khẩu là bắt buộc" } };
 
   const normalizedEmail = email.toLowerCase().trim();
   const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) {
-    return { status: 401, body: { message: "Invalid email or password" } };
+    return { status: 401, body: { message: "Email hoặc mật khẩu không đúng" } };
   }
 
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) {
-    return { status: 401, body: { message: "Invalid email or password" } };
+    return { status: 401, body: { message: "Email hoặc mật khẩu không đúng" } };
   }
 
   if (user.isLocked) {
     return {
       status: 403,
-      body: { message: "Your account has been locked. Please contact support.", code: "ACCOUNT_LOCKED" },
+      body: { message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.", code: "ACCOUNT_LOCKED" },
     };
   }
 
   if (user.role === "patient" && (!user.isActive || !user.isEmailVerified)) {
     return {
       status: 403,
-      body: { message: "Please verify your email before logging in", code: "EMAIL_NOT_VERIFIED" },
+      body: { message: "Vui lòng xác minh email trước khi đăng nhập", code: "EMAIL_NOT_VERIFIED" },
     };
   }
 
   if (!user.isActive) {
     return {
       status: 403,
-      body: { message: "Your account is inactive. Please contact support.", code: "ACCOUNT_INACTIVE" },
+      body: { message: "Tài khoản chưa kích hoạt. Vui lòng liên hệ hỗ trợ.", code: "ACCOUNT_INACTIVE" },
     };
   }
 
@@ -78,7 +78,7 @@ export async function login(email, password, rememberMe = false) {
 
 export async function logout(accessToken) {
   await revokeAuthToken(accessToken);
-  return { status: 200, body: { message: "Logged out successfully" } };
+  return { status: 200, body: { message: "Đăng xuất thành công" } };
 }
 
 export async function registerPatient({ email, password, fullName, phone }) {
@@ -86,11 +86,11 @@ export async function registerPatient({ email, password, fullName, phone }) {
   if (emailError) return { status: 400, body: { message: emailError } };
   const pwdError = validatePasswordStrength(password);
   if (pwdError) return { status: 400, body: { message: pwdError } };
-  if (!fullName?.trim()) return { status: 400, body: { message: "Full name is required" } };
+  if (!fullName?.trim()) return { status: 400, body: { message: "Họ và tên là bắt buộc" } };
 
   const normalizedEmail = email.toLowerCase().trim();
   const exists = await User.findOne({ email: normalizedEmail });
-  if (exists) return { status: 409, body: { message: "Email already registered" } };
+  if (exists) return { status: 409, body: { message: "Email đã được đăng ký" } };
 
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await User.create({
@@ -119,13 +119,13 @@ export async function registerPatient({ email, password, fullName, phone }) {
 
   return {
     status: 201,
-    body: { message: "Account created. Please check your email to activate your account." },
+    body: { message: "Tài khoản đã được tạo. Vui lòng kiểm tra email để kích hoạt tài khoản." },
   };
 }
 
 export async function requestReset(email) {
   const normalizedEmail = email?.toLowerCase()?.trim();
-  if (!normalizedEmail) return { status: 400, body: { message: "Email is required" } };
+  if (!normalizedEmail) return { status: 400, body: { message: "Email là bắt buộc" } };
 
   const user = await User.findOne({ email: normalizedEmail, isLocked: false });
   if (user) {
@@ -140,12 +140,12 @@ export async function requestReset(email) {
 
   return {
     status: 200,
-    body: { message: "If the email exists, a password reset link was sent." },
+    body: { message: "Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi." },
   };
 }
 
 export async function resetPassword(token, newPassword) {
-  if (!token) return { status: 400, body: { message: "Token is required" } };
+  if (!token) return { status: 400, body: { message: "Token là bắt buộc" } };
   const pwdError = validatePasswordStrength(newPassword);
   if (pwdError) return { status: 400, body: { message: pwdError } };
 
@@ -154,7 +154,7 @@ export async function resetPassword(token, newPassword) {
     expiresAt: { $gt: new Date() },
     usedAt: null,
   });
-  if (!doc) return { status: 400, body: { message: "Invalid or expired reset link" } };
+  if (!doc) return { status: 400, body: { message: "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn" } };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
   await User.updateOne(
@@ -165,31 +165,31 @@ export async function resetPassword(token, newPassword) {
   doc.usedAt = new Date();
   await doc.save();
 
-  return { status: 200, body: { message: "Password updated successfully. You can log in now." } };
+  return { status: 200, body: { message: "Mật khẩu đã được cập nhật. Bạn có thể đăng nhập ngay." } };
 }
 
 export async function verifyEmail(token) {
-  if (!token) return { status: 400, body: { message: "Token is required" } };
+  if (!token) return { status: 400, body: { message: "Token là bắt buộc" } };
 
   const doc = await EmailVerificationToken.findOne({ token });
   if (!doc) {
-    return { status: 400, body: { message: "Invalid or expired verification link" } };
+    return { status: 400, body: { message: "Liên kết xác minh không hợp lệ hoặc đã hết hạn" } };
   }
 
   const user = await User.findById(doc.userId);
   if (!user) {
-    return { status: 400, body: { message: "Invalid or expired verification link" } };
+    return { status: 400, body: { message: "Liên kết xác minh không hợp lệ hoặc đã hết hạn" } };
   }
 
   if (doc.usedAt || user.isEmailVerified) {
     if (user.isEmailVerified && user.isActive) {
-      return { status: 200, body: { message: "Email already verified. You can log in now." } };
+      return { status: 200, body: { message: "Email đã được xác minh. Bạn có thể đăng nhập ngay." } };
     }
-    return { status: 400, body: { message: "Invalid or expired verification link" } };
+    return { status: 400, body: { message: "Liên kết xác minh không hợp lệ hoặc đã hết hạn" } };
   }
 
   if (doc.expiresAt <= new Date()) {
-    return { status: 400, body: { message: "Invalid or expired verification link" } };
+    return { status: 400, body: { message: "Liên kết xác minh không hợp lệ hoặc đã hết hạn" } };
   }
 
   user.isEmailVerified = true;
@@ -199,12 +199,12 @@ export async function verifyEmail(token) {
   doc.usedAt = new Date();
   await doc.save();
 
-  return { status: 200, body: { message: "Email verified successfully. You can log in now." } };
+  return { status: 200, body: { message: "Xác minh email thành công. Bạn có thể đăng nhập ngay." } };
 }
 
 export async function resendVerification(email) {
   const normalizedEmail = email?.toLowerCase()?.trim();
-  if (!normalizedEmail) return { status: 400, body: { message: "Email is required" } };
+  if (!normalizedEmail) return { status: 400, body: { message: "Email là bắt buộc" } };
 
   const user = await User.findOne({
     email: normalizedEmail,
@@ -219,7 +219,7 @@ export async function resendVerification(email) {
       return {
         status: 429,
         body: {
-          message: "Please wait before requesting another verification email",
+          message: "Vui lòng đợi trước khi yêu cầu gửi lại email xác minh",
           retryAfterSec,
         },
       };
@@ -240,24 +240,24 @@ export async function resendVerification(email) {
 
   return {
     status: 200,
-    body: { message: "If the account is eligible, a verification email was sent." },
+    body: { message: "Nếu tài khoản đủ điều kiện, email xác minh đã được gửi." },
   };
 }
 
 export async function changePassword(userId, { currentPassword, newPassword }) {
   const pwdError = validatePasswordStrength(newPassword);
   if (pwdError) return { status: 400, body: { message: pwdError } };
-  if (!currentPassword) return { status: 400, body: { message: "Current password is required" } };
+  if (!currentPassword) return { status: 400, body: { message: "Mật khẩu hiện tại là bắt buộc" } };
 
   const user = await User.findById(userId);
-  if (!user) return { status: 404, body: { message: "User not found" } };
+  if (!user) return { status: 404, body: { message: "Không tìm thấy người dùng" } };
 
   const match = await bcrypt.compare(currentPassword, user.passwordHash);
-  if (!match) return { status: 401, body: { message: "Current password is incorrect" } };
+  if (!match) return { status: 401, body: { message: "Mật khẩu hiện tại không đúng" } };
 
   const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
   if (sameAsCurrent) {
-    return { status: 400, body: { message: "New password must be different from current password" } };
+    return { status: 400, body: { message: "Mật khẩu mới phải khác mật khẩu hiện tại" } };
   }
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);
@@ -265,16 +265,16 @@ export async function changePassword(userId, { currentPassword, newPassword }) {
   await user.save();
   await revokeAllUserTokens(userId);
 
-  return { status: 200, body: { message: "Password changed successfully. Please sign in again." } };
+  return { status: 200, body: { message: "Đổi mật khẩu thành công. Vui lòng đăng nhập lại." } };
 }
 
 export async function getMe(userId) {
   const user = await User.findById(userId).select("email role fullName isActive isLocked isEmailVerified");
   if (!user || !user.isActive || user.isLocked) {
-    return { status: 403, body: { message: "Session invalid or account unavailable" } };
+    return { status: 403, body: { message: "Phiên đăng nhập không hợp lệ hoặc tài khoản không khả dụng" } };
   }
   if (user.role === "patient" && !user.isEmailVerified) {
-    return { status: 403, body: { message: "Email verification required" } };
+    return { status: 403, body: { message: "Yêu cầu xác minh email" } };
   }
   return {
     status: 200,

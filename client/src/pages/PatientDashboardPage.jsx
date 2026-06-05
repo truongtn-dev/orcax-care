@@ -7,9 +7,9 @@ import { useAuth } from "../context/AuthContext.jsx";
 const SHORTCUTS = [
   {
     to: "/patient/book",
-    title: "Book Appointment",
-    description: "Start from doctor search and choose the right specialist for your visit.",
-    badge: "Care",
+    title: "Đặt lịch khám",
+    description: "Tìm bác sĩ và chọn chuyên khoa phù hợp cho lần khám sắp tới.",
+    badge: "Khám bệnh",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M8 2v4" />
@@ -23,9 +23,9 @@ const SHORTCUTS = [
   },
   {
     to: "/patient/appointments",
-    title: "Appointments",
-    description: "Review upcoming and past appointments from your patient workspace.",
-    badge: "Care",
+    title: "Lịch hẹn",
+    description: "Xem các lịch hẹn sắp tới và lịch sử khám bệnh của bạn.",
+    badge: "Khám bệnh",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M8 2v4" />
@@ -38,9 +38,9 @@ const SHORTCUTS = [
   },
   {
     to: "/patient/wallet",
-    title: "Wallet",
-    description: "Check patient wallet balance, billing shortcuts, and payment activity.",
-    badge: "Billing",
+    title: "Ví thanh toán",
+    description: "Kiểm tra số dư ví và lịch sử thanh toán.",
+    badge: "Thanh toán",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1" />
@@ -51,9 +51,9 @@ const SHORTCUTS = [
   },
   {
     to: "/profile",
-    title: "Profile",
-    description: "Update your name, phone, address, DOB, and emergency contact.",
-    badge: "Account",
+    title: "Hồ sơ cá nhân",
+    description: "Cập nhật họ tên, số điện thoại, địa chỉ, ngày sinh và người liên hệ khẩn cấp.",
+    badge: "Tài khoản",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -63,9 +63,9 @@ const SHORTCUTS = [
   },
   {
     to: "/search-doctors",
-    title: "Find Doctors",
-    description: "Browse active doctors by specialty or department before booking.",
-    badge: "Care",
+    title: "Tìm bác sĩ",
+    description: "Xem danh sách bác sĩ theo chuyên khoa hoặc khoa trước khi đặt lịch.",
+    badge: "Khám bệnh",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <circle cx="11" cy="11" r="8" />
@@ -82,9 +82,9 @@ export default function PatientDashboardPage() {
     <PageLayout>
       <ScrollReveal variant="up">
         <div className="dashboard-welcome">
-          <h1>Welcome back, {fullName?.split(" ")[0] || "Patient"}</h1>
-          <p>Your health portal is ready. Explore services and manage your account below.</p>
-          <span className="dashboard-role-badge">Patient</span>
+          <h1>Chào {fullName?.split(" ")[0] || "bạn"}</h1>
+          <p>Trang cá nhân của bạn đã sẵn sàng. Chọn dịch vụ bên dưới để bắt đầu.</p>
+          <span className="dashboard-role-badge">Bệnh nhân</span>
         </div>
       </ScrollReveal>
 
@@ -96,7 +96,7 @@ export default function PatientDashboardPage() {
               <span className="shortcut-badge">{s.badge}</span>
               <h3>{s.title}</h3>
               <p>{s.description}</p>
-              <span className="shortcut-arrow">Open →</span>
+              <span className="shortcut-arrow">Xem chi tiết →</span>
             </Link>
           </ScrollReveal>
         ))}
@@ -106,11 +106,11 @@ export default function PatientDashboardPage() {
         <div className="card account-section">
           <div className="account-section-header">
             <div>
-              <h3>Account Settings</h3>
-              <p className="muted">Signed in as {email || "your account"}</p>
+              <h3>Cài đặt tài khoản</h3>
+              <p className="muted">Đang đăng nhập: {email || "chưa có email"}</p>
             </div>
             <Link to="/change-password" className="btn btn-outline">
-              Change Password
+              Đổi mật khẩu
             </Link>
           </div>
           <ResendVerificationForm defaultEmail={email} />

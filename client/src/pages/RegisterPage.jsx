@@ -61,7 +61,7 @@ export default function RegisterPage() {
       const msg = getApiErrorMessage(err);
       setError(msg);
       if (err?.response?.status === 409) {
-        setFieldErrors({ email: "Email already registered" });
+        setFieldErrors({ email: "Email đã được đăng ký" });
       }
     } finally {
       setLoading(false);
@@ -69,24 +69,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthPageLayout title="Create account" subtitle="Register as a patient on OrcaXCare">
+    <AuthPageLayout title="Đăng ký tài khoản" subtitle="Tạo tài khoản bệnh nhân trên OrcaXCare">
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
 
         <FormField
-          label="Full name"
+          label="Họ và tên"
           name="fullName"
           value={form.fullName}
           onChange={onChange}
           onBlur={onBlur}
           error={fieldErrors.fullName}
-          placeholder="Nguyen Van A"
+          placeholder="Nguyễn Văn A"
           autoComplete="name"
         />
 
         <FormField
-          label="Email address"
+          label="Địa chỉ email"
           type="email"
           name="email"
           value={form.email}
@@ -98,7 +98,7 @@ export default function RegisterPage() {
         />
 
         <FormField
-          label="Phone number"
+          label="Số điện thoại"
           name="phone"
           type="tel"
           value={form.phone}
@@ -107,45 +107,44 @@ export default function RegisterPage() {
           error={fieldErrors.phone}
           placeholder="0901234567"
           autoComplete="tel"
-          hint="Optional — 8 to 20 digits"
         />
 
         <FormField
-          label="Password"
+          label="Mật khẩu"
           type="password"
           name="password"
           value={form.password}
           onChange={onChange}
           onBlur={onBlur}
           error={fieldErrors.password}
-          placeholder="Min. 8 characters, letters & numbers"
+          placeholder="Tối thiểu 8 ký tự, có chữ và số"
           autoComplete="new-password"
         />
 
         <FormField
-          label="Confirm password"
+          label="Xác nhận mật khẩu"
           type="password"
           name="confirmPassword"
           value={form.confirmPassword}
           onChange={onChange}
           onBlur={onBlur}
           error={fieldErrors.confirmPassword}
-          placeholder="Re-enter password"
+          placeholder="Nhập lại mật khẩu"
           autoComplete="new-password"
         />
 
         <label className="checkbox-row">
           <input type="checkbox" name="terms" checked={form.terms} onChange={onChange} />
-          I accept the terms and conditions
+          Tôi đồng ý với điều khoản và điều kiện
         </label>
         {fieldErrors.terms && <span className="field-error">{fieldErrors.terms}</span>}
 
         <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-          {loading ? "Creating account…" : "Create Account"}
+          {loading ? "Đang đăng ký…" : "Đăng ký"}
         </button>
       </form>
       <p className="form-footer">
-        Already have an account? <Link to="/login">Sign in</Link>
+        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
       </p>
     </AuthPageLayout>
   );

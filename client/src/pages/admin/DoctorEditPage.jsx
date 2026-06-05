@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CustomSelect from "../../components/CustomSelect.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -164,28 +165,26 @@ export default function DoctorEditPage() {
             <fieldset className="form-section">
               <legend>Thông tin nghề nghiệp</legend>
               <div className="form-grid">
-                <label>
-                  Chuyên khoa
-                  <select name="specialtyId" value={form.specialtyId} onChange={onChange} required>
-                    <option value="">Chọn chuyên khoa</option>
-                    {specialties.map((specialty) => (
-                      <option key={specialty._id} value={specialty._id}>
-                        {specialty.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Khoa/phòng ban
-                  <select name="departmentId" value={form.departmentId} onChange={onChange} required>
-                    <option value="">Chọn khoa/phòng ban</option>
-                    {departments.map((department) => (
-                      <option key={department._id} value={department._id}>
-                        {department.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <CustomSelect
+                  label="Chuyên khoa"
+                  value={form.specialtyId}
+                  placeholder="Chọn chuyên khoa"
+                  onChange={(specialtyId) => onChange({ target: { name: "specialtyId", value: specialtyId } })}
+                  options={[
+                    { value: "", label: "Chọn chuyên khoa" },
+                    ...specialties.map((specialty) => ({ value: specialty._id, label: specialty.name })),
+                  ]}
+                />
+                <CustomSelect
+                  label="Khoa/phòng ban"
+                  value={form.departmentId}
+                  placeholder="Chọn khoa/phòng ban"
+                  onChange={(departmentId) => onChange({ target: { name: "departmentId", value: departmentId } })}
+                  options={[
+                    { value: "", label: "Chọn khoa/phòng ban" },
+                    ...departments.map((department) => ({ value: department._id, label: department.name })),
+                  ]}
+                />
                 <label>
                   Số giấy phép
                   <input type="text" name="licenseNo" value={form.licenseNo} onChange={onChange} minLength={3} required />

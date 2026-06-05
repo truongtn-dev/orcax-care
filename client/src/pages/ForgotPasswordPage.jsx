@@ -39,14 +39,14 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthPageLayout
-      title="Forgot password?"
-      subtitle="Enter your registered email. We'll send a reset link if the account exists."
+      title="Quên mật khẩu?"
+      subtitle="Nhập email đã đăng ký. Nếu tài khoản tồn tại, chúng tôi sẽ gửi liên kết đặt lại mật khẩu."
     >
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         {message && <div className="alert alert-success">{message}</div>}
         <FormField
-          label="Email address"
+          label="Địa chỉ email"
           type="email"
           name="email"
           value={email}
@@ -61,11 +61,11 @@ export default function ForgotPasswordPage() {
           autoComplete="email"
         />
         <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-          {loading ? "Sending…" : "Send Reset Link"}
+          {loading ? "Đang gửi…" : "Gửi liên kết đặt lại"}
         </button>
       </form>
       <p className="form-footer">
-        <Link to="/login">Back to Sign In</Link>
+        <Link to="/login">Quay lại đăng nhập</Link>
       </p>
     </AuthPageLayout>
   );

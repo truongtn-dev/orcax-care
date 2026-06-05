@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
     setError("");
 
     if (!token) {
-      setError("Invalid reset link");
+      setError("Liên kết đặt lại mật khẩu không hợp lệ");
       return;
     }
 
@@ -60,38 +60,38 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthPageLayout title="Reset password" subtitle="Choose a strong new password for your account">
+    <AuthPageLayout title="Đặt lại mật khẩu" subtitle="Nhập mật khẩu mới cho tài khoản của bạn">
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
         <FormField
-          label="New password"
+          label="Mật khẩu mới"
           type="password"
           name="newPassword"
           value={form.newPassword}
           onChange={onChange}
           onBlur={onBlur}
           error={fieldErrors.newPassword}
-          placeholder="Min. 8 characters, letters & numbers"
+          placeholder="Tối thiểu 8 ký tự, có chữ và số"
           autoComplete="new-password"
         />
         <FormField
-          label="Confirm new password"
+          label="Xác nhận mật khẩu mới"
           type="password"
           name="confirmPassword"
           value={form.confirmPassword}
           onChange={onChange}
           onBlur={onBlur}
           error={fieldErrors.confirmPassword}
-          placeholder="Re-enter new password"
+          placeholder="Nhập lại mật khẩu mới"
           autoComplete="new-password"
         />
         <button type="submit" className="btn btn-primary btn-block" disabled={loading || !token || Boolean(success)}>
-          {loading ? "Updating…" : "Update Password"}
+          {loading ? "Đang cập nhật…" : "Cập nhật mật khẩu"}
         </button>
       </form>
       <p className="form-footer">
-        <Link to="/login">Back to Sign In</Link>
+        <Link to="/login">Quay lại đăng nhập</Link>
       </p>
     </AuthPageLayout>
   );

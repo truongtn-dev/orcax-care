@@ -10,9 +10,11 @@ export default function DoctorDashboardPage() {
     <PageLayout>
       <ScrollReveal variant="up">
         <div className="dashboard-welcome">
-          <h1>Doctor Portal</h1>
-          <p>Welcome, Dr. {fullName?.split(" ").slice(-1)[0] || fullName || "Doctor"}. Your clinical workspace awaits.</p>
-          <span className="dashboard-role-badge">Doctor</span>
+          <h1>Khu vực bác sĩ</h1>
+          <p>
+            Xin chào, BS. {fullName?.split(" ").slice(-1)[0] || fullName || "bác sĩ"}. Khu vực làm việc của bạn đã sẵn sàng.
+          </p>
+          <span className="dashboard-role-badge">Bác sĩ</span>
         </div>
       </ScrollReveal>
 
@@ -25,19 +27,18 @@ export default function DoctorDashboardPage() {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
-            <h3>Edit Profile</h3>
-            <p>Update your bio and contact information.</p>
-            <span className="shortcut-arrow">Open →</span>
+            <h3>Cập nhật hồ sơ</h3>
+            <p>Chỉnh sửa tiểu sử nghề nghiệp và thông tin liên hệ.</p>
+            <span className="shortcut-arrow">Xem chi tiết →</span>
           </Link>
         </ScrollReveal>
       </div>
 
       <ScrollReveal variant="up" delay={100}>
         <div className="card info-panel">
-          <h3 style={{ marginBottom: "0.75rem" }}>Iteration 1 — Foundation</h3>
+          <h3 style={{ marginBottom: "0.75rem" }}>Giai đoạn 1 — Nền tảng</h3>
           <p>
-            This is your doctor console shell for Iteration 1. Appointment management, patient records, and clinical
-            modules will arrive in Iteration 2.
+            Đây là giao diện làm việc cơ bản cho bác sĩ. Các tính năng quản lý lịch hẹn, hồ sơ bệnh nhân và công việc lâm sàng sẽ được bổ sung ở giai đoạn tiếp theo.
           </p>
         </div>
       </ScrollReveal>

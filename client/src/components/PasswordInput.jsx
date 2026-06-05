@@ -33,7 +33,7 @@ export default function PasswordInput({ invalid = false, className = "", ...prop
         type="button"
         className="password-toggle"
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? "Hide password" : "Show password"}
+        aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
         tabIndex={-1}
       >
         {visible ? <EyeOffIcon /> : <EyeIcon />}

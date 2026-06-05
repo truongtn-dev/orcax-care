@@ -4,8 +4,8 @@ export default function ConfirmDialog({
   open,
   title,
   description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = "Xác nhận",
+  cancelText = "Hủy",
   variant = "default",
   loading = false,
   onConfirm,
@@ -26,7 +26,7 @@ export default function ConfirmDialog({
             <h2>{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          <button type="button" className="modal-close" onClick={onCancel} aria-label="Close">
+          <button type="button" className="modal-close" onClick={onCancel} aria-label="Đóng">
             ×
           </button>
         </div>
@@ -41,7 +41,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? "Processing…" : confirmText}
+            {loading ? "Đang xử lý…" : confirmText}
           </button>
         </div>
       </div>

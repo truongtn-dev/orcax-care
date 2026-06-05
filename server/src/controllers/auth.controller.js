@@ -10,7 +10,7 @@ export async function login(req, res) {
     return sendResult(res, await AuthService.login(email, password, Boolean(rememberMe)));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -19,7 +19,7 @@ export async function register(req, res) {
     return sendResult(res, await AuthService.registerPatient(req.body));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -28,7 +28,7 @@ export async function forgotPassword(req, res) {
     return sendResult(res, await AuthService.requestReset(req.body.email));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -38,7 +38,7 @@ export async function resetPassword(req, res) {
     return sendResult(res, await AuthService.resetPassword(token, newPassword));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -47,7 +47,7 @@ export async function verifyEmail(req, res) {
     return sendResult(res, await AuthService.verifyEmail(req.query.token));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -56,7 +56,7 @@ export async function resendVerification(req, res) {
     return sendResult(res, await AuthService.resendVerification(req.body.email));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -68,7 +68,7 @@ export async function changePassword(req, res) {
     );
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -77,7 +77,7 @@ export async function logout(req, res) {
     return sendResult(res, await AuthService.logout(req.authToken));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }
 
@@ -86,6 +86,6 @@ export async function me(req, res) {
     return sendResult(res, await AuthService.getMe(req.user.userId));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 }

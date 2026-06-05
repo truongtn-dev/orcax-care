@@ -21,17 +21,17 @@ export function validatePhoneOptional(phone) {
 
 export function validatePasswordStrength(password) {
   if (!password || password.length < 8) {
-    return "Password must be at least 8 characters";
+    return "Mật khẩu phải có ít nhất 8 ký tự";
   }
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-    return "Password must contain at least one letter and one number";
+    return "Mật khẩu phải có ít nhất một chữ cái và một chữ số";
   }
   return null;
 }
 
 export function validateEmail(email) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "Invalid email address";
+    return "Địa chỉ email không hợp lệ";
   }
   return null;
 }

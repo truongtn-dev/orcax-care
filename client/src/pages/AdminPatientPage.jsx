@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AdminLayout from "../components/AdminLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
+import FilterSearchField from "../components/FilterSearchField.jsx";
+import AppPagination from "../components/AppPagination.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
+  { value: "", label: "Tất cả trạng thái" },
+  { value: "true", label: "Đang hoạt động" },
+  { value: "false", label: "Ngừng hoạt động" },
 ];
 
 const GENDER_LABELS = {
-  male: "Male",
-  female: "Female",
-  other: "Other",
+  male: "Nam",
+  female: "Nữ",
+  other: "Khác",
 };
 
 function formatDate(value) {
@@ -67,41 +71,37 @@ export default function AdminPatientPage() {
   };
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <Link to="/admin" className="back-link">
-              ← Admin Console
-            </Link>
-            <h1>Patients</h1>
-            <p>View patient list with demographics, registration date, and linked account.</p>
-          </div>
-        </div>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Quản lý bệnh nhân"
+        description="Tra cứu hồ sơ bệnh nhân, thông tin nhân khẩu học và tài khoản liên kết."
+      >
       <div className="card filters-card">
-        <div className="filters-row">
-          <input
-            type="search"
-            placeholder="Search by name, email, or phone…"
-            value={filters.q}
-            onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters({ q: filters.q })}
-          />
-          <select value={filters.isActive} onChange={(e) => applyFilters({ isActive: e.target.value })}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-            Search
-          </button>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear
-          </button>
+        <div className="filters-toolbar">
+          <div className="filters-toolbar-fields">
+            <FilterSearchField
+              id="admin-patient-search"
+              placeholder="Tìm theo tên, email hoặc số điện thoại…"
+              value={filters.q}
+              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+              onSearch={() => applyFilters({ q: filters.q })}
+            />
+            <CustomSelect
+              className="filter-field"
+              label="Trạng thái"
+              value={filters.isActive}
+              onChange={(isActive) => applyFilters({ isActive })}
+              options={STATUS_OPTIONS}
+            />
+          </div>
+          <div className="filters-toolbar-actions">
+            <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
+              Tìm kiếm
+            </button>
+            <button type="button" className="btn btn-outline" onClick={clearFilters}>
+              Xóa lọc
+            </button>
+          </div>
         </div>
       </div>
 
@@ -110,16 +110,16 @@ export default function AdminPatientPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading patients…
+          Đang tải bệnh nhân…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>No patients found</h3>
-          <p>Try adjusting your search criteria or clearing filters.</p>
+          <h3>Không tìm thấy bệnh nhân</h3>
+          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc xóa bộ lọc.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear Filters
+            Xóa lọc
           </button>
         </div>
       )}
@@ -130,14 +130,14 @@ export default function AdminPatientPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Patient</th>
-                  <th>Gender</th>
-                  <th>Date of birth</th>
-                  <th>Phone</th>
-                  <th>Registration date</th>
-                  <th>Linked account</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>Bệnh nhân</th>
+                  <th>Giới tính</th>
+                  <th>Ngày sinh</th>
+                  <th>Số điện thoại</th>
+                  <th>Ngày đăng ký</th>
+                  <th>Tài khoản liên kết</th>
+                  <th>Trạng thái</th>
+                  <th className="table-actions-col">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,22 +155,22 @@ export default function AdminPatientPage() {
                     <td>{formatDate(patient.createdAt)}</td>
                     <td>
                       <Link to={`/admin/account/${patient._id}`} className="table-link">
-                        Open Account
+                        Mở tài khoản
                       </Link>
                     </td>
                     <td>
                       <div className="status-badge-group">
-                        <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
-                        {patient.isLocked && <span className="status-badge status-badge-locked">Locked</span>}
+                        <StatusBadge active={patient.isActive} label={patient.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
+                        {patient.isLocked && <span className="status-badge status-badge-locked">Đã khóa</span>}
                       </div>
                     </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <td className="table-actions-col">
+                      <div className="table-row-actions">
                         <Link to={`/admin/patient/${patient._id}`} className="btn btn-outline btn-sm">
-                          Detail
+                          Chi tiết
                         </Link>
                         <Link to={`/admin/patient/${patient._id}/edit`} className="btn btn-primary btn-sm">
-                          Edit
+                          Sửa
                         </Link>
                       </div>
                     </td>
@@ -182,29 +182,17 @@ export default function AdminPatientPage() {
         </div>
       )}
 
-      {result.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page <= 1}
-            onClick={() => applyFilters({ page: result.page - 1 })}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {result.page} of {result.totalPages} · {result.total} patients
-          </span>
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page >= result.totalPages}
-            onClick={() => applyFilters({ page: result.page + 1 })}
-          >
-            Next
-          </button>
-        </div>
+      {!loading && result.total > 0 && (
+        <AppPagination
+          page={result.page}
+          totalPages={result.totalPages}
+          total={result.total}
+          limit={filters.limit}
+          itemLabel="bệnh nhân"
+          onPageChange={(page) => applyFilters({ page })}
+        />
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

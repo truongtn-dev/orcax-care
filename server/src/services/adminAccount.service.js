@@ -48,7 +48,7 @@ export async function listAccounts({ q, role, page = 1, limit = 20 } = {}) {
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
 
   const filter = {};
-  const allowedRoles = ["patient", "doctor", "admin"];
+  const allowedRoles = ["patient", "doctor", "admin", "staff"];
 
   if (role && allowedRoles.includes(role)) {
     filter.role = role;
@@ -104,7 +104,7 @@ export async function createAccount(payload) {
 
   if (!fullName?.trim()) return { status: 400, body: { message: "Full name is required" } };
 
-  const allowedRoles = ["patient", "doctor", "admin"];
+  const allowedRoles = ["patient", "doctor", "admin", "staff"];
   if (!role || !allowedRoles.includes(role)) {
     return { status: 400, body: { message: "Invalid role" } };
   }
@@ -251,7 +251,7 @@ export async function updateAccount(userId, dto) {
   if (emailError) return { status: 400, body: { message: emailError } };
 
   const nextFullName = String(dto.fullName ?? user.fullName).trim();
-  const fullNameError = validateRequired(nextFullName, "Họ và tên");
+  const fullNameError = validateRequired(nextFullName, "Hờ và tên");
   if (fullNameError) return { status: 400, body: { message: fullNameError } };
 
   const phone = String(dto.phone ?? "").trim();

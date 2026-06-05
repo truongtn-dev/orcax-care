@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminEditPatientForm } from "../utils/validation.js";
 
 const GENDER_OPTIONS = [
-  { value: "", label: "Prefer not to say" },
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
+  { value: "", label: "Không muốn tiết lộ" },
+  { value: "male", label: "Nam" },
+  { value: "female", label: "Nữ" },
+  { value: "other", label: "Khác" },
 ];
 
 function formatDateOnly(value) {
@@ -83,7 +84,7 @@ export default function AdminPatientEditPage() {
 
     try {
       const { data } = await AdminApiClient.updatePatient(id, payload);
-      setSuccess(data.message || "Patient details updated successfully.");
+      setSuccess(data.message || "Đã cập nhật thông tin bệnh nhân thành công.");
       setTimeout(() => {
         navigate(`/admin/patient/${id}`);
       }, 800);
@@ -100,10 +101,10 @@ export default function AdminPatientEditPage() {
         <div className="page-header-row">
           <div>
             <Link to={`/admin/patient/${id}`} className="back-link">
-              ← Back to Patient Details
+              ← Về chi tiết bệnh nhân
             </Link>
-            <h1>Edit Patient</h1>
-            <p>Update patient demographics and emergency contact information.</p>
+            <h1>Sửa bệnh nhân</h1>
+            <p>Cập nhật nhân khẩu học và thông tin liên hệ khẩn cấp của bệnh nhân.</p>
           </div>
         </div>
       </div>
@@ -111,7 +112,7 @@ export default function AdminPatientEditPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading patient…
+          Đang tải bệnh nhân…
         </div>
       )}
 
@@ -124,9 +125,9 @@ export default function AdminPatientEditPage() {
             {success && <div className="alert alert-success">{success}</div>}
 
             <fieldset className="form-section">
-              <legend>Patient Demographics</legend>
+              <legend>Nhân khẩu học</legend>
               <label>
-                Date of birth
+                Ngày sinh
                 <input
                   type="date"
                   name="dateOfBirth"
@@ -136,29 +137,23 @@ export default function AdminPatientEditPage() {
                 />
                 {fieldErrors.dateOfBirth && <span className="field-error">{fieldErrors.dateOfBirth}</span>}
               </label>
-              <label>
-                Gender
-                <select
-                  name="gender"
+              <div>
+                <CustomSelect
+                  label="Giới tính"
                   value={form.gender}
-                  onChange={onChange}
-                  aria-invalid={Boolean(fieldErrors.gender)}
-                >
-                  {GENDER_OPTIONS.map((opt) => (
-                    <option key={opt.value || "none"} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(gender) => onChange({ target: { name: "gender", value: gender } })}
+                  options={GENDER_OPTIONS}
+                  invalid={Boolean(fieldErrors.gender)}
+                />
                 {fieldErrors.gender && <span className="field-error">{fieldErrors.gender}</span>}
-              </label>
+              </div>
               <label>
-                Address
+                Địa chỉ
                 <input
                   name="address"
                   value={form.address}
                   onChange={onChange}
-                  placeholder="City, district, street…"
+                  placeholder="Thành phố, quận/huyện, đường…"
                   aria-invalid={Boolean(fieldErrors.address)}
                 />
                 {fieldErrors.address && <span className="field-error">{fieldErrors.address}</span>}
@@ -166,14 +161,14 @@ export default function AdminPatientEditPage() {
             </fieldset>
 
             <fieldset className="form-section">
-              <legend>Emergency Contact</legend>
+              <legend>Liên hệ khẩn cấp</legend>
               <label>
-                Emergency contact name
+                Tên liên hệ khẩn cấp
                 <input
                   name="emergencyContactName"
                   value={form.emergencyContactName}
                   onChange={onChange}
-                  placeholder="Contact person name"
+                  placeholder="Tên người liên hệ"
                   aria-invalid={Boolean(fieldErrors.emergencyContactName)}
                 />
                 {fieldErrors.emergencyContactName && (
@@ -181,12 +176,12 @@ export default function AdminPatientEditPage() {
                 )}
               </label>
               <label>
-                Emergency contact phone
+                SĐT liên hệ khẩn cấp
                 <input
                   name="emergencyContactPhone"
                   value={form.emergencyContactPhone}
                   onChange={onChange}
-                  placeholder="Phone number"
+                  placeholder="Số điện thoại"
                   aria-invalid={Boolean(fieldErrors.emergencyContactPhone)}
                 />
                 {fieldErrors.emergencyContactPhone && (
@@ -197,10 +192,10 @@ export default function AdminPatientEditPage() {
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? "Saving…" : "Save Changes"}
+                {saving ? "Đang lưu…" : "Lưu thay đổi"}
               </button>
               <Link to={`/admin/patient/${id}`} className="btn btn-outline">
-                Cancel
+                Hủy
               </Link>
             </div>
           </form>

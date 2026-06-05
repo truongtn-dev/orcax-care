@@ -90,8 +90,12 @@ export async function connectDatabase() {
     console.error("\n✗ Không kết nối Atlas/local MongoDB:");
     console.error(`  ${err.message}\n`);
 
-    if (process.env.NODE_ENV !== "production" && !wantsRealDatabase()) {
-      console.warn("→ Thử in-memory DB cho dev...\n");
+    const allowDevFallback =
+      process.env.NODE_ENV !== "production" &&
+      process.env.MONGODB_DEV_FALLBACK !== "false";
+
+    if (allowDevFallback) {
+      console.warn("→ Thử in-memory DB cho dev (dữ liệu mất khi tắt server)...\n");
       try {
         await connectMemoryDb();
         return true;
@@ -102,7 +106,8 @@ export async function connectDatabase() {
 
     console.error("Kiểm tra server/.env:");
     console.error("  - MONGODB_PASSWORD đúng chưa");
-    console.error("  - Atlas → Network Access → Allow 0.0.0.0/0 (hoặc IP máy bạn)\n");
+    console.error("  - Atlas → Network Access → Allow 0.0.0.0/0 (hoặc IP máy bạn)");
+    console.error("  - Hoặc tạm dùng MONGODB_URI=memory cho dev local\n");
     return false;
   }
 }

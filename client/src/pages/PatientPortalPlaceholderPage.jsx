@@ -3,21 +3,21 @@ import PageLayout from "../components/PageLayout.jsx";
 
 const CONTENT = {
   book: {
-    title: "Book Appointment",
-    description: "Booking will start from the doctor search flow once appointment slots are connected.",
-    primaryLabel: "Find Doctors",
+    title: "Đặt lịch khám",
+    description: "Tính năng đặt lịch sẽ được mở sau khi hệ thống kết nối khung giờ khám. Hiện tại bạn có thể tìm bác sĩ trước.",
+    primaryLabel: "Tìm bác sĩ",
     primaryTo: "/search-doctors",
   },
   appointments: {
-    title: "Appointments",
-    description: "Your upcoming and past appointments will appear here when appointment management is available.",
-    primaryLabel: "Find Doctors",
+    title: "Lịch hẹn",
+    description: "Danh sách lịch hẹn sắp tới và lịch sử khám sẽ hiển thị tại đây khi tính năng được triển khai.",
+    primaryLabel: "Tìm bác sĩ",
     primaryTo: "/search-doctors",
   },
   wallet: {
-    title: "Wallet",
-    description: "Wallet balance and billing activity will be shown here after payment features are connected.",
-    primaryLabel: "Back to Dashboard",
+    title: "Ví thanh toán",
+    description: "Số dư ví và lịch sử thanh toán sẽ hiển thị tại đây khi tính năng thanh toán được triển khai.",
+    primaryLabel: "Về trang cá nhân",
     primaryTo: "/patient",
   },
 };
@@ -42,14 +42,14 @@ export default function PatientPortalPlaceholderPage({ type }) {
             <path d="M8 16h5" />
           </svg>
         </div>
-        <h3>{content.title} is coming soon</h3>
-        <p>This patient-only page is ready for the next module integration.</p>
+        <h3>{content.title} — Sắp ra mắt</h3>
+        <p>Tính năng này đang được phát triển và sẽ sớm có mặt trên hệ thống.</p>
         <div className="form-actions">
           <Link to={content.primaryTo} className="btn btn-primary">
             {content.primaryLabel}
           </Link>
           <Link to="/patient" className="btn btn-outline">
-            Patient Dashboard
+            Về trang cá nhân
           </Link>
         </div>
       </div>

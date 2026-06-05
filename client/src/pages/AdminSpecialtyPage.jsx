@@ -1,15 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AdminLayout from "../components/AdminLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
+import FilterSearchField from "../components/FilterSearchField.jsx";
+import AppPagination from "../components/AppPagination.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminCreateSpecialtyForm } from "../utils/validation.js";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "All statuses" },
-  { value: "true", label: "Active" },
-  { value: "false", label: "Inactive" },
+  { value: "", label: "Tất cả trạng thái" },
+  { value: "true", label: "Đang hoạt động" },
+  { value: "false", label: "Ngừng hoạt động" },
 ];
 
 const EMPTY_FORM = {
@@ -27,7 +31,7 @@ function formatDate(value) {
 function StatusBadge({ active }) {
   return (
     <span className={`status-badge ${active ? "status-badge-active" : "status-badge-inactive"}`}>
-      {active ? "Active" : "Inactive"}
+      {active ? "Đang hoạt động" : "Ngừng hoạt động"}
     </span>
   );
 }
@@ -147,7 +151,7 @@ export default function AdminSpecialtyPage() {
   const openDeleteConfirm = (specialty) => {
     if (specialty.doctorCount > 0) {
       setActionError(
-        `Cannot delete "${specialty.name}". It is assigned to ${specialty.doctorCount} doctor(s).`
+        `Không thể xóa "${specialty.name}". Chuyên khoa này đang được gán cho ${specialty.doctorCount} bác sĩ.`
       );
       setActionMessage("");
       return;
@@ -183,44 +187,42 @@ export default function AdminSpecialtyPage() {
   };
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <Link to="/admin" className="back-link">
-              ← Admin Console
-            </Link>
-            <h1>Specialties</h1>
-            <p>View and manage medical specialties on the platform.</p>
-          </div>
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Quản lý chuyên khoa"
+        description="Danh mục chuyên khoa lâm sàng và trạng thái sử dụng trên hệ thống."
+        actions={
           <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Create Specialty
+            Tạo chuyên khoa
           </button>
-        </div>
-      </div>
-
+        }
+      >
       <div className="card filters-card">
-        <div className="filters-row">
-          <input
-            type="search"
-            placeholder="Search by code, name, or description…"
-            value={filters.q}
-            onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters({ q: filters.q })}
-          />
-          <select value={filters.isActive} onChange={(e) => applyFilters({ isActive: e.target.value })}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-            Search
-          </button>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear
-          </button>
+        <div className="filters-toolbar">
+          <div className="filters-toolbar-fields">
+            <FilterSearchField
+              id="admin-specialty-search"
+              placeholder="Tìm theo mã, tên hoặc mô tả…"
+              value={filters.q}
+              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+              onSearch={() => applyFilters({ q: filters.q })}
+            />
+            <CustomSelect
+              className="filter-field"
+              label="Trạng thái"
+              value={filters.isActive}
+              onChange={(isActive) => applyFilters({ isActive })}
+              options={STATUS_OPTIONS}
+            />
+          </div>
+          <div className="filters-toolbar-actions">
+            <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
+              Tìm kiếm
+            </button>
+            <button type="button" className="btn btn-outline" onClick={clearFilters}>
+              Xóa lọc
+            </button>
+          </div>
         </div>
       </div>
 
@@ -231,16 +233,16 @@ export default function AdminSpecialtyPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading specialties…
+          Đang tải chuyên khoa…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>No specialties found</h3>
-          <p>Try adjusting your search criteria or create a new specialty.</p>
+          <h3>Không tìm thấy chuyên khoa</h3>
+          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc tạo chuyên khoa mới.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear Filters
+            Xóa lọc
           </button>
         </div>
       )}
@@ -251,13 +253,13 @@ export default function AdminSpecialtyPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Doctors</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>Mã</th>
+                  <th>Tên</th>
+                  <th>Mô tả</th>
+                  <th>Bác sĩ</th>
+                  <th>Trạng thái</th>
+                  <th>Ngày tạo</th>
+                  <th className="table-actions-col">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,17 +275,18 @@ export default function AdminSpecialtyPage() {
                       <StatusBadge active={specialty.isActive} />
                     </td>
                     <td>{formatDate(specialty.createdAt)}</td>
-                    <td>
+                    <td className="table-actions-col">
+                      <div className="table-row-actions">
                       <button
                         type="button"
                         className="btn btn-outline btn-icon btn-icon-danger"
-                        aria-label={`Delete ${specialty.name}`}
+                        aria-label={`Xóa ${specialty.name}`}
                         title={
                           specialty.doctorCount > 0
-                            ? `Cannot delete — ${specialty.doctorCount} doctor(s) linked`
+                            ? `Không thể xóa — đang liên kết ${specialty.doctorCount} bác sĩ`
                             : specialty.isActive
-                              ? "Deactivate specialty"
-                              : "Already inactive"
+                              ? "Ngừng hoạt động chuyên khoa"
+                              : "Đã ngừng hoạt động"
                         }
                         disabled={
                           deletingId === specialty._id ||
@@ -300,6 +303,7 @@ export default function AdminSpecialtyPage() {
                           <line x1="14" y1="11" x2="14" y2="17" />
                         </svg>
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -309,40 +313,27 @@ export default function AdminSpecialtyPage() {
         </div>
       )}
 
-      {result.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page <= 1}
-            onClick={() => applyFilters({ page: result.page - 1 })}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {result.page} of {result.totalPages} · {result.total} specialties
-          </span>
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page >= result.totalPages}
-            onClick={() => applyFilters({ page: result.page + 1 })}
-          >
-            Next
-          </button>
-        </div>
+      {!loading && result.total > 0 && (
+        <AppPagination
+          page={result.page}
+          totalPages={result.totalPages}
+          total={result.total}
+          limit={filters.limit}
+          itemLabel="chuyên khoa"
+          onPageChange={(page) => applyFilters({ page })}
+        />
       )}
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
-        title="Deactivate specialty?"
+        title="Ngừng hoạt động chuyên khoa?"
         description={
           deleteTarget
-            ? `You are about to deactivate "${deleteTarget.name}" (${deleteTarget.code}).`
+            ? `Bạn sắp ngừng hoạt động "${deleteTarget.name}" (${deleteTarget.code}).`
             : ""
         }
-        confirmText="Yes, deactivate"
-        cancelText="Cancel"
+        confirmText="Có, ngừng hoạt động"
+        cancelText="Hủy"
         variant="danger"
         loading={Boolean(deletingId)}
         onConfirm={confirmDelete}
@@ -360,10 +351,10 @@ export default function AdminSpecialtyPage() {
           >
             <div className="modal-header">
               <div>
-                <h2 id="create-specialty-title">Create Specialty</h2>
-                <p>Add a new medical specialty to the platform.</p>
+                <h2 id="create-specialty-title">Tạo chuyên khoa</h2>
+                <p>Thêm chuyên khoa y tế mới vào hệ thống.</p>
               </div>
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
+              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Đóng">
                 ×
               </button>
             </div>
@@ -373,39 +364,39 @@ export default function AdminSpecialtyPage() {
               {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
 
               <label>
-                Code
+                Mã
                 <input
                   name="code"
                   value={form.code}
                   onChange={onFormChange}
-                  placeholder="e.g. CARD"
+                  placeholder="vd. CARD"
                   aria-invalid={Boolean(fieldError("code"))}
                   style={{ textTransform: "uppercase" }}
                 />
                 {fieldError("code") && <span className="field-error">{fieldError("code")}</span>}
-                <span className="field-hint">2–12 characters, letters, numbers, hyphen, underscore</span>
+                <span className="field-hint">2–12 ký tự, chữ, số, gạch ngang, gạch dưới</span>
               </label>
 
               <label>
-                Name
+                Tên
                 <input
                   name="name"
                   value={form.name}
                   onChange={onFormChange}
-                  placeholder="e.g. Cardiology"
+                  placeholder="vd. Tim mạch"
                   aria-invalid={Boolean(fieldError("name"))}
                 />
                 {fieldError("name") && <span className="field-error">{fieldError("name")}</span>}
               </label>
 
               <label>
-                Description
+                Mô tả
                 <textarea
                   name="description"
                   value={form.description}
                   onChange={onFormChange}
                   rows={3}
-                  placeholder="Brief description of this specialty (optional)"
+                  placeholder="Mô tả ngắn về chuyên khoa (tùy chọn)"
                   aria-invalid={Boolean(fieldError("description"))}
                 />
                 {fieldError("description") && (
@@ -415,21 +406,22 @@ export default function AdminSpecialtyPage() {
 
               <label className="checkbox-row">
                 <input type="checkbox" name="isActive" checked={form.isActive} onChange={onFormChange} />
-                Active (visible on the platform)
+                Đang hoạt động (hiển thị trên hệ thống)
               </label>
 
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
-                  Cancel
+                  Hủy
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>
-                  {creating ? "Creating…" : "Create Specialty"}
+                  {creating ? "Đang tạo…" : "Tạo chuyên khoa"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

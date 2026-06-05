@@ -5,9 +5,9 @@ import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
 const GENDER_LABELS = {
-  male: "Male",
-  female: "Female",
-  other: "Other",
+  male: "Nam",
+  female: "Nữ",
+  other: "Khác",
 };
 
 function formatDate(value) {
@@ -58,14 +58,14 @@ export default function AdminPatientDetailPage() {
         <div className="page-header-row">
           <div>
             <Link to="/admin/account" className="back-link">
-              ← Back to Accounts
+              ← Về danh sách tài khoản
             </Link>
-            <h1>Patient Details</h1>
-            <p>View and manage patient information.</p>
+            <h1>Chi tiết bệnh nhân</h1>
+            <p>Xem và quản lý thông tin bệnh nhân.</p>
           </div>
           {patient && (
             <Link to={`/admin/patient/${id}/edit`} className="btn btn-primary">
-              Edit Patient
+              Sửa bệnh nhân
             </Link>
           )}
         </div>
@@ -74,7 +74,7 @@ export default function AdminPatientDetailPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading patient…
+          Đang tải bệnh nhân…
         </div>
       )}
 
@@ -89,70 +89,70 @@ export default function AdminPatientDetailPage() {
               <p>{patient.email}</p>
               <p>
                 <Link to={`/admin/account/${patient._id}`} className="table-link">
-                  Open linked account →
+                  Mở tài khoản liên kết →
                 </Link>
               </p>
               <div className="status-badge-group">
-                <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
+                <StatusBadge active={patient.isActive} label={patient.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
                 <StatusBadge
                   active={patient.isEmailVerified}
-                  label={patient.isEmailVerified ? "Email verified" : "Email pending"}
+                  label={patient.isEmailVerified ? "Email đã xác minh" : "Email chưa xác minh"}
                 />
-                {patient.isLocked && <span className="status-badge status-badge-locked">Locked</span>}
+                {patient.isLocked && <span className="status-badge status-badge-locked">Đã khóa</span>}
               </div>
             </div>
           </div>
 
           <div className="detail-grid">
             <section className="card detail-section">
-              <h3>Linked Account</h3>
+              <h3>Tài khoản liên kết</h3>
               <div className="detail-list">
-                <DetailItem label="Full name" value={patient.fullName} />
+                <DetailItem label="Họ và tên" value={patient.fullName} />
                 <DetailItem label="Email" value={patient.email} />
-                <DetailItem label="Phone" value={patient.phone || "—"} />
-                <DetailItem label="Registration date" value={formatDate(patient.createdAt)} />
-                <DetailItem label="Last login" value={formatDate(patient.lastLoginAt)} />
-                <DetailItem label="Password changed" value={formatDate(patient.passwordChangedAt)} />
+                <DetailItem label="Số điện thoại" value={patient.phone || "—"} />
+                <DetailItem label="Ngày đăng ký" value={formatDate(patient.createdAt)} />
+                <DetailItem label="Đăng nhập gần nhất" value={formatDate(patient.lastLoginAt)} />
+                <DetailItem label="Đổi mật khẩu lần cuối" value={formatDate(patient.passwordChangedAt)} />
               </div>
             </section>
 
             <section className="card detail-section">
-              <h3>Demographics</h3>
+              <h3>Nhân khẩu học</h3>
               <div className="detail-list">
-                <DetailItem label="Date of birth" value={formatDateOnly(patient.profile.dateOfBirth)} />
+                <DetailItem label="Ngày sinh" value={formatDateOnly(patient.profile.dateOfBirth)} />
                 <DetailItem
-                  label="Gender"
+                  label="Giới tính"
                   value={GENDER_LABELS[patient.profile.gender] || patient.profile.gender || "—"}
                 />
-                <DetailItem label="Address" value={patient.profile.address || "—"} />
-                <DetailItem label="Emergency contact name" value={patient.profile.emergencyContactName || "—"} />
-                <DetailItem label="Emergency contact phone" value={patient.profile.emergencyContactPhone || "—"} />
+                <DetailItem label="Địa chỉ" value={patient.profile.address || "—"} />
+                <DetailItem label="Tên liên hệ khẩn cấp" value={patient.profile.emergencyContactName || "—"} />
+                <DetailItem label="SĐT liên hệ khẩn cấp" value={patient.profile.emergencyContactPhone || "—"} />
               </div>
             </section>
 
             <section className="card detail-section">
-              <h3>Account Status</h3>
+              <h3>Trạng thái tài khoản</h3>
               <div className="detail-list">
                 <DetailItem
-                  label="Account status"
+                  label="Trạng thái tài khoản"
                   value={
-                    <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
+                    <StatusBadge active={patient.isActive} label={patient.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
                   }
                 />
                 <DetailItem
-                  label="Email verification"
+                  label="Xác minh email"
                   value={
                     <StatusBadge
                       active={patient.isEmailVerified}
-                      label={patient.isEmailVerified ? "Verified" : "Pending"}
+                      label={patient.isEmailVerified ? "Đã xác minh" : "Chưa xác minh"}
                     />
                   }
                 />
                 <DetailItem
-                  label="Account locked"
-                  value={patient.isLocked ? <span className="status-badge status-badge-locked">Locked</span> : "No"}
+                  label="Tài khoản bị khóa"
+                  value={patient.isLocked ? <span className="status-badge status-badge-locked">Đã khóa</span> : "Không"}
                 />
-                <DetailItem label="Last updated" value={formatDate(patient.updatedAt)} />
+                <DetailItem label="Cập nhật lần cuối" value={formatDate(patient.updatedAt)} />
               </div>
             </section>
           </div>

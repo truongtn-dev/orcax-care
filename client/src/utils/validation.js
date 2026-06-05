@@ -1,29 +1,29 @@
 export function validateFullName(fullName) {
   const trimmed = fullName?.trim();
-  if (!trimmed) return "Full name is required";
-  if (trimmed.length < 2) return "Full name must be at least 2 characters";
-  if (trimmed.length > 100) return "Full name is too long";
-  if (!/^[\p{L}\s'.-]+$/u.test(trimmed)) return "Full name contains invalid characters";
+  if (!trimmed) return "Họ và tên là bắt buộc";
+  if (trimmed.length < 2) return "Họ và tên phải có ít nhất 2 ký tự";
+  if (trimmed.length > 100) return "Họ và tên quá dài";
+  if (!/^[\p{L}\s'.-]+$/u.test(trimmed)) return "Họ và tên chứa ký tự không hợp lệ";
   return null;
 }
 
 export function validatePhone(phone) {
   if (!phone?.trim()) return null;
-  if (!/^[\d\s+\-()]{8,20}$/.test(phone.trim())) return "Invalid phone number (8–20 digits)";
+  if (!/^[\d\s+\-()]{8,20}$/.test(phone.trim())) return "Số điện thoại không hợp lệ (8–20 chữ số)";
   return null;
 }
 
 export function validateEmail(email) {
-  if (!email?.trim()) return "Email is required";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Invalid email address";
+  if (!email?.trim()) return "Email là bắt buộc";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return "Địa chỉ email không hợp lệ";
   return null;
 }
 
 export function validatePasswordStrength(password) {
-  if (!password) return "Password is required";
-  if (password.length < 8) return "Password must be at least 8 characters";
+  if (!password) return "Mật khẩu là bắt buộc";
+  if (password.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự";
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-    return "Password must contain at least one letter and one number";
+    return "Mật khẩu phải có ít nhất một chữ cái và một chữ số";
   }
   return null;
 }
@@ -41,15 +41,15 @@ export function validateRegisterForm(form) {
   if (passwordError) errors.password = passwordError;
 
   if (!form.confirmPassword) {
-    errors.confirmPassword = "Please confirm your password";
+    errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
   } else if (form.password !== form.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match";
+    errors.confirmPassword = "Mật khẩu không khớp";
   }
 
   const phoneError = validatePhone(form.phone);
   if (phoneError) errors.phone = phoneError;
 
-  if (!form.terms) errors.terms = "You must accept the terms and conditions";
+  if (!form.terms) errors.terms = "Bạn phải đồng ý với điều khoản và điều kiện";
 
   return errors;
 }
@@ -58,24 +58,24 @@ export function validateLoginForm(form) {
   const errors = {};
   const emailError = validateEmail(form.email);
   if (emailError) errors.email = emailError;
-  if (!form.password) errors.password = "Password is required";
+  if (!form.password) errors.password = "Mật khẩu là bắt buộc";
   return errors;
 }
 
 export function validateChangePasswordForm(form) {
   const errors = {};
-  if (!form.currentPassword) errors.currentPassword = "Current password is required";
+  if (!form.currentPassword) errors.currentPassword = "Mật khẩu hiện tại là bắt buộc";
 
   const passwordError = validatePasswordStrength(form.newPassword);
   if (passwordError) errors.newPassword = passwordError;
   else if (form.currentPassword && form.newPassword === form.currentPassword) {
-    errors.newPassword = "New password must be different from current password";
+    errors.newPassword = "Mật khẩu mới phải khác mật khẩu hiện tại";
   }
 
   if (!form.confirmPassword) {
-    errors.confirmPassword = "Please confirm your new password";
+    errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
   } else if (form.newPassword !== form.confirmPassword) {
-    errors.confirmPassword = "New passwords do not match";
+    errors.confirmPassword = "Mật khẩu mới không khớp";
   }
 
   return errors;
@@ -87,9 +87,9 @@ export function validateResetPasswordForm(form) {
   if (passwordError) errors.newPassword = passwordError;
 
   if (!form.confirmPassword) {
-    errors.confirmPassword = "Please confirm your new password";
+    errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
   } else if (form.newPassword !== form.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match";
+    errors.confirmPassword = "Mật khẩu không khớp";
   }
 
   return errors;
@@ -98,7 +98,7 @@ export function validateResetPasswordForm(form) {
 export function validateAdminCreateAccountForm(form) {
   const errors = {};
 
-  if (!form.fullName?.trim()) errors.fullName = "Full name is required";
+  if (!form.fullName?.trim()) errors.fullName = "Họ và tên là bắt buộc";
 
   const emailError = validateEmail(form.email);
   if (emailError) errors.email = emailError;
@@ -107,9 +107,9 @@ export function validateAdminCreateAccountForm(form) {
   if (passwordError) errors.password = passwordError;
 
   if (!form.confirmPassword) {
-    errors.confirmPassword = "Please confirm your password";
+    errors.confirmPassword = "Vui lòng xác nhận mật khẩu";
   } else if (form.password !== form.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match";
+    errors.confirmPassword = "Mật khẩu không khớp";
   }
 
   if (form.phone?.trim()) {
@@ -117,12 +117,12 @@ export function validateAdminCreateAccountForm(form) {
     if (phoneError) errors.phone = phoneError;
   }
 
-  if (!form.role) errors.role = "Role is required";
+  if (!form.role) errors.role = "Vai trò là bắt buộc";
 
   if (form.role === "doctor") {
-    if (!form.specialtyId) errors.specialtyId = "Specialty is required";
-    if (!form.departmentId) errors.departmentId = "Department is required";
-    if (!form.licenseNo?.trim()) errors.licenseNo = "License number is required";
+    if (!form.specialtyId) errors.specialtyId = "Chuyên khoa là bắt buộc";
+    if (!form.departmentId) errors.departmentId = "Khoa/phòng ban là bắt buộc";
+    if (!form.licenseNo?.trim()) errors.licenseNo = "Số giấy phép là bắt buộc";
   }
 
   return errors;
@@ -132,36 +132,36 @@ export function validateAdminCreateClinicRoomForm(form) {
   const errors = {};
 
   if (!form.departmentId) {
-    errors.departmentId = "Department is required";
+    errors.departmentId = "Khoa/phòng ban là bắt buộc";
   }
 
   const roomCode = form.roomCode?.trim().toUpperCase();
   if (!roomCode) {
-    errors.roomCode = "Room code is required";
+    errors.roomCode = "Mã phòng là bắt buộc";
   } else if (!/^[A-Z0-9_-]{2,12}$/.test(roomCode)) {
-    errors.roomCode = "Room code must be 2–12 characters (letters, numbers, hyphen, underscore)";
+    errors.roomCode = "Mã phòng phải có 2–12 ký tự (chữ, số, gạch ngang, gạch dưới)";
   }
 
   const name = form.name?.trim();
   if (!name) {
-    errors.name = "Room name is required";
+    errors.name = "Tên phòng là bắt buộc";
   } else if (name.length > 100) {
-    errors.name = "Room name must be at most 100 characters";
+    errors.name = "Tên phòng tối đa 100 ký tự";
   }
 
   const floor = form.floor?.trim() || "";
   if (floor.length > 20) {
-    errors.floor = "Floor must be at most 20 characters";
+    errors.floor = "Tầng tối đa 20 ký tự";
   }
 
   const capacityNum = parseInt(form.capacity, 10);
   if (!capacityNum || capacityNum < 1 || capacityNum > 50) {
-    errors.capacity = "Capacity must be between 1 and 50";
+    errors.capacity = "Sức chứa phải từ 1 đến 50";
   }
 
   const equipmentNotes = form.equipmentNotes?.trim() || "";
   if (equipmentNotes.length > 500) {
-    errors.equipmentNotes = "Equipment notes must be at most 500 characters";
+    errors.equipmentNotes = "Ghi chú thiết bị tối đa 500 ký tự";
   }
 
   return errors;
@@ -172,21 +172,21 @@ export function validateAdminCreateSpecialtyForm(form) {
 
   const code = form.code?.trim().toUpperCase();
   if (!code) {
-    errors.code = "Code is required";
+    errors.code = "Mã là bắt buộc";
   } else if (!/^[A-Z0-9_-]{2,12}$/.test(code)) {
-    errors.code = "Code must be 2–12 characters (letters, numbers, hyphen, underscore)";
+    errors.code = "Mã phải có 2–12 ký tự (chữ, số, gạch ngang, gạch dưới)";
   }
 
   const name = form.name?.trim();
   if (!name) {
-    errors.name = "Name is required";
+    errors.name = "Tên là bắt buộc";
   } else if (name.length > 100) {
-    errors.name = "Name must be at most 100 characters";
+    errors.name = "Tên tối đa 100 ký tự";
   }
 
   const description = form.description?.trim() || "";
   if (description.length > 500) {
-    errors.description = "Description must be at most 500 characters";
+    errors.description = "Mô tả tối đa 500 ký tự";
   }
 
   return errors;
@@ -198,27 +198,27 @@ export function validateAdminEditPatientForm(form) {
   if (form.dateOfBirth) {
     const dob = new Date(form.dateOfBirth);
     if (Number.isNaN(dob.getTime()) || dob > new Date()) {
-      errors.dateOfBirth = "Invalid date of birth";
+      errors.dateOfBirth = "Ngày sinh không hợp lệ";
     }
   }
 
   if (form.gender && !["male", "female", "other"].includes(form.gender)) {
-    errors.gender = "Invalid gender value";
+    errors.gender = "Giới tính không hợp lệ";
   }
 
   const address = form.address?.trim() || "";
   if (address.length > 300) {
-    errors.address = "Address must be at most 300 characters";
+    errors.address = "Địa chỉ tối đa 300 ký tự";
   }
 
   const emergencyContactName = form.emergencyContactName?.trim() || "";
   if (emergencyContactName.length > 120) {
-    errors.emergencyContactName = "Emergency contact name must be at most 120 characters";
+    errors.emergencyContactName = "Tên liên hệ khẩn cấp tối đa 120 ký tự";
   }
 
   const emergencyContactPhone = form.emergencyContactPhone?.trim() || "";
   if (emergencyContactPhone && !/^[\d\s+\-()]{8,20}$/.test(emergencyContactPhone)) {
-    errors.emergencyContactPhone = "Invalid emergency contact phone number";
+    errors.emergencyContactPhone = "Số điện thoại liên hệ khẩn cấp không hợp lệ";
   }
 
   return errors;

@@ -9,7 +9,7 @@ export default function ProtectedRoute({ children, roles }) {
     return (
       <div className="auth-loading-screen">
         <div className="loading-spinner" />
-        <p>Checking session…</p>
+        <p>Đang kiểm tra phiên đăng nhập…</p>
       </div>
     );
   }

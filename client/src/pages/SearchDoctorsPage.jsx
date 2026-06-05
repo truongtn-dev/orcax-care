@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../components/PageLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import AppPagination, { getResultRange } from "../components/AppPagination.jsx";
 import DoctorSearchCard from "../components/DoctorSearchCard.jsx";
 import DoctorCardSkeleton from "../components/DoctorCardSkeleton.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
@@ -28,14 +29,6 @@ function SearchIcon() {
   );
 }
 
-function ChevronIcon({ direction }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <path d={direction === "prev" ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} />
-    </svg>
-  );
-}
-
 function buildActiveFilters(filters, specialties, departments) {
   const pills = [];
 
@@ -54,87 +47,6 @@ function buildActiveFilters(filters, specialties, departments) {
   }
 
   return pills;
-}
-
-function getPageNumbers(page, totalPages) {
-  if (totalPages <= 1) return [1];
-  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
-
-  const pages = new Set(
-    [1, totalPages, page, page - 1, page + 1].filter((value) => value >= 1 && value <= totalPages),
-  );
-
-  return [...pages].sort((a, b) => a - b);
-}
-
-function getResultRange(result, limit) {
-  if (!result.total) return null;
-
-  return {
-    start: (result.page - 1) * limit + 1,
-    end: Math.min(result.page * limit, result.total),
-  };
-}
-
-function SearchPagination({ result, resultRange, onPageChange }) {
-  const pageNumbers = useMemo(
-    () => getPageNumbers(result.page, result.totalPages),
-    [result.page, result.totalPages],
-  );
-
-  return (
-    <div className={`search-pagination-shell ${result.totalPages <= 1 ? "search-pagination-single" : ""}`}>
-      <p className="search-pagination-summary">
-        Showing <strong>{resultRange.start}–{resultRange.end}</strong> of <strong>{result.total}</strong> specialists
-        {result.totalPages > 1 && (
-          <>
-            {" "}
-            · Page <strong>{result.page}</strong> of <strong>{result.totalPages}</strong>
-          </>
-        )}
-      </p>
-      <nav className="search-pagination" aria-label="Search results pages">
-        <button
-          type="button"
-          className="search-page-btn search-page-btn-nav"
-          disabled={result.page <= 1}
-          onClick={() => onPageChange(result.page - 1)}
-          aria-label="Previous page"
-        >
-          <ChevronIcon direction="prev" />
-        </button>
-        <div className="search-page-numbers">
-          {pageNumbers.map((num, index) => {
-            const previous = pageNumbers[index - 1];
-            const showEllipsis = previous != null && num - previous > 1;
-
-            return (
-              <span key={num} className="search-page-num-wrap">
-                {showEllipsis && <span className="search-page-ellipsis">…</span>}
-                <button
-                  type="button"
-                  className={`search-page-btn ${result.page === num ? "search-page-btn-active" : ""}`}
-                  onClick={() => onPageChange(num)}
-                  aria-current={result.page === num ? "page" : undefined}
-                >
-                  {num}
-                </button>
-              </span>
-            );
-          })}
-        </div>
-        <button
-          type="button"
-          className="search-page-btn search-page-btn-nav"
-          disabled={result.page >= result.totalPages}
-          onClick={() => onPageChange(result.page + 1)}
-          aria-label="Next page"
-        >
-          <ChevronIcon direction="next" />
-        </button>
-      </nav>
-    </div>
-  );
 }
 
 export default function SearchDoctorsPage() {
@@ -195,11 +107,14 @@ export default function SearchDoctorsPage() {
     [filters, specialties, departments],
   );
 
-  const resultRange = useMemo(() => getResultRange(result, filters.limit), [result, filters.limit]);
+  const resultRange = useMemo(
+    () => getResultRange(result.page, result.total, filters.limit),
+    [result.page, result.total, filters.limit],
+  );
 
   const specialtyOptions = useMemo(
     () => [
-      { value: "", label: "All specialties" },
+      { value: "", label: "Tất cả chuyên khoa" },
       ...specialties.map((item) => ({ value: item._id, label: item.name })),
     ],
     [specialties],
@@ -207,14 +122,14 @@ export default function SearchDoctorsPage() {
 
   const departmentOptions = useMemo(
     () => [
-      { value: "", label: "All departments" },
+      { value: "", label: "Tất cả khoa/phòng ban" },
       ...departments.map((item) => ({ value: item._id, label: item.name })),
     ],
     [departments],
   );
 
   const popularSpecialties = specialties.slice(0, 8);
-  const specialistLabel = result.total === 1 ? "specialist" : "specialists";
+  const specialistLabel = result.total === 1 ? "bác sĩ" : "bác sĩ";
 
   return (
     <PageLayout>
@@ -222,10 +137,10 @@ export default function SearchDoctorsPage() {
         <section className="search-hero" aria-labelledby="search-doctors-title">
           <div className="search-hero-bg" aria-hidden="true" />
           <div className="search-hero-inner">
-            <p className="search-hero-eyebrow">Find care</p>
-            <h1 id="search-doctors-title">Find your specialist</h1>
+            <p className="search-hero-eyebrow">Dịch vụ y tế</p>
+            <h1 id="search-doctors-title">Tìm bác sĩ phù hợp</h1>
             <p className="search-hero-lead">
-              Search verified doctors by name, specialty, or department — book with confidence.
+              Tìm bác sĩ đã được xác minh theo tên, chuyên khoa hoặc khoa — đặt lịch nhanh chóng.
             </p>
 
             <form
@@ -242,20 +157,20 @@ export default function SearchDoctorsPage() {
                 <input
                   id="doctor-search-q"
                   type="search"
-                  placeholder="Doctor name, specialty, or department…"
+                  placeholder="Tên bác sĩ, chuyên khoa hoặc khoa…"
                   value={filters.q}
                   onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
                   autoComplete="off"
                 />
               </label>
               <button type="submit" className="btn btn-white search-hero-submit">
-                Search
+                Tìm kiếm
               </button>
             </form>
 
             {!loading && (
               <p className="search-hero-stat" aria-live="polite">
-                <strong>{result.total}</strong> {specialistLabel} available
+                Có <strong>{result.total}</strong> {specialistLabel}
               </p>
             )}
           </div>
@@ -264,10 +179,10 @@ export default function SearchDoctorsPage() {
         <div className="search-body">
           <div className="search-toolbar card">
             <div className="search-toolbar-head">
-              <h2 className="search-toolbar-title">Refine results</h2>
+              <h2 className="search-toolbar-title">Lọc kết quả</h2>
               {activeFilters.length > 0 && (
                 <button type="button" className="search-toolbar-clear" onClick={clearFilters}>
-                  Clear all
+                  Xóa tất cả
                 </button>
               )}
             </div>
@@ -275,17 +190,17 @@ export default function SearchDoctorsPage() {
             <div className="search-toolbar-fields">
               <CustomSelect
                 id="filter-specialty"
-                label="Specialty"
+                label="Chuyên khoa"
                 value={filters.specialtyId}
-                placeholder="All specialties"
+                placeholder="Tất cả chuyên khoa"
                 onChange={(specialtyId) => applySearch({ specialtyId })}
                 options={specialtyOptions}
               />
               <CustomSelect
                 id="filter-department"
-                label="Department"
+                label="Khoa/phòng ban"
                 value={filters.departmentId}
-                placeholder="All departments"
+                placeholder="Tất cả khoa/phòng ban"
                 onChange={(departmentId) => applySearch({ departmentId })}
                 options={departmentOptions}
               />
@@ -293,7 +208,7 @@ export default function SearchDoctorsPage() {
 
             {popularSpecialties.length > 0 && (
               <div className="search-toolbar-chips">
-                <span className="search-toolbar-chips-label">Popular specialties</span>
+                <span className="search-toolbar-chips-label">Chuyên khoa phổ biến</span>
                 <div className="chip-row">
                   {popularSpecialties.map((specialty) => (
                     <button
@@ -316,7 +231,7 @@ export default function SearchDoctorsPage() {
 
           <div className="search-main">
             {activeFilters.length > 0 && (
-              <div className="search-active-filters" aria-label="Active filters">
+              <div className="search-active-filters" aria-label="Bộ lọc đang áp dụng">
                 {activeFilters.map((pill) => (
                   <button
                     key={pill.key}
@@ -331,7 +246,7 @@ export default function SearchDoctorsPage() {
                   </button>
                 ))}
                 <button type="button" className="search-filter-clear-link" onClick={clearFilters}>
-                  Clear all
+                  Xóa tất cả
                 </button>
               </div>
             )}
@@ -344,7 +259,7 @@ export default function SearchDoctorsPage() {
 
             <div className="search-results-bar">
               <h2 className="search-results-title">
-                {loading ? "Searching…" : result.total > 0 ? "Recommended specialists" : "Results"}
+                {loading ? "Đang tìm…" : result.total > 0 ? "Gợi ý cho bạn" : "Kết quả tìm kiếm"}
               </h2>
               {!loading && result.total > 0 && (
                 <span className="search-results-range">
@@ -354,7 +269,7 @@ export default function SearchDoctorsPage() {
             </div>
 
             {loading && (
-              <div className="doctor-grid-premium" aria-busy="true" aria-label="Loading doctors">
+              <div className="doctor-grid-premium" aria-busy="true" aria-label="Đang tải danh sách bác sĩ">
                 {Array.from({ length: DOCTORS_PAGE_SIZE }).map((_, index) => (
                   <DoctorCardSkeleton key={index} />
                 ))}
@@ -367,10 +282,10 @@ export default function SearchDoctorsPage() {
                   <div className="empty-state-icon search-empty-icon">
                     <SearchIcon />
                   </div>
-                  <h3>No specialists match your search</h3>
-                  <p>Try a different keyword, specialty, or department — or browse all doctors.</p>
+                  <h3>Không tìm thấy bác sĩ phù hợp</h3>
+                  <p>Thử từ khóa, chuyên khoa hoặc khoa khác, hoặc xem toàn bộ danh sách bác sĩ.</p>
                   <button type="button" className="btn btn-primary" onClick={clearFilters}>
-                    Show all doctors
+                    Xem tất cả bác sĩ
                   </button>
                 </div>
               </ScrollReveal>
@@ -387,9 +302,13 @@ export default function SearchDoctorsPage() {
             )}
 
             {!loading && result.total > 0 && resultRange && (
-              <SearchPagination
-                result={result}
-                resultRange={resultRange}
+              <AppPagination
+                page={result.page}
+                totalPages={result.totalPages}
+                total={result.total}
+                limit={filters.limit}
+                itemLabel="bác sĩ"
+                ariaLabel="Trang kết quả tìm kiếm"
                 onPageChange={(page) => applySearch({ page })}
               />
             )}

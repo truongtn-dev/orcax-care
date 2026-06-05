@@ -9,7 +9,7 @@ export const authRouter = Router();
 const resendLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 5,
-  message: { message: "Too many requests. Please try again later." },
+  message: { message: "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
 });
 
 authRouter.use(requireDatabase);

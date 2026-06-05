@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import CustomSelect from "../../components/CustomSelect.jsx";
+import FilterSearchField from "../../components/FilterSearchField.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -92,38 +94,37 @@ export default function DoctorsListPage() {
       </div>
 
       <div className="card filters-card">
-        <div className="filters-row">
-          <input
-            type="search"
-            name="q"
-            value={filters.q}
-            onChange={onChange}
-            placeholder="Tìm tên, email, giấy phép..."
-          />
-          <select
-            name="specialtyId"
-            value={filters.specialtyId}
-            onChange={onChange}
-          >
-            <option value="">Tất cả chuyên khoa</option>
-            {specialties.map((specialty) => (
-              <option key={specialty._id} value={specialty._id}>
-                {specialty.name}
-              </option>
-            ))}
-          </select>
-          <select
-            name="departmentId"
-            value={filters.departmentId}
-            onChange={onChange}
-          >
-            <option value="">Tất cả khoa/phòng ban</option>
-            {departments.map((department) => (
-              <option key={department._id} value={department._id}>
-                {department.name}
-              </option>
-            ))}
-          </select>
+        <div className="filters-toolbar">
+          <div className="filters-toolbar-fields">
+            <FilterSearchField
+              id="doctors-list-search"
+              placeholder="Tìm tên, email, giấy phép…"
+              value={filters.q}
+              onChange={(e) => setFilters((current) => ({ ...current, q: e.target.value, page: 1 }))}
+            />
+            <CustomSelect
+              className="filter-field"
+              label="Chuyên khoa"
+              value={filters.specialtyId}
+              placeholder="Tất cả chuyên khoa"
+              onChange={(specialtyId) => setFilters((current) => ({ ...current, specialtyId, page: 1 }))}
+              options={[
+                { value: "", label: "Tất cả chuyên khoa" },
+                ...specialties.map((specialty) => ({ value: specialty._id, label: specialty.name })),
+              ]}
+            />
+            <CustomSelect
+              className="filter-field"
+              label="Khoa/phòng ban"
+              value={filters.departmentId}
+              placeholder="Tất cả khoa/phòng ban"
+              onChange={(departmentId) => setFilters((current) => ({ ...current, departmentId, page: 1 }))}
+              options={[
+                { value: "", label: "Tất cả khoa/phòng ban" },
+                ...departments.map((department) => ({ value: department._id, label: department.name })),
+              ]}
+            />
+          </div>
         </div>
         <div className="filters-row">
           <label className="checkbox-row">

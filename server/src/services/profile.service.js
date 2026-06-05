@@ -17,7 +17,7 @@ function formatUser(user) {
 
 export async function getProfile(userId, role) {
   const user = await User.findById(userId);
-  if (!user) return { status: 404, body: { message: "User not found" } };
+  if (!user) return { status: 404, body: { message: "Không tìm thấy người dùng" } };
 
   const base = formatUser(user);
 
@@ -46,7 +46,7 @@ export async function getProfile(userId, role) {
       .populate("specialtyId", "name code")
       .populate("departmentId", "name")
       .lean();
-    if (!doctor) return { status: 404, body: { message: "Doctor profile not found" } };
+    if (!doctor) return { status: 404, body: { message: "Không tìm thấy hồ sơ bác sĩ" } };
 
     return {
       status: 200,
@@ -71,14 +71,14 @@ export async function getProfile(userId, role) {
 
 export async function updateProfile(userId, role, payload) {
   const user = await User.findById(userId);
-  if (!user) return { status: 404, body: { message: "User not found" } };
+  if (!user) return { status: 404, body: { message: "Không tìm thấy người dùng" } };
 
   const fullName = payload.fullName?.trim();
-  if (!fullName) return { status: 400, body: { message: "Full name is required" } };
+  if (!fullName) return { status: 400, body: { message: "Họ và tên là bắt buộc" } };
 
   const phone = payload.phone?.trim() || "";
   if (phone && !/^[\d\s+\-()]{8,20}$/.test(phone)) {
-    return { status: 400, body: { message: "Invalid phone number" } };
+    return { status: 400, body: { message: "Số điện thoại không hợp lệ" } };
   }
 
   user.fullName = fullName;
@@ -91,13 +91,13 @@ export async function updateProfile(userId, role, payload) {
 
     const gender = payload.gender?.trim() || "";
     if (gender && !GENDERS.includes(gender)) {
-      return { status: 400, body: { message: "Invalid gender value" } };
+      return { status: 400, body: { message: "Giới tính không hợp lệ" } };
     }
 
     if (payload.dateOfBirth) {
       const dob = new Date(payload.dateOfBirth);
       if (Number.isNaN(dob.getTime()) || dob > new Date()) {
-        return { status: 400, body: { message: "Invalid date of birth" } };
+        return { status: 400, body: { message: "Ngày sinh không hợp lệ" } };
       }
       patient.dateOfBirth = dob;
     } else {
@@ -113,7 +113,7 @@ export async function updateProfile(userId, role, payload) {
 
   if (role === "doctor") {
     const doctor = await Doctor.findOne({ userId: user._id });
-    if (!doctor) return { status: 404, body: { message: "Doctor profile not found" } };
+    if (!doctor) return { status: 404, body: { message: "Không tìm thấy hồ sơ bác sĩ" } };
     doctor.bio = payload.bio?.trim()?.slice(0, 1000) || "";
     await doctor.save();
   }

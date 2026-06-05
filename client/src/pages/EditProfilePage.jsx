@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { ProfileApiClient } from "../services/profileApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import { formatRoleLabel } from "../utils/roleLabels.js";
 
 const GENDER_OPTIONS = [
-  { value: "", label: "Prefer not to say" },
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
+  { value: "", label: "Không muốn tiết lộ" },
+  { value: "male", label: "Nam" },
+  { value: "female", label: "Nữ" },
+  { value: "other", label: "Khác" },
 ];
 
 export default function EditProfilePage() {
@@ -119,7 +121,7 @@ export default function EditProfilePage() {
       };
       setProfileData(updatedData);
       setForm(updatedData);
-      setSuccess("Profile updated successfully.");
+      setSuccess("Cập nhật hồ sơ thành công.");
       updateProfileMeta(data.fullName, data.phone);
       setIsModalOpen(false);
     } catch (err) {
@@ -143,15 +145,15 @@ export default function EditProfilePage() {
 
   const getGenderLabel = (val) => {
     const opt = GENDER_OPTIONS.find((o) => o.value === val);
-    return opt ? opt.label : "Not specified";
+    return opt ? opt.label : "Chưa cập nhật";
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return "Not specified";
+    if (!dateStr) return "Chưa cập nhật";
     try {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString("en-US", {
+      return d.toLocaleDateString("vi-VN", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -164,21 +166,21 @@ export default function EditProfilePage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>User Profile</h1>
-        <p>View your personal profile information. Click edit to make updates.</p>
+        <h1>Hồ sơ cá nhân</h1>
+        <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
       </div>
 
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading profile…
+          Đang tải hồ sơ…
         </div>
       ) : error ? (
         <div className="card form-card-centered">
           <div className="alert alert-error">{error}</div>
           <div style={{ marginTop: "1rem", textAlign: "center" }}>
             <Link to={backLink} className="btn btn-outline">
-              Back to Dashboard
+              Về trang cá nhân
             </Link>
           </div>
         </div>
@@ -195,71 +197,69 @@ export default function EditProfilePage() {
               <h2>
                 {profileData.fullName}
                 <span className={`profile-role-badge ${role}`}>
-                  {role}
+                  {formatRoleLabel(role)}
                 </span>
               </h2>
               <div className="profile-sub-meta">
                 <div>Email: <strong>{profileData.email}</strong></div>
-                <div>Phone: <strong>{profileData.phone || "Not specified"}</strong></div>
+                <div>Số điện thoại: <strong>{profileData.phone || "Chưa cập nhật"}</strong></div>
               </div>
             </div>
 
             <div className="profile-actions">
               <button onClick={handleOpenModal} className="btn btn-primary">
-                Edit Profile
+                Sửa hồ sơ
               </button>
             </div>
           </div>
 
-          {/* Patient Details */}
           {role === "patient" && (
             <div className="profile-grid-section">
-              <h3>Patient Information</h3>
+              <h3>Thông tin bệnh nhân</h3>
               <div className="profile-grid">
                 <div className="profile-item">
-                  <span className="profile-item-label">Date of birth</span>
+                  <span className="profile-item-label">Ngày sinh</span>
                   <span className="profile-item-value">{formatDate(profileData.dateOfBirth)}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Gender</span>
+                  <span className="profile-item-label">Giới tính</span>
                   <span className="profile-item-value">{getGenderLabel(profileData.gender)}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Address</span>
-                  <span className="profile-item-value">{profileData.address || "Not specified"}</span>
+                  <span className="profile-item-label">Địa chỉ</span>
+                  <span className="profile-item-value">{profileData.address || "Chưa cập nhật"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Emergency contact name</span>
-                  <span className="profile-item-value">{profileData.emergencyContactName || "Not specified"}</span>
+                  <span className="profile-item-label">Tên liên hệ khẩn cấp</span>
+                  <span className="profile-item-value">{profileData.emergencyContactName || "Chưa cập nhật"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Emergency contact phone</span>
-                  <span className="profile-item-value">{profileData.emergencyContactPhone || "Not specified"}</span>
+                  <span className="profile-item-label">SĐT liên hệ khẩn cấp</span>
+                  <span className="profile-item-value">{profileData.emergencyContactPhone || "Chưa cập nhật"}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Doctor Details */}
           {role === "doctor" && (
             <div className="profile-grid-section">
-              <h3>Doctor Information</h3>
+              <h3>Thông tin bác sĩ</h3>
               <div className="profile-grid">
                 <div className="profile-item">
-                  <span className="profile-item-label">License Number</span>
-                  <span className="profile-item-value">{profileData.licenseNo || "Not specified"}</span>
+                  <span className="profile-item-label">Số giấy phép</span>
+                  <span className="profile-item-value">{profileData.licenseNo || "Chưa cập nhật"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Specialty</span>
-                  <span className="profile-item-value">{profileData.specialtyName || "Not specified"}</span>
+                  <span className="profile-item-label">Chuyên khoa</span>
+                  <span className="profile-item-value">{profileData.specialtyName || "Chưa cập nhật"}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Department</span>
-                  <span className="profile-item-value">{profileData.departmentName || "Not specified"}</span>
+                  <span className="profile-item-label">Khoa/phòng ban</span>
+                  <span className="profile-item-value">{profileData.departmentName || "Chưa cập nhật"}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Professional Bio</span>
-                  <span className="profile-item-value bio-text">{profileData.bio || "No professional bio provided yet."}</span>
+                  <span className="profile-item-label">Tiểu sử nghề nghiệp</span>
+                  <span className="profile-item-value bio-text">{profileData.bio || "Chưa có tiểu sử nghề nghiệp."}</span>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function EditProfilePage() {
 
           <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
             <Link to={backLink} className="btn btn-outline">
-              Back to Dashboard
+              Về trang cá nhân
             </Link>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function EditProfilePage() {
         <div className="modal-backdrop" onClick={handleCloseModal}>
           <div className="card modal-card animate-scale" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Edit Profile</h3>
+              <h3>Sửa hồ sơ</h3>
               <button className="modal-close-btn" onClick={handleCloseModal}>
                 &times;
               </button>
@@ -287,14 +287,14 @@ export default function EditProfilePage() {
               {modalError && <div className="alert alert-error">{modalError}</div>}
 
               <fieldset className="form-section">
-                <legend>Account</legend>
+                <legend>Tài khoản</legend>
                 <div className="form-grid">
                   <label>
-                    Full name
-                    <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Your full name" />
+                    Họ và tên
+                    <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Họ và tên đầy đủ" />
                   </label>
                   <label>
-                    Phone number
+                    Số điện thoại
                     <input name="phone" value={form.phone} onChange={onChange} placeholder="0901234567" />
                   </label>
                   <label className="form-grid-span-2">
@@ -306,42 +306,38 @@ export default function EditProfilePage() {
 
               {role === "patient" && (
                 <fieldset className="form-section">
-                  <legend>Patient details</legend>
+                  <legend>Thông tin bệnh nhân</legend>
                   <div className="form-grid">
                     <label>
-                      Date of birth
+                      Ngày sinh
                       <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
                     </label>
-                    <label>
-                      Gender
-                      <select name="gender" value={form.gender} onChange={onChange}>
-                        {GENDER_OPTIONS.map((opt) => (
-                          <option key={opt.value || "none"} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <CustomSelect
+                      label="Giới tính"
+                      value={form.gender}
+                      onChange={(gender) => onChange({ target: { name: "gender", value: gender } })}
+                      options={GENDER_OPTIONS}
+                    />
                     <label className="form-grid-span-2">
-                      Address
-                      <input name="address" value={form.address} onChange={onChange} placeholder="City, district, street…" />
+                      Địa chỉ
+                      <input name="address" value={form.address} onChange={onChange} placeholder="Thành phố, quận/huyện, đường…" />
                     </label>
                     <label>
-                      Emergency contact name
+                      Tên liên hệ khẩn cấp
                       <input
                         name="emergencyContactName"
                         value={form.emergencyContactName}
                         onChange={onChange}
-                        placeholder="Contact person name"
+                        placeholder="Tên người liên hệ"
                       />
                     </label>
                     <label>
-                      Emergency contact phone
+                      SĐT liên hệ khẩn cấp
                       <input
                         name="emergencyContactPhone"
                         value={form.emergencyContactPhone}
                         onChange={onChange}
-                        placeholder="Phone number"
+                        placeholder="Số điện thoại"
                       />
                     </label>
                   </div>
@@ -350,28 +346,28 @@ export default function EditProfilePage() {
 
               {role === "doctor" && (
                 <fieldset className="form-section">
-                  <legend>Doctor details</legend>
+                  <legend>Thông tin bác sĩ</legend>
                   <div className="form-grid">
                     <label>
-                      License number
+                      Số giấy phép
                       <input name="licenseNo" value={form.licenseNo} readOnly disabled className="input-readonly" />
                     </label>
                     <label>
-                      Specialty
+                      Chuyên khoa
                       <input name="specialtyName" value={form.specialtyName} readOnly disabled className="input-readonly" />
                     </label>
                     <label className="form-grid-span-2">
-                      Department
+                      Khoa/phòng ban
                       <input name="departmentName" value={form.departmentName} readOnly disabled className="input-readonly" />
                     </label>
                     <label className="form-grid-span-2">
-                      Professional bio
+                      Tiểu sử nghề nghiệp
                       <textarea
                         name="bio"
                         value={form.bio}
                         onChange={onChange}
                         rows={4}
-                        placeholder="Brief introduction for patients…"
+                        placeholder="Viết vài dòng giới thiệu về bản thân…"
                         maxLength={1000}
                       />
                     </label>
@@ -381,10 +377,10 @@ export default function EditProfilePage() {
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Saving…" : "Save Changes"}
+                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
                 </button>
                 <button type="button" className="btn btn-outline" onClick={handleCloseModal}>
-                  Cancel
+                  Hủy
                 </button>
               </div>
             </form>

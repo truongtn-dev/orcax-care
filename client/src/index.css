@@ -56,6 +56,7 @@
   /* Layout */
   --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
   --header-height: 72px;
+  --page-gutter: clamp(1rem, 2.5vw, 2.5rem);
   --container: 1200px;
   --container-narrow: 480px;
   --radius-sm: 10px;
@@ -124,10 +125,15 @@ body::after {
   overflow-x: clip;
 }
 
-img,
-svg {
+img {
   display: block;
   max-width: 100%;
+  height: auto;
+}
+
+svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 a {

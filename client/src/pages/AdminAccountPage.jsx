@@ -1,23 +1,33 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AdminLayout from "../components/AdminLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
+import FilterSearchField from "../components/FilterSearchField.jsx";
+import AppPagination from "../components/AppPagination.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminCreateAccountForm } from "../utils/validation.js";
 
 const FILTER_ROLE_OPTIONS = [
-  { value: "", label: "All roles" },
-  { value: "patient", label: "Patient" },
-  { value: "doctor", label: "Doctor" },
-  { value: "admin", label: "Admin" },
+  { value: "", label: "Tất cả vai trò" },
+  { value: "patient", label: "Bệnh nhân" },
+  { value: "doctor", label: "Bác sĩ" },
+  { value: "staff", label: "Nhân viên" },
+  { value: "admin", label: "Quản trị viên" },
 ];
 
 const CREATE_ROLE_OPTIONS = [
-  { value: "patient", label: "Patient" },
-  { value: "doctor", label: "Doctor" },
-  { value: "admin", label: "Admin" },
+  { value: "patient", label: "Bệnh nhân" },
+  { value: "doctor", label: "Bác sĩ" },
+  { value: "admin", label: "Quản trị viên" },
 ];
+
+function formatRoleLabel(role) {
+  const labels = { admin: "Quản trị viên", doctor: "Bác sĩ", staff: "Nhân viên", patient: "Bệnh nhân" };
+  return labels[role] || role;
+}
 
 const EMPTY_FORM = {
   fullName: "",
@@ -179,44 +189,42 @@ export default function AdminAccountPage() {
   const fieldError = (name) => fieldErrors[name];
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <Link to="/admin" className="back-link">
-              ← Admin Console
-            </Link>
-            <h1>Accounts</h1>
-            <p>View and manage all user accounts on the platform.</p>
-          </div>
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Danh sách tài khoản"
+        description="Xem và quản lý tài khoản người dùng, vai trò và trạng thái hoạt động."
+        actions={
           <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Add Account
+            Thêm tài khoản
           </button>
-        </div>
-      </div>
-
+        }
+      >
       <div className="card filters-card">
-        <div className="filters-row">
-          <input
-            type="search"
-            placeholder="Search by name, email, or phone…"
-            value={filters.q}
-            onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters({ q: filters.q })}
-          />
-          <select value={filters.role} onChange={(e) => applyFilters({ role: e.target.value })}>
-            {FILTER_ROLE_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-            Search
-          </button>
-          <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear
-          </button>
+        <div className="filters-toolbar">
+          <div className="filters-toolbar-fields">
+            <FilterSearchField
+              id="admin-account-list-search"
+              placeholder="Tìm theo tên, email hoặc số điện thoại…"
+              value={filters.q}
+              onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+              onSearch={() => applyFilters({ q: filters.q })}
+            />
+            <CustomSelect
+              className="filter-field"
+              label="Vai trò"
+              value={filters.role}
+              onChange={(role) => applyFilters({ role })}
+              options={FILTER_ROLE_OPTIONS}
+            />
+          </div>
+          <div className="filters-toolbar-actions">
+            <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
+              Tìm kiếm
+            </button>
+            <button type="button" className="btn btn-outline" onClick={clearFilters}>
+              Xóa lọc
+            </button>
+          </div>
         </div>
       </div>
 
@@ -225,16 +233,16 @@ export default function AdminAccountPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Loading accounts…
+          Đang tải tài khoản…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>No accounts found</h3>
-          <p>Try adjusting your search criteria or clearing filters.</p>
+          <h3>Không tìm thấy tài khoản</h3>
+          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc xóa bộ lọc.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Clear Filters
+            Xóa lọc
           </button>
         </div>
       )}
@@ -245,15 +253,15 @@ export default function AdminAccountPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Full name</th>
+                  <th>Họ và tên</th>
                   <th>Email</th>
-                  <th>Role</th>
-                  <th>Phone</th>
-                  <th>Status</th>
-                  <th>Email verified</th>
-                  <th>Last login</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th>Vai trò</th>
+                  <th>Số điện thoại</th>
+                  <th>Trạng thái</th>
+                  <th>Email đã xác minh</th>
+                  <th>Đăng nhập gần nhất</th>
+                  <th>Ngày tạo</th>
+                  <th className="table-actions-col">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -266,37 +274,39 @@ export default function AdminAccountPage() {
                     </td>
                     <td>{account.email}</td>
                     <td>
-                      <span className="role-badge">{account.role}</span>
+                      <span className="role-badge">{formatRoleLabel(account.role)}</span>
                     </td>
                     <td>{account.phone || "—"}</td>
                     <td>
                       <div className="status-badge-group">
-                        <StatusBadge active={account.isActive} label={account.isActive ? "Active" : "Inactive"} />
+                        <StatusBadge active={account.isActive} label={account.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
                         {account.isLocked && (
-                          <span className="status-badge status-badge-locked">Locked</span>
+                          <span className="status-badge status-badge-locked">Đã khóa</span>
                         )}
                       </div>
                     </td>
                     <td>
                       <StatusBadge
                         active={account.isEmailVerified}
-                        label={account.isEmailVerified ? "Verified" : "Pending"}
+                        label={account.isEmailVerified ? "Đã xác minh" : "Chưa xác minh"}
                       />
                     </td>
                     <td>{formatDate(account.lastLoginAt)}</td>
                     <td>{formatDate(account.createdAt)}</td>
-                    <td>
+                    <td className="table-actions-col">
+                      <div className="table-row-actions">
                       <Link
                         to={`/admin/account/${account._id}`}
                         className="btn btn-outline btn-icon"
-                        aria-label={`View ${account.fullName}`}
-                        title="View details"
+                        aria-label={`Xem ${account.fullName}`}
+                        title="Xem chi tiết"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                           <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                           <circle cx="12" cy="12" r="3" />
                         </svg>
                       </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -306,28 +316,15 @@ export default function AdminAccountPage() {
         </div>
       )}
 
-      {result.totalPages > 1 && (
-        <div className="pagination">
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page <= 1}
-            onClick={() => applyFilters({ page: result.page - 1 })}
-          >
-            Previous
-          </button>
-          <span className="pagination-info">
-            Page {result.page} of {result.totalPages} · {result.total} accounts
-          </span>
-          <button
-            type="button"
-            className="btn btn-outline"
-            disabled={result.page >= result.totalPages}
-            onClick={() => applyFilters({ page: result.page + 1 })}
-          >
-            Next
-          </button>
-        </div>
+      {!loading && result.total > 0 && (
+        <AppPagination
+          page={result.page}
+          totalPages={result.totalPages}
+          total={result.total}
+          limit={filters.limit}
+          itemLabel="tài khoản"
+          onPageChange={(page) => applyFilters({ page })}
+        />
       )}
 
       {showCreateModal && (
@@ -341,10 +338,10 @@ export default function AdminAccountPage() {
           >
             <div className="modal-header">
               <div>
-                <h2 id="create-account-title">Add New Account</h2>
-                <p>Create a patient, doctor, or admin account.</p>
+                <h2 id="create-account-title">Thêm tài khoản mới</h2>
+                <p>Tạo tài khoản bệnh nhân, bác sĩ hoặc quản trị viên.</p>
               </div>
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
+              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Đóng">
                 ×
               </button>
             </div>
@@ -354,19 +351,19 @@ export default function AdminAccountPage() {
               {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
 
               <label>
-                Full name
+                Họ và tên
                 <input
                   name="fullName"
                   value={form.fullName}
                   onChange={onFormChange}
-                  placeholder="Nguyen Van A"
+                  placeholder="Nguyễn Văn A"
                   aria-invalid={Boolean(fieldError("fullName"))}
                 />
                 {fieldError("fullName") && <span className="field-error">{fieldError("fullName")}</span>}
               </label>
 
               <label>
-                Email address
+                Địa chỉ email
                 <input
                   type="email"
                   name="email"
@@ -379,7 +376,7 @@ export default function AdminAccountPage() {
               </label>
 
               <label>
-                Phone number
+                Số điện thoại
                 <input
                   name="phone"
                   value={form.phone}
@@ -390,62 +387,55 @@ export default function AdminAccountPage() {
                 {fieldError("phone") && <span className="field-error">{fieldError("phone")}</span>}
               </label>
 
-              <label>
-                Role
-                <select name="role" value={form.role} onChange={onFormChange} aria-invalid={Boolean(fieldError("role"))}>
-                  {CREATE_ROLE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+              <div>
+                <CustomSelect
+                  label="Vai trò"
+                  value={form.role}
+                  onChange={(role) => onFormChange({ target: { name: "role", value: role } })}
+                  options={CREATE_ROLE_OPTIONS}
+                  invalid={Boolean(fieldError("role"))}
+                />
                 {fieldError("role") && <span className="field-error">{fieldError("role")}</span>}
-              </label>
+              </div>
 
               {form.role === "doctor" && (
                 <>
-                  <label>
-                    Specialty
-                    <select
-                      name="specialtyId"
+                  <div>
+                    <CustomSelect
+                      label="Chuyên khoa"
                       value={form.specialtyId}
-                      onChange={onFormChange}
-                      aria-invalid={Boolean(fieldError("specialtyId"))}
-                    >
-                      <option value="">Select specialty</option>
-                      {specialties.map((item) => (
-                        <option key={item._id} value={item._id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Chọn chuyên khoa"
+                      onChange={(specialtyId) => onFormChange({ target: { name: "specialtyId", value: specialtyId } })}
+                      options={[
+                        { value: "", label: "Chọn chuyên khoa" },
+                        ...specialties.map((item) => ({ value: item._id, label: item.name })),
+                      ]}
+                      invalid={Boolean(fieldError("specialtyId"))}
+                    />
                     {fieldError("specialtyId") && (
                       <span className="field-error">{fieldError("specialtyId")}</span>
                     )}
-                  </label>
+                  </div>
 
-                  <label>
-                    Department
-                    <select
-                      name="departmentId"
+                  <div>
+                    <CustomSelect
+                      label="Khoa/phòng ban"
                       value={form.departmentId}
-                      onChange={onFormChange}
-                      aria-invalid={Boolean(fieldError("departmentId"))}
-                    >
-                      <option value="">Select department</option>
-                      {departments.map((item) => (
-                        <option key={item._id} value={item._id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Chọn khoa/phòng ban"
+                      onChange={(departmentId) => onFormChange({ target: { name: "departmentId", value: departmentId } })}
+                      options={[
+                        { value: "", label: "Chọn khoa/phòng ban" },
+                        ...departments.map((item) => ({ value: item._id, label: item.name })),
+                      ]}
+                      invalid={Boolean(fieldError("departmentId"))}
+                    />
                     {fieldError("departmentId") && (
                       <span className="field-error">{fieldError("departmentId")}</span>
                     )}
-                  </label>
+                  </div>
 
                   <label>
-                    License number
+                    Số giấy phép
                     <input
                       name="licenseNo"
                       value={form.licenseNo}
@@ -459,39 +449,39 @@ export default function AdminAccountPage() {
                   </label>
 
                   <label>
-                    Bio
+                    Tiểu sử
                     <textarea
                       name="bio"
                       value={form.bio}
                       onChange={onFormChange}
                       rows={3}
-                      placeholder="Short professional bio (optional)"
+                      placeholder="Tiểu sử nghề nghiệp ngắn (tùy chọn)"
                     />
                   </label>
                 </>
               )}
 
               <label>
-                Password
+                Mật khẩu
                 <input
                   type="password"
                   name="password"
                   value={form.password}
                   onChange={onFormChange}
-                  placeholder="Min. 8 characters, letters & numbers"
+                  placeholder="Tối thiểu 8 ký tự, chữ và số"
                   aria-invalid={Boolean(fieldError("password"))}
                 />
                 {fieldError("password") && <span className="field-error">{fieldError("password")}</span>}
               </label>
 
               <label>
-                Confirm password
+                Xác nhận mật khẩu
                 <input
                   type="password"
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={onFormChange}
-                  placeholder="Re-enter password"
+                  placeholder="Nhập lại mật khẩu"
                   aria-invalid={Boolean(fieldError("confirmPassword"))}
                 />
                 {fieldError("confirmPassword") && (
@@ -501,16 +491,17 @@ export default function AdminAccountPage() {
 
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
-                  Cancel
+                  Hủy
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>
-                  {creating ? "Creating…" : "Create Account"}
+                  {creating ? "Đang tạo…" : "Tạo tài khoản"}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }
