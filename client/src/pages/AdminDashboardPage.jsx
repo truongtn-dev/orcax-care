@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import "./AdminDashboardPage.css";
 import PageLayout from "../components/PageLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
@@ -125,7 +126,7 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await AdminApiClient.listClinicRooms();
+      const { data } = await AdminApiClient.listClinicRooms({ limit: 500 });
       setRooms(data.items || []);
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -434,9 +435,15 @@ export default function AdminDashboardPage() {
               Departments
             </button>
           </div>
+          <div className="admin-quick-links">
+            <Link to="/admin/account" className="btn btn-outline btn-sm">Account list</Link>
+            <Link to="/admin/patient" className="btn btn-outline btn-sm">Patients</Link>
+            <Link to="/admin/specialty" className="btn btn-outline btn-sm">Specialty manager</Link>
+            <Link to="/admin/clinic-room" className="btn btn-outline btn-sm">Clinic rooms</Link>
+          </div>
         </div>
       </ScrollReveal>
-      
+
       {toast.show && (
         <div className={`toast-notification toast-${toast.type} animate-slide-in`}>
           <div className="toast-icon">

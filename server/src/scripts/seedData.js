@@ -28,18 +28,39 @@ const doctors = [
 ];
 
 export async function runSeed() {
-  const passwordHash = await bcrypt.hash("Admin@123", 10);
+  const defaultAdminHash = await bcrypt.hash("Admin@123", 10);
   let admin = await User.findOne({ email: "admin@orcaxcare.com" });
   if (!admin) {
     await User.create({
       email: "admin@orcaxcare.com",
-      passwordHash,
+      passwordHash: defaultAdminHash,
       role: "admin",
       fullName: "System Administrator",
       isActive: true,
       isEmailVerified: true,
     });
     console.log("Created admin: admin@orcaxcare.com / Admin@123");
+  }
+
+  const truongAdminHash = await bcrypt.hash("Truong123@", 10);
+  let truongAdmin = await User.findOne({ email: "truongtn.dev@gmail.com" });
+  if (!truongAdmin) {
+    await User.create({
+      email: "truongtn.dev@gmail.com",
+      passwordHash: truongAdminHash,
+      role: "admin",
+      fullName: "Nguyen Thanh Truong",
+      isActive: true,
+      isEmailVerified: true,
+    });
+    console.log("Created admin: truongtn.dev@gmail.com / Truong123@");
+  } else if (truongAdmin.role !== "admin") {
+    truongAdmin.role = "admin";
+    truongAdmin.passwordHash = truongAdminHash;
+    truongAdmin.isActive = true;
+    truongAdmin.isEmailVerified = true;
+    await truongAdmin.save();
+    console.log("Updated to admin: truongtn.dev@gmail.com / Truong123@");
   }
 
   for (const s of specialties) {

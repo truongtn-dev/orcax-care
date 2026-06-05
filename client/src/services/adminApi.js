@@ -21,6 +21,10 @@ export const AdminApiClient = {
     return api.get("/api/admin/specialties", { params });
   },
 
+  listSpecialties(params) {
+    return api.get("/api/admin/specialties", { params });
+  },
+
   getDepartments(params) {
     return api.get("/api/admin/departments", { params });
   },
@@ -85,8 +89,20 @@ export const AdminApiClient = {
     return api.put(`/api/admin/specialties/${id}`, payload);
   },
 
-  listClinicRooms() {
-    return api.get("/api/admin/clinic-rooms");
+  deleteSpecialty(id) {
+    return api.delete(`/api/admin/specialties/${id}`);
+  },
+
+  listPatients(params) {
+    return api.get("/api/admin/patients", { params });
+  },
+
+  listClinicRoomDepartments() {
+    return api.get("/api/admin/clinic-rooms/departments");
+  },
+
+  listClinicRooms(params) {
+    return api.get("/api/admin/clinic-rooms", { params });
   },
 
   createClinicRoom(payload) {

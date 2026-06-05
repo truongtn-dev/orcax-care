@@ -68,8 +68,13 @@ async function fetchDoctorRecords(matchStage = { isActive: true }) {
       $project: {
         _id: 1,
         bio: 1,
-        photoUrl: 1,
+        photoUrl: { $ifNull: ["$photoUrl", "$user.photoUrl"] },
         licenseNo: 1,
+        languages: 1,
+        workplace: 1,
+        reviewRating: 1,
+        reviewCount: 1,
+        reviewSummary: 1,
         fullName: "$user.fullName",
         email: "$user.email",
         phone: "$user.phone",
@@ -82,6 +87,32 @@ async function fetchDoctorRecords(matchStage = { isActive: true }) {
   ];
 
   return Doctor.aggregate(pipeline);
+}
+
+export async function getDoctorById(doctorId) {
+  if (!doctorId || !mongoose.Types.ObjectId.isValid(doctorId)) {
+    return null;
+  }
+
+  const matchStage = { isActive: true, _id: new mongoose.Types.ObjectId(doctorId) };
+  const doctors = await fetchDoctorRecords(matchStage);
+  return doctors.length > 0 ? doctors[0] : null;
+}
+
+export async function getFeaturedDoctors(limit = 6) {
+  const doctors = await fetchDoctorRecords({ isActive: true });
+  const sorted = doctors
+    .map((doc) => ({
+      ...doc,
+      reviewRating: doc.reviewRating != null ? doc.reviewRating : 0,
+      reviewCount: doc.reviewCount || 0,
+    }))
+    .sort((a, b) => {
+      if (b.reviewRating !== a.reviewRating) return b.reviewRating - a.reviewRating;
+      if (b.reviewCount !== a.reviewCount) return b.reviewCount - a.reviewCount;
+      return a.fullName.localeCompare(b.fullName);
+    });
+  return sorted.slice(0, Math.max(1, Math.min(12, parseInt(limit, 10) || 6)));
 }
 
 function applyIdFilter(matchStage, specialtyId, departmentId) {

@@ -20,6 +20,30 @@ export async function listDepartments(req, res) {
   }
 }
 
+export async function getDoctor(req, res) {
+  try {
+    const doctor = await DoctorSearchService.getDoctorById(req.params.id);
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
+    return res.json(doctor);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function listFeaturedDoctors(req, res) {
+  try {
+    const { limit } = req.query;
+    const items = await DoctorSearchService.getFeaturedDoctors(limit);
+    return res.json({ items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 export async function searchDoctors(req, res) {
   try {
     const { q, name, specialtyId, departmentId, page, limit } = req.query;

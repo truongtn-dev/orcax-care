@@ -12,4 +12,12 @@ export const PublicApiClient = {
   searchDoctors(params) {
     return api.get("/api/public/doctors", { params });
   },
+
+  getFeaturedDoctors(limit = 6) {
+    return api.get("/api/public/doctors/featured", { params: { limit } });
+  },
+
+  getDoctor(id) {
+    return api.get(`/api/public/doctors/${id}`);
+  },
 };

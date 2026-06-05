@@ -128,6 +128,102 @@ export function validateAdminCreateAccountForm(form) {
   return errors;
 }
 
+export function validateAdminCreateClinicRoomForm(form) {
+  const errors = {};
+
+  if (!form.departmentId) {
+    errors.departmentId = "Department is required";
+  }
+
+  const roomCode = form.roomCode?.trim().toUpperCase();
+  if (!roomCode) {
+    errors.roomCode = "Room code is required";
+  } else if (!/^[A-Z0-9_-]{2,12}$/.test(roomCode)) {
+    errors.roomCode = "Room code must be 2–12 characters (letters, numbers, hyphen, underscore)";
+  }
+
+  const name = form.name?.trim();
+  if (!name) {
+    errors.name = "Room name is required";
+  } else if (name.length > 100) {
+    errors.name = "Room name must be at most 100 characters";
+  }
+
+  const floor = form.floor?.trim() || "";
+  if (floor.length > 20) {
+    errors.floor = "Floor must be at most 20 characters";
+  }
+
+  const capacityNum = parseInt(form.capacity, 10);
+  if (!capacityNum || capacityNum < 1 || capacityNum > 50) {
+    errors.capacity = "Capacity must be between 1 and 50";
+  }
+
+  const equipmentNotes = form.equipmentNotes?.trim() || "";
+  if (equipmentNotes.length > 500) {
+    errors.equipmentNotes = "Equipment notes must be at most 500 characters";
+  }
+
+  return errors;
+}
+
+export function validateAdminCreateSpecialtyForm(form) {
+  const errors = {};
+
+  const code = form.code?.trim().toUpperCase();
+  if (!code) {
+    errors.code = "Code is required";
+  } else if (!/^[A-Z0-9_-]{2,12}$/.test(code)) {
+    errors.code = "Code must be 2–12 characters (letters, numbers, hyphen, underscore)";
+  }
+
+  const name = form.name?.trim();
+  if (!name) {
+    errors.name = "Name is required";
+  } else if (name.length > 100) {
+    errors.name = "Name must be at most 100 characters";
+  }
+
+  const description = form.description?.trim() || "";
+  if (description.length > 500) {
+    errors.description = "Description must be at most 500 characters";
+  }
+
+  return errors;
+}
+
+export function validateAdminEditPatientForm(form) {
+  const errors = {};
+
+  if (form.dateOfBirth) {
+    const dob = new Date(form.dateOfBirth);
+    if (Number.isNaN(dob.getTime()) || dob > new Date()) {
+      errors.dateOfBirth = "Invalid date of birth";
+    }
+  }
+
+  if (form.gender && !["male", "female", "other"].includes(form.gender)) {
+    errors.gender = "Invalid gender value";
+  }
+
+  const address = form.address?.trim() || "";
+  if (address.length > 300) {
+    errors.address = "Address must be at most 300 characters";
+  }
+
+  const emergencyContactName = form.emergencyContactName?.trim() || "";
+  if (emergencyContactName.length > 120) {
+    errors.emergencyContactName = "Emergency contact name must be at most 120 characters";
+  }
+
+  const emergencyContactPhone = form.emergencyContactPhone?.trim() || "";
+  if (emergencyContactPhone && !/^[\d\s+\-()]{8,20}$/.test(emergencyContactPhone)) {
+    errors.emergencyContactPhone = "Invalid emergency contact phone number";
+  }
+
+  return errors;
+}
+
 export function firstFormError(errors) {
   return Object.values(errors)[0] || null;
 }

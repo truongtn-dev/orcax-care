@@ -14,8 +14,14 @@ import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
+import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
+import AdminPatientDetailPage from "./pages/AdminPatientDetailPage.jsx";
+import AdminPatientEditPage from "./pages/AdminPatientEditPage.jsx";
+import AdminPatientPage from "./pages/AdminPatientPage.jsx";
+import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
+import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
@@ -176,6 +182,47 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/patient/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminPatientEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patient/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminPatientDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patient"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminPatientPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/specialty"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminSpecialtyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/clinic-room"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminClinicRoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/doctor/:id" element={<DoctorPublicProfilePage />} />
           <Route
             path="/doctor"
             element={

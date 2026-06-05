@@ -4,6 +4,12 @@
   border-bottom: 1px solid var(--glass-border-light);
   padding-bottom: 2px;
 }
+.admin-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
 .tab-menu {
   display: flex;
   gap: 0.5rem;

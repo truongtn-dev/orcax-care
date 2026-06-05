@@ -1,8 +1,10 @@
 import { Router } from "express";
 import * as AdminAccountController from "../controllers/adminAccount.controller.js";
+import * as AdminClinicRoomController from "../controllers/adminClinicRoom.controller.js";
 import * as AdminDoctorController from "../controllers/adminDoctor.controller.js";
 import * as AdminMasterController from "../controllers/adminMaster.controller.js";
 import * as AdminPatientController from "../controllers/adminPatient.controller.js";
+import * as AdminSpecialtyController from "../controllers/adminSpecialty.controller.js";
 import * as AdminController from "../controllers/admin.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -34,14 +36,22 @@ adminRouter.get("/patients", AdminPatientController.listPatients);
 adminRouter.get("/patients/:id", AdminPatientController.getPatient);
 adminRouter.put("/patients/:id", AdminPatientController.updatePatient);
 
-adminRouter.get("/specialties", AdminMasterController.listSpecialties);
-adminRouter.post("/specialties", AdminController.createSpecialty);
+adminRouter.get("/specialties", (req, res) => {
+  const { q, page, limit, isActive } = req.query;
+  if (q || page || limit || isActive !== undefined) {
+    return AdminSpecialtyController.listSpecialties(req, res);
+  }
+  return AdminMasterController.listSpecialties(req, res);
+});
+adminRouter.post("/specialties", AdminSpecialtyController.createSpecialty);
 adminRouter.put("/specialties/:specialtyId", AdminController.updateSpecialty);
+adminRouter.delete("/specialties/:id", AdminSpecialtyController.deleteSpecialty);
 
 adminRouter.get("/departments", AdminMasterController.listDepartments);
 adminRouter.post("/departments", AdminMasterController.createDepartment);
 adminRouter.get("/departments/:id", AdminMasterController.getDepartmentDetail);
 
-adminRouter.get("/clinic-rooms", AdminController.listClinicRooms);
-adminRouter.post("/clinic-rooms", AdminController.createClinicRoom);
-adminRouter.put("/clinic-rooms/:roomId", AdminController.updateClinicRoom);
+adminRouter.get("/clinic-rooms/departments", AdminClinicRoomController.listDepartmentOptions);
+adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);
+adminRouter.post("/clinic-rooms", AdminClinicRoomController.createClinicRoom);
+adminRouter.put("/clinic-rooms/:roomId", AdminClinicRoomController.updateClinicRoom);

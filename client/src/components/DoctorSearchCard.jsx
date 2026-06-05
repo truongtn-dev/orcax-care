@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 function getInitials(name) {
   if (!name) return "D";
   const parts = name.trim().split(/\s+/);
@@ -6,7 +8,7 @@ function getInitials(name) {
 }
 
 export default function DoctorSearchCard({ doctor }) {
-  const { fullName, bio, photoUrl, specialty, department, licenseNo } = doctor;
+  const { _id, fullName, bio, photoUrl, specialty, department, licenseNo } = doctor;
   const initials = getInitials(fullName);
 
   return (
@@ -71,9 +73,9 @@ export default function DoctorSearchCard({ doctor }) {
           </svg>
           Verified profile
         </span>
-        <button type="button" className="btn btn-primary btn-sm doctor-card-cta" disabled title="Coming soon">
+        <Link to={`/doctor/${_id}`} className="btn btn-primary btn-sm doctor-card-cta">
           View profile
-        </button>
+        </Link>
       </div>
     </article>
   );
