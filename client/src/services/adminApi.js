@@ -136,4 +136,8 @@ export const AdminApiClient = {
   deleteWorkShift(id) {
     return api.delete(`/api/admin/work-shifts/${id}`);
   },
+
+  generateAppointmentSlots(payload) {
+    return api.post("/api/admin/appointment-slots/generate", payload);
+  },
 };

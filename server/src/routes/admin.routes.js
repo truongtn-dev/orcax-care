@@ -5,6 +5,7 @@ import * as AdminDoctorController from "../controllers/adminDoctor.controller.js
 import * as AdminMasterController from "../controllers/adminMaster.controller.js";
 import * as AdminPatientController from "../controllers/adminPatient.controller.js";
 import * as AdminSpecialtyController from "../controllers/adminSpecialty.controller.js";
+import * as AdminAppointmentSlotController from "../controllers/adminAppointmentSlot.controller.js";
 import * as AdminWorkShiftController from "../controllers/adminWorkShift.controller.js";
 import * as AdminController from "../controllers/admin.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
@@ -62,3 +63,8 @@ adminRouter.post("/work-shifts", AdminWorkShiftController.createWorkShift);
 adminRouter.get("/work-shifts/:id", AdminWorkShiftController.getWorkShift);
 adminRouter.put("/work-shifts/:id", AdminWorkShiftController.updateWorkShift);
 adminRouter.delete("/work-shifts/:id", AdminWorkShiftController.deleteWorkShift);
+
+adminRouter.post(
+  "/appointment-slots/generate",
+  AdminAppointmentSlotController.generateAppointmentSlots
+);

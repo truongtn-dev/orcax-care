@@ -57,9 +57,14 @@ export default function WorkShiftsListPage() {
             <h1>Work shifts</h1>
             <p>Weekly shift templates. Filter by doctor to review the recurring schedule.</p>
           </div>
-          <Link to="/admin/work-shifts/new" className="btn btn-primary">
-            Create shift
-          </Link>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <Link to="/admin/appointment-slots/generate" className="btn btn-secondary">
+              Generate slots
+            </Link>
+            <Link to="/admin/work-shifts/new" className="btn btn-primary">
+              Create shift
+            </Link>
+          </div>
         </div>
       </div>
 

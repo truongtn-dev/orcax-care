@@ -29,6 +29,46 @@ export function computeSlotDurationMin(startTime, endTime, maxPatients) {
   return Math.max(15, Math.floor(span / maxPatients));
 }
 
+export function buildSlotTimes(startTime, endTime, slotDurationMin, maxPatients) {
+  const slots = [];
+  let cursor = timeToMinutes(startTime);
+  const end = timeToMinutes(endTime);
+  const duration = parseInt(slotDurationMin, 10);
+
+  for (let i = 0; i < maxPatients && cursor + duration <= end; i += 1) {
+    slots.push({
+      startTime: minutesToTime(cursor),
+      endTime: minutesToTime(cursor + duration),
+    });
+    cursor += duration;
+  }
+
+  return slots;
+}
+
+export function parseDateOnly(value) {
+  if (!value || typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return null;
+  const date = new Date(`${trimmed}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function eachDateInclusive(startDate, endDate) {
+  const dates = [];
+  const cursor = new Date(startDate);
+  cursor.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(0, 0, 0, 0);
+
+  while (cursor <= end) {
+    dates.push(new Date(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return dates;
+}
+
 export const DAY_OF_WEEK_LABELS = [
   "Chủ nhật",
   "Thứ 2",
