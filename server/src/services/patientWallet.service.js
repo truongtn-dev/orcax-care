@@ -1,12 +1,20 @@
 import { getApiPublicOrigin, getClientOrigin, getWalletLimits } from "../config/wallet.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import {
-  createMomoPaymentLink,
-  isMomoMockMode,
-  isMomoPaymentSuccess,
-  verifyMomoIpnSignature,
-} from "./momo.service.js";
+  buildVnpayIpnFailure,
+  buildVnpayIpnSuccess,
+  createVnpayPaymentUrl,
+  isVnpayMockMode,
+  isVnpayPaymentSuccess,
+  verifyVnpayCallback,
+} from "./vnpay.service.js";
 import { createPayosPaymentLink, isPayosMockMode, verifyPayosPayment } from "./payos.service.js";
+import {
+  createSepayCheckout,
+  isSepayMockMode,
+  isSepayOrderPaid,
+  verifySepayIpnSecret,
+} from "./sepay.service.js";
 import {
   completeTopupTransaction,
   deductWalletBalance,
@@ -39,11 +47,13 @@ export async function getPatientWallet(userId, query = {}) {
       ...overview,
       paymentMethods: [
         { id: "payos", label: "PayOS", enabled: true },
-        { id: "momo", label: "Momo", enabled: true },
+        { id: "vnpay", label: "VNPay", enabled: true },
+        { id: "sepay", label: "SePay", enabled: true },
       ],
       limits: { minTopup, maxTopup },
       payosMockMode: isPayosMockMode(),
-      momoMockMode: isMomoMockMode(),
+      vnpayMockMode: isVnpayMockMode(),
+      sepayMockMode: isSepayMockMode(),
     },
   };
 }
@@ -161,35 +171,34 @@ export async function confirmMockPayosTopup(userId, payload = {}) {
   return result;
 }
 
-export async function createMomoTopup(userId, payload = {}, req) {
+export async function createVnpayTopup(userId, payload = {}, req) {
   const validated = validateTopupAmount(payload.amount);
   if (validated.error) return validated.error;
 
-  const providerOrderId = await generateUniqueProviderOrderId("MOMO");
-  const requestId = `${providerOrderId}-req`;
+  const providerOrderId = await generateUniqueProviderOrderId("VNP");
   const apiOrigin = getApiPublicOrigin(req);
   const clientOrigin = getClientOrigin();
-  const redirectUrl = `${apiOrigin}/api/payments/momo/return`;
-  const ipnUrl = `${apiOrigin}/api/payments/momo/ipn`;
+  const returnUrl = `${apiOrigin}/api/payments/vnpay/return`;
+  const ipnUrl = `${apiOrigin}/api/payments/vnpay/ipn`;
+  const ipAddr = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "127.0.0.1";
 
   const txn = await WalletTransaction.create({
     userId,
     type: "topup",
     amount: validated.value,
     status: "pending",
-    provider: "momo",
+    provider: "vnpay",
     providerOrderId,
-    paymentLinkId: requestId,
-    description: payload.description?.trim() || "OrcaXCare wallet top-up via Momo",
+    description: payload.description?.trim() || "OrcaXCare wallet top-up via VNPay",
   });
 
-  const payment = await createMomoPaymentLink({
+  const payment = createVnpayPaymentUrl({
     orderId: providerOrderId,
-    requestId,
     amount: validated.value,
     orderInfo: txn.description,
-    redirectUrl,
+    returnUrl,
     ipnUrl,
+    ipAddr,
   });
 
   return {
@@ -199,22 +208,22 @@ export async function createMomoTopup(userId, payload = {}, req) {
       providerOrderId,
       amount: validated.value,
       checkoutUrl: payment.mock
-        ? `${clientOrigin}/patient/wallet/momo/mock?orderId=${providerOrderId}`
+        ? `${clientOrigin}/patient/wallet/vnpay/mock?orderId=${providerOrderId}`
         : payment.payUrl,
-      paymentMethod: "momo",
+      paymentMethod: "vnpay",
       mockMode: payment.mock,
     },
   };
 }
 
-async function finalizeMomoTopup(payload = {}) {
-  const providerOrderId = payload.orderId;
+async function finalizeVnpayTopup(query = {}) {
+  const providerOrderId = query.vnp_TxnRef || query.orderId;
   if (!providerOrderId) {
-    return { redirectStatus: "failed", reason: "Missing Momo order id" };
+    return { redirectStatus: "failed", reason: "Missing VNPay order id" };
   }
 
-  if (!isMomoMockMode() && !verifyMomoIpnSignature(payload)) {
-    await markTopupFailed({ providerOrderId }, "Invalid Momo signature");
+  if (!isVnpayMockMode() && !verifyVnpayCallback(query)) {
+    await markTopupFailed({ providerOrderId }, "Invalid VNPay signature");
     return {
       redirectStatus: "failed",
       providerOrderId,
@@ -222,21 +231,21 @@ async function finalizeMomoTopup(payload = {}) {
     };
   }
 
-  if (!isMomoPaymentSuccess(payload) && !isMomoMockMode()) {
+  if (!isVnpayPaymentSuccess(query) && !isVnpayMockMode()) {
     await markTopupFailed(
       { providerOrderId },
-      payload.message || `Momo result code ${payload.resultCode}`
+      query.vnp_Message || `VNPay response code ${query.vnp_ResponseCode}`
     );
     return {
       redirectStatus: "failed",
       providerOrderId,
-      reason: payload.message || "Momo payment failed",
+      reason: query.vnp_Message || "VNPay payment failed",
     };
   }
 
   const result = await completeTopupTransaction(
     { providerOrderId },
-    { providerReferenceId: payload.transId || payload.requestId || "" }
+    { providerReferenceId: query.vnp_TransactionNo || query.vnp_BankTranNo || "" }
   );
 
   if (result.status === 200) {
@@ -254,44 +263,186 @@ async function finalizeMomoTopup(payload = {}) {
   };
 }
 
-export async function handleMomoReturn(query = {}) {
-  if (query.mock === "1" || isMomoMockMode()) {
-    return finalizeMomoTopup({
+export async function handleVnpayReturn(query = {}) {
+  if (query.mock === "1" || isVnpayMockMode()) {
+    return finalizeVnpayTopup({
       ...query,
-      orderId: query.orderId,
-      resultCode: 0,
-      transId: query.transId || `MOCK-${query.orderId}`,
-      accessKey: process.env.MOMO_ACCESS_KEY || "mock-access",
-      amount: query.amount || "",
-      extraData: "",
-      message: "Success",
-      orderInfo: "",
-      orderType: "momo_wallet",
-      partnerCode: process.env.MOMO_PARTNER_CODE || "MOCK",
-      payType: "webApp",
-      requestId: query.requestId || query.orderId,
-      responseTime: Date.now(),
-      signature: query.signature || "mock",
+      vnp_TxnRef: query.orderId,
+      vnp_ResponseCode: "00",
+      vnp_TransactionNo: query.vnp_TransactionNo || `MOCK-${query.orderId}`,
     });
   }
 
-  return finalizeMomoTopup(query);
+  return finalizeVnpayTopup(query);
 }
 
-export async function handleMomoIpn(payload = {}) {
-  const result = await finalizeMomoTopup(payload);
+export async function handleVnpayIpn(query = {}) {
+  const result = await finalizeVnpayTopup(query);
   return {
-    status: result.redirectStatus === "success" ? 204 : 400,
     body:
       result.redirectStatus === "success"
-        ? null
-        : { message: result.reason || "Momo IPN rejected" },
+        ? buildVnpayIpnSuccess()
+        : buildVnpayIpnFailure(result.reason || "VNPay IPN rejected"),
   };
 }
 
-export async function confirmMockMomoTopup(userId, payload = {}) {
-  if (!isMomoMockMode()) {
-    return { status: 403, body: { message: "Mock Momo confirmation is disabled" } };
+export async function createSepayTopup(userId, payload = {}, req) {
+  const validated = validateTopupAmount(payload.amount);
+  if (validated.error) return validated.error;
+
+  const providerOrderId = await generateUniqueProviderOrderId("SEP");
+  const apiOrigin = getApiPublicOrigin(req);
+  const clientOrigin = getClientOrigin();
+  const successUrl = `${apiOrigin}/api/payments/sepay/return?orderId=${providerOrderId}`;
+  const errorUrl = `${apiOrigin}/api/payments/sepay/error?orderId=${providerOrderId}`;
+  const cancelUrl = `${apiOrigin}/api/payments/sepay/cancel?orderId=${providerOrderId}`;
+
+  const txn = await WalletTransaction.create({
+    userId,
+    type: "topup",
+    amount: validated.value,
+    status: "pending",
+    provider: "sepay",
+    providerOrderId,
+    description: payload.description?.trim() || "OrcaXCare wallet top-up via SePay",
+  });
+
+  const payment = createSepayCheckout({
+    orderInvoiceNumber: providerOrderId,
+    amount: validated.value,
+    description: txn.description,
+    successUrl,
+    errorUrl,
+    cancelUrl,
+    customerId: userId.toString(),
+  });
+
+  return {
+    status: 201,
+    body: {
+      transactionId: txn._id.toString(),
+      providerOrderId,
+      amount: validated.value,
+      checkoutUrl: payment.mock
+        ? `${clientOrigin}/patient/wallet/sepay/mock?orderId=${providerOrderId}`
+        : payment.checkoutUrl,
+      checkoutFields: payment.checkoutFields,
+      checkoutMethod: payment.checkoutMethod,
+      paymentMethod: "sepay",
+      mockMode: payment.mock,
+    },
+  };
+}
+
+async function finalizeSepayTopup(providerOrderId, providerReferenceId = "") {
+  if (!providerOrderId) {
+    return { redirectStatus: "failed", reason: "Missing SePay order id" };
+  }
+
+  const result = await completeTopupTransaction(
+    { providerOrderId },
+    { providerReferenceId }
+  );
+
+  if (result.status === 200) {
+    return {
+      redirectStatus: "success",
+      providerOrderId,
+      receipt: result.body.receipt,
+    };
+  }
+
+  return {
+    redirectStatus: "failed",
+    providerOrderId,
+    reason: result.body?.message || "Could not credit wallet",
+  };
+}
+
+export async function handleSepayReturn(query = {}) {
+  const providerOrderId = query.orderId || query.order_invoice_number;
+  if (query.mock === "1" || isSepayMockMode()) {
+    return finalizeSepayTopup(providerOrderId, `MOCK-${providerOrderId}`);
+  }
+  return finalizeSepayTopup(
+    providerOrderId,
+    query.transaction_id || query.order_id || ""
+  );
+}
+
+export async function handleSepayError(query = {}) {
+  const providerOrderId = query.orderId;
+  if (providerOrderId) {
+    await markTopupFailed({ providerOrderId }, "SePay payment failed");
+  }
+  return {
+    redirectStatus: "failed",
+    providerOrderId,
+    reason: "SePay payment failed",
+  };
+}
+
+export async function handleSepayCancel(query = {}) {
+  const providerOrderId = query.orderId;
+  if (providerOrderId) {
+    await markTopupCancelled({ providerOrderId }, "SePay payment cancelled");
+  }
+  return {
+    redirectStatus: "cancelled",
+    providerOrderId,
+    reason: "SePay payment cancelled",
+  };
+}
+
+export async function handleSepayIpn(payload = {}, headers = {}) {
+  const secretHeader = headers["x-secret-key"] || headers["X-Secret-Key"];
+  if (!verifySepayIpnSecret(secretHeader)) {
+    return { status: 401, body: { success: false, message: "Unauthorized IPN" } };
+  }
+
+  if (!isSepayOrderPaid(payload)) {
+    return { status: 200, body: { success: true, message: "Ignored notification" } };
+  }
+
+  const providerOrderId = payload.order?.order_invoice_number;
+  const providerReferenceId =
+    payload.transaction?.transaction_id || payload.order?.order_id || "";
+
+  const result = await finalizeSepayTopup(providerOrderId, providerReferenceId);
+  if (result.redirectStatus === "success") {
+    return { status: 200, body: { success: true } };
+  }
+
+  return {
+    status: 400,
+    body: { success: false, message: result.reason || "Could not credit wallet" },
+  };
+}
+
+export async function confirmMockSepayTopup(userId, payload = {}) {
+  if (!isSepayMockMode()) {
+    return { status: 403, body: { message: "Mock SePay confirmation is disabled" } };
+  }
+
+  const providerOrderId = String(payload.orderId || "").trim();
+  if (!providerOrderId) {
+    return { status: 400, body: { message: "orderId is required" } };
+  }
+
+  const txn = await WalletTransaction.findOne({ providerOrderId, type: "topup" });
+  if (!txn || txn.userId.toString() !== userId) {
+    return { status: 404, body: { message: "Top-up transaction not found" } };
+  }
+
+  return completeTopupTransaction(
+    { providerOrderId },
+    { providerReferenceId: `MOCK-${providerOrderId}` }
+  );
+}
+
+export async function confirmMockVnpayTopup(userId, payload = {}) {
+  if (!isVnpayMockMode()) {
+    return { status: 403, body: { message: "Mock VNPay confirmation is disabled" } };
   }
 
   const providerOrderId = String(payload.orderId || "").trim();

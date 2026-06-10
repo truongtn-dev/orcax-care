@@ -9,16 +9,24 @@ export const PatientApiClient = {
     return api.post("/api/patient/wallet/topups/payos", payload);
   },
 
-  createMomoTopup(payload) {
-    return api.post("/api/patient/wallet/topups/momo", payload);
+  createVnpayTopup(payload) {
+    return api.post("/api/patient/wallet/topups/vnpay", payload);
+  },
+
+  createSepayTopup(payload) {
+    return api.post("/api/patient/wallet/topups/sepay", payload);
   },
 
   confirmMockPayosTopup(payload) {
     return api.post("/api/patient/wallet/payos/mock-confirm", payload);
   },
 
-  confirmMockMomoTopup(payload) {
-    return api.post("/api/patient/wallet/momo/mock-confirm", payload);
+  confirmMockVnpayTopup(payload) {
+    return api.post("/api/patient/wallet/vnpay/mock-confirm", payload);
+  },
+
+  confirmMockSepayTopup(payload) {
+    return api.post("/api/patient/wallet/sepay/mock-confirm", payload);
   },
 
   getTopupReceipt(ref) {

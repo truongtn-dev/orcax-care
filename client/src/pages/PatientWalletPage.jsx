@@ -65,6 +65,26 @@ export default function PatientWalletPage() {
     setSearchParams({}, { replace: true });
   }, [loadWallet, searchParams, setSearchParams]);
 
+  const redirectToCheckout = (data) => {
+    if (data.checkoutMethod === "POST" && data.checkoutFields) {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = data.checkoutUrl;
+      Object.entries(data.checkoutFields).forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value);
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      form.submit();
+      return;
+    }
+
+    window.location.href = data.checkoutUrl;
+  };
+
   const onTopup = async (event) => {
     event.preventDefault();
     setSubmitting(true);
@@ -73,14 +93,17 @@ export default function PatientWalletPage() {
     setReceipt(null);
     try {
       const payload = { amount: Number(amount) };
-      const { data } =
-        paymentMethod === "momo"
-          ? await PatientApiClient.createMomoTopup(payload)
-          : await PatientApiClient.createPayosTopup(payload);
-      window.location.href = data.checkoutUrl;
+      let response;
+      if (paymentMethod === "vnpay") {
+        response = await PatientApiClient.createVnpayTopup(payload);
+      } else if (paymentMethod === "sepay") {
+        response = await PatientApiClient.createSepayTopup(payload);
+      } else {
+        response = await PatientApiClient.createPayosTopup(payload);
+      }
+      redirectToCheckout(response.data);
     } catch (err) {
       setError(getApiErrorMessage(err));
-    } finally {
       setSubmitting(false);
     }
   };
@@ -91,7 +114,7 @@ export default function PatientWalletPage() {
         <div className="page-header-row">
           <div>
             <h1>Wallet</h1>
-            <p>Top up with PayOS or Momo and use your balance when confirming bookings.</p>
+            <p>Top up with PayOS, VNPay, or SePay and use your balance when confirming bookings.</p>
           </div>
           <Link to="/patient" className="btn btn-secondary">
             Back to dashboard
@@ -109,7 +132,7 @@ export default function PatientWalletPage() {
           <div className="card wallet-balance-card">
             <p className="text-muted">Current balance</p>
             <h2 className="wallet-balance-value">{formatCurrency(wallet?.balance)}</h2>
-            {(wallet?.payosMockMode || wallet?.momoMockMode) && (
+            {(wallet?.payosMockMode || wallet?.vnpayMockMode || wallet?.sepayMockMode) && (
               <p className="text-muted">
                 Payment sandbox mock mode is active for local development.
               </p>
@@ -178,9 +201,11 @@ export default function PatientWalletPage() {
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting
                     ? "Redirecting…"
-                    : paymentMethod === "momo"
-                      ? "Continue to Momo"
-                      : "Continue to PayOS"}
+                    : paymentMethod === "vnpay"
+                      ? "Continue to VNPay"
+                      : paymentMethod === "sepay"
+                        ? "Continue to SePay"
+                        : "Continue to PayOS"}
                 </button>
               </div>
             </form>

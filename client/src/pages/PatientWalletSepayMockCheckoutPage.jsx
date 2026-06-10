@@ -4,7 +4,7 @@ import PageLayout from "../components/PageLayout.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
-export default function PatientWalletMomoMockCheckoutPage() {
+export default function PatientWalletSepayMockCheckoutPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const orderId = searchParams.get("orderId");
@@ -13,7 +13,7 @@ export default function PatientWalletMomoMockCheckoutPage() {
 
   useEffect(() => {
     if (!orderId) {
-      setError("Missing Momo order id.");
+      setError("Missing SePay order id.");
     }
   }, [orderId]);
 
@@ -21,7 +21,7 @@ export default function PatientWalletMomoMockCheckoutPage() {
     setLoading(true);
     setError("");
     try {
-      await PatientApiClient.confirmMockMomoTopup({ orderId });
+      await PatientApiClient.confirmMockSepayTopup({ orderId });
       navigate(`/patient/wallet?payment=success&orderId=${orderId}`);
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -31,14 +31,14 @@ export default function PatientWalletMomoMockCheckoutPage() {
   };
 
   const onCancel = () => {
-    navigate("/patient/wallet?payment=cancelled&reason=Mock+Momo+payment+cancelled");
+    navigate("/patient/wallet?payment=cancelled&reason=Mock+SePay+payment+cancelled");
   };
 
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Momo sandbox checkout</h1>
-        <p>Mock Momo page for local development. No real wallet charge will occur.</p>
+        <h1>SePay sandbox checkout</h1>
+        <p>Mock SePay page for local development. No real bank charge will occur.</p>
       </div>
 
       <div className="card form-card-centered">
@@ -47,8 +47,13 @@ export default function PatientWalletMomoMockCheckoutPage() {
           Order id: <strong>{orderId || "—"}</strong>
         </p>
         <div className="form-actions">
-          <button type="button" className="btn btn-primary" onClick={onConfirm} disabled={loading || !orderId}>
-            {loading ? "Processing…" : "Simulate successful Momo payment"}
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onConfirm}
+            disabled={loading || !orderId}
+          >
+            {loading ? "Processing…" : "Simulate successful SePay payment"}
           </button>
           <button type="button" className="btn btn-outline" onClick={onCancel} disabled={loading}>
             Cancel payment

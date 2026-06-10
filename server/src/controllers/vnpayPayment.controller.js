@@ -9,9 +9,9 @@ function buildWalletRedirect({ status, refKey, refValue, reason = "" }) {
   return `${clientOrigin}/patient/wallet?${params.toString()}`;
 }
 
-export async function momoReturn(req, res) {
+export async function vnpayReturn(req, res) {
   try {
-    const result = await PatientWalletService.handleMomoReturn(req.query);
+    const result = await PatientWalletService.handleVnpayReturn(req.query);
     return res.redirect(
       buildWalletRedirect({
         status: result.redirectStatus,
@@ -26,15 +26,12 @@ export async function momoReturn(req, res) {
   }
 }
 
-export async function momoIpn(req, res) {
+export async function vnpayIpn(req, res) {
   try {
-    const result = await PatientWalletService.handleMomoIpn(req.body);
-    if (result.status === 204) {
-      return res.status(204).end();
-    }
-    return res.status(result.status).json(result.body);
+    const result = await PatientWalletService.handleVnpayIpn(req.query);
+    return res.status(200).json(result.body);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "System error" });
+    return res.status(200).json({ RspCode: "99", Message: "System error" });
   }
 }

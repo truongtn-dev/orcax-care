@@ -10,7 +10,11 @@ const walletTransactionSchema = new mongoose.Schema(
       enum: ["pending", "success", "failed", "cancelled"],
       default: "pending",
     },
-    provider: { type: String, enum: ["payos", "momo", "internal"], default: "payos" },
+    provider: {
+      type: String,
+      enum: ["payos", "vnpay", "sepay", "internal"],
+      default: "payos",
+    },
     orderCode: { type: Number, unique: true, sparse: true },
     providerOrderId: { type: String, unique: true, sparse: true, trim: true },
     paymentLinkId: { type: String, default: "" },

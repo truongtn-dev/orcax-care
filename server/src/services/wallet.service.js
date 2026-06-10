@@ -74,7 +74,7 @@ export async function generateUniqueOrderCode() {
   throw new Error("Could not generate unique PayOS order code");
 }
 
-export async function generateUniqueProviderOrderId(prefix = "MOMO") {
+export async function generateUniqueProviderOrderId(prefix = "VNP") {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const providerOrderId = `${prefix}${Date.now()}${Math.floor(Math.random() * 1000)}`;
     const exists = await WalletTransaction.exists({ providerOrderId });
