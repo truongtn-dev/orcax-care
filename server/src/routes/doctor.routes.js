@@ -11,3 +11,5 @@ doctorRouter.use(requireDatabase, authMiddleware, requireRole("doctor"));
 doctorRouter.get("/work-shifts", DoctorWorkShiftController.listMyWorkShifts);
 doctorRouter.get("/schedule", DoctorScheduleController.getScheduleCalendar);
 doctorRouter.get("/appointment-slots/:id", DoctorScheduleController.getAppointmentSlotDetail);
+doctorRouter.put("/appointment-slots/:id/block", DoctorScheduleController.blockAppointmentSlot);
+doctorRouter.put("/appointment-slots/:id/unblock", DoctorScheduleController.unblockAppointmentSlot);

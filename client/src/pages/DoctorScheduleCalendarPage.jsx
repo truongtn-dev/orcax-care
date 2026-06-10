@@ -41,6 +41,7 @@ export default function DoctorScheduleCalendarPage() {
   const [slotDetail, setSlotDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [error, setError] = useState("");
 
   const range = useMemo(() => {
@@ -101,6 +102,39 @@ export default function DoctorScheduleCalendarPage() {
   const shiftRange = (amount) => {
     setAnchorDate((current) => addDays(current, view === "day" ? amount : amount * 7));
     setSelectedSlotId("");
+  };
+
+  const refreshAfterStatusChange = async (data) => {
+    setSlotDetail(data);
+    await loadCalendar();
+  };
+
+  const onBlockSlot = async () => {
+    if (!selectedSlotId) return;
+    setStatusUpdating(true);
+    setError("");
+    try {
+      const { data } = await DoctorApiClient.blockAppointmentSlot(selectedSlotId);
+      await refreshAfterStatusChange(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
+  const onUnblockSlot = async () => {
+    if (!selectedSlotId) return;
+    setStatusUpdating(true);
+    setError("");
+    try {
+      const { data } = await DoctorApiClient.unblockAppointmentSlot(selectedSlotId);
+      await refreshAfterStatusChange(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setStatusUpdating(false);
+    }
   };
 
   const daysToRender =
@@ -253,6 +287,33 @@ export default function DoctorScheduleCalendarPage() {
                 <dd>{slotDetail.workShiftId}</dd>
               </div>
             </dl>
+          )}
+          {slotDetail && (
+            <div className="form-actions" style={{ marginTop: "1rem" }}>
+              {slotDetail.status === "available" && (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={onBlockSlot}
+                  disabled={statusUpdating}
+                >
+                  {statusUpdating ? "Updating…" : "Block slot"}
+                </button>
+              )}
+              {slotDetail.status === "blocked" && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onUnblockSlot}
+                  disabled={statusUpdating}
+                >
+                  {statusUpdating ? "Updating…" : "Unlock slot"}
+                </button>
+              )}
+              {slotDetail.status === "booked" && (
+                <p className="text-muted">Booked slots cannot be blocked or unlocked.</p>
+              )}
+            </div>
           )}
         </div>
       )}

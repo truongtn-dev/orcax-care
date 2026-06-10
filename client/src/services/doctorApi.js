@@ -12,4 +12,12 @@ export const DoctorApiClient = {
   getAppointmentSlot(id) {
     return api.get(`/api/doctor/appointment-slots/${id}`);
   },
+
+  blockAppointmentSlot(id) {
+    return api.put(`/api/doctor/appointment-slots/${id}/block`);
+  },
+
+  unblockAppointmentSlot(id) {
+    return api.put(`/api/doctor/appointment-slots/${id}/unblock`);
+  },
 };

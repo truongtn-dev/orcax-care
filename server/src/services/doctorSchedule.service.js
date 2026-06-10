@@ -165,3 +165,85 @@ export async function getAppointmentSlotDetail(userId, slotId) {
 
   return { status: 200, body: serializeSlot(slot) };
 }
+
+async function findOwnSlot(userId, slotId) {
+  const doctor = await resolveDoctorForUser(userId);
+  if (!doctor) {
+    return { error: { status: 404, body: { message: "Doctor profile not found" } } };
+  }
+
+  if (!slotId || !mongoose.Types.ObjectId.isValid(slotId)) {
+    return { error: { status: 400, body: { message: "Invalid appointment slot" } } };
+  }
+
+  const slot = await AppointmentSlot.findOne({
+    _id: slotId,
+    doctorId: doctor._id,
+  });
+
+  if (!slot) {
+    return { error: { status: 404, body: { message: "Appointment slot not found" } } };
+  }
+
+  return { doctor, slot };
+}
+
+export async function blockAppointmentSlot(userId, slotId) {
+  const result = await findOwnSlot(userId, slotId);
+  if (result.error) return result.error;
+
+  const { slot } = result;
+
+  if (slot.status === "booked") {
+    return {
+      status: 409,
+      body: { message: "Cannot block a booked appointment slot" },
+    };
+  }
+
+  if (slot.status === "blocked") {
+    const populated = await AppointmentSlot.findById(slot._id)
+      .populate("roomId", "name roomNumber roomCode")
+      .lean();
+    return { status: 200, body: serializeSlot(populated) };
+  }
+
+  slot.status = "blocked";
+  await slot.save();
+
+  const populated = await AppointmentSlot.findById(slot._id)
+    .populate("roomId", "name roomNumber roomCode")
+    .lean();
+
+  return { status: 200, body: serializeSlot(populated) };
+}
+
+export async function unblockAppointmentSlot(userId, slotId) {
+  const result = await findOwnSlot(userId, slotId);
+  if (result.error) return result.error;
+
+  const { slot } = result;
+
+  if (slot.status === "booked") {
+    return {
+      status: 409,
+      body: { message: "Cannot unlock a booked appointment slot" },
+    };
+  }
+
+  if (slot.status === "available") {
+    const populated = await AppointmentSlot.findById(slot._id)
+      .populate("roomId", "name roomNumber roomCode")
+      .lean();
+    return { status: 200, body: serializeSlot(populated) };
+  }
+
+  slot.status = "available";
+  await slot.save();
+
+  const populated = await AppointmentSlot.findById(slot._id)
+    .populate("roomId", "name roomNumber roomCode")
+    .lean();
+
+  return { status: 200, body: serializeSlot(populated) };
+}
