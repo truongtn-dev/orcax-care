@@ -12,6 +12,8 @@ import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
+import PatientWalletPage from "./pages/PatientWalletPage.jsx";
+import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
@@ -96,7 +98,15 @@ export default function App() {
             path="/patient/wallet"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientPortalPlaceholderPage type="wallet" />
+                <PatientWalletPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/wallet/payos/mock"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientWalletMockCheckoutPage />
               </ProtectedRoute>
             }
           />

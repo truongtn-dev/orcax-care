@@ -4,6 +4,8 @@ import { authRouter } from "./auth.routes.js";
 import { publicRouter } from "./public.routes.js";
 import { profileRouter } from "./profile.routes.js";
 import { doctorRouter } from "./doctor.routes.js";
+import { patientRouter } from "./patient.routes.js";
+import { paymentsRouter } from "./payments.routes.js";
 
 export const apiRouter = Router();
 
@@ -15,4 +17,6 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/profile", profileRouter);
 apiRouter.use("/doctor", doctorRouter);
+apiRouter.use("/patient", patientRouter);
+apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/public", publicRouter);
