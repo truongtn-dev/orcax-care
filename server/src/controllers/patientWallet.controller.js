@@ -20,9 +20,29 @@ export async function createPayosTopup(req, res) {
   }
 }
 
+export async function createMomoTopup(req, res) {
+  try {
+    const result = await PatientWalletService.createMomoTopup(req.user.userId, req.body, req);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function confirmMockPayosTopup(req, res) {
   try {
     const result = await PatientWalletService.confirmMockPayosTopup(req.user.userId, req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function confirmMockMomoTopup(req, res) {
+  try {
+    const result = await PatientWalletService.confirmMockMomoTopup(req.user.userId, req.body);
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);

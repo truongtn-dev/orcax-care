@@ -17,12 +17,36 @@ function serializeTransaction(txn) {
     status: txn.status,
     provider: txn.provider,
     orderCode: txn.orderCode || null,
+    providerOrderId: txn.providerOrderId || null,
+    providerReferenceId: txn.providerReferenceId || "",
     description: txn.description,
     failureReason: txn.failureReason || "",
     balanceAfter: txn.balanceAfter,
     createdAt: txn.createdAt,
     updatedAt: txn.updatedAt,
   };
+}
+
+function buildTopupReceipt(txn) {
+  return {
+    orderCode: txn.orderCode || null,
+    providerOrderId: txn.providerOrderId || null,
+    referenceId: txn.providerReferenceId || txn.paymentLinkId || String(txn.orderCode || txn.providerOrderId || ""),
+    amount: txn.amount,
+    paidAt: txn.updatedAt,
+    provider: txn.provider,
+  };
+}
+
+async function findTopupTransaction(ref = {}) {
+  const { orderCode, providerOrderId } = ref;
+  if (providerOrderId) {
+    return WalletTransaction.findOne({ providerOrderId: String(providerOrderId), type: "topup" });
+  }
+  if (orderCode) {
+    return WalletTransaction.findOne({ orderCode: Number(orderCode), type: "topup" });
+  }
+  return null;
 }
 
 export async function getWalletOverview(userId, { limit = 10 } = {}) {
@@ -50,8 +74,19 @@ export async function generateUniqueOrderCode() {
   throw new Error("Could not generate unique PayOS order code");
 }
 
-export async function completeTopupTransaction(orderCode, { failureReason = "" } = {}) {
-  const txn = await WalletTransaction.findOne({ orderCode: Number(orderCode), type: "topup" });
+export async function generateUniqueProviderOrderId(prefix = "MOMO") {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const providerOrderId = `${prefix}${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const exists = await WalletTransaction.exists({ providerOrderId });
+    if (!exists) return providerOrderId;
+  }
+  throw new Error("Could not generate unique provider order id");
+}
+
+export async function completeTopupTransaction(ref, { providerReferenceId = "" } = {}) {
+  const txn = await findTopupTransaction(
+    typeof ref === "object" ? ref : { orderCode: ref }
+  );
   if (!txn) {
     return { status: 404, body: { message: "Top-up transaction not found" } };
   }
@@ -82,6 +117,9 @@ export async function completeTopupTransaction(orderCode, { failureReason = "" }
   txn.status = "success";
   txn.balanceAfter = wallet.balance;
   txn.failureReason = "";
+  if (providerReferenceId) {
+    txn.providerReferenceId = String(providerReferenceId);
+  }
   await txn.save();
 
   return {
@@ -89,18 +127,15 @@ export async function completeTopupTransaction(orderCode, { failureReason = "" }
     body: {
       transaction: serializeTransaction(txn),
       balance: wallet.balance,
-      receipt: {
-        orderCode: txn.orderCode,
-        amount: txn.amount,
-        paidAt: txn.updatedAt,
-        provider: "payos",
-      },
+      receipt: buildTopupReceipt(txn),
     },
   };
 }
 
-export async function markTopupCancelled(orderCode, reason = "Payment cancelled") {
-  const txn = await WalletTransaction.findOne({ orderCode: Number(orderCode), type: "topup" });
+export async function markTopupCancelled(ref, reason = "Payment cancelled") {
+  const txn = await findTopupTransaction(
+    typeof ref === "object" ? ref : { orderCode: ref }
+  );
   if (!txn) {
     return { status: 404, body: { message: "Top-up transaction not found" } };
   }
@@ -113,8 +148,10 @@ export async function markTopupCancelled(orderCode, reason = "Payment cancelled"
   return { status: 200, body: { transaction: serializeTransaction(txn) } };
 }
 
-export async function markTopupFailed(orderCode, reason) {
-  const txn = await WalletTransaction.findOne({ orderCode: Number(orderCode), type: "topup" });
+export async function markTopupFailed(ref, reason) {
+  const txn = await findTopupTransaction(
+    typeof ref === "object" ? ref : { orderCode: ref }
+  );
   if (!txn) {
     return { status: 404, body: { message: "Top-up transaction not found" } };
   }

@@ -16,6 +16,7 @@ export default function PatientWalletPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [wallet, setWallet] = useState(null);
   const [amount, setAmount] = useState("100000");
+  const [paymentMethod, setPaymentMethod] = useState("payos");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -43,13 +44,15 @@ export default function PatientWalletPage() {
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
     const orderCode = searchParams.get("orderCode");
+    const orderId = searchParams.get("orderId");
+    const receiptRef = orderCode || orderId;
     const reason = searchParams.get("reason");
 
     if (!paymentStatus) return;
 
-    if (paymentStatus === "success" && orderCode) {
+    if (paymentStatus === "success" && receiptRef) {
       setNotice("Top-up successful. Your wallet balance has been updated.");
-      PatientApiClient.getTopupReceipt(orderCode)
+      PatientApiClient.getTopupReceipt(receiptRef)
         .then(({ data }) => setReceipt(data.receipt))
         .catch(() => setReceipt(null));
       loadWallet();
@@ -69,9 +72,11 @@ export default function PatientWalletPage() {
     setNotice("");
     setReceipt(null);
     try {
-      const { data } = await PatientApiClient.createPayosTopup({
-        amount: Number(amount),
-      });
+      const payload = { amount: Number(amount) };
+      const { data } =
+        paymentMethod === "momo"
+          ? await PatientApiClient.createMomoTopup(payload)
+          : await PatientApiClient.createPayosTopup(payload);
       window.location.href = data.checkoutUrl;
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -86,7 +91,7 @@ export default function PatientWalletPage() {
         <div className="page-header-row">
           <div>
             <h1>Wallet</h1>
-            <p>Top up with PayOS and use your balance when confirming bookings.</p>
+            <p>Top up with PayOS or Momo and use your balance when confirming bookings.</p>
           </div>
           <Link to="/patient" className="btn btn-secondary">
             Back to dashboard
@@ -104,8 +109,10 @@ export default function PatientWalletPage() {
           <div className="card wallet-balance-card">
             <p className="text-muted">Current balance</p>
             <h2 className="wallet-balance-value">{formatCurrency(wallet?.balance)}</h2>
-            {wallet?.payosMockMode && (
-              <p className="text-muted">PayOS sandbox mock mode is active for local development.</p>
+            {(wallet?.payosMockMode || wallet?.momoMockMode) && (
+              <p className="text-muted">
+                Payment sandbox mock mode is active for local development.
+              </p>
             )}
           </div>
 
@@ -114,8 +121,12 @@ export default function PatientWalletPage() {
               <h3>Receipt summary</h3>
               <dl className="detail-list">
                 <div>
-                  <dt>Order code</dt>
-                  <dd>{receipt.orderCode}</dd>
+                  <dt>Reference</dt>
+                  <dd>{receipt.referenceId || receipt.providerOrderId || receipt.orderCode}</dd>
+                </div>
+                <div>
+                  <dt>Provider</dt>
+                  <dd>{receipt.provider}</dd>
                 </div>
                 <div>
                   <dt>Amount</dt>
@@ -132,7 +143,20 @@ export default function PatientWalletPage() {
           <div className="card form-card-centered">
             <form onSubmit={onTopup} className="form">
               <fieldset className="form-section">
-                <legend>Top up via PayOS</legend>
+                <legend>Top up wallet</legend>
+                <label>
+                  Payment method
+                  <select
+                    value={paymentMethod}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                  >
+                    {(wallet?.paymentMethods || []).map((method) => (
+                      <option key={method.id} value={method.id}>
+                        {method.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <label>
                   Amount (VND)
                   <input
@@ -152,7 +176,11 @@ export default function PatientWalletPage() {
               </fieldset>
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Redirecting…" : "Continue to PayOS"}
+                  {submitting
+                    ? "Redirecting…"
+                    : paymentMethod === "momo"
+                      ? "Continue to Momo"
+                      : "Continue to PayOS"}
                 </button>
               </div>
             </form>
