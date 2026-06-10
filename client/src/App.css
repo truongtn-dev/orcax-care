@@ -3890,3 +3890,35 @@
 .wallet-status-cancelled {
   color: #b91c1c;
 }
+
+.insurance-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.insurance-card-item {
+  padding: 1rem;
+}
+
+.insurance-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.insurance-card-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.insurance-primary-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.12);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}

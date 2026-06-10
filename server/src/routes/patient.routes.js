@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -14,3 +15,6 @@ patientRouter.post("/wallet/payos/mock-confirm", PatientWalletController.confirm
 patientRouter.post("/wallet/momo/mock-confirm", PatientWalletController.confirmMockMomoTopup);
 patientRouter.post("/wallet/deduct", PatientWalletController.deductWallet);
 patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopupReceipt);
+
+patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
+patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
