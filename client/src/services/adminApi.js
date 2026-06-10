@@ -116,4 +116,8 @@ export const AdminApiClient = {
   listDoctors(params) {
     return api.get("/api/admin/doctors", { params });
   },
+
+  createWorkShift(payload) {
+    return api.post("/api/admin/work-shifts", payload);
+  },
 };

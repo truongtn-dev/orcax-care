@@ -77,11 +77,18 @@ export default function DoctorsListPage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Danh sách bác sĩ</h1>
-        <p>
-          Quản lý hồ sơ bác sĩ, chuyên khoa, khoa/phòng ban và trạng thái hiển
-          thị cho bệnh nhân.
-        </p>
+        <div className="page-header-row">
+          <div>
+            <h1>Danh sách bác sĩ</h1>
+            <p>
+              Quản lý hồ sơ bác sĩ, chuyên khoa, khoa/phòng ban và trạng thái hiển
+              thị cho bệnh nhân.
+            </p>
+          </div>
+          <Link to="/admin/work-shifts/new" className="btn btn-primary">
+            Tạo ca làm việc
+          </Link>
+        </div>
       </div>
 
       <div className="card admin-toolbar">

@@ -23,6 +23,7 @@ import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
+import CreateWorkShiftPage from "./pages/admin/CreateWorkShiftPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
 import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
@@ -147,6 +148,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <DoctorEditPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/work-shifts/new"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <CreateWorkShiftPage />
               </ProtectedRoute>
             }
           />

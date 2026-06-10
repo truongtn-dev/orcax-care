@@ -5,6 +5,7 @@ import * as AdminDoctorController from "../controllers/adminDoctor.controller.js
 import * as AdminMasterController from "../controllers/adminMaster.controller.js";
 import * as AdminPatientController from "../controllers/adminPatient.controller.js";
 import * as AdminSpecialtyController from "../controllers/adminSpecialty.controller.js";
+import * as AdminWorkShiftController from "../controllers/adminWorkShift.controller.js";
 import * as AdminController from "../controllers/admin.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -55,3 +56,5 @@ adminRouter.get("/clinic-rooms/departments", AdminClinicRoomController.listDepar
 adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);
 adminRouter.post("/clinic-rooms", AdminClinicRoomController.createClinicRoom);
 adminRouter.put("/clinic-rooms/:roomId", AdminClinicRoomController.updateClinicRoom);
+
+adminRouter.post("/work-shifts", AdminWorkShiftController.createWorkShift);
