@@ -22,6 +22,7 @@ export default function EditWorkShiftPage() {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -61,6 +62,24 @@ export default function EditWorkShiftPage() {
       [name]: type === "checkbox" ? checked : value,
     }));
     setError("");
+  };
+
+  const onDelete = async () => {
+    const confirmed = window.confirm(
+      "Delete this shift template? This cannot be undone if there are no future bookings."
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setError("");
+    try {
+      await AdminApiClient.deleteWorkShift(id);
+      navigate("/admin/work-shifts");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const onSubmit = async (event) => {
@@ -163,12 +182,20 @@ export default function EditWorkShiftPage() {
             </fieldset>
 
             <div className="form-actions">
-              <button type="submit" className="btn btn-primary" disabled={saving}>
+              <button type="submit" className="btn btn-primary" disabled={saving || deleting}>
                 {saving ? "Saving…" : "Save changes"}
               </button>
               <Link to="/admin/work-shifts" className="btn btn-secondary">
                 Cancel
               </Link>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={onDelete}
+                disabled={saving || deleting}
+              >
+                {deleting ? "Deleting…" : "Delete shift"}
+              </button>
             </div>
           </form>
         )}

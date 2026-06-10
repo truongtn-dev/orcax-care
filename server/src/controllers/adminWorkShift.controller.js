@@ -40,3 +40,12 @@ export async function updateWorkShift(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function deleteWorkShift(req, res) {
+  try {
+    return sendResult(res, await AdminWorkShiftService.deleteWorkShift(req.params.id));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}

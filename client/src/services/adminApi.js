@@ -132,4 +132,8 @@ export const AdminApiClient = {
   updateWorkShift(id, payload) {
     return api.put(`/api/admin/work-shifts/${id}`, payload);
   },
+
+  deleteWorkShift(id) {
+    return api.delete(`/api/admin/work-shifts/${id}`);
+  },
 };

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ClinicRoom } from "../models/ClinicRoom.js";
 import { Doctor } from "../models/Doctor.js";
+import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { WorkShift } from "../models/WorkShift.js";
 import {
   DAY_OF_WEEK_LABELS,
@@ -336,6 +337,55 @@ export async function updateWorkShift(shiftId, payload) {
     body: {
       ...serializeWorkShift(populated),
       note: "Future appointment slots may need regeneration after this change.",
+    },
+  };
+}
+
+function startOfToday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+export async function deleteWorkShift(shiftId) {
+  if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
+    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+  }
+
+  const existing = await WorkShift.findById(shiftId);
+  if (!existing) {
+    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+  }
+
+  const futureBookedCount = await AppointmentSlot.countDocuments({
+    workShiftId: existing._id,
+    status: "booked",
+    date: { $gte: startOfToday() },
+  });
+
+  if (futureBookedCount > 0) {
+    return {
+      status: 409,
+      body: {
+        message: "Không thể xóa ca làm việc vì còn lịch hẹn đã đặt trong tương lai",
+        futureBookings: futureBookedCount,
+      },
+    };
+  }
+
+  await AppointmentSlot.deleteMany({
+    workShiftId: existing._id,
+    date: { $gte: startOfToday() },
+    status: { $in: ["available", "blocked"] },
+  });
+
+  await existing.deleteOne();
+
+  return {
+    status: 200,
+    body: {
+      message: "Đã xóa ca làm việc",
+      deletedShiftId: shiftId,
     },
   };
 }
