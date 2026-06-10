@@ -1,8 +1,6 @@
-/**
- * HMM-based query extractor — Viterbi decoding for NAME / SPECIALTY / DEPARTMENT / OTHER.
- */
-
-import { normalizeText } from "./ngramEngine.js";
+import { matchDepartment, matchSpecialty } from "./catalogMatcher.js";
+import { ngramTextScore } from "./ngramEngine.js";
+import { normalizeText } from "./textProcessing.js";
 
 const STATES = ["OTHER", "NAME", "SPECIALTY", "DEPARTMENT"];
 const S = STATES.length;
@@ -32,18 +30,30 @@ function buildDictionary(entries) {
   return map;
 }
 
+function bestDictNgramScore(token, dict) {
+  let best = 0;
+  for (const key of dict.keys()) {
+    best = Math.max(best, ngramTextScore(token, key));
+  }
+  return best;
+}
+
 function emissionLogProb(token, state, dicts) {
   const { specialtyDict, departmentDict, nameTokens } = dicts;
 
   if (state === "SPECIALTY") {
     if (specialtyDict.has(token)) return log(0.92);
-    if ([...specialtyDict.keys()].some((k) => k.includes(token) || token.includes(k))) return log(0.55);
+    const best = bestDictNgramScore(token, specialtyDict);
+    if (best >= 0.7) return log(0.82);
+    if (best >= 0.45) return log(0.55);
     return log(0.02);
   }
 
   if (state === "DEPARTMENT") {
     if (departmentDict.has(token)) return log(0.9);
-    if ([...departmentDict.keys()].some((k) => k.includes(token) || token.includes(k))) return log(0.5);
+    const best = bestDictNgramScore(token, departmentDict);
+    if (best >= 0.7) return log(0.8);
+    if (best >= 0.45) return log(0.5);
     return log(0.02);
   }
 
@@ -54,19 +64,17 @@ function emissionLogProb(token, state, dicts) {
     return log(0.05);
   }
 
-  // OTHER
   if (/^(dr|bs|doctor|bacsi|tim|mat|da)$/.test(token)) return log(0.4);
   if (specialtyDict.has(token) || departmentDict.has(token)) return log(0.08);
   return log(0.35);
 }
 
-// Transition log-probabilities (hand-tuned for medical search queries)
 const TRANS = [
-  [-1.2, -0.4, -0.8, -0.8, -1.0], // from START
-  [-0.5, -0.3, -1.5, -1.5, -0.8], // from OTHER
-  [-0.6, -0.2, -2.0, -2.0, -0.7], // from NAME
-  [-0.5, -2.0, -0.2, -1.8, -0.6], // from SPECIALTY
-  [-0.5, -2.0, -1.8, -0.2, -0.6], // from DEPARTMENT
+  [-1.2, -0.4, -0.8, -0.8, -1.0],
+  [-0.5, -0.3, -1.5, -1.5, -0.8],
+  [-0.6, -0.2, -2.0, -2.0, -0.7],
+  [-0.5, -2.0, -0.2, -1.8, -0.6],
+  [-0.5, -2.0, -1.8, -0.2, -0.6],
 ];
 
 function viterbi(tokens, dicts) {
@@ -130,25 +138,6 @@ function collectSpans(tokens, labels) {
   };
 }
 
-function resolveEntity(text, dict) {
-  if (!text) return null;
-  const norm = normalizeText(text);
-  if (dict.has(norm)) return dict.get(norm);
-
-  let best = null;
-  let bestScore = 0;
-  for (const [key, value] of dict.entries()) {
-    if (key.includes(norm) || norm.includes(key)) {
-      const score = Math.min(key.length, norm.length) / Math.max(key.length, norm.length);
-      if (score > bestScore) {
-        bestScore = score;
-        best = value;
-      }
-    }
-  }
-  return bestScore >= 0.45 ? best : null;
-}
-
 export function extractQueryEntities(query, { specialties = [], departments = [], doctorNames = [] } = {}) {
   const tokens = tokenizeQuery(query);
   if (tokens.length === 0) {
@@ -158,9 +147,11 @@ export function extractQueryEntities(query, { specialties = [], departments = []
       departmentId: null,
       specialtyName: null,
       departmentName: null,
+      specialtyMatchPercent: null,
+      departmentMatchPercent: null,
       tokens: [],
       labels: [],
-      engine: "HMM",
+      engine: "HMM+NGram+BM25",
     };
   }
 
@@ -181,8 +172,19 @@ export function extractQueryEntities(query, { specialties = [], departments = []
   const labels = viterbi(tokens, dicts);
   const spans = collectSpans(tokens, labels);
 
-  const specialtyMatch = resolveEntity(spans.specialtyText || spans.otherText, specialtyDict);
-  const departmentMatch = resolveEntity(spans.departmentText || spans.otherText, departmentDict);
+  const spanSpecialty = matchSpecialty(spans.specialtyText, specialties, { minScore: 0.42 });
+  const spanDepartment = matchDepartment(spans.departmentText, departments, { minScore: 0.42 });
+  const fullSpecialty = matchSpecialty(query, specialties);
+  const fullDepartment = matchDepartment(query, departments);
+
+  const specialtyMatch =
+    spanSpecialty && (!fullSpecialty || spanSpecialty.score >= fullSpecialty.score * 0.9)
+      ? spanSpecialty
+      : fullSpecialty;
+  const departmentMatch =
+    spanDepartment && (!fullDepartment || spanDepartment.score >= fullDepartment.score * 0.9)
+      ? spanDepartment
+      : fullDepartment;
 
   let nameText = spans.nameText;
   if (!nameText && !specialtyMatch && !departmentMatch) {
@@ -193,10 +195,14 @@ export function extractQueryEntities(query, { specialties = [], departments = []
     nameText,
     specialtyId: specialtyMatch?.id || null,
     departmentId: departmentMatch?.id || null,
-    specialtyName: specialtyMatch?.ref?.name || null,
-    departmentName: departmentMatch?.ref?.name || null,
+    specialtyName: specialtyMatch?.name || null,
+    departmentName: departmentMatch?.name || null,
+    specialtyMatchPercent: specialtyMatch?.matchPercent ?? null,
+    departmentMatchPercent: departmentMatch?.matchPercent ?? null,
+    specialtyAlternatives: specialtyMatch?.alternatives || [],
+    departmentAlternatives: departmentMatch?.alternatives || [],
     tokens,
     labels,
-    engine: "HMM+NGram",
+    engine: "HMM+NGram+BM25",
   };
 }
