@@ -124,4 +124,12 @@ export const AdminApiClient = {
   listWorkShifts(params) {
     return api.get("/api/admin/work-shifts", { params });
   },
+
+  getWorkShift(id) {
+    return api.get(`/api/admin/work-shifts/${id}`);
+  },
+
+  updateWorkShift(id, payload) {
+    return api.put(`/api/admin/work-shifts/${id}`, payload);
+  },
 };

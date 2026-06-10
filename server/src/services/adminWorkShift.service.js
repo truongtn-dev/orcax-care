@@ -212,3 +212,130 @@ export async function listWorkShifts({
     },
   };
 }
+
+export async function getWorkShiftById(shiftId) {
+  if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
+    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+  }
+
+  const shift = await shiftQuery().findById(shiftId).lean();
+  if (!shift) {
+    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+  }
+
+  return { status: 200, body: serializeWorkShift(shift) };
+}
+
+export async function updateWorkShift(shiftId, payload) {
+  if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
+    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+  }
+
+  const existing = await WorkShift.findById(shiftId);
+  if (!existing) {
+    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+  }
+
+  const {
+    roomId,
+    dayOfWeek,
+    startTime,
+    endTime,
+    maxPatients,
+    slotDurationMin,
+    isActive,
+  } = payload;
+
+  const day =
+    dayOfWeek !== undefined && dayOfWeek !== null && dayOfWeek !== ""
+      ? Number(dayOfWeek)
+      : existing.dayOfWeek;
+  if (!Number.isInteger(day) || day < 0 || day > 6) {
+    return { status: 400, body: { message: "Ngày trong tuần phải từ 0 (CN) đến 6 (T7)" } };
+  }
+
+  const start = startTime !== undefined ? String(startTime).trim() : existing.startTime;
+  const end = endTime !== undefined ? String(endTime).trim() : existing.endTime;
+  if (!isValidTimeString(start) || !isValidTimeString(end)) {
+    return { status: 400, body: { message: "Giờ bắt đầu/kết thúc phải theo định dạng HH:mm" } };
+  }
+  if (timeToMinutes(end) <= timeToMinutes(start)) {
+    return { status: 400, body: { message: "Giờ kết thúc phải sau giờ bắt đầu" } };
+  }
+
+  const capacity =
+    maxPatients !== undefined && maxPatients !== null && maxPatients !== ""
+      ? parseInt(maxPatients, 10)
+      : existing.maxPatients;
+  if (!capacity || capacity < 1) {
+    return { status: 400, body: { message: "Số bệnh nhân tối đa phải >= 1" } };
+  }
+
+  let roomObjectId = existing.roomId;
+  if (roomId !== undefined) {
+    if (roomId === null || roomId === "") {
+      roomObjectId = null;
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(roomId)) {
+        return { status: 400, body: { message: "Phòng khám không hợp lệ" } };
+      }
+      const room = await ClinicRoom.findById(roomId);
+      if (!room || !room.isActive) {
+        return { status: 404, body: { message: "Không tìm thấy phòng khám đang hoạt động" } };
+      }
+      roomObjectId = room._id;
+    }
+  }
+
+  const nextIsActive = isActive !== undefined ? isActive !== false : existing.isActive;
+
+  if (nextIsActive) {
+    const overlap = await findOverlappingShift({
+      doctorId: existing.doctorId,
+      dayOfWeek: day,
+      startTime: start,
+      endTime: end,
+      excludeId: existing._id,
+    });
+    if (overlap) {
+      return {
+        status: 409,
+        body: {
+          message: "Ca làm trùng với ca hiện có của bác sĩ trong cùng ngày",
+          conflict: {
+            shiftId: overlap._id.toString(),
+            startTime: overlap.startTime,
+            endTime: overlap.endTime,
+          },
+        },
+      };
+    }
+  }
+
+  const duration =
+    slotDurationMin != null && slotDurationMin !== ""
+      ? parseInt(slotDurationMin, 10)
+      : computeSlotDurationMin(start, end, capacity);
+
+  if (!duration || duration < 15) {
+    return { status: 400, body: { message: "Thời lượng mỗi slot phải >= 15 phút" } };
+  }
+
+  existing.dayOfWeek = day;
+  existing.startTime = start;
+  existing.endTime = end;
+  existing.maxPatients = capacity;
+  existing.slotDurationMin = duration;
+  existing.roomId = roomObjectId;
+  existing.isActive = nextIsActive;
+  await existing.save();
+
+  const populated = await shiftQuery().findById(existing._id).lean();
+  return {
+    status: 200,
+    body: {
+      ...serializeWorkShift(populated),
+      note: "Future appointment slots may need regeneration after this change.",
+    },
+  };
+}

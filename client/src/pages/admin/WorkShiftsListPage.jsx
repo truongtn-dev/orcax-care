@@ -110,6 +110,9 @@ export default function WorkShiftsListPage() {
                           <span>{shift.doctorName}</span>
                           {shift.roomName && <span>{shift.roomName}</span>}
                           <span>Max {shift.maxPatients} · {shift.slotDurationMin} min/slot</span>
+                          <Link to={`/admin/work-shifts/${shift._id}/edit`} className="btn btn-secondary btn-sm">
+                            Edit
+                          </Link>
                         </li>
                       ))}
                     </ul>
