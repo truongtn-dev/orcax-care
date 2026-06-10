@@ -85,9 +85,14 @@ export default function DoctorsListPage() {
               thị cho bệnh nhân.
             </p>
           </div>
-          <Link to="/admin/work-shifts/new" className="btn btn-primary">
-            Tạo ca làm việc
-          </Link>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            <Link to="/admin/work-shifts" className="btn btn-secondary">
+              Work shifts
+            </Link>
+            <Link to="/admin/work-shifts/new" className="btn btn-primary">
+              Tạo ca làm việc
+            </Link>
+          </div>
         </div>
       </div>
 

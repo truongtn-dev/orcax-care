@@ -9,6 +9,16 @@ export async function createWorkShift(req, res) {
     return sendResult(res, await AdminWorkShiftService.createWorkShift(req.body));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function listWorkShifts(req, res) {
+  try {
+    const data = await AdminWorkShiftService.listWorkShifts(req.query);
+    return res.status(200).json(data);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
   }
 }

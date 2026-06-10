@@ -3607,3 +3607,48 @@
     padding: 1.5rem;
   }
 }
+
+.work-shift-week-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.work-shift-day {
+  padding: 1rem;
+  min-height: 140px;
+}
+
+.work-shift-day-title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.work-shift-day-empty {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.work-shift-day-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.work-shift-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.06);
+  font-size: 0.88rem;
+}
+
+.work-shift-card strong {
+  font-size: 0.95rem;
+}

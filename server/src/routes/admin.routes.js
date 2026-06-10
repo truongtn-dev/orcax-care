@@ -57,4 +57,5 @@ adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);
 adminRouter.post("/clinic-rooms", AdminClinicRoomController.createClinicRoom);
 adminRouter.put("/clinic-rooms/:roomId", AdminClinicRoomController.updateClinicRoom);
 
+adminRouter.get("/work-shifts", AdminWorkShiftController.listWorkShifts);
 adminRouter.post("/work-shifts", AdminWorkShiftController.createWorkShift);

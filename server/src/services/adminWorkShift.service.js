@@ -150,3 +150,65 @@ export async function createWorkShift(payload) {
   const populated = await shiftQuery().findById(shift._id).lean();
   return { status: 201, body: serializeWorkShift(populated) };
 }
+
+export function buildWeeklyPattern(shifts) {
+  const buckets = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+    dayOfWeek,
+    dayLabel: DAY_OF_WEEK_LABELS[dayOfWeek] || "",
+    shifts: [],
+  }));
+
+  for (const shift of shifts) {
+    const day = shift.dayOfWeek;
+    if (day >= 0 && day <= 6) {
+      buckets[day].shifts.push(shift);
+    }
+  }
+
+  for (const bucket of buckets) {
+    bucket.shifts.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
+  }
+
+  return buckets;
+}
+
+export async function listWorkShifts({
+  doctorId = "",
+  isActive = "",
+  page = 1,
+  limit = 50,
+} = {}) {
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+  const filter = {};
+
+  if (doctorId && mongoose.Types.ObjectId.isValid(doctorId)) {
+    filter.doctorId = new mongoose.Types.ObjectId(doctorId);
+  }
+
+  const activeFilter = String(isActive || "").trim().toLowerCase();
+  if (activeFilter === "true") filter.isActive = true;
+  if (activeFilter === "false") filter.isActive = false;
+
+  const skip = (pageNum - 1) * limitNum;
+  const [rows, total] = await Promise.all([
+    shiftQuery().find(filter).sort({ dayOfWeek: 1, startTime: 1 }).skip(skip).limit(limitNum).lean(),
+    WorkShift.countDocuments(filter),
+  ]);
+
+  const items = rows.map(serializeWorkShift);
+  const weeklyPattern = buildWeeklyPattern(items);
+
+  return {
+    items,
+    weeklyPattern,
+    page: pageNum,
+    limit: limitNum,
+    total,
+    totalPages: Math.ceil(total / limitNum) || 1,
+    filters: {
+      doctorId: doctorId || null,
+      isActive: activeFilter || "all",
+    },
+  };
+}

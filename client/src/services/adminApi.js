@@ -120,4 +120,8 @@ export const AdminApiClient = {
   createWorkShift(payload) {
     return api.post("/api/admin/work-shifts", payload);
   },
+
+  listWorkShifts(params) {
+    return api.get("/api/admin/work-shifts", { params });
+  },
 };
