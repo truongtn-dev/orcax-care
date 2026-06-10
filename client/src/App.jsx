@@ -27,6 +27,7 @@ import CreateWorkShiftPage from "./pages/admin/CreateWorkShiftPage.jsx";
 import EditWorkShiftPage from "./pages/admin/EditWorkShiftPage.jsx";
 import GenerateAppointmentSlotsPage from "./pages/admin/GenerateAppointmentSlotsPage.jsx";
 import WorkShiftsListPage from "./pages/admin/WorkShiftsListPage.jsx";
+import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
@@ -259,7 +260,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/doctor/:id" element={<DoctorPublicProfilePage />} />
           <Route
             path="/doctor"
             element={
@@ -276,6 +276,15 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/doctor/schedule"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorScheduleCalendarPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/doctor/:id" element={<DoctorPublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

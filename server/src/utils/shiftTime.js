@@ -46,6 +46,15 @@ export function buildSlotTimes(startTime, endTime, slotDurationMin, maxPatients)
   return slots;
 }
 
+export function formatDateOnly(date) {
+  const value = new Date(date);
+  if (Number.isNaN(value.getTime())) return "";
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function parseDateOnly(value) {
   if (!value || typeof value !== "string") return null;
   const trimmed = value.trim();

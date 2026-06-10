@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as DoctorScheduleController from "../controllers/doctorSchedule.controller.js";
 import * as DoctorWorkShiftController from "../controllers/doctorWorkShift.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -8,3 +9,5 @@ export const doctorRouter = Router();
 doctorRouter.use(requireDatabase, authMiddleware, requireRole("doctor"));
 
 doctorRouter.get("/work-shifts", DoctorWorkShiftController.listMyWorkShifts);
+doctorRouter.get("/schedule", DoctorScheduleController.getScheduleCalendar);
+doctorRouter.get("/appointment-slots/:id", DoctorScheduleController.getAppointmentSlotDetail);
