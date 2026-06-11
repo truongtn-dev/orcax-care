@@ -53,6 +53,7 @@ export async function getPatientWallet(userId, query = {}) {
       ...overview,
       paymentMethods: [
         { id: "payos", label: "PayOS", enabled: !isPayosMockMode() },
+        { id: "vnpay", label: "VNPay", enabled: !isVnpayMockMode() },
         { id: "sepay", label: "SePay", enabled: !isSepayMockMode() },
       ],
       limits: { minTopup, maxTopup },

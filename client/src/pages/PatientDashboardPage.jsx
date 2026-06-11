@@ -140,6 +140,20 @@ const DASHBOARD_SECTIONS = [
     ),
     items: [
       {
+        to: "/patient/notifications",
+        title: "Notifications",
+        description: "Read clinic updates, visit messages, and system notices.",
+        badge: "Inbox",
+        theme: "cyan",
+        cta: "Open inbox",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+          </svg>
+        ),
+      },
+      {
         to: "/profile",
         title: "Profile",
         description: "Update contact details, date of birth, and emergency contact.",
@@ -233,6 +247,20 @@ export default function PatientDashboardPage() {
                 <span className="patient-quick-value">0</span>
                 <span className="patient-quick-label">Upcoming visits</span>
                 <span className="patient-quick-hint">Online booking coming soon</span>
+              </div>
+            </Link>
+
+            <Link to="/patient/notifications" className="patient-quick-card">
+              <span className="patient-quick-icon patient-quick-icon--notifications" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+              </span>
+              <div className="patient-quick-body">
+                <span className="patient-quick-value">Inbox</span>
+                <span className="patient-quick-label">Notifications</span>
+                <span className="patient-quick-hint">Read clinic updates</span>
               </div>
             </Link>
 
