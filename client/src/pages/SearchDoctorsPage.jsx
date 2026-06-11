@@ -114,7 +114,7 @@ export default function SearchDoctorsPage() {
 
   const specialtyOptions = useMemo(
     () => [
-      { value: "", label: "Tất cả chuyên khoa" },
+      { value: "", label: "All specialties" },
       ...specialties.map((item) => ({ value: item._id, label: item.name })),
     ],
     [specialties],
@@ -122,14 +122,14 @@ export default function SearchDoctorsPage() {
 
   const departmentOptions = useMemo(
     () => [
-      { value: "", label: "Tất cả khoa/phòng ban" },
+      { value: "", label: "All departments" },
       ...departments.map((item) => ({ value: item._id, label: item.name })),
     ],
     [departments],
   );
 
   const popularSpecialties = specialties.slice(0, 8);
-  const specialistLabel = result.total === 1 ? "bác sĩ" : "bác sĩ";
+  const specialistLabel = result.total === 1 ? "doctor" : "doctors";
 
   return (
     <PageLayout>
@@ -137,10 +137,10 @@ export default function SearchDoctorsPage() {
         <section className="search-hero" aria-labelledby="search-doctors-title">
           <div className="search-hero-bg" aria-hidden="true" />
           <div className="search-hero-inner">
-            <p className="search-hero-eyebrow">Dịch vụ y tế</p>
-            <h1 id="search-doctors-title">Tìm bác sĩ phù hợp</h1>
+            <p className="search-hero-eyebrow">Healthcare services</p>
+            <h1 id="search-doctors-title">Find the right doctor</h1>
             <p className="search-hero-lead">
-              Tìm bác sĩ đã được xác minh theo tên, chuyên khoa hoặc khoa — đặt lịch nhanh chóng.
+              Search verified doctors by name, specialty, or department — and book quickly.
             </p>
 
             <form
@@ -157,20 +157,20 @@ export default function SearchDoctorsPage() {
                 <input
                   id="doctor-search-q"
                   type="search"
-                  placeholder="Tên bác sĩ, chuyên khoa hoặc khoa…"
+                  placeholder="Doctor name, specialty, or department…"
                   value={filters.q}
                   onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
                   autoComplete="off"
                 />
               </label>
               <button type="submit" className="btn btn-white search-hero-submit">
-                Tìm kiếm
+                Search
               </button>
             </form>
 
             {!loading && (
               <p className="search-hero-stat" aria-live="polite">
-                Có <strong>{result.total}</strong> {specialistLabel}
+                <strong>{result.total}</strong> {specialistLabel} available
               </p>
             )}
           </div>
@@ -179,10 +179,10 @@ export default function SearchDoctorsPage() {
         <div className="search-body">
           <div className="search-toolbar card">
             <div className="search-toolbar-head">
-              <h2 className="search-toolbar-title">Lọc kết quả</h2>
+              <h2 className="search-toolbar-title">Filter results</h2>
               {activeFilters.length > 0 && (
                 <button type="button" className="search-toolbar-clear" onClick={clearFilters}>
-                  Xóa tất cả
+                  Clear all
                 </button>
               )}
             </div>
@@ -190,17 +190,17 @@ export default function SearchDoctorsPage() {
             <div className="search-toolbar-fields">
               <CustomSelect
                 id="filter-specialty"
-                label="Chuyên khoa"
+                label="Specialty"
                 value={filters.specialtyId}
-                placeholder="Tất cả chuyên khoa"
+                placeholder="All specialties"
                 onChange={(specialtyId) => applySearch({ specialtyId })}
                 options={specialtyOptions}
               />
               <CustomSelect
                 id="filter-department"
-                label="Khoa/phòng ban"
+                label="Department"
                 value={filters.departmentId}
-                placeholder="Tất cả khoa/phòng ban"
+                placeholder="All departments"
                 onChange={(departmentId) => applySearch({ departmentId })}
                 options={departmentOptions}
               />
@@ -208,7 +208,7 @@ export default function SearchDoctorsPage() {
 
             {popularSpecialties.length > 0 && (
               <div className="search-toolbar-chips">
-                <span className="search-toolbar-chips-label">Chuyên khoa phổ biến</span>
+                <span className="search-toolbar-chips-label">Popular specialties</span>
                 <div className="chip-row">
                   {popularSpecialties.map((specialty) => (
                     <button
@@ -231,7 +231,7 @@ export default function SearchDoctorsPage() {
 
           <div className="search-main">
             {activeFilters.length > 0 && (
-              <div className="search-active-filters" aria-label="Bộ lọc đang áp dụng">
+              <div className="search-active-filters" aria-label="Active filters">
                 {activeFilters.map((pill) => (
                   <button
                     key={pill.key}
@@ -246,7 +246,7 @@ export default function SearchDoctorsPage() {
                   </button>
                 ))}
                 <button type="button" className="search-filter-clear-link" onClick={clearFilters}>
-                  Xóa tất cả
+                  Clear all
                 </button>
               </div>
             )}
@@ -259,7 +259,7 @@ export default function SearchDoctorsPage() {
 
             <div className="search-results-bar">
               <h2 className="search-results-title">
-                {loading ? "Đang tìm…" : result.total > 0 ? "Gợi ý cho bạn" : "Kết quả tìm kiếm"}
+                {loading ? "Searching…" : result.total > 0 ? "Recommended for you" : "Search results"}
               </h2>
               {!loading && result.total > 0 && (
                 <span className="search-results-range">
@@ -269,7 +269,7 @@ export default function SearchDoctorsPage() {
             </div>
 
             {loading && (
-              <div className="doctor-grid-premium" aria-busy="true" aria-label="Đang tải danh sách bác sĩ">
+              <div className="doctor-grid-premium" aria-busy="true" aria-label="Loading doctor list">
                 {Array.from({ length: DOCTORS_PAGE_SIZE }).map((_, index) => (
                   <DoctorCardSkeleton key={index} />
                 ))}
@@ -282,10 +282,10 @@ export default function SearchDoctorsPage() {
                   <div className="empty-state-icon search-empty-icon">
                     <SearchIcon />
                   </div>
-                  <h3>Không tìm thấy bác sĩ phù hợp</h3>
-                  <p>Thử từ khóa, chuyên khoa hoặc khoa khác, hoặc xem toàn bộ danh sách bác sĩ.</p>
+                  <h3>No matching doctors found</h3>
+                  <p>Try a different keyword, specialty, or department, or browse all doctors.</p>
                   <button type="button" className="btn btn-primary" onClick={clearFilters}>
-                    Xem tất cả bác sĩ
+                    View all doctors
                   </button>
                 </div>
               </ScrollReveal>
@@ -307,8 +307,8 @@ export default function SearchDoctorsPage() {
                 totalPages={result.totalPages}
                 total={result.total}
                 limit={filters.limit}
-                itemLabel="bác sĩ"
-                ariaLabel="Trang kết quả tìm kiếm"
+                itemLabel="doctors"
+                ariaLabel="Search results pages"
                 onPageChange={(page) => applySearch({ page })}
               />
             )}

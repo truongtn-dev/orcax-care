@@ -70,11 +70,11 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthPageLayout title="Chào mừng trở lại" subtitle="Đăng nhập tài khoản OrcaXCare">
+    <AuthPageLayout title="Welcome back" subtitle="Sign in to your OrcaXCare account">
       <form onSubmit={onSubmit} className="form" noValidate>
         {error && <div className="alert alert-error">{error}</div>}
         <FormField
-          label="Địa chỉ email"
+          label="Email address"
           type="email"
           name="email"
           value={form.email}
@@ -85,7 +85,7 @@ export default function LoginPage() {
           placeholder="you@example.com"
         />
         <FormField
-          label="Mật khẩu"
+          label="Password"
           type="password"
           name="password"
           value={form.password}
@@ -93,14 +93,14 @@ export default function LoginPage() {
           onBlur={onBlur}
           error={fieldErrors.password}
           autoComplete="current-password"
-          placeholder="Nhập mật khẩu"
+          placeholder="Enter your password"
         />
         <label className="checkbox-row">
           <input type="checkbox" name="rememberMe" checked={form.rememberMe} onChange={onChange} />
-          Ghi nhớ đăng nhập
+          Remember me
         </label>
         <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-          {loading ? "Đang đăng nhập…" : "Đăng nhập"}
+          {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
 
@@ -111,9 +111,9 @@ export default function LoginPage() {
       )}
 
       <p className="form-footer">
-        <Link to="/forgot-password">Quên mật khẩu?</Link>
+        <Link to="/forgot-password">Forgot password?</Link>
         {" · "}
-        <Link to="/register">Đăng ký tài khoản</Link>
+        <Link to="/register">Create an account</Link>
       </p>
     </AuthPageLayout>
   );

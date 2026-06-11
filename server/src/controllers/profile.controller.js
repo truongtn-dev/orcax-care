@@ -9,7 +9,7 @@ export async function getProfile(req, res) {
     return sendResult(res, await ProfileService.getProfile(req.user.userId, req.user.role));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -18,6 +18,6 @@ export async function updateProfile(req, res) {
     return sendResult(res, await ProfileService.updateProfile(req.user.userId, req.user.role, req.body));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }

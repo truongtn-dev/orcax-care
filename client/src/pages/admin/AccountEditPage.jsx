@@ -74,7 +74,7 @@ export default function AccountEditPage() {
         phone: data.phone || "",
         isActive: Boolean(data.isActive),
       });
-      setSuccess("Cập nhật tài khoản thành công.");
+      setSuccess("Account updated successfully.");
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -85,14 +85,14 @@ export default function AccountEditPage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Cập nhật tài khoản</h1>
-        <p>Tải người dùng hiện có, chỉnh sửa thông tin liên hệ và lưu trạng thái tài khoản.</p>
+        <h1>Update account</h1>
+        <p>Load an existing user, edit contact information, and save account status.</p>
       </div>
 
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải tài khoản...
+          Loading account...
         </div>
       ) : (
         <div className="card form-card-centered profile-form-card">
@@ -102,33 +102,33 @@ export default function AccountEditPage() {
 
             {account && (
               <fieldset className="form-section">
-                <legend>Thông tin hệ thống</legend>
+                <legend>System information</legend>
                 <div className="admin-detail-list">
                   <div>
-                    <span>Vai trò</span>
+                    <span>Role</span>
                     <strong>{account.role}</strong>
                   </div>
                   <div>
-                    <span>Email đã xác thực</span>
-                    <strong>{account.isEmailVerified ? "Có" : "Không"}</strong>
+                    <span>Email verified</span>
+                    <strong>{account.isEmailVerified ? "Yes" : "No"}</strong>
                   </div>
                   <div>
-                    <span>Hồ sơ liên kết</span>
-                    <strong>{account.doctorId || account.patientId || "Chưa có"}</strong>
+                    <span>Linked profile</span>
+                    <strong>{account.doctorId || account.patientId || "None"}</strong>
                   </div>
                 </div>
               </fieldset>
             )}
 
             <fieldset className="form-section">
-              <legend>Thông tin liên hệ</legend>
+              <legend>Contact information</legend>
               <div className="form-grid">
                 <label>
                   Email
                   <input type="email" name="email" value={form.email} onChange={onChange} required />
                 </label>
                 <label>
-                  Họ và tên
+                  Full name
                   <input
                     type="text"
                     name="fullName"
@@ -139,14 +139,14 @@ export default function AccountEditPage() {
                   />
                 </label>
                 <label>
-                  Số điện thoại
+                  Phone number
                   <input
                     type="tel"
                     name="phone"
                     value={form.phone}
                     onChange={onChange}
                     pattern="[0-9+\-\s()]{8,20}"
-                    title="Dùng 8-20 ký tự gồm số, khoảng trắng, +, -, hoặc ngoặc đơn."
+                    title="Use 8–20 characters including digits, spaces, +, -, or parentheses."
                   />
                 </label>
                 <label className="checkbox-row">
@@ -156,20 +156,20 @@ export default function AccountEditPage() {
                     checked={form.isActive}
                     onChange={onChange}
                   />
-                  Tài khoản đang hoạt động
+                  Account is active
                 </label>
               </div>
             </fieldset>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                {saving ? "Saving..." : "Save changes"}
               </button>
               <button type="button" className="btn btn-outline" onClick={() => navigate("/admin")}>
-                Hủy
+                Cancel
               </button>
               <Link to="/admin" className="btn btn-ghost">
-                Về bảng quản trị
+                Back to admin dashboard
               </Link>
             </div>
           </form>

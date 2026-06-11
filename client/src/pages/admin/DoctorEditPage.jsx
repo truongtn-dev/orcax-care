@@ -99,7 +99,7 @@ export default function DoctorEditPage() {
         isActive: Boolean(data.isActive),
         accountIsActive: Boolean(data.accountIsActive),
       });
-      setSuccess("Cập nhật bác sĩ thành công. Tìm kiếm phía bệnh nhân sẽ dùng dữ liệu mới.");
+      setSuccess("Doctor updated successfully. Patient search will use the new data.");
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -109,23 +109,23 @@ export default function DoctorEditPage() {
 
   return (
     <PageLayout>
-      <nav className="admin-breadcrumb" aria-label="Điều hướng">
-        <Link to="/admin">Quản trị</Link>
+      <nav className="admin-breadcrumb" aria-label="Navigation">
+        <Link to="/admin">Admin</Link>
         <span>/</span>
-        <Link to="/admin/doctors">Bác sĩ</Link>
+        <Link to="/admin/doctors">Doctor</Link>
         <span>/</span>
-        <span>Cập nhật</span>
+        <span>Edit</span>
       </nav>
 
       <div className="page-header">
-        <h1>Cập nhật bác sĩ</h1>
-        <p>Sửa thông tin nghề nghiệp, tài khoản liên kết và trạng thái hiển thị cho bệnh nhân.</p>
+        <h1>Update doctor</h1>
+        <p>Edit professional details, linked account, and patient-facing visibility status.</p>
       </div>
 
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải bác sĩ...
+          Loading doctor...
         </div>
       ) : (
         <div className="card form-card-centered profile-form-card">
@@ -134,85 +134,85 @@ export default function DoctorEditPage() {
             {success && <div className="alert alert-success">{success}</div>}
 
             <fieldset className="form-section">
-              <legend>Tài khoản liên kết</legend>
+              <legend>Linked account</legend>
               <div className="form-grid">
                 <label>
                   Email
                   <input type="email" name="email" value={form.email} onChange={onChange} required />
                 </label>
                 <label>
-                  Họ và tên
+                  Full name
                   <input type="text" name="fullName" value={form.fullName} onChange={onChange} minLength={2} required />
                 </label>
                 <label>
-                  Số điện thoại
+                  Phone number
                   <input
                     type="tel"
                     name="phone"
                     value={form.phone}
                     onChange={onChange}
                     pattern="[0-9+\-\s()]{8,20}"
-                    title="Dùng 8-20 ký tự gồm số, khoảng trắng, +, -, hoặc ngoặc đơn."
+                    title="Use 8–20 characters including digits, spaces, +, -, or parentheses."
                   />
                 </label>
                 <label className="checkbox-row">
                   <input type="checkbox" name="accountIsActive" checked={form.accountIsActive} onChange={onChange} />
-                  Tài khoản đang hoạt động
+                  Account is active
                 </label>
               </div>
             </fieldset>
 
             <fieldset className="form-section">
-              <legend>Thông tin nghề nghiệp</legend>
+              <legend>Professional details</legend>
               <div className="form-grid">
                 <CustomSelect
-                  label="Chuyên khoa"
+                  label="Specialty"
                   value={form.specialtyId}
-                  placeholder="Chọn chuyên khoa"
+                  placeholder="Select specialty"
                   onChange={(specialtyId) => onChange({ target: { name: "specialtyId", value: specialtyId } })}
                   options={[
-                    { value: "", label: "Chọn chuyên khoa" },
+                    { value: "", label: "Select specialty" },
                     ...specialties.map((specialty) => ({ value: specialty._id, label: specialty.name })),
                   ]}
                 />
                 <CustomSelect
-                  label="Khoa/phòng ban"
+                  label="Department"
                   value={form.departmentId}
-                  placeholder="Chọn khoa/phòng ban"
+                  placeholder="Select department"
                   onChange={(departmentId) => onChange({ target: { name: "departmentId", value: departmentId } })}
                   options={[
-                    { value: "", label: "Chọn khoa/phòng ban" },
+                    { value: "", label: "Select department" },
                     ...departments.map((department) => ({ value: department._id, label: department.name })),
                   ]}
                 />
                 <label>
-                  Số giấy phép
+                  License number
                   <input type="text" name="licenseNo" value={form.licenseNo} onChange={onChange} minLength={3} required />
                 </label>
                 <label>
-                  Ảnh đại diện URL
+                  Avatar URL
                   <input type="url" name="photoUrl" value={form.photoUrl} onChange={onChange} />
                 </label>
                 <label className="checkbox-row">
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
-                  Bác sĩ đang hoạt động
+                  Doctor is active
                 </label>
               </div>
               <label>
-                Tiểu sử
+                Bio
                 <textarea name="bio" value={form.bio} onChange={onChange} rows="5" maxLength="1000" />
               </label>
             </fieldset>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving}>
-                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                {saving ? "Saving..." : "Save changes"}
               </button>
               <button type="button" className="btn btn-outline" onClick={() => navigate("/admin/doctors")}>
-                Hủy
+                Cancel
               </button>
               <Link to="/search-doctors" className="btn btn-ghost">
-                Xem phía bệnh nhân
+                View patient side
               </Link>
             </div>
           </form>

@@ -11,12 +11,12 @@ export function parseAuthToken(header) {
 export async function authMiddleware(req, res, next) {
   const plainToken = parseAuthToken(req.headers.authorization);
   if (!plainToken) {
-    return res.status(401).json({ message: "Chưa xác thực" });
+    return res.status(401).json({ message: "Not authenticated" });
   }
 
   const tokenDoc = await findValidAuthToken(plainToken);
   if (!tokenDoc) {
-    return res.status(401).json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 
   const user = await User.findById(tokenDoc.userId).select(
@@ -24,23 +24,23 @@ export async function authMiddleware(req, res, next) {
   );
 
   if (!user) {
-    return res.status(401).json({ message: "Chưa xác thực" });
+    return res.status(401).json({ message: "Not authenticated" });
   }
 
   if (user.isLocked) {
-    return res.status(403).json({ message: "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ." });
+    return res.status(403).json({ message: "Account is locked. Please contact support." });
   }
 
   if (!user.isActive) {
-    return res.status(403).json({ message: "Tài khoản chưa kích hoạt." });
+    return res.status(403).json({ message: "Account is not activated." });
   }
 
   if (user.role === "patient" && !user.isEmailVerified) {
-    return res.status(403).json({ message: "Yêu cầu xác minh email" });
+    return res.status(403).json({ message: "Email verification required" });
   }
 
   if (user.passwordChangedAt && tokenDoc.createdAt < user.passwordChangedAt) {
-    return res.status(401).json({ message: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại." });
+    return res.status(401).json({ message: "Session expired. Please sign in again." });
   }
 
   req.user = {
@@ -55,7 +55,7 @@ export async function authMiddleware(req, res, next) {
 export function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Không có quyền truy cập" });
+      return res.status(403).json({ message: "Access denied" });
     }
     next();
   };

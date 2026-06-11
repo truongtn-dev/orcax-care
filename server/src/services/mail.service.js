@@ -28,7 +28,7 @@ function getTransporter() {
 
 function emailLayout({ title, bodyHtml, actionUrl, actionLabel }) {
   return `<!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f8fafc;font-family:'Segoe UI',system-ui,sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
@@ -45,12 +45,12 @@ function emailLayout({ title, bodyHtml, actionUrl, actionLabel }) {
               ? `<p style="margin:24px 0 0;text-align:center;">
             <a href="${actionUrl}" style="display:inline-block;background:#0891b2;color:#fff;text-decoration:none;padding:12px 28px;border-radius:999px;font-weight:600;">${actionLabel}</a>
           </p>
-          <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;word-break:break-all;">Hoặc copy link: ${actionUrl}</p>`
+          <p style="margin:16px 0 0;font-size:12px;color:#94a3b8;word-break:break-all;">Or copy this link: ${actionUrl}</p>`
               : ""
           }
         </td></tr>
         <tr><td style="padding:16px 28px;background:#f1f5f9;border-top:1px solid #e2e8f0;">
-          <p style="margin:0;font-size:12px;color:#64748b;">Email tự động từ ${APP_NAME}. Nếu bạn không yêu cầu, hãy bỏ qua.</p>
+          <p style="margin:0;font-size:12px;color:#64748b;">Automated email from ${APP_NAME}. If you did not request this, you can ignore it.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -100,14 +100,14 @@ export async function verifyMailConnection() {
 
 export async function sendVerificationEmail(user, token) {
   const link = `${CLIENT_ORIGIN}/verify-email?token=${token}`;
-  const subject = `[${APP_NAME}] Xác nhận email đăng ký`;
-  const text = `Xin chào ${user.fullName},\n\nVui lòng xác nhận email bằng link sau (hết hạn sau 24 giờ):\n${link}\n\n— ${APP_NAME}`;
+  const subject = `[${APP_NAME}] Verify your email`;
+  const text = `Hello ${user.fullName},\n\nPlease verify your email using the link below (expires in 24 hours):\n${link}\n\n— ${APP_NAME}`;
   const html = emailLayout({
-    title: "Xác nhận email của bạn",
-    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Xin chào <strong>${user.fullName}</strong>,</p>
-      <p style="margin:0;color:#475569;line-height:1.6;">Cảm ơn bạn đã đăng ký tài khoản patient trên ${APP_NAME}. Nhấn nút bên dưới để kích hoạt tài khoản. Link có hiệu lực <strong>24 giờ</strong>.</p>`,
+    title: "Verify your email",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">Thank you for registering a patient account on ${APP_NAME}. Click the button below to activate your account. This link is valid for <strong>24 hours</strong>.</p>`,
     actionUrl: link,
-    actionLabel: "Xác nhận email",
+    actionLabel: "Verify email",
   });
 
   return deliverMail({ to: user.email, subject, text, html });
@@ -115,15 +115,15 @@ export async function sendVerificationEmail(user, token) {
 
 export async function sendResetPasswordEmail(user, token) {
   const link = `${CLIENT_ORIGIN}/reset-password?token=${token}`;
-  const subject = `[${APP_NAME}] Đặt lại mật khẩu`;
-  const text = `Xin chào ${user.fullName},\n\nBạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu. Link (hết hạn sau 30 phút):\n${link}\n\nNếu không phải bạn, bỏ qua email này.\n\n— ${APP_NAME}`;
+  const subject = `[${APP_NAME}] Reset your password`;
+  const text = `Hello ${user.fullName},\n\nYou (or someone else) requested a password reset. Link (expires in 30 minutes):\n${link}\n\nIf this was not you, ignore this email.\n\n— ${APP_NAME}`;
   const html = emailLayout({
-    title: "Đặt lại mật khẩu",
-    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Xin chào <strong>${user.fullName}</strong>,</p>
-      <p style="margin:0;color:#475569;line-height:1.6;">Chúng tôi nhận được yêu cầu đặt lại mật khẩu. Nhấn nút bên dưới để tạo mật khẩu mới. Link có hiệu lực <strong>30 phút</strong>.</p>
-      <p style="margin:12px 0 0;color:#475569;line-height:1.6;">Nếu bạn không yêu cầu, có thể bỏ qua email này.</p>`,
+    title: "Reset your password",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">We received a password reset request. Click the button below to set a new password. This link is valid for <strong>30 minutes</strong>.</p>
+      <p style="margin:12px 0 0;color:#475569;line-height:1.6;">If you did not request this, you can ignore this email.</p>`,
     actionUrl: link,
-    actionLabel: "Đặt lại mật khẩu",
+    actionLabel: "Reset password",
   });
 
   return deliverMail({ to: user.email, subject, text, html });

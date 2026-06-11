@@ -79,10 +79,9 @@ export default function DoctorsListPage() {
       <div className="page-header">
         <div className="page-header-row">
           <div>
-            <h1>Danh sách bác sĩ</h1>
+            <h1>Doctor list</h1>
             <p>
-              Quản lý hồ sơ bác sĩ, chuyên khoa, khoa/phòng ban và trạng thái hiển
-              thị cho bệnh nhân.
+              Manage doctor profiles, specialties, departments, and patient-facing visibility status.
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -90,7 +89,7 @@ export default function DoctorsListPage() {
               Work shifts
             </Link>
             <Link to="/admin/work-shifts/new" className="btn btn-primary">
-              Tạo ca làm việc
+              Create work shift
             </Link>
           </div>
         </div>
@@ -98,10 +97,10 @@ export default function DoctorsListPage() {
 
       <div className="card admin-toolbar">
         <Link to="/admin" className="btn btn-outline">
-          Về quản trị
+          Back to admin
         </Link>
         <Link to="/search-doctors" className="btn btn-ghost">
-          Xem phía bệnh nhân
+          View patient side
         </Link>
       </div>
 
@@ -110,29 +109,29 @@ export default function DoctorsListPage() {
           <div className="filters-toolbar-fields">
             <FilterSearchField
               id="doctors-list-search"
-              placeholder="Tìm tên, email, giấy phép…"
+              placeholder="Search name, email, license…"
               value={filters.q}
               onChange={(e) => setFilters((current) => ({ ...current, q: e.target.value, page: 1 }))}
             />
             <CustomSelect
               className="filter-field"
-              label="Chuyên khoa"
+              label="Specialty"
               value={filters.specialtyId}
-              placeholder="Tất cả chuyên khoa"
+              placeholder="All specialties"
               onChange={(specialtyId) => setFilters((current) => ({ ...current, specialtyId, page: 1 }))}
               options={[
-                { value: "", label: "Tất cả chuyên khoa" },
+                { value: "", label: "All specialties" },
                 ...specialties.map((specialty) => ({ value: specialty._id, label: specialty.name })),
               ]}
             />
             <CustomSelect
               className="filter-field"
-              label="Khoa/phòng ban"
+              label="Department"
               value={filters.departmentId}
-              placeholder="Tất cả khoa/phòng ban"
+              placeholder="All departments"
               onChange={(departmentId) => setFilters((current) => ({ ...current, departmentId, page: 1 }))}
               options={[
-                { value: "", label: "Tất cả khoa/phòng ban" },
+                { value: "", label: "All departments" },
                 ...departments.map((department) => ({ value: department._id, label: department.name })),
               ]}
             />
@@ -146,14 +145,14 @@ export default function DoctorsListPage() {
               checked={filters.activeOnly}
               onChange={onChange}
             />
-            Chỉ hiện bác sĩ đang hoạt động
+            Show active doctors only
           </label>
           <button
             type="button"
             className="btn btn-outline"
             onClick={clearFilters}
           >
-            Xóa lọc
+            Clear filters
           </button>
         </div>
       </div>
@@ -162,7 +161,7 @@ export default function DoctorsListPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải bác sĩ...
+          Loading doctors...
         </div>
       )}
 
@@ -171,12 +170,12 @@ export default function DoctorsListPage() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Bác sĩ</th>
-                <th>Chuyên khoa</th>
-                <th>Khoa/phòng ban</th>
-                <th>Giấy phép</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
+                <th>Doctor</th>
+                <th>Specialty</th>
+                <th>Department</th>
+                <th>License</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -194,8 +193,8 @@ export default function DoctorsListPage() {
                       className={`status-pill ${doctor.isActive && doctor.accountIsActive ? "status-active" : ""}`}
                     >
                       {doctor.isActive && doctor.accountIsActive
-                        ? "Đang hoạt động"
-                        : "Ngừng hoạt động"}
+                        ? "Active"
+                        : "Inactive"}
                     </span>
                   </td>
                   <td>
@@ -203,7 +202,7 @@ export default function DoctorsListPage() {
                       className="btn btn-sm btn-outline"
                       to={`/admin/doctors/${doctor._id}/edit`}
                     >
-                      Sửa
+                      Edit
                     </Link>
                   </td>
                 </tr>
@@ -211,7 +210,7 @@ export default function DoctorsListPage() {
               {result.items.length === 0 && (
                 <tr>
                   <td colSpan="6" className="empty-cell">
-                    Không tìm thấy bác sĩ.
+                    No doctors found.
                   </td>
                 </tr>
               )}

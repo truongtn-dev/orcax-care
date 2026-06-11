@@ -1,6 +1,6 @@
 export default function FilterSearchField({
   id,
-  label = "Tìm kiếm",
+  label = "Search",
   placeholder,
   value,
   onChange,

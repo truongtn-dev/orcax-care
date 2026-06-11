@@ -127,7 +127,7 @@ describe("Create Work Shift (UC Iter2 #1)", () => {
     const body = await res.json();
     assert.equal(body.doctorId, doctor._id.toString());
     assert.equal(body.dayOfWeek, 1);
-    assert.equal(body.dayLabel, "Thứ 2");
+    assert.equal(body.dayLabel, "Monday");
     assert.equal(body.startTime, "08:00");
     assert.equal(body.endTime, "12:00");
     assert.equal(body.maxPatients, 8);
@@ -164,7 +164,7 @@ describe("Create Work Shift (UC Iter2 #1)", () => {
 
     assert.equal(second.status, 409);
     const body = await second.json();
-    assert.match(body.message, /trùng/i);
+    assert.match(body.message, /overlap/i);
   });
 
   test("requires admin authentication", async () => {

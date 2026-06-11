@@ -213,13 +213,13 @@ export async function updatePatient(id, dto) {
     }
   }
 
-  if (!patient) return { status: 404, body: { message: "Không tìm thấy hồ sơ bệnh nhân" } };
+  if (!patient) return { status: 404, body: { message: "Patient profile not found" } };
 
   const user = await User.findById(patient.userId._id);
-  if (!user) return { status: 404, body: { message: "Không tìm thấy tài khoản bệnh nhân" } };
+  if (!user) return { status: 404, body: { message: "Patient account not found" } };
 
   const fullName = String(dto.fullName || "").trim();
-  const fullNameError = validateRequired(fullName, "Họ và tên");
+  const fullNameError = validateRequired(fullName, "Full name");
   if (fullNameError) return { status: 400, body: { message: fullNameError } };
 
   const phone = String(dto.phone || "").trim();
@@ -232,13 +232,13 @@ export async function updatePatient(id, dto) {
 
   const gender = String(dto.gender || "").trim();
   if (!GENDERS.includes(gender)) {
-    return { status: 400, body: { message: "Giới tính không hợp lệ" } };
+    return { status: 400, body: { message: "Invalid gender" } };
   }
 
   if (dto.dateOfBirth) {
     const dob = new Date(dto.dateOfBirth);
     if (Number.isNaN(dob.getTime()) || dob > new Date()) {
-      return { status: 400, body: { message: "Ngày sinh không hợp lệ" } };
+      return { status: 400, body: { message: "Invalid date of birth" } };
     }
     patient.dateOfBirth = dob;
   } else {

@@ -244,14 +244,14 @@ export async function getAccount(userId) {
 
 export async function updateAccount(userId, dto) {
   const user = await User.findById(userId);
-  if (!user) return { status: 404, body: { message: "Không tìm thấy tài khoản" } };
+  if (!user) return { status: 404, body: { message: "Account not found" } };
 
   const nextEmail = normalizeEmail(dto.email ?? user.email);
   const emailError = validateEmail(nextEmail);
   if (emailError) return { status: 400, body: { message: emailError } };
 
   const nextFullName = String(dto.fullName ?? user.fullName).trim();
-  const fullNameError = validateRequired(nextFullName, "Hờ và tên");
+  const fullNameError = validateRequired(nextFullName, "Full name");
   if (fullNameError) return { status: 400, body: { message: fullNameError } };
 
   const phone = String(dto.phone ?? "").trim();
@@ -259,7 +259,7 @@ export async function updateAccount(userId, dto) {
   if (phoneError) return { status: 400, body: { message: phoneError } };
 
   const duplicate = await User.findOne({ email: nextEmail, _id: { $ne: user._id } }).lean();
-  if (duplicate) return { status: 409, body: { message: "Email đã được sử dụng" } };
+  if (duplicate) return { status: 409, body: { message: "Email already in use" } };
 
   user.email = nextEmail;
   user.fullName = nextFullName;

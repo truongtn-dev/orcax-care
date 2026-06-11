@@ -148,7 +148,7 @@ describe("UC-29 Update Work Shift", () => {
     });
     assert.equal(res.status, 409);
     const body = await res.json();
-    assert.match(body.message, /trùng/i);
+    assert.match(body.message, /overlap/i);
   });
 
   test("returns 404 for missing shift", async () => {

@@ -10,11 +10,11 @@ export default function DoctorDashboardPage() {
     <PageLayout>
       <ScrollReveal variant="up">
         <div className="dashboard-welcome">
-          <h1>Khu vực bác sĩ</h1>
+          <h1>Doctor workspace</h1>
           <p>
-            Xin chào, BS. {fullName?.split(" ").slice(-1)[0] || fullName || "bác sĩ"}. Khu vực làm việc của bạn đã sẵn sàng.
+            Hello, Dr. {fullName?.split(" ").slice(-1)[0] || fullName || "Doctor"}. Your workspace is ready.
           </p>
-          <span className="dashboard-role-badge">Bác sĩ</span>
+          <span className="dashboard-role-badge">Doctor</span>
         </div>
       </ScrollReveal>
 
@@ -54,18 +54,18 @@ export default function DoctorDashboardPage() {
                 <circle cx="12" cy="7" r="4" />
               </svg>
             </div>
-            <h3>Cập nhật hồ sơ</h3>
-            <p>Chỉnh sửa tiểu sử nghề nghiệp và thông tin liên hệ.</p>
-            <span className="shortcut-arrow">Xem chi tiết →</span>
+            <h3>Update profile</h3>
+            <p>Edit your professional bio and contact information.</p>
+            <span className="shortcut-arrow">View details →</span>
           </Link>
         </ScrollReveal>
       </div>
 
       <ScrollReveal variant="up" delay={100}>
         <div className="card info-panel">
-          <h3 style={{ marginBottom: "0.75rem" }}>Giai đoạn 1 — Nền tảng</h3>
+          <h3 style={{ marginBottom: "0.75rem" }}>Phase 1 — Foundation</h3>
           <p>
-            Đây là giao diện làm việc cơ bản cho bác sĩ. Các tính năng quản lý lịch hẹn, hồ sơ bệnh nhân và công việc lâm sàng sẽ được bổ sung ở giai đoạn tiếp theo.
+            This is the core workspace for doctors. Appointment management, patient records, and clinical workflows will be added in upcoming phases.
           </p>
         </div>
       </ScrollReveal>

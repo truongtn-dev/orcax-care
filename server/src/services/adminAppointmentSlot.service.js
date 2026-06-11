@@ -27,29 +27,29 @@ export async function generateAppointmentSlots(payload = {}) {
   const rangeStart = parseDateOnly(startDate);
   const rangeEnd = parseDateOnly(endDate);
   if (!rangeStart || !rangeEnd) {
-    return { status: 400, body: { message: "Ngày bắt đầu/kết thúc phải theo định dạng YYYY-MM-DD" } };
+    return { status: 400, body: { message: "Start/end date must use YYYY-MM-DD format" } };
   }
   if (rangeEnd < rangeStart) {
-    return { status: 400, body: { message: "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu" } };
+    return { status: 400, body: { message: "End date must be on or after start date" } };
   }
 
   const shiftFilter = { isActive: true };
   if (doctorId) {
     if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-      return { status: 400, body: { message: "Bác sĩ không hợp lệ" } };
+      return { status: 400, body: { message: "Invalid doctor" } };
     }
     shiftFilter.doctorId = new mongoose.Types.ObjectId(doctorId);
   }
   if (workShiftId) {
     if (!mongoose.Types.ObjectId.isValid(workShiftId)) {
-      return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+      return { status: 400, body: { message: "Invalid work shift" } };
     }
     shiftFilter._id = new mongoose.Types.ObjectId(workShiftId);
   }
 
   const shifts = await WorkShift.find(shiftFilter).lean();
   if (!shifts.length) {
-    return { status: 404, body: { message: "Không tìm thấy ca làm việc phù hợp để sinh slot" } };
+    return { status: 404, body: { message: "No matching work shift found to generate slots" } };
   }
 
   const holidayDates = await loadHolidayDates(rangeStart, rangeEnd);

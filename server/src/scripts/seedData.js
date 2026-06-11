@@ -3,6 +3,7 @@ import { User } from "../models/User.js";
 import { Specialty } from "../models/Specialty.js";
 import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -77,6 +78,22 @@ export async function runSeed() {
   const deptMap = Object.fromEntries(
     (await Department.find()).map((d) => [d.name, d._id])
   );
+
+  const patientHash = await bcrypt.hash("Patient@123", 10);
+  let patientUser = await User.findOne({ email: "patient@orcaxcare.com" });
+  if (!patientUser) {
+    patientUser = await User.create({
+      email: "patient@orcaxcare.com",
+      passwordHash: patientHash,
+      role: "patient",
+      fullName: "Demo Patient",
+      phone: "0912345678",
+      isActive: true,
+      isEmailVerified: true,
+    });
+    await Patient.create({ userId: patientUser._id, isActive: true });
+    console.log("Created patient: patient@orcaxcare.com / Patient@123");
+  }
 
   for (const doc of doctors) {
     let user = await User.findOne({ email: doc.email });

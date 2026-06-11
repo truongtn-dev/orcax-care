@@ -16,7 +16,7 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!token) {
       setStatus("error");
-      setMessage("Thiếu mã xác minh.");
+      setMessage("Verification token is missing.");
       return;
     }
 
@@ -36,11 +36,11 @@ export default function VerifyEmailPage() {
   }, [token, navigate]);
 
   return (
-    <AuthPageLayout title="Xác minh email" subtitle="Chúng tôi đang xác nhận địa chỉ email của bạn">
+    <AuthPageLayout title="Verify email" subtitle="We are confirming your email address">
       {status === "loading" && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang xác minh email…
+          Verifying email…
         </div>
       )}
       {status === "success" && <div className="alert alert-success">{message}</div>}
@@ -48,13 +48,13 @@ export default function VerifyEmailPage() {
         <>
           <div className="alert alert-error">{message}</div>
           <p className="muted resend-description">
-            Liên kết có thể đã hết hạn. Vui lòng gửi lại email xác minh bên dưới.
+            The link may have expired. Please resend a verification email below.
           </p>
           <ResendVerificationForm compact />
         </>
       )}
       <p className="form-footer">
-        <Link to="/login">Đến trang đăng nhập</Link>
+        <Link to="/login">Go to sign in</Link>
       </p>
     </AuthPageLayout>
   );

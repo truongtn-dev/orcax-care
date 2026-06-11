@@ -16,9 +16,9 @@ const BENEFITS = [
 
   {
 
-    title: "Tìm bác sĩ phù hợp",
+    title: "Find the right doctor",
 
-    description: "Xem danh sách chuyên khoa, so sánh hồ sơ và chọn bác sĩ bạn tin tưởng.",
+    description: "Browse specialties, compare profiles, and choose a doctor you trust.",
 
     icon: (
 
@@ -36,9 +36,9 @@ const BENEFITS = [
 
   {
 
-    title: "Đặt lịch khám trực tuyến",
+    title: "Book appointments online",
 
-    description: "Chọn khung giờ, nhận xác nhận và dễ dàng đổi hoặc hủy khi cần.",
+    description: "Pick a time slot, receive confirmation, and reschedule or cancel when needed.",
 
     icon: (
 
@@ -56,9 +56,9 @@ const BENEFITS = [
 
   {
 
-    title: "Thanh toán thuận tiện",
+    title: "Convenient payments",
 
-    description: "Thanh toán qua ví hoặc cổng thanh toán phổ biến, theo dõi lịch sử rõ ràng.",
+    description: "Pay with your wallet or popular payment gateways and track your history clearly.",
 
     icon: (
 
@@ -76,9 +76,9 @@ const BENEFITS = [
 
   {
 
-    title: "Hồ sơ sức khỏe tập trung",
+    title: "Centralized health records",
 
-    description: "Ghi chú khám, kết quả xét nghiệm và đơn thuốc được lưu gọn gàng, dễ tra cứu.",
+    description: "Visit notes, lab results, and prescriptions stored neatly and easy to access.",
 
     icon: (
 
@@ -96,9 +96,9 @@ const BENEFITS = [
 
   {
 
-    title: "Giảm thời gian chờ",
+    title: "Shorter wait times",
 
-    description: "Theo dõi trạng thái xếp hàng, nhận nhắc lịch hẹn và tìm chi nhánh gần bạn.",
+    description: "Track queue status, get appointment reminders, and find nearby locations.",
 
     icon: (
 
@@ -116,9 +116,9 @@ const BENEFITS = [
 
   {
 
-    title: "Bảo mật thông tin",
+    title: "Secure information",
 
-    description: "Đăng nhập an toàn, quản lý hồ sơ và bảo vệ dữ liệu sức khỏe cá nhân.",
+    description: "Secure sign-in, profile management, and protection of your personal health data.",
 
     icon: (
 
@@ -142,25 +142,25 @@ const STEPS = [
 
   {
 
-    title: "Tạo tài khoản",
+    title: "Create an account",
 
-    description: "Đăng ký trong vài phút và xác minh email để bắt đầu sử dụng.",
-
-  },
-
-  {
-
-    title: "Đặt lịch với bác sĩ",
-
-    description: "Tìm bác sĩ, chọn khung giờ phù hợp và xác nhận lịch hẹn.",
+    description: "Register in minutes and verify your email to get started.",
 
   },
 
   {
 
-    title: "Khám bệnh và theo dõi",
+    title: "Book with a doctor",
 
-    description: "Đến khám đúng giờ, theo dõi quá trình điều trị và xem kết quả, đơn thuốc sau khám.",
+    description: "Find a doctor, choose a suitable time slot, and confirm your appointment.",
+
+  },
+
+  {
+
+    title: "Visit and follow up",
+
+    description: "Attend on time, track your treatment, and review results and prescriptions after your visit.",
 
   },
 
@@ -208,7 +208,7 @@ export default function HomePage() {
 
               <span className="hero-badge-dot" />
 
-              Nền tảng y tế số tin cậy
+              Trusted digital healthcare platform
 
             </div>
 
@@ -218,11 +218,11 @@ export default function HomePage() {
 
               {fullName ? (
 
-                <>Chào mừng trở lại, {fullName.split(" ")[0]}</>
+                <>Welcome back, {fullName.split(" ")[0]}</>
 
               ) : (
 
-                <>Chăm sóc sức khỏe đơn giản và an toàn</>
+                <>Healthcare made simple and secure</>
 
               )}
 
@@ -234,9 +234,9 @@ export default function HomePage() {
 
               {isAuthenticated
 
-                ? "Đặt lịch khám, quản lý hồ sơ và theo dõi quá trình điều trị — tất cả trên một nền tảng."
+                ? "Book appointments, manage your records, and follow your care — all in one place."
 
-                : "Tìm bác sĩ, đặt lịch khám, thanh toán trực tuyến và quản lý hồ sơ sức khỏe — nhanh gọn, không rắc rối."}
+                : "Find doctors, book visits, pay online, and manage your health records — quickly and without hassle."}
 
             </p>
 
@@ -246,7 +246,7 @@ export default function HomePage() {
 
               <Link to="/search-doctors" className="btn btn-white btn-lg">
 
-                Tìm bác sĩ
+                Find a doctor
 
               </Link>
 
@@ -254,7 +254,7 @@ export default function HomePage() {
 
                 <Link to="/register" className="btn btn-outline btn-hero-outline btn-lg">
 
-                  Đăng ký tài khoản
+                  Create an account
 
                 </Link>
 
@@ -264,7 +264,7 @@ export default function HomePage() {
 
                 <Link to={dashboardPath} className="btn btn-outline btn-hero-outline btn-lg">
 
-                  Trang cá nhân
+                  My dashboard
 
                 </Link>
 
@@ -280,7 +280,7 @@ export default function HomePage() {
 
                 <span className="hero-stat-value">500+</span>
 
-                <span className="hero-stat-label">Bác sĩ</span>
+                <span className="hero-stat-label">Doctors</span>
 
               </div>
 
@@ -288,7 +288,7 @@ export default function HomePage() {
 
                 <span className="hero-stat-value">20+</span>
 
-                <span className="hero-stat-label">Chuyên khoa</span>
+                <span className="hero-stat-label">Specialties</span>
 
               </div>
 
@@ -296,7 +296,7 @@ export default function HomePage() {
 
                 <span className="hero-stat-value">24/7</span>
 
-                <span className="hero-stat-label">Hỗ trợ trực tuyến</span>
+                <span className="hero-stat-label">Online support</span>
 
               </div>
 
@@ -312,15 +312,15 @@ export default function HomePage() {
 
           <ScrollReveal className="section-header" variant="up">
 
-            <span className="section-label">Tại sao chọn OrcaXCare</span>
+            <span className="section-label">Why OrcaXCare</span>
 
-            <h2>Phù hợp với cuộc sống hàng ngày</h2>
+            <h2>Built for everyday life</h2>
 
             <p>
 
-              Không dùng từ ngữ phức tạp — chỉ tập trung vào những gì bạn cần: tìm bác sĩ, đến hẹn khám và theo dõi
+              No complicated jargon — just what you need: find a doctor, keep your appointments, and follow your
 
-              sức khỏe sau mỗi lần khám.
+              health after each visit.
 
             </p>
 
@@ -354,11 +354,11 @@ export default function HomePage() {
 
           <ScrollReveal className="section-header" variant="up">
 
-            <span className="section-label">Cách sử dụng</span>
+            <span className="section-label">How it works</span>
 
-            <h2>Bắt đầu chỉ với 3 bước</h2>
+            <h2>Get started in 3 steps</h2>
 
-            <p>Từ đăng ký đến tái khám — quy trình đơn giản, dễ theo dõi.</p>
+            <p>From registration to follow-up visits — a simple, easy-to-follow process.</p>
 
           </ScrollReveal>
 
@@ -388,21 +388,21 @@ export default function HomePage() {
 
         <ScrollReveal className="cta-section" variant="scale" delay={80}>
 
-          <h2>Bạn đã sẵn sàng chăm sóc sức khỏe chủ động?</h2>
+          <h2>Ready to take charge of your health?</h2>
 
-          <p>Đăng ký miễn phí hoặc xem danh sách bác sĩ — chỉ mất vài phút để bắt đầu.</p>
+          <p>Sign up for free or browse our doctors — it only takes a few minutes to get started.</p>
 
           <div className="cta-actions">
 
             <Link to="/register" className="btn btn-white btn-lg">
 
-              Đăng ký ngay
+              Sign up now
 
             </Link>
 
             <Link to="/search-doctors" className="btn btn-outline btn-hero-outline btn-lg">
 
-              Xem danh sách bác sĩ
+              Browse doctors
 
             </Link>
 
@@ -417,4 +417,3 @@ export default function HomePage() {
   );
 
 }
-

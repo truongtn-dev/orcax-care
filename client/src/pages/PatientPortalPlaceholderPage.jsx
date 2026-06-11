@@ -3,21 +3,21 @@ import PageLayout from "../components/PageLayout.jsx";
 
 const CONTENT = {
   book: {
-    title: "Đặt lịch khám",
-    description: "Tính năng đặt lịch sẽ được mở sau khi hệ thống kết nối khung giờ khám. Hiện tại bạn có thể tìm bác sĩ trước.",
-    primaryLabel: "Tìm bác sĩ",
+    title: "Book an appointment",
+    description: "Online booking will be available once appointment slots are connected. You can browse doctors in the meantime.",
+    primaryLabel: "Find a doctor",
     primaryTo: "/search-doctors",
   },
   appointments: {
-    title: "Lịch hẹn",
-    description: "Danh sách lịch hẹn sắp tới và lịch sử khám sẽ hiển thị tại đây khi tính năng được triển khai.",
-    primaryLabel: "Tìm bác sĩ",
+    title: "Appointments",
+    description: "Upcoming appointments and visit history will appear here when this feature is released.",
+    primaryLabel: "Find a doctor",
     primaryTo: "/search-doctors",
   },
   wallet: {
-    title: "Ví thanh toán",
-    description: "Số dư ví và lịch sử thanh toán sẽ hiển thị tại đây khi tính năng thanh toán được triển khai.",
-    primaryLabel: "Về trang cá nhân",
+    title: "Wallet",
+    description: "Wallet balance and payment history will appear here when payments are fully enabled.",
+    primaryLabel: "Back to dashboard",
     primaryTo: "/patient",
   },
 };
@@ -42,14 +42,14 @@ export default function PatientPortalPlaceholderPage({ type }) {
             <path d="M8 16h5" />
           </svg>
         </div>
-        <h3>{content.title} — Sắp ra mắt</h3>
-        <p>Tính năng này đang được phát triển và sẽ sớm có mặt trên hệ thống.</p>
+        <h3>{content.title} — Coming soon</h3>
+        <p>This feature is under development and will be available on the platform soon.</p>
         <div className="form-actions">
           <Link to={content.primaryTo} className="btn btn-primary">
             {content.primaryLabel}
           </Link>
           <Link to="/patient" className="btn btn-outline">
-            Về trang cá nhân
+            Back to dashboard
           </Link>
         </div>
       </div>

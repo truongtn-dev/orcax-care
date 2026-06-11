@@ -66,44 +66,44 @@ export async function createWorkShift(payload) {
   } = payload;
 
   if (!doctorId || !mongoose.Types.ObjectId.isValid(doctorId)) {
-    return { status: 400, body: { message: "Bác sĩ không hợp lệ" } };
+    return { status: 400, body: { message: "Invalid doctor" } };
   }
 
   const day = Number(dayOfWeek);
   if (!Number.isInteger(day) || day < 0 || day > 6) {
-    return { status: 400, body: { message: "Ngày trong tuần phải từ 0 (CN) đến 6 (T7)" } };
+    return { status: 400, body: { message: "Day of week must be from 0 (Sun) to 6 (Sat)" } };
   }
 
   const start = (startTime || "").trim();
   const end = (endTime || "").trim();
   if (!isValidTimeString(start) || !isValidTimeString(end)) {
-    return { status: 400, body: { message: "Giờ bắt đầu/kết thúc phải theo định dạng HH:mm" } };
+    return { status: 400, body: { message: "Start/end time must use HH:mm format" } };
   }
   if (timeToMinutes(end) <= timeToMinutes(start)) {
-    return { status: 400, body: { message: "Giờ kết thúc phải sau giờ bắt đầu" } };
+    return { status: 400, body: { message: "End time must be after start time" } };
   }
 
   const capacity = parseInt(maxPatients, 10);
   if (!capacity || capacity < 1) {
-    return { status: 400, body: { message: "Số bệnh nhân tối đa phải >= 1" } };
+    return { status: 400, body: { message: "Maximum patients must be >= 1" } };
   }
 
   const doctor = await Doctor.findById(doctorId).populate("userId", "fullName isActive");
   if (!doctor || !doctor.isActive) {
-    return { status: 404, body: { message: "Không tìm thấy bác sĩ đang hoạt động" } };
+    return { status: 404, body: { message: "Active doctor not found" } };
   }
   if (!doctor.userId?.isActive) {
-    return { status: 400, body: { message: "Tài khoản bác sĩ chưa được kích hoạt" } };
+    return { status: 400, body: { message: "Doctor account is not activated" } };
   }
 
   let roomObjectId = null;
   if (roomId) {
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
-      return { status: 400, body: { message: "Phòng khám không hợp lệ" } };
+      return { status: 400, body: { message: "Invalid clinic room" } };
     }
     const room = await ClinicRoom.findById(roomId);
     if (!room || !room.isActive) {
-      return { status: 404, body: { message: "Không tìm thấy phòng khám đang hoạt động" } };
+      return { status: 404, body: { message: "Active clinic room not found" } };
     }
     roomObjectId = room._id;
   }
@@ -118,7 +118,7 @@ export async function createWorkShift(payload) {
     return {
       status: 409,
       body: {
-        message: "Ca làm trùng với ca hiện có của bác sĩ trong cùng ngày",
+        message: "Shift overlaps with an existing shift for this doctor on the same day",
         conflict: {
           shiftId: overlap._id.toString(),
           startTime: overlap.startTime,
@@ -134,7 +134,7 @@ export async function createWorkShift(payload) {
       : computeSlotDurationMin(start, end, capacity);
 
   if (!duration || duration < 15) {
-    return { status: 400, body: { message: "Thời lượng mỗi slot phải >= 15 phút" } };
+    return { status: 400, body: { message: "Each slot duration must be >= 15 minutes" } };
   }
 
   const shift = await WorkShift.create({
@@ -216,12 +216,12 @@ export async function listWorkShifts({
 
 export async function getWorkShiftById(shiftId) {
   if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
-    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+    return { status: 400, body: { message: "Invalid work shift" } };
   }
 
   const shift = await shiftQuery().findById(shiftId).lean();
   if (!shift) {
-    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+    return { status: 404, body: { message: "Work shift not found" } };
   }
 
   return { status: 200, body: serializeWorkShift(shift) };
@@ -229,12 +229,12 @@ export async function getWorkShiftById(shiftId) {
 
 export async function updateWorkShift(shiftId, payload) {
   if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
-    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+    return { status: 400, body: { message: "Invalid work shift" } };
   }
 
   const existing = await WorkShift.findById(shiftId);
   if (!existing) {
-    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+    return { status: 404, body: { message: "Work shift not found" } };
   }
 
   const {
@@ -252,16 +252,16 @@ export async function updateWorkShift(shiftId, payload) {
       ? Number(dayOfWeek)
       : existing.dayOfWeek;
   if (!Number.isInteger(day) || day < 0 || day > 6) {
-    return { status: 400, body: { message: "Ngày trong tuần phải từ 0 (CN) đến 6 (T7)" } };
+    return { status: 400, body: { message: "Day of week must be from 0 (Sun) to 6 (Sat)" } };
   }
 
   const start = startTime !== undefined ? String(startTime).trim() : existing.startTime;
   const end = endTime !== undefined ? String(endTime).trim() : existing.endTime;
   if (!isValidTimeString(start) || !isValidTimeString(end)) {
-    return { status: 400, body: { message: "Giờ bắt đầu/kết thúc phải theo định dạng HH:mm" } };
+    return { status: 400, body: { message: "Start/end time must use HH:mm format" } };
   }
   if (timeToMinutes(end) <= timeToMinutes(start)) {
-    return { status: 400, body: { message: "Giờ kết thúc phải sau giờ bắt đầu" } };
+    return { status: 400, body: { message: "End time must be after start time" } };
   }
 
   const capacity =
@@ -269,7 +269,7 @@ export async function updateWorkShift(shiftId, payload) {
       ? parseInt(maxPatients, 10)
       : existing.maxPatients;
   if (!capacity || capacity < 1) {
-    return { status: 400, body: { message: "Số bệnh nhân tối đa phải >= 1" } };
+    return { status: 400, body: { message: "Maximum patients must be >= 1" } };
   }
 
   let roomObjectId = existing.roomId;
@@ -278,11 +278,11 @@ export async function updateWorkShift(shiftId, payload) {
       roomObjectId = null;
     } else {
       if (!mongoose.Types.ObjectId.isValid(roomId)) {
-        return { status: 400, body: { message: "Phòng khám không hợp lệ" } };
+        return { status: 400, body: { message: "Invalid clinic room" } };
       }
       const room = await ClinicRoom.findById(roomId);
       if (!room || !room.isActive) {
-        return { status: 404, body: { message: "Không tìm thấy phòng khám đang hoạt động" } };
+        return { status: 404, body: { message: "Active clinic room not found" } };
       }
       roomObjectId = room._id;
     }
@@ -302,7 +302,7 @@ export async function updateWorkShift(shiftId, payload) {
       return {
         status: 409,
         body: {
-          message: "Ca làm trùng với ca hiện có của bác sĩ trong cùng ngày",
+          message: "Shift overlaps with an existing shift for this doctor on the same day",
           conflict: {
             shiftId: overlap._id.toString(),
             startTime: overlap.startTime,
@@ -319,7 +319,7 @@ export async function updateWorkShift(shiftId, payload) {
       : computeSlotDurationMin(start, end, capacity);
 
   if (!duration || duration < 15) {
-    return { status: 400, body: { message: "Thời lượng mỗi slot phải >= 15 phút" } };
+    return { status: 400, body: { message: "Each slot duration must be >= 15 minutes" } };
   }
 
   existing.dayOfWeek = day;
@@ -349,12 +349,12 @@ function startOfToday() {
 
 export async function deleteWorkShift(shiftId) {
   if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
-    return { status: 400, body: { message: "Ca làm việc không hợp lệ" } };
+    return { status: 400, body: { message: "Invalid work shift" } };
   }
 
   const existing = await WorkShift.findById(shiftId);
   if (!existing) {
-    return { status: 404, body: { message: "Không tìm thấy ca làm việc" } };
+    return { status: 404, body: { message: "Work shift not found" } };
   }
 
   const futureBookedCount = await AppointmentSlot.countDocuments({
@@ -367,7 +367,7 @@ export async function deleteWorkShift(shiftId) {
     return {
       status: 409,
       body: {
-        message: "Không thể xóa ca làm việc vì còn lịch hẹn đã đặt trong tương lai",
+        message: "Cannot delete work shift because future appointments are booked",
         futureBookings: futureBookedCount,
       },
     };
@@ -384,7 +384,7 @@ export async function deleteWorkShift(shiftId) {
   return {
     status: 200,
     body: {
-      message: "Đã xóa ca làm việc",
+      message: "Work shift deleted",
       deletedShiftId: shiftId,
     },
   };

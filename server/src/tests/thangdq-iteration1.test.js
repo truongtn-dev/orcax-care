@@ -89,10 +89,10 @@ describe("ThangDQ Iteration 1 foundations", () => {
 
   test("normalizes shared validation inputs", () => {
     assert.equal(normalizeEmail("  ADMIN@OrcaXCare.COM  "), "admin@orcaxcare.com");
-    assert.equal(validateRequired("  ", "Tên khoa/phòng ban"), "Tên khoa/phòng ban là bắt buộc");
-    assert.equal(validateRequired("Cardiology", "Tên khoa/phòng ban"), null);
+    assert.equal(validateRequired("  ", "Department name"), "Department name is required");
+    assert.equal(validateRequired("Cardiology", "Department name"), null);
     assert.equal(validatePhoneOptional("028-1234-1001"), null);
-    assert.equal(validatePhoneOptional("abc"), "Số điện thoại không hợp lệ");
+    assert.equal(validatePhoneOptional("abc"), "Invalid phone number");
   });
 
   test("protects admin routes with auth and admin role", async () => {
@@ -187,7 +187,7 @@ describe("ThangDQ Iteration 1 foundations", () => {
     });
 
     assert.equal(res.status, 409);
-    assert.deepEqual(await res.json(), { message: "Email đã được sử dụng" });
+    assert.deepEqual(await res.json(), { message: "Email already in use" });
   });
 
   test("updates patient profile as admin and returns changed detail", async () => {
@@ -530,7 +530,7 @@ describe("ThangDQ Iteration 1 foundations", () => {
     });
 
     assert.equal(invalidRes.status, 400);
-    assert.deepEqual(await invalidRes.json(), { message: "Số điện thoại là bắt buộc" });
+    assert.deepEqual(await invalidRes.json(), { message: "Phone number is required" });
 
     const createRes = await fetch(`${baseUrl}/api/admin/departments`, {
       method: "POST",
@@ -567,7 +567,7 @@ describe("ThangDQ Iteration 1 foundations", () => {
     });
 
     assert.equal(duplicateRes.status, 409);
-    assert.deepEqual(await duplicateRes.json(), { message: "Khoa/phòng ban đã tồn tại" });
+    assert.deepEqual(await duplicateRes.json(), { message: "Department already exists" });
   });
 
   test("loads department detail with room and doctor summaries", async () => {

@@ -64,17 +64,17 @@ export async function createDepartment(dto) {
   const location = String(dto.location || "").trim();
   const phone = String(dto.phone || "").trim();
 
-  const nameError = validateRequired(name, "Tên khoa/phòng ban");
+  const nameError = validateRequired(name, "Department name");
   if (nameError) return { status: 400, body: { message: nameError } };
-  const locationError = validateRequired(location, "Vị trí");
+  const locationError = validateRequired(location, "Location");
   if (locationError) return { status: 400, body: { message: locationError } };
-  const phoneRequiredError = validateRequired(phone, "Số điện thoại");
+  const phoneRequiredError = validateRequired(phone, "Phone number");
   if (phoneRequiredError) return { status: 400, body: { message: phoneRequiredError } };
   const phoneError = validatePhoneOptional(phone);
   if (phoneError) return { status: 400, body: { message: phoneError } };
 
   const duplicate = await Department.findOne({ name }).lean();
-  if (duplicate) return { status: 409, body: { message: "Khoa/phòng ban đã tồn tại" } };
+  if (duplicate) return { status: 409, body: { message: "Department already exists" } };
 
   const department = await Department.create({
     name,
@@ -89,11 +89,11 @@ export async function createDepartment(dto) {
 
 export async function getDepartmentDetail(id) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return { status: 404, body: { message: "Không tìm thấy khoa/phòng ban" } };
+    return { status: 404, body: { message: "Department not found" } };
   }
 
   const department = await Department.findById(id);
-  if (!department) return { status: 404, body: { message: "Không tìm thấy khoa/phòng ban" } };
+  if (!department) return { status: 404, body: { message: "Department not found" } };
 
   const doctors = await Doctor.find({ departmentId: department._id })
     .populate("userId", "fullName isActive")
@@ -107,7 +107,7 @@ export async function getDepartmentDetail(id) {
       const doctorActive = Boolean(doctor.isActive && doctor.userId?.isActive);
       return {
         _id: doctor._id.toString(),
-        fullName: doctor.userId?.fullName || "Chưa rõ bác sĩ",
+        fullName: doctor.userId?.fullName || "Unknown doctor",
         specialtyName: doctor.specialtyId?.name || "",
         isActive: doctorActive,
       };

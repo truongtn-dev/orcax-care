@@ -6,7 +6,7 @@ export async function listSpecialties(req, res) {
     return res.json({ items });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -16,7 +16,7 @@ export async function listDepartments(req, res) {
     return res.json({ items });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -24,12 +24,12 @@ export async function getDoctor(req, res) {
   try {
     const doctor = await DoctorSearchService.getDoctorById(req.params.id);
     if (!doctor) {
-      return res.status(404).json({ message: "Không tìm thấy bác sĩ" });
+      return res.status(404).json({ message: "Doctor not found" });
     }
     return res.json(doctor);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -40,7 +40,7 @@ export async function listFeaturedDoctors(req, res) {
     return res.json({ items });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -58,6 +58,6 @@ export async function searchDoctors(req, res) {
     return res.json(result);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }

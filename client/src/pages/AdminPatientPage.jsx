@@ -9,15 +9,15 @@ import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Tất cả trạng thái" },
-  { value: "true", label: "Đang hoạt động" },
-  { value: "false", label: "Ngừng hoạt động" },
+  { value: "", label: "All statuses" },
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
 ];
 
 const GENDER_LABELS = {
-  male: "Nam",
-  female: "Nữ",
-  other: "Khác",
+  male: "Male",
+  female: "Female",
+  other: "Other",
 };
 
 function formatDate(value) {
@@ -73,22 +73,22 @@ export default function AdminPatientPage() {
   return (
     <PageLayout dashboard>
       <AdminLayout
-        title="Quản lý bệnh nhân"
-        description="Tra cứu hồ sơ bệnh nhân, thông tin nhân khẩu học và tài khoản liên kết."
+        title="Patient management"
+        description="Look up patient profiles, demographics, and linked accounts."
       >
       <div className="card filters-card">
         <div className="filters-toolbar">
           <div className="filters-toolbar-fields">
             <FilterSearchField
               id="admin-patient-search"
-              placeholder="Tìm theo tên, email hoặc số điện thoại…"
+              placeholder="Search by name, email, or phone number…"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               onSearch={() => applyFilters({ q: filters.q })}
             />
             <CustomSelect
               className="filter-field"
-              label="Trạng thái"
+              label="Status"
               value={filters.isActive}
               onChange={(isActive) => applyFilters({ isActive })}
               options={STATUS_OPTIONS}
@@ -96,10 +96,10 @@ export default function AdminPatientPage() {
           </div>
           <div className="filters-toolbar-actions">
             <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-              Tìm kiếm
+              Search
             </button>
             <button type="button" className="btn btn-outline" onClick={clearFilters}>
-              Xóa lọc
+              Clear filters
             </button>
           </div>
         </div>
@@ -110,16 +110,16 @@ export default function AdminPatientPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải bệnh nhân…
+          Loading patients…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>Không tìm thấy bệnh nhân</h3>
-          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc xóa bộ lọc.</p>
+          <h3>No patients found</h3>
+          <p>Try adjusting your search criteria or clear filters.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Xóa lọc
+            Clear filters
           </button>
         </div>
       )}
@@ -130,14 +130,14 @@ export default function AdminPatientPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Bệnh nhân</th>
-                  <th>Giới tính</th>
-                  <th>Ngày sinh</th>
-                  <th>Số điện thoại</th>
-                  <th>Ngày đăng ký</th>
-                  <th>Tài khoản liên kết</th>
-                  <th>Trạng thái</th>
-                  <th className="table-actions-col">Thao tác</th>
+                  <th>Patient</th>
+                  <th>Gender</th>
+                  <th>Date of birth</th>
+                  <th>Phone number</th>
+                  <th>Registered</th>
+                  <th>Linked account</th>
+                  <th>Status</th>
+                  <th className="table-actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,22 +155,22 @@ export default function AdminPatientPage() {
                     <td>{formatDate(patient.createdAt)}</td>
                     <td>
                       <Link to={`/admin/account/${patient._id}`} className="table-link">
-                        Mở tài khoản
+                        Open account
                       </Link>
                     </td>
                     <td>
                       <div className="status-badge-group">
-                        <StatusBadge active={patient.isActive} label={patient.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
-                        {patient.isLocked && <span className="status-badge status-badge-locked">Đã khóa</span>}
+                        <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
+                        {patient.isLocked && <span className="status-badge status-badge-locked">Locked</span>}
                       </div>
                     </td>
                     <td className="table-actions-col">
                       <div className="table-row-actions">
                         <Link to={`/admin/patient/${patient._id}`} className="btn btn-outline btn-sm">
-                          Chi tiết
+                          Details
                         </Link>
                         <Link to={`/admin/patient/${patient._id}/edit`} className="btn btn-primary btn-sm">
-                          Sửa
+                          Edit
                         </Link>
                       </div>
                     </td>
@@ -188,7 +188,7 @@ export default function AdminPatientPage() {
           totalPages={result.totalPages}
           total={result.total}
           limit={filters.limit}
-          itemLabel="bệnh nhân"
+          itemLabel="patients"
           onPageChange={(page) => applyFilters({ page })}
         />
       )}

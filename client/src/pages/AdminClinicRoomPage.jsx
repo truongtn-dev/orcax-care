@@ -10,9 +10,9 @@ import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminCreateClinicRoomForm } from "../utils/validation.js";
 
 const STATUS_OPTIONS = [
-  { value: "", label: "Tất cả trạng thái" },
-  { value: "true", label: "Đang hoạt động" },
-  { value: "false", label: "Ngừng hoạt động" },
+  { value: "", label: "All statuses" },
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
 ];
 
 const EMPTY_FORM = {
@@ -33,7 +33,7 @@ function formatDate(value) {
 function StatusBadge({ active }) {
   return (
     <span className={`status-badge ${active ? "status-badge-active" : "status-badge-inactive"}`}>
-      {active ? "Đang hoạt động" : "Ngừng hoạt động"}
+      {active ? "Active" : "Inactive"}
     </span>
   );
 }
@@ -159,11 +159,11 @@ export default function AdminClinicRoomPage() {
   return (
     <PageLayout dashboard>
       <AdminLayout
-        title="Quản lý phòng khám"
-        description="Quản lý phòng khám theo khoa/phòng ban, sức chứa và trạng thái vận hành."
+        title="Clinic room management"
+        description="Manage clinic rooms by department, capacity, and operational status."
         actions={
           <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Tạo phòng khám
+            Create clinic room
           </button>
         }
       >
@@ -172,25 +172,25 @@ export default function AdminClinicRoomPage() {
           <div className="filters-toolbar-fields">
             <FilterSearchField
               id="admin-clinic-room-search"
-              placeholder="Tìm theo mã, tên, tầng hoặc thiết bị…"
+              placeholder="Search by code, name, floor, or equipment…"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               onSearch={() => applyFilters({ q: filters.q })}
             />
             <CustomSelect
               className="filter-field"
-              label="Khoa/phòng ban"
+              label="Department"
               value={filters.departmentId}
-              placeholder="Tất cả khoa/phòng ban"
+              placeholder="All departments"
               onChange={(departmentId) => applyFilters({ departmentId })}
               options={[
-                { value: "", label: "Tất cả khoa/phòng ban" },
+                { value: "", label: "All departments" },
                 ...departments.map((dept) => ({ value: dept._id, label: dept.name })),
               ]}
             />
             <CustomSelect
               className="filter-field"
-              label="Trạng thái"
+              label="Status"
               value={filters.isActive}
               onChange={(isActive) => applyFilters({ isActive })}
               options={STATUS_OPTIONS}
@@ -198,10 +198,10 @@ export default function AdminClinicRoomPage() {
           </div>
           <div className="filters-toolbar-actions">
             <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-              Tìm kiếm
+              Search
             </button>
             <button type="button" className="btn btn-outline" onClick={clearFilters}>
-              Xóa lọc
+              Clear filters
             </button>
           </div>
         </div>
@@ -212,16 +212,16 @@ export default function AdminClinicRoomPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải phòng khám…
+          Loading clinic rooms…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>Không tìm thấy phòng khám</h3>
-          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc tạo phòng khám mới.</p>
+          <h3>No clinic rooms found</h3>
+          <p>Try adjusting your search criteria or create a new clinic room.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Xóa lọc
+            Clear filters
           </button>
         </div>
       )}
@@ -232,14 +232,14 @@ export default function AdminClinicRoomPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Mã phòng</th>
-                  <th>Tên</th>
-                  <th>Khoa/phòng ban</th>
-                  <th>Tầng</th>
-                  <th>Sức chứa</th>
-                  <th>Thiết bị</th>
-                  <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
+                  <th>Room code</th>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Floor</th>
+                  <th>Capacity</th>
+                  <th>Equipment</th>
+                  <th>Status</th>
+                  <th>Created</th>
                 </tr>
               </thead>
               <tbody>
@@ -276,7 +276,7 @@ export default function AdminClinicRoomPage() {
           totalPages={result.totalPages}
           total={result.total}
           limit={filters.limit}
-          itemLabel="phòng khám"
+          itemLabel="clinic rooms"
           onPageChange={(page) => applyFilters({ page })}
         />
       )}
@@ -292,10 +292,10 @@ export default function AdminClinicRoomPage() {
           >
             <div className="modal-header">
               <div>
-                <h2 id="create-clinic-room-title">Tạo phòng khám</h2>
-                <p>Thêm phòng khám hoặc điều trị mới.</p>
+                <h2 id="create-clinic-room-title">Create clinic room</h2>
+                <p>Add a new clinic or treatment room.</p>
               </div>
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Đóng">
+              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
                 ×
               </button>
             </div>
@@ -306,12 +306,12 @@ export default function AdminClinicRoomPage() {
 
               <div>
                 <CustomSelect
-                  label="Khoa/phòng ban"
+                  label="Department"
                   value={form.departmentId}
-                  placeholder="Chọn khoa/phòng ban"
+                  placeholder="Select department"
                   onChange={(departmentId) => onFormChange({ target: { name: "departmentId", value: departmentId } })}
                   options={[
-                    { value: "", label: "Chọn khoa/phòng ban" },
+                    { value: "", label: "Select department" },
                     ...departments.map((dept) => ({ value: dept._id, label: dept.name })),
                   ]}
                   invalid={Boolean(fieldError("departmentId"))}
@@ -322,45 +322,45 @@ export default function AdminClinicRoomPage() {
               </div>
 
               <label>
-                Mã phòng
+                Room code
                 <input
                   name="roomCode"
                   value={form.roomCode}
                   onChange={onFormChange}
-                  placeholder="vd. IM-203"
+                  placeholder="e.g. IM-203"
                   aria-invalid={Boolean(fieldError("roomCode"))}
                   style={{ textTransform: "uppercase" }}
                 />
                 {fieldError("roomCode") && <span className="field-error">{fieldError("roomCode")}</span>}
-                <span className="field-hint">2–12 ký tự, chữ, số, gạch ngang, gạch dưới</span>
+                <span className="field-hint">2–12 characters: letters, numbers, hyphens, underscores</span>
               </label>
 
               <label>
-                Tên phòng
+                Room name
                 <input
                   name="name"
                   value={form.name}
                   onChange={onFormChange}
-                  placeholder="vd. Phòng khám 203"
+                  placeholder="e.g. Clinic room 203"
                   aria-invalid={Boolean(fieldError("name"))}
                 />
                 {fieldError("name") && <span className="field-error">{fieldError("name")}</span>}
               </label>
 
               <label>
-                Tầng
+                Floor
                 <input
                   name="floor"
                   value={form.floor}
                   onChange={onFormChange}
-                  placeholder="vd. 2"
+                  placeholder="e.g. 2"
                   aria-invalid={Boolean(fieldError("floor"))}
                 />
                 {fieldError("floor") && <span className="field-error">{fieldError("floor")}</span>}
               </label>
 
               <label>
-                Sức chứa
+                Capacity
                 <input
                   type="number"
                   name="capacity"
@@ -374,13 +374,13 @@ export default function AdminClinicRoomPage() {
               </label>
 
               <label>
-                Ghi chú thiết bị
+                Equipment notes
                 <textarea
                   name="equipmentNotes"
                   value={form.equipmentNotes}
                   onChange={onFormChange}
                   rows={3}
-                  placeholder="Thiết bị có sẵn (tùy chọn)"
+                  placeholder="Available equipment (optional)"
                   aria-invalid={Boolean(fieldError("equipmentNotes"))}
                 />
                 {fieldError("equipmentNotes") && (
@@ -390,15 +390,15 @@ export default function AdminClinicRoomPage() {
 
               <label className="checkbox-row">
                 <input type="checkbox" name="isActive" checked={form.isActive} onChange={onFormChange} />
-                Đang hoạt động (sẵn sàng đặt lịch)
+                Active (available for booking)
               </label>
 
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
-                  Hủy
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>
-                  {creating ? "Đang tạo…" : "Tạo phòng khám"}
+                  {creating ? "Creating…" : "Create clinic room"}
                 </button>
               </div>
             </form>

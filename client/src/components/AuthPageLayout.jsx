@@ -14,13 +14,13 @@ export default function AuthPageLayout({ title, subtitle, children }) {
 
           <div className="auth-brand-content">
 
-            <div className="auth-brand-badge">Nền tảng y tế số</div>
+            <div className="auth-brand-badge">Digital health platform</div>
 
-            <h2>Đồng hành cùng sức khỏe của bạn</h2>
+            <h2>Here for your health</h2>
 
             <p>
 
-              Tra cứu bác sĩ, đặt lịch khám và quản lý hồ sơ sức khỏe một cách an toàn, thuận tiện.
+              Find doctors, book appointments, and manage your health records safely and easily.
 
             </p>
 
@@ -30,7 +30,7 @@ export default function AuthPageLayout({ title, subtitle, children }) {
 
                 <span className="feature-icon" aria-hidden="true">✓</span>
 
-                Đội ngũ bác sĩ đã được xác minh
+                Verified doctor network
 
               </li>
 
@@ -38,7 +38,7 @@ export default function AuthPageLayout({ title, subtitle, children }) {
 
                 <span className="feature-icon" aria-hidden="true">✓</span>
 
-                Thông tin tài khoản được bảo mật
+                Secure account information
 
               </li>
 
@@ -46,7 +46,7 @@ export default function AuthPageLayout({ title, subtitle, children }) {
 
                 <span className="feature-icon" aria-hidden="true">✓</span>
 
-                Hỗ trợ người dùng 24/7
+                24/7 user support
 
               </li>
 

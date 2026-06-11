@@ -14,7 +14,7 @@ export async function listSpecialties(req, res) {
     );
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -28,7 +28,7 @@ export async function listDepartments(req, res) {
     );
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -37,7 +37,7 @@ export async function createDepartment(req, res) {
     return sendResult(res, await AdminMasterService.createDepartment(req.body));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -46,6 +46,6 @@ export async function getDepartmentDetail(req, res) {
     return sendResult(res, await AdminMasterService.getDepartmentDetail(req.params.id));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }

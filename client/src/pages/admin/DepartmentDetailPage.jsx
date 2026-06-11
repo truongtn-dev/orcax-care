@@ -34,32 +34,32 @@ export default function DepartmentDetailPage() {
 
   return (
     <PageLayout>
-      <nav className="admin-breadcrumb" aria-label="Điều hướng">
-        <Link to="/admin">Quản trị</Link>
+      <nav className="admin-breadcrumb" aria-label="Navigation">
+        <Link to="/admin">Admin</Link>
         <span>/</span>
-        <Link to="/admin/departments/new">Khoa/phòng ban</Link>
+        <Link to="/admin/departments/new">Department</Link>
         <span>/</span>
-        <span>Chi tiết</span>
+        <span>Details</span>
       </nav>
 
       <div className="page-header">
-        <h1>Chi tiết khoa/phòng ban</h1>
-        <p>Thông tin khoa/phòng ban kèm tổng quan bác sĩ.</p>
+        <h1>Department details</h1>
+        <p>Department information with doctor overview.</p>
       </div>
 
       <div className="card admin-toolbar">
         <Link to="/admin" className="btn btn-outline">
-          Về quản trị
+          Back to admin
         </Link>
         <Link to="/admin/departments/new" className="btn btn-primary">
-          Tạo khoa/phòng ban
+          Create department
         </Link>
       </div>
 
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải khoa/phòng ban...
+          Loading department...
         </div>
       )}
       {error && <div className="alert alert-error">{error}</div>}
@@ -73,41 +73,41 @@ export default function DepartmentDetailPage() {
                 <p className="muted">{detail.department.location}</p>
               </div>
               <span className={`status-pill ${detail.department.isActive ? "status-active" : ""}`}>
-                {detail.department.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                {detail.department.isActive ? "Active" : "Inactive"}
               </span>
             </div>
             <div className="admin-detail-list">
               <div>
-                <span>Số điện thoại</span>
+                <span>Phone number</span>
                 <strong>{detail.department.phone}</strong>
               </div>
               <div>
-                <span>Tổng số bác sĩ</span>
+                <span>Total doctors</span>
                 <strong>{detail.summary.totalDoctors}</strong>
               </div>
               <div>
-                <span>Bác sĩ đang hoạt động</span>
+                <span>Active doctors</span>
                 <strong>{detail.summary.activeDoctors}</strong>
               </div>
               <div>
-                <span>Tổng số phòng</span>
+                <span>Total rooms</span>
                 <strong>{detail.summary.totalRooms}</strong>
               </div>
               <div>
-                <span>Phòng đang hoạt động</span>
+                <span>Active rooms</span>
                 <strong>{detail.summary.activeRooms}</strong>
               </div>
             </div>
           </div>
 
           <div className="card admin-table-card">
-            <h3>Phòng thuộc khoa/phòng ban</h3>
+            <h3>Rooms in department</h3>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Tên phòng</th>
-                  <th>Tầng</th>
-                  <th>Trạng thái</th>
+                  <th>Room name</th>
+                  <th>Floor</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -117,7 +117,7 @@ export default function DepartmentDetailPage() {
                     <td>{room.floor || "-"}</td>
                     <td>
                       <span className={`status-pill ${room.isActive ? "status-active" : ""}`}>
-                        {room.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                        {room.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                   </tr>
@@ -125,7 +125,7 @@ export default function DepartmentDetailPage() {
                 {detail.rooms.length === 0 && (
                   <tr>
                     <td colSpan="3" className="empty-cell">
-                      Chưa có phòng nào thuộc khoa/phòng ban này.
+                      No rooms belong to this department yet.
                     </td>
                   </tr>
                 )}
@@ -134,13 +134,13 @@ export default function DepartmentDetailPage() {
           </div>
 
           <div className="card admin-table-card">
-            <h3>Bác sĩ thuộc khoa/phòng ban</h3>
+            <h3>Doctors in department</h3>
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>Tên</th>
-                  <th>Chuyên khoa</th>
-                  <th>Trạng thái</th>
+                  <th>Name</th>
+                  <th>Specialty</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,7 +150,7 @@ export default function DepartmentDetailPage() {
                     <td>{doctor.specialtyName || "-"}</td>
                     <td>
                       <span className={`status-pill ${doctor.isActive ? "status-active" : ""}`}>
-                        {doctor.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                        {doctor.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                   </tr>
@@ -158,7 +158,7 @@ export default function DepartmentDetailPage() {
                 {detail.doctors.length === 0 && (
                   <tr>
                     <td colSpan="3" className="empty-cell">
-                      Chưa có bác sĩ nào thuộc khoa/phòng ban này.
+                      No doctors belong to this department yet.
                     </td>
                   </tr>
                 )}

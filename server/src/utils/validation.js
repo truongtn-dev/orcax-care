@@ -9,29 +9,29 @@ export function normalizeEmail(email) {
 }
 
 export function validateRequired(value, label) {
-  if (!String(value || "").trim()) return `${label} là bắt buộc`;
+  if (!String(value || "").trim()) return `${label} is required`;
   return null;
 }
 
 export function validatePhoneOptional(phone) {
   if (!phone) return null;
-  if (!/^[0-9+\-\s()]{8,20}$/.test(phone.trim())) return "Số điện thoại không hợp lệ";
+  if (!/^[0-9+\-\s()]{8,20}$/.test(phone.trim())) return "Invalid phone number";
   return null;
 }
 
 export function validatePasswordStrength(password) {
   if (!password || password.length < 8) {
-    return "Mật khẩu phải có ít nhất 8 ký tự";
+    return "Password must be at least 8 characters";
   }
   if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-    return "Mật khẩu phải có ít nhất một chữ cái và một chữ số";
+    return "Password must contain at least one letter and one number";
   }
   return null;
 }
 
 export function validateEmail(email) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return "Địa chỉ email không hợp lệ";
+    return "Invalid email address";
   }
   return null;
 }

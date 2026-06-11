@@ -28,7 +28,7 @@ export async function getAccount(req, res) {
     return sendResult(res, await AdminAccountService.getAccount(req.params.id));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }
 
@@ -37,6 +37,6 @@ export async function updateAccount(req, res) {
     return sendResult(res, await AdminAccountService.updateAccount(req.params.id, req.body));
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "System error" });
   }
 }

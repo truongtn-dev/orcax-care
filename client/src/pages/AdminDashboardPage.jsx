@@ -58,12 +58,12 @@ function IconDownload({ className = "" }) {
 }
 
 function formatRoleLabel(role) {
-  const labels = { admin: "Quản trị viên", doctor: "Bác sĩ", staff: "Nhân viên", patient: "Bệnh nhân" };
+  const labels = { admin: "Administrator", doctor: "Doctor", staff: "Staff", patient: "Patient" };
   return labels[role] || role;
 }
 
 function formatRoomStatus(status) {
-  const labels = { active: "Hoạt động", maintenance: "Bảo trì", inactive: "Ngừng hoạt động" };
+  const labels = { active: "Active", maintenance: "Maintenance", inactive: "Inactive" };
   return labels[status] || status;
 }
 
@@ -75,44 +75,44 @@ function getInitials(name) {
 }
 
 const ACCOUNT_ROLE_OPTIONS = [
-  { value: "", label: "Tất cả vai trò" },
-  { value: "patient", label: "Bệnh nhân" },
-  { value: "doctor", label: "Bác sĩ" },
-  { value: "staff", label: "Nhân viên" },
-  { value: "admin", label: "Quản trị viên" },
+  { value: "", label: "All roles" },
+  { value: "patient", label: "Patient" },
+  { value: "doctor", label: "Doctor" },
+  { value: "staff", label: "Staff" },
+  { value: "admin", label: "Administrator" },
 ];
 
 const DOCTOR_STATUS_FILTER_OPTIONS = [
-  { value: "all", label: "Tất cả trạng thái" },
-  { value: "true", label: "Chỉ đang hoạt động" },
-  { value: "false", label: "Chỉ ngừng hoạt động" },
+  { value: "all", label: "All statuses" },
+  { value: "true", label: "Active only" },
+  { value: "false", label: "Inactive only" },
 ];
 
 const STAFF_ROLE_OPTIONS = [
-  { value: "staff", label: "Nhân viên (Hỗ trợ / Lễ tân)" },
-  { value: "patient", label: "Bệnh nhân (Đầy đủ nhân khẩu học)" },
-  { value: "doctor", label: "Bác sĩ (Chuyên khoa)" },
-  { value: "admin", label: "Quản trị viên" },
+  { value: "staff", label: "Staff (Support / Reception)" },
+  { value: "patient", label: "Patient (Full demographics)" },
+  { value: "doctor", label: "Doctor (Specialty)" },
+  { value: "admin", label: "Administrator" },
 ];
 
 const SYSTEM_ROLE_OPTIONS = [
-  { value: "patient", label: "Bệnh nhân" },
-  { value: "staff", label: "Nhân viên" },
-  { value: "doctor", label: "Bác sĩ" },
-  { value: "admin", label: "Quản trị viên" },
+  { value: "patient", label: "Patient" },
+  { value: "staff", label: "Staff" },
+  { value: "doctor", label: "Doctor" },
+  { value: "admin", label: "Administrator" },
 ];
 
 const GENDER_OPTIONS = [
-  { value: "", label: "Không muốn tiết lộ" },
-  { value: "male", label: "Nam" },
-  { value: "female", label: "Nữ" },
-  { value: "other", label: "Khác" },
+  { value: "", label: "Prefer not to say" },
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
 ];
 
 const ROOM_STATUS_OPTIONS = [
-  { value: "active", label: "Hoạt động (Sẵn sàng)" },
-  { value: "maintenance", label: "Bảo trì" },
-  { value: "inactive", label: "Ngừng hoạt động" },
+  { value: "active", label: "Active (Ready)" },
+  { value: "maintenance", label: "Maintenance" },
+  { value: "inactive", label: "Inactive" },
 ];
 
 export default function AdminDashboardPage() {
@@ -327,7 +327,7 @@ export default function AdminDashboardPage() {
     setSuccess("");
     try {
       await AdminApiClient.createStaff(staffForm);
-      setSuccess(`Đã tạo tài khoản ${formatRoleLabel(staffForm.role)} thành công!`);
+      setSuccess(`Created ${formatRoleLabel(staffForm.role)} account successfully!`);
       setShowAddStaffModal(false);
       setStaffForm({
         email: "",
@@ -356,15 +356,15 @@ export default function AdminDashboardPage() {
   const handleDeactivateUser = (userId) => {
     setConfirmModal({
       show: true,
-      title: "Ngừng hoạt động tài khoản",
-      message: "Bạn có chắc muốn ngừng hoạt động tài khoản này? Người dùng sẽ bị đăng xuất ngay lập tức và tất cả phiên đăng nhập sẽ bị chấm dứt.",
+      title: "Inactive accounts",
+      message: "Are you sure you want to deactivate this account? The user will be signed out immediately and all active sessions will be terminated.",
       onConfirm: async () => {
         setActionLoading(true);
         setError("");
         setSuccess("");
         try {
           await AdminApiClient.deactivateUser(userId);
-          setSuccess("Đã ngừng hoạt động tài khoản và chấm dứt tất cả phiên đăng nhập.");
+          setSuccess("Account deactivated and all sessions terminated.");
           loadAccounts(accountFilters);
         } catch (err) {
           setError(getApiErrorMessage(err));
@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
     setSuccess("");
     try {
       await AdminApiClient.reactivateUser(userId);
-      setSuccess("Đã kích hoạt lại tài khoản thành công.");
+      setSuccess("Account reactivated successfully.");
       loadAccounts(accountFilters);
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -418,7 +418,7 @@ export default function AdminDashboardPage() {
         bio: roleForm.bio,
       } : {};
       await AdminApiClient.changeRole(selectedUser._id, roleForm.role, extra);
-      setSuccess("Đã cập nhật vai trò người dùng thành công. Các phiên đăng nhập hiện tại đã bị vô hiệu hóa.");
+      setSuccess("User role updated successfully. All current sessions have been invalidated.");
       setShowChangeRoleModal(false);
       setSelectedUser(null);
       loadAccounts(accountFilters);
@@ -449,10 +449,10 @@ export default function AdminDashboardPage() {
     try {
       if (specialtyForm.id) {
         await AdminApiClient.updateSpecialty(specialtyForm.id, specialtyForm);
-        setSuccess("Đã cập nhật chuyên khoa thành công.");
+        setSuccess("Specialty updated successfully.");
       } else {
         await AdminApiClient.createSpecialty(specialtyForm);
-        setSuccess("Đã tạo chuyên khoa thành công.");
+        setSuccess("Specialty created successfully.");
       }
       setShowSpecialtyModal(false);
       loadSpecialtyList(specialtyFilters);
@@ -496,10 +496,10 @@ export default function AdminDashboardPage() {
     try {
       if (roomForm.id) {
         await AdminApiClient.updateClinicRoom(roomForm.id, roomForm);
-        setSuccess("Đã cập nhật phòng khám thành công.");
+        setSuccess("Clinic room updated successfully.");
       } else {
         await AdminApiClient.createClinicRoom(roomForm);
-        setSuccess("Đã tạo phòng khám thành công.");
+        setSuccess("Clinic room created successfully.");
       }
       setShowRoomModal(false);
       loadRooms(roomFilters);
@@ -511,7 +511,7 @@ export default function AdminDashboardPage() {
   };
 
   const exportDoctorsToCSV = () => {
-    const headers = ["Họ và tên", "Email", "Số điện thoại", "Chuyên khoa", "Khoa/phòng ban", "Số giấy phép", "Trạng thái"];
+    const headers = ["Full name", "Email", "Phone number", "Specialty", "Department", "License number", "Status"];
     const rows = doctors.map(doc => [
       doc.fullName,
       doc.email,
@@ -519,7 +519,7 @@ export default function AdminDashboardPage() {
       doc.specialty?.name || "",
       doc.department?.name || "",
       doc.licenseNo,
-      doc.isActive ? "Đang hoạt động" : "Ngừng hoạt động"
+      doc.isActive ? "Active" : "Inactive"
     ]);
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers.join(","), ...rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(","))].join("\n");
@@ -544,7 +544,7 @@ export default function AdminDashboardPage() {
           onClick={() => setShowAddStaffModal(true)}
         >
           <IconUserPlus className="admin-btn-icon" />
-          Đăng ký tài khoản
+          Register account
         </button>
       );
     }
@@ -552,7 +552,7 @@ export default function AdminDashboardPage() {
     if (activeTab === "specialties") {
       return (
         <button type="button" className="btn btn-primary" onClick={() => openSpecialtyModal()}>
-          + Thêm chuyên khoa
+          + Add specialty
         </button>
       );
     }
@@ -560,7 +560,7 @@ export default function AdminDashboardPage() {
     if (activeTab === "rooms") {
       return (
         <button type="button" className="btn btn-primary" onClick={() => openRoomModal()}>
-          + Thêm phòng khám
+          + Add clinic room
         </button>
       );
     }
@@ -586,7 +586,7 @@ export default function AdminDashboardPage() {
             )}
           </div>
           <div className="toast-content">
-            <span className="toast-title">{toast.type === "success" ? "Thành công" : "Lỗi"}</span>
+            <span className="toast-title">{toast.type === "success" ? "Success" : "Error"}</span>
             <p className="toast-message">{toast.message}</p>
           </div>
           <button type="button" className="toast-close" onClick={() => setToast({ show: false, type: "success", message: "" })}>
@@ -599,7 +599,7 @@ export default function AdminDashboardPage() {
       {loading && (
         <div className="loading-state" style={{ padding: "4rem" }}>
           <div className="loading-spinner" />
-          Đang tải dữ liệu…
+          Loading data…
         </div>
       )}
 
@@ -608,21 +608,21 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="up" delay={80}>
           <div className="card admin-card admin-accounts-card">
             <div className="admin-section-bar">
-              <span className="admin-section-count">{accountResult.total} tài khoản</span>
+              <span className="admin-section-count">{accountResult.total} accounts</span>
             </div>
 
             <div className="admin-filters-grid admin-accounts-filters">
               <div className="admin-filters-fields">
                 <FilterSearchField
                   id="admin-account-search"
-                  placeholder="Tên, email hoặc số điện thoại…"
+                  placeholder="Name, email, or phone number…"
                   value={accountFilters.q}
                   onChange={(e) => setAccountFilters((f) => ({ ...f, q: e.target.value }))}
                   onSearch={() => applyAccountFilters({ q: accountFilters.q })}
                 />
                 <CustomSelect
                   className="filter-field"
-                  label="Vai trò"
+                  label="Role"
                   value={accountFilters.role}
                   onChange={(role) => applyAccountFilters({ role })}
                   options={ACCOUNT_ROLE_OPTIONS}
@@ -634,14 +634,14 @@ export default function AdminDashboardPage() {
                   className="btn btn-primary"
                   onClick={() => applyAccountFilters({ q: accountFilters.q })}
                 >
-                  Tìm kiếm
+                  Search
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setAccountFilters({ q: "", role: "", page: 1, limit: 10 })}
                 >
-                  Xóa lọc
+                  Clear filters
                 </button>
               </div>
             </div>
@@ -650,20 +650,20 @@ export default function AdminDashboardPage() {
               <table className="admin-table admin-accounts-table">
                 <thead>
                   <tr>
-                    <th>Họ và tên</th>
+                    <th>Full name</th>
                     <th>Email</th>
-                    <th>Số điện thoại</th>
-                    <th>Vai trò</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày đăng ký</th>
-                    <th className="admin-table-actions-col">Thao tác</th>
+                    <th>Phone number</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th className="admin-table-actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {accountResult.items.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="admin-table-empty">
-                        Không tìm thấy tài khoản. Hãy đăng ký tài khoản đầu tiên hoặc điều chỉnh bộ lọc.
+                        No accounts found. Register the first account or adjust your filters.
                       </td>
                     </tr>
                   ) : (
@@ -695,7 +695,7 @@ export default function AdminDashboardPage() {
                         </td>
                         <td>
                           <span className={`badge badge-status-${user.isActive ? "active" : "inactive"}`}>
-                            {user.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                            {user.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
                         <td className="admin-date-cell">
@@ -709,7 +709,7 @@ export default function AdminDashboardPage() {
                               onClick={() => openChangeRoleModal(user)}
                             >
                               <IconShield className="admin-btn-icon" />
-                              Đổi vai trò
+                              Change role
                             </button>
                             {user.isActive ? (
                               <button
@@ -717,7 +717,7 @@ export default function AdminDashboardPage() {
                                 className="btn btn-sm admin-action-deactivate"
                                 onClick={() => handleDeactivateUser(user._id)}
                               >
-                                Ngừng hoạt động
+                                Inactive
                               </button>
                             ) : (
                               <button
@@ -725,7 +725,7 @@ export default function AdminDashboardPage() {
                                 className="btn btn-sm admin-action-reactivate"
                                 onClick={() => handleReactivateUser(user._id)}
                               >
-                                Kích hoạt lại
+                                Reactivate
                               </button>
                             )}
                           </div>
@@ -742,7 +742,7 @@ export default function AdminDashboardPage() {
               totalPages={accountResult.totalPages}
               total={accountResult.total}
               limit={accountFilters.limit}
-              itemLabel="tài khoản"
+              itemLabel="accounts"
               onPageChange={(page) => applyAccountFilters({ page })}
             />
           </div>
@@ -754,14 +754,14 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="up" delay={80}>
           <div className="card admin-card">
             <div className="admin-section-bar">
-              <span className="admin-section-count">{specialtyListResult.total} chuyên khoa</span>
+              <span className="admin-section-count">{specialtyListResult.total} specialties</span>
             </div>
 
             <div className="admin-filters-grid" style={{ marginBottom: "1rem" }}>
               <div className="admin-filters-fields">
                 <FilterSearchField
                   id="admin-specialty-search"
-                  placeholder="Mã hoặc tên…"
+                  placeholder="Code or name…"
                   value={specialtyFilters.q}
                   onChange={(e) => setSpecialtyFilters((f) => ({ ...f, q: e.target.value }))}
                   onSearch={() => setSpecialtyFilters((f) => ({ ...f, q: specialtyFilters.q, page: 1 }))}
@@ -773,14 +773,14 @@ export default function AdminDashboardPage() {
                   className="btn btn-primary"
                   onClick={() => setSpecialtyFilters((f) => ({ ...f, page: 1 }))}
                 >
-                  Tìm kiếm
+                  Search
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setSpecialtyFilters({ q: "", page: 1, limit: 10 })}
                 >
-                  Xóa lọc
+                  Clear filters
                 </button>
               </div>
             </div>
@@ -789,18 +789,18 @@ export default function AdminDashboardPage() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Mã</th>
-                    <th>Tên chuyên khoa</th>
-                    <th>Mô tả</th>
-                    <th>Trạng thái</th>
-                    <th className="admin-table-actions-col">Thao tác</th>
+                    <th>Code</th>
+                    <th>Name specialties</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th className="admin-table-actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {specialtyListResult.items.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                        Không tìm thấy chuyên khoa.
+                        No specialties found.
                       </td>
                     </tr>
                   ) : (
@@ -808,10 +808,10 @@ export default function AdminDashboardPage() {
                     <tr key={spec._id}>
                       <td><code>{spec.code}</code></td>
                       <td><strong>{spec.name}</strong></td>
-                      <td style={{ maxWidth: "300px" }}>{spec.description || <em style={{ color: "var(--color-text-muted)" }}>Không có</em>}</td>
+                      <td style={{ maxWidth: "300px" }}>{spec.description || <em style={{ color: "var(--color-text-muted)" }}>None</em>}</td>
                       <td>
                         <span className={`badge badge-status-${spec.isActive ? "active" : "inactive"}`}>
-                          {spec.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                          {spec.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
                       <td className="admin-table-actions-col">
@@ -820,7 +820,7 @@ export default function AdminDashboardPage() {
                           className="btn btn-outline btn-xs"
                           onClick={() => openSpecialtyModal(spec)}
                         >
-                          Sửa
+                          Edit
                         </button>
                         </div>
                       </td>
@@ -836,7 +836,7 @@ export default function AdminDashboardPage() {
               totalPages={specialtyListResult.totalPages}
               total={specialtyListResult.total}
               limit={specialtyFilters.limit}
-              itemLabel="chuyên khoa"
+              itemLabel="specialties"
               onPageChange={(page) => setSpecialtyFilters((f) => ({ ...f, page }))}
             />
           </div>
@@ -848,14 +848,14 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="up" delay={80}>
           <div className="card admin-card">
             <div className="admin-section-bar">
-              <span className="admin-section-count">{roomPagination.total} phòng khám</span>
+              <span className="admin-section-count">{roomPagination.total} clinic rooms</span>
             </div>
 
             <div className="admin-filters-grid" style={{ marginBottom: "1rem" }}>
               <div className="admin-filters-fields">
                 <FilterSearchField
                   id="admin-room-search"
-                  placeholder="Số phòng hoặc tên…"
+                  placeholder="Room number or name…"
                   value={roomFilters.q}
                   onChange={(e) => setRoomFilters((f) => ({ ...f, q: e.target.value }))}
                   onSearch={() => setRoomFilters((f) => ({ ...f, q: roomFilters.q, page: 1 }))}
@@ -867,14 +867,14 @@ export default function AdminDashboardPage() {
                   className="btn btn-primary"
                   onClick={() => setRoomFilters((f) => ({ ...f, page: 1 }))}
                 >
-                  Tìm kiếm
+                  Search
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setRoomFilters({ q: "", page: 1, limit: 10 })}
                 >
-                  Xóa lọc
+                  Clear filters
                 </button>
               </div>
             </div>
@@ -883,18 +883,18 @@ export default function AdminDashboardPage() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Số phòng</th>
-                    <th>Tên phòng</th>
-                    <th>Chuyên khoa phân công</th>
-                    <th>Trạng thái hiện tại</th>
-                    <th className="admin-table-actions-col">Thao tác</th>
+                    <th>Room number</th>
+                    <th>Room name</th>
+                    <th>Assigned specialty</th>
+                    <th>Current status</th>
+                    <th className="admin-table-actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rooms.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ textAlign: "center", padding: "2rem" }}>
-                        Chưa có phòng khám nào được đăng ký.
+                        No clinic rooms have been registered yet.
                       </td>
                     </tr>
                   ) : (
@@ -914,7 +914,7 @@ export default function AdminDashboardPage() {
                             className="btn btn-outline btn-xs"
                             onClick={() => openRoomModal(room)}
                           >
-                            Sửa
+                            Edit
                           </button>
                           </div>
                         </td>
@@ -930,7 +930,7 @@ export default function AdminDashboardPage() {
               totalPages={roomPagination.totalPages}
               total={roomPagination.total}
               limit={roomFilters.limit}
-              itemLabel="phòng khám"
+              itemLabel="clinic rooms"
               onPageChange={(page) => setRoomFilters((f) => ({ ...f, page }))}
             />
           </div>
@@ -942,22 +942,22 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="up" delay={80}>
           <div className="card admin-card">
             <div className="admin-section-bar">
-              <span className="admin-section-count">{doctorPagination.total} bác sĩ</span>
+              <span className="admin-section-count">{doctorPagination.total} doctors</span>
             </div>
             <div className="admin-doctors-toolbar">
               <div className="admin-filters-grid admin-doctors-filters">
                 <div className="admin-filters-fields">
                   <FilterSearchField
                     id="admin-doctor-search"
-                    label="Tìm theo tên"
-                    placeholder="Tìm bác sĩ…"
+                    label="Search by name"
+                    placeholder="Search doctors…"
                     value={doctorFilters.name}
                     onChange={(e) => setDoctorFilters((f) => ({ ...f, name: e.target.value, page: 1 }))}
                   />
 
                   <CustomSelect
                     className="filter-field"
-                    label="Trạng thái"
+                    label="Status"
                     value={doctorFilters.isActive}
                     onChange={(isActive) => setDoctorFilters((f) => ({ ...f, isActive, page: 1 }))}
                     options={DOCTOR_STATUS_FILTER_OPTIONS}
@@ -965,24 +965,24 @@ export default function AdminDashboardPage() {
 
                   <CustomSelect
                     className="filter-field"
-                    label="Chuyên khoa"
+                    label="Specialty"
                     value={doctorFilters.specialtyId}
-                    placeholder="Tất cả chuyên khoa"
+                    placeholder="All specialties"
                     onChange={(specialtyId) => setDoctorFilters((f) => ({ ...f, specialtyId, page: 1 }))}
                     options={[
-                      { value: "", label: "Tất cả chuyên khoa" },
+                      { value: "", label: "All specialties" },
                       ...specialties.map((s) => ({ value: s._id, label: s.name })),
                     ]}
                   />
 
                   <CustomSelect
                     className="filter-field"
-                    label="Khoa/phòng ban"
+                    label="Department"
                     value={doctorFilters.departmentId}
-                    placeholder="Tất cả khoa/phòng ban"
+                    placeholder="All departments"
                     onChange={(departmentId) => setDoctorFilters((f) => ({ ...f, departmentId, page: 1 }))}
                     options={[
-                      { value: "", label: "Tất cả khoa/phòng ban" },
+                      { value: "", label: "All departments" },
                       ...departments.map((d) => ({ value: d._id, label: d.name })),
                     ]}
                   />
@@ -992,7 +992,7 @@ export default function AdminDashboardPage() {
               <div className="admin-filters-actions">
                 <button type="button" className="btn btn-outline admin-export-btn" onClick={exportDoctorsToCSV}>
                   <IconDownload className="admin-btn-icon" />
-                  Xuất CSV
+                  Export CSV
                 </button>
               </div>
             </div>
@@ -1001,19 +1001,19 @@ export default function AdminDashboardPage() {
               <table className="admin-table">
                 <thead>
                   <tr>
-                    <th>Tên bác sĩ</th>
-                    <th>Thông tin liên hệ</th>
-                    <th>Chuyên khoa</th>
-                    <th>Khoa/phòng ban</th>
-                    <th>Số giấy phép</th>
-                    <th>Trạng thái</th>
+                    <th>Name doctors</th>
+                    <th>Contact info</th>
+                    <th>Specialty</th>
+                    <th>Department</th>
+                    <th>License number</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {doctors.length === 0 ? (
                     <tr>
                       <td colSpan="6" style={{ textAlign: "center", padding: "2rem" }}>
-                        Không tìm thấy bác sĩ phù hợp với tiêu chí hiện tại.
+                        No doctors match the current criteria.
                       </td>
                     </tr>
                   ) : (
@@ -1037,7 +1037,7 @@ export default function AdminDashboardPage() {
                         <td><code>{doc.licenseNo}</code></td>
                         <td>
                           <span className={`badge badge-status-${doc.isActive ? "active" : "inactive"}`}>
-                            {doc.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                            {doc.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
                       </tr>
@@ -1053,7 +1053,7 @@ export default function AdminDashboardPage() {
               totalPages={doctorPagination.totalPages}
               total={doctorPagination.total}
               limit={doctorFilters.limit}
-              itemLabel="bác sĩ"
+              itemLabel="doctors"
               onPageChange={(page) => setDoctorFilters((f) => ({ ...f, page }))}
             />
           </div>
@@ -1065,7 +1065,7 @@ export default function AdminDashboardPage() {
         <ScrollReveal variant="up" delay={80}>
           <div className="card admin-card">
             <div className="admin-section-bar">
-              <span className="admin-section-count">{departments.length} khoa/phòng ban</span>
+              <span className="admin-section-count">{departments.length} departments</span>
             </div>
 
             <div className="table-responsive">
@@ -1075,10 +1075,10 @@ export default function AdminDashboardPage() {
                     <th 
                       onClick={() => handleDeptSort("name")} 
                       className="sortable-header"
-                      title="Sắp xếp theo tên khoa/phòng ban"
+                      title="Sort by department name"
                       style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                      Tên khoa/phòng ban 
+                      Name departments 
                       {deptSort.key === "name" && (
                         <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
                       )}
@@ -1086,10 +1086,10 @@ export default function AdminDashboardPage() {
                     <th 
                       onClick={() => handleDeptSort("doctorsCount")} 
                       className="sortable-header"
-                      title="Sắp xếp theo số bác sĩ"
+                      title="Sort by doctor count"
                       style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                      Số bác sĩ 
+                      Doctor count 
                       {deptSort.key === "doctorsCount" && (
                         <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
                       )}
@@ -1097,22 +1097,22 @@ export default function AdminDashboardPage() {
                     <th 
                       onClick={() => handleDeptSort("location")} 
                       className="sortable-header"
-                      title="Sắp xếp theo vị trí"
+                      title="Sort by location"
                       style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                      Vị trí / Tòa nhà 
+                      Location / Building 
                       {deptSort.key === "location" && (
                         <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
                       )}
                     </th>
-                    <th>Điện thoại hỗ trợ</th>
+                    <th>Support phone</th>
                     <th 
                       onClick={() => handleDeptSort("status")} 
                       className="sortable-header"
-                      title="Sắp xếp theo trạng thái"
+                      title="Sort by status"
                       style={{ cursor: "pointer", userSelect: "none" }}
                     >
-                      Trạng thái 
+                      Status 
                       {deptSort.key === "status" && (
                         <span className="sort-indicator">{deptSort.direction === "asc" ? " ▲" : " ▼"}</span>
                       )}
@@ -1143,14 +1143,14 @@ export default function AdminDashboardPage() {
                         <td><strong>{dept.name}</strong></td>
                         <td>
                           <span className="badge badge-role-doctor admin-dept-count">
-                            {docCount} bác sĩ
+                            {docCount} doctors
                           </span>
                         </td>
-                        <td>{dept.location || "Tòa trung tâm"}</td>
+                        <td>{dept.location || "Central building"}</td>
                         <td>{dept.phone || "—"}</td>
                         <td>
                           <span className={`badge badge-status-${dept.isActive ? "active" : "inactive"}`}>
-                            {dept.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
+                            {dept.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
                       </tr>
@@ -1167,31 +1167,31 @@ export default function AdminDashboardPage() {
       {showAddStaffModal && (
         <div className="modal-backdrop">
           <div className="card modal-card animate-scale" style={{ maxWidth: "520px" }}>
-            <h3>Đăng ký tài khoản người dùng mới</h3>
+            <h3>Register new user account</h3>
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)", marginBottom: "1.5rem" }}>
-              Đăng ký trực tiếp hồ sơ nhân viên hỗ trợ, bác sĩ, bệnh nhân hoặc quản trị viên. Trạng thái mặc định là đang hoạt động.
+              Register support staff, doctor, patient, or administrator profiles directly. Default status is active.
             </p>
             <form onSubmit={handleAddStaffSubmit} className="form">
               <CustomSelect
-                label="Vai trò hệ thống"
+                label="System role"
                 value={staffForm.role}
                 onChange={(role) => setStaffForm((s) => ({ ...s, role }))}
                 options={STAFF_ROLE_OPTIONS}
               />
 
               <label>
-                Họ và tên
+                Full name
                 <input
                   type="text"
                   required
                   value={staffForm.fullName}
                   onChange={(e) => setStaffForm(s => ({ ...s, fullName: e.target.value }))}
-                  placeholder="vd. Nguyễn Văn A"
+                  placeholder="e.g. John Smith"
                 />
               </label>
 
               <label>
-                Địa chỉ email
+                Email address
                 <input
                   type="email"
                   required
@@ -1202,18 +1202,18 @@ export default function AdminDashboardPage() {
               </label>
 
               <label>
-                Mật khẩu bảo mật
+                Secure password
                 <input
                   type="password"
                   required
                   value={staffForm.password}
                   onChange={(e) => setStaffForm(s => ({ ...s, password: e.target.value }))}
-                  placeholder="Tối thiểu 8 ký tự (chữ và số)"
+                  placeholder="At least 8 characters (letters and numbers)"
                 />
               </label>
 
               <label>
-                Số điện thoại
+                Phone number
                 <input
                   type="text"
                   value={staffForm.phone}
@@ -1225,47 +1225,47 @@ export default function AdminDashboardPage() {
               
               {staffForm.role === "doctor" && (
                 <fieldset className="form-section animate-fade-in" style={{ padding: "1rem", borderRadius: "10px", marginTop: "1rem", background: "rgba(255, 255, 255, 0.25)" }}>
-                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>Thông tin nghề nghiệp bác sĩ</legend>
+                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>Doctor professional details</legend>
                   
                   <label>
-                    Số giấy phép (Mã CCHN)
+                    License number (Code CCHN)
                     <input
                       type="text"
                       required
                       value={staffForm.licenseNo}
                       onChange={(e) => setStaffForm(s => ({ ...s, licenseNo: e.target.value }))}
-                      placeholder="vd. 012345/BYT-CCHN"
+                      placeholder="e.g. 012345/BYT-CCHN"
                     />
                   </label>
 
                   <CustomSelect
-                    label="Chuyên khoa lâm sàng"
+                    label="Clinical specialty"
                     value={staffForm.specialtyId}
-                    placeholder="Chọn chuyên khoa"
+                    placeholder="Select specialty"
                     onChange={(specialtyId) => setStaffForm((s) => ({ ...s, specialtyId }))}
                     options={[
-                      { value: "", label: "Chọn chuyên khoa" },
+                      { value: "", label: "Select specialty" },
                       ...specialties.map((s) => ({ value: s._id, label: s.name })),
                     ]}
                   />
 
                   <CustomSelect
-                    label="Khoa/phòng ban phân công"
+                    label="Assigned department"
                     value={staffForm.departmentId}
-                    placeholder="Chọn khoa/phòng ban"
+                    placeholder="Select department"
                     onChange={(departmentId) => setStaffForm((s) => ({ ...s, departmentId }))}
                     options={[
-                      { value: "", label: "Chọn khoa/phòng ban" },
+                      { value: "", label: "Select department" },
                       ...departments.map((d) => ({ value: d._id, label: d.name })),
                     ]}
                   />
 
                   <label>
-                    Tiểu sử nghề nghiệp
+                    Professional bio
                     <textarea
                       value={staffForm.bio}
                       onChange={(e) => setStaffForm(s => ({ ...s, bio: e.target.value }))}
-                      placeholder="Bằng cấp, chứng chỉ nghề nghiệp, tóm tắt chuyên môn…"
+                      placeholder="Degrees, certifications, specialty summary…"
                       rows={3}
                     />
                   </label>
@@ -1275,10 +1275,10 @@ export default function AdminDashboardPage() {
               
               {staffForm.role === "patient" && (
                 <fieldset className="form-section animate-fade-in" style={{ padding: "1rem", borderRadius: "10px", marginTop: "1rem", background: "rgba(255, 255, 255, 0.25)" }}>
-                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>Thông tin nhân khẩu học bệnh nhân</legend>
+                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>Patient demographic details</legend>
                   
                   <label>
-                    Ngày sinh
+                    Date of birth
                     <input
                       type="date"
                       value={staffForm.dateOfBirth}
@@ -1287,34 +1287,34 @@ export default function AdminDashboardPage() {
                   </label>
 
                   <CustomSelect
-                    label="Giới tính"
+                    label="Gender"
                     value={staffForm.gender}
                     onChange={(gender) => setStaffForm((s) => ({ ...s, gender }))}
                     options={GENDER_OPTIONS}
                   />
 
                   <label>
-                    Địa chỉ đầy đủ
+                    Full address
                     <input
                       type="text"
                       value={staffForm.address}
                       onChange={(e) => setStaffForm(s => ({ ...s, address: e.target.value }))}
-                      placeholder="vd. 123 Nguyễn Huệ, Quận 1, TP.HCM"
+                      placeholder="e.g. 123 Main St, District 1, Ho Chi Minh City"
                     />
                   </label>
 
                   <label>
-                    Tên liên hệ khẩn cấp
+                    Emergency contact name
                     <input
                       type="text"
                       value={staffForm.emergencyContactName}
                       onChange={(e) => setStaffForm(s => ({ ...s, emergencyContactName: e.target.value }))}
-                      placeholder="Tên người thân hoặc người giám hộ"
+                      placeholder="Relative or guardian name"
                     />
                   </label>
 
                   <label>
-                    SĐT liên hệ khẩn cấp
+                    Emergency contact phone
                     <input
                       type="text"
                       value={staffForm.emergencyContactPhone}
@@ -1327,14 +1327,14 @@ export default function AdminDashboardPage() {
 
               <div className="form-actions" style={{ marginTop: "1.5rem", padding: "1rem 0 0 0" }}>
                 <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                  {actionLoading ? "Đang đăng ký…" : "Đăng ký tài khoản"}
+                  {actionLoading ? "Registering…" : "Register account"}
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setShowAddStaffModal(false)}
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>
@@ -1346,13 +1346,13 @@ export default function AdminDashboardPage() {
       {showChangeRoleModal && selectedUser && (
         <div className="modal-backdrop">
           <div className="card modal-card animate-scale" style={{ maxWidth: "520px" }}>
-            <h3>Đổi vai trò tài khoản</h3>
+            <h3>Change account role</h3>
             <p style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>
-              Cập nhật thông tin và vai trò cho **{selectedUser.fullName}**. Hành động này sẽ vô hiệu hóa ngay tất cả phiên đăng nhập hiện tại.
+              Update information and role for **{selectedUser.fullName}**. This will immediately invalidate all current sessions.
             </p>
             <form onSubmit={handleChangeRoleSubmit} className="form" style={{ marginTop: "1rem" }}>
               <CustomSelect
-                label="Vai trò hệ thống"
+                label="System role"
                 value={roleForm.role}
                 onChange={(role) => setRoleForm((r) => ({ ...r, role }))}
                 options={SYSTEM_ROLE_OPTIONS}
@@ -1360,41 +1360,41 @@ export default function AdminDashboardPage() {
 
               {roleForm.role === "doctor" && (
                 <fieldset className="form-section animate-fade-in" style={{ padding: "1rem", borderRadius: "10px", marginTop: "1rem" }}>
-                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>Giấy phép &amp; thông tin lâm sàng bác sĩ</legend>
+                  <legend style={{ fontWeight: "bold", fontSize: "0.85rem", color: "var(--color-primary)" }}>License &amp; clinical doctor details</legend>
                   
                   <label>
-                    Số giấy phép (Mã CCHN)
+                    License number (Code CCHN)
                     <input
                       type="text"
                       required
                       value={roleForm.licenseNo}
                       onChange={(e) => setRoleForm(r => ({ ...r, licenseNo: e.target.value }))}
-                      placeholder="vd. 012345/BYT-CCHN"
+                      placeholder="e.g. 012345/BYT-CCHN"
                     />
                   </label>
 
                   <CustomSelect
-                    label="Chuyên khoa lâm sàng"
+                    label="Clinical specialty"
                     value={roleForm.specialtyId}
-                    placeholder="Chọn chuyên khoa"
+                    placeholder="Select specialty"
                     onChange={(specialtyId) => setRoleForm((r) => ({ ...r, specialtyId }))}
                     options={specialties.map((s) => ({ value: s._id, label: s.name }))}
                   />
 
                   <CustomSelect
-                    label="Khoa/phòng ban phân công"
+                    label="Assigned department"
                     value={roleForm.departmentId}
-                    placeholder="Chọn khoa/phòng ban"
+                    placeholder="Select department"
                     onChange={(departmentId) => setRoleForm((r) => ({ ...r, departmentId }))}
                     options={departments.map((d) => ({ value: d._id, label: d.name }))}
                   />
 
                   <label>
-                    Tiểu sử nghề nghiệp
+                    Professional bio
                     <textarea
                       value={roleForm.bio}
                       onChange={(e) => setRoleForm(r => ({ ...r, bio: e.target.value }))}
-                      placeholder="Chuyên môn, bằng cấp, tóm tắt sự nghiệp…"
+                      placeholder="Expertise, qualifications, career summary…"
                       rows={3}
                     />
                   </label>
@@ -1403,7 +1403,7 @@ export default function AdminDashboardPage() {
 
               <div className="form-actions" style={{ marginTop: "1.5rem", padding: "1rem 0 0 0" }}>
                 <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                  {actionLoading ? "Đang cập nhật…" : "Áp dụng thay đổi vai trò"}
+                  {actionLoading ? "Updating…" : "Apply role change"}
                 </button>
                 <button
                   type="button"
@@ -1413,7 +1413,7 @@ export default function AdminDashboardPage() {
                     setSelectedUser(null);
                   }}
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>
@@ -1425,34 +1425,34 @@ export default function AdminDashboardPage() {
       {showSpecialtyModal && (
         <div className="modal-backdrop">
           <div className="card modal-card animate-scale">
-            <h3>{specialtyForm.id ? "Sửa chuyên khoa lâm sàng" : "Thêm chuyên khoa lâm sàng"}</h3>
+            <h3>{specialtyForm.id ? "Edit clinical specialty" : "Add clinical specialty"}</h3>
             <form onSubmit={handleSpecialtySubmit} className="form" style={{ marginTop: "1rem" }}>
               <label>
-                Mã chuyên khoa (duy nhất)
+                Specialty code (unique)
                 <input
                   type="text"
                   required
-                  placeholder="vd. CARDIOLOGY"
+                  placeholder="e.g. CARDIOLOGY"
                   value={specialtyForm.code}
                   onChange={(e) => setSpecialtyForm(s => ({ ...s, code: e.target.value }))}
                 />
               </label>
 
               <label>
-                Tên chuyên khoa
+                Name specialties
                 <input
                   type="text"
                   required
-                  placeholder="vd. Tim mạch &amp; chăm sóc tim"
+                  placeholder="e.g. Cardiology &amp; heart care"
                   value={specialtyForm.name}
                   onChange={(e) => setSpecialtyForm(s => ({ ...s, name: e.target.value }))}
                 />
               </label>
 
               <label>
-                Mô tả chi tiết
+                Detailed description
                 <textarea
-                  placeholder="Bệnh lý quản lý, kỹ thuật chẩn đoán, phòng khám…"
+                  placeholder="Conditions managed, diagnostic techniques, clinics…"
                   rows={3}
                   value={specialtyForm.description}
                   onChange={(e) => setSpecialtyForm(s => ({ ...s, description: e.target.value }))}
@@ -1465,19 +1465,19 @@ export default function AdminDashboardPage() {
                   checked={specialtyForm.isActive}
                   onChange={(e) => setSpecialtyForm(s => ({ ...s, isActive: e.target.checked }))}
                 />
-                Đang hoạt động &amp; có thể chọn
+                Active &amp; selectable
               </label>
 
               <div className="form-actions" style={{ marginTop: "1.5rem", padding: "1rem 0 0 0" }}>
                 <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                  {actionLoading ? "Đang lưu…" : "Lưu chuyên khoa"}
+                  {actionLoading ? "Saving…" : "Save specialty"}
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setShowSpecialtyModal(false)}
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>
@@ -1489,39 +1489,39 @@ export default function AdminDashboardPage() {
       {showRoomModal && (
         <div className="modal-backdrop">
           <div className="card modal-card animate-scale">
-            <h3>{roomForm.id ? "Sửa phòng khám tư vấn" : "Đăng ký phòng khám tư vấn"}</h3>
+            <h3>{roomForm.id ? "Edit consultation room" : "Register consultation room"}</h3>
             <form onSubmit={handleRoomSubmit} className="form" style={{ marginTop: "1rem" }}>
               <label>
-                Số phòng (duy nhất)
+                Room number (unique)
                 <input
                   type="text"
                   required
-                  placeholder="vd. Phòng 104"
+                  placeholder="e.g. Room 104"
                   value={roomForm.roomNumber}
                   onChange={(e) => setRoomForm(r => ({ ...r, roomNumber: e.target.value }))}
                 />
               </label>
 
               <label>
-                Tên phòng
+                Room name
                 <input
                   type="text"
                   required
-                  placeholder="vd. Phòng siêu âm chẩn đoán 1"
+                  placeholder="e.g. Diagnostic ultrasound room 1"
                   value={roomForm.name}
                   onChange={(e) => setRoomForm(r => ({ ...r, name: e.target.value }))}
                 />
               </label>
 
               <CustomSelect
-                label="Chuyên khoa lâm sàng phân công"
+                label="Assigned clinical specialty"
                 value={roomForm.specialtyId}
                 onChange={(specialtyId) => setRoomForm((r) => ({ ...r, specialtyId }))}
                 options={specialties.map((s) => ({ value: s._id, label: s.name }))}
               />
 
               <CustomSelect
-                label="Trạng thái phòng"
+                label="Room status"
                 value={roomForm.status}
                 onChange={(status) => setRoomForm((r) => ({ ...r, status }))}
                 options={ROOM_STATUS_OPTIONS}
@@ -1529,14 +1529,14 @@ export default function AdminDashboardPage() {
 
               <div className="form-actions" style={{ marginTop: "1.5rem", padding: "1rem 0 0 0" }}>
                 <button type="submit" className="btn btn-primary" disabled={actionLoading}>
-                  {actionLoading ? "Đang lưu…" : "Lưu thông tin phòng"}
+                  {actionLoading ? "Saving…" : "Save room details"}
                 </button>
                 <button
                   type="button"
                   className="btn btn-outline"
                   onClick={() => setShowRoomModal(false)}
                 >
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>
@@ -1568,14 +1568,14 @@ export default function AdminDashboardPage() {
                   if (confirmModal.onConfirm) confirmModal.onConfirm();
                 }}
               >
-                Xác nhận ngừng hoạt động
+                Confirm deactivation
               </button>
               <button
                 type="button"
                 className="btn btn-outline"
                 onClick={() => setConfirmModal({ show: false, title: "", message: "", onConfirm: null })}
               >
-                Hủy
+                Cancel
               </button>
             </div>
           </div>

@@ -33,13 +33,13 @@ export default function SpecialtiesListPage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Danh sách chuyên khoa</h1>
-        <p>Dữ liệu chuyên khoa dùng cho quản trị và bộ lọc tìm bác sĩ.</p>
+        <h1>Specialty list</h1>
+        <p>Specialty data used for admin and doctor search filters.</p>
       </div>
 
       <div className="card admin-toolbar">
         <Link to="/admin" className="btn btn-outline">
-          Về quản trị
+          Back to admin
         </Link>
         <label className="checkbox-row">
           <input
@@ -47,7 +47,7 @@ export default function SpecialtiesListPage() {
             checked={activeOnly}
             onChange={(e) => setActiveOnly(e.target.checked)}
           />
-          Chỉ hiện đang hoạt động
+          Show active only
         </label>
       </div>
 
@@ -55,7 +55,7 @@ export default function SpecialtiesListPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải chuyên khoa...
+          Loading specialties...
         </div>
       )}
 
@@ -64,10 +64,10 @@ export default function SpecialtiesListPage() {
           <table className="admin-table">
             <thead>
               <tr>
-                <th>Mã</th>
-                <th>Tên</th>
-                <th>Mô tả</th>
-                <th>Trạng thái</th>
+                <th>Code</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -81,8 +81,8 @@ export default function SpecialtiesListPage() {
                       className={`status-pill ${specialty.isActive ? "status-active" : ""}`}
                     >
                       {specialty.isActive
-                        ? "Đang hoạt động"
-                        : "Ngừng hoạt động"}
+                        ? "Active"
+                        : "Inactive"}
                     </span>
                   </td>
                 </tr>
@@ -90,7 +90,7 @@ export default function SpecialtiesListPage() {
               {items.length === 0 && (
                 <tr>
                   <td colSpan="4" className="empty-cell">
-                    Không tìm thấy chuyên khoa.
+                    No specialties found.
                   </td>
                 </tr>
               )}

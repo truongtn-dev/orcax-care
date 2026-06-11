@@ -11,21 +11,21 @@ import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminCreateAccountForm } from "../utils/validation.js";
 
 const FILTER_ROLE_OPTIONS = [
-  { value: "", label: "Tất cả vai trò" },
-  { value: "patient", label: "Bệnh nhân" },
-  { value: "doctor", label: "Bác sĩ" },
-  { value: "staff", label: "Nhân viên" },
-  { value: "admin", label: "Quản trị viên" },
+  { value: "", label: "All roles" },
+  { value: "patient", label: "Patient" },
+  { value: "doctor", label: "Doctor" },
+  { value: "staff", label: "Staff" },
+  { value: "admin", label: "Administrator" },
 ];
 
 const CREATE_ROLE_OPTIONS = [
-  { value: "patient", label: "Bệnh nhân" },
-  { value: "doctor", label: "Bác sĩ" },
-  { value: "admin", label: "Quản trị viên" },
+  { value: "patient", label: "Patient" },
+  { value: "doctor", label: "Doctor" },
+  { value: "admin", label: "Administrator" },
 ];
 
 function formatRoleLabel(role) {
-  const labels = { admin: "Quản trị viên", doctor: "Bác sĩ", staff: "Nhân viên", patient: "Bệnh nhân" };
+  const labels = { admin: "Administrator", doctor: "Doctor", staff: "Staff", patient: "Patient" };
   return labels[role] || role;
 }
 
@@ -191,11 +191,11 @@ export default function AdminAccountPage() {
   return (
     <PageLayout dashboard>
       <AdminLayout
-        title="Danh sách tài khoản"
-        description="Xem và quản lý tài khoản người dùng, vai trò và trạng thái hoạt động."
+        title="Account list"
+        description="View and manage user accounts, roles, and active status."
         actions={
           <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Thêm tài khoản
+            Add account
           </button>
         }
       >
@@ -204,14 +204,14 @@ export default function AdminAccountPage() {
           <div className="filters-toolbar-fields">
             <FilterSearchField
               id="admin-account-list-search"
-              placeholder="Tìm theo tên, email hoặc số điện thoại…"
+              placeholder="Search by name, email, or phone number…"
               value={filters.q}
               onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
               onSearch={() => applyFilters({ q: filters.q })}
             />
             <CustomSelect
               className="filter-field"
-              label="Vai trò"
+              label="Role"
               value={filters.role}
               onChange={(role) => applyFilters({ role })}
               options={FILTER_ROLE_OPTIONS}
@@ -219,10 +219,10 @@ export default function AdminAccountPage() {
           </div>
           <div className="filters-toolbar-actions">
             <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
-              Tìm kiếm
+              Search
             </button>
             <button type="button" className="btn btn-outline" onClick={clearFilters}>
-              Xóa lọc
+              Clear filters
             </button>
           </div>
         </div>
@@ -233,16 +233,16 @@ export default function AdminAccountPage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải tài khoản…
+          Loading accounts…
         </div>
       )}
 
       {!loading && result.items.length === 0 && (
         <div className="empty-state card">
-          <h3>Không tìm thấy tài khoản</h3>
-          <p>Hãy thử điều chỉnh tiêu chí tìm kiếm hoặc xóa bộ lọc.</p>
+          <h3>No accounts found</h3>
+          <p>Try adjusting your search criteria or clear filters.</p>
           <button type="button" className="btn btn-outline" onClick={clearFilters}>
-            Xóa lọc
+            Clear filters
           </button>
         </div>
       )}
@@ -253,15 +253,15 @@ export default function AdminAccountPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Họ và tên</th>
+                  <th>Full name</th>
                   <th>Email</th>
-                  <th>Vai trò</th>
-                  <th>Số điện thoại</th>
-                  <th>Trạng thái</th>
-                  <th>Email đã xác minh</th>
-                  <th>Đăng nhập gần nhất</th>
-                  <th>Ngày tạo</th>
-                  <th className="table-actions-col">Thao tác</th>
+                  <th>Role</th>
+                  <th>Phone number</th>
+                  <th>Status</th>
+                  <th>Email verified</th>
+                  <th>Last login</th>
+                  <th>Created</th>
+                  <th className="table-actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -279,16 +279,16 @@ export default function AdminAccountPage() {
                     <td>{account.phone || "—"}</td>
                     <td>
                       <div className="status-badge-group">
-                        <StatusBadge active={account.isActive} label={account.isActive ? "Đang hoạt động" : "Ngừng hoạt động"} />
+                        <StatusBadge active={account.isActive} label={account.isActive ? "Active" : "Inactive"} />
                         {account.isLocked && (
-                          <span className="status-badge status-badge-locked">Đã khóa</span>
+                          <span className="status-badge status-badge-locked">Locked</span>
                         )}
                       </div>
                     </td>
                     <td>
                       <StatusBadge
                         active={account.isEmailVerified}
-                        label={account.isEmailVerified ? "Đã xác minh" : "Chưa xác minh"}
+                        label={account.isEmailVerified ? "Verified" : "Not verified"}
                       />
                     </td>
                     <td>{formatDate(account.lastLoginAt)}</td>
@@ -299,7 +299,7 @@ export default function AdminAccountPage() {
                         to={`/admin/account/${account._id}`}
                         className="btn btn-outline btn-icon"
                         aria-label={`Xem ${account.fullName}`}
-                        title="Xem chi tiết"
+                        title="View details"
                       >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                           <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
@@ -322,7 +322,7 @@ export default function AdminAccountPage() {
           totalPages={result.totalPages}
           total={result.total}
           limit={filters.limit}
-          itemLabel="tài khoản"
+          itemLabel="accounts"
           onPageChange={(page) => applyFilters({ page })}
         />
       )}
@@ -338,10 +338,10 @@ export default function AdminAccountPage() {
           >
             <div className="modal-header">
               <div>
-                <h2 id="create-account-title">Thêm tài khoản mới</h2>
-                <p>Tạo tài khoản bệnh nhân, bác sĩ hoặc quản trị viên.</p>
+                <h2 id="create-account-title">Add new account</h2>
+                <p>Create a patient, doctor, or administrator account.</p>
               </div>
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Đóng">
+              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
                 ×
               </button>
             </div>
@@ -351,19 +351,19 @@ export default function AdminAccountPage() {
               {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
 
               <label>
-                Họ và tên
+                Full name
                 <input
                   name="fullName"
                   value={form.fullName}
                   onChange={onFormChange}
-                  placeholder="Nguyễn Văn A"
+                  placeholder="John Smith"
                   aria-invalid={Boolean(fieldError("fullName"))}
                 />
                 {fieldError("fullName") && <span className="field-error">{fieldError("fullName")}</span>}
               </label>
 
               <label>
-                Địa chỉ email
+                Email address
                 <input
                   type="email"
                   name="email"
@@ -376,7 +376,7 @@ export default function AdminAccountPage() {
               </label>
 
               <label>
-                Số điện thoại
+                Phone number
                 <input
                   name="phone"
                   value={form.phone}
@@ -389,7 +389,7 @@ export default function AdminAccountPage() {
 
               <div>
                 <CustomSelect
-                  label="Vai trò"
+                  label="Role"
                   value={form.role}
                   onChange={(role) => onFormChange({ target: { name: "role", value: role } })}
                   options={CREATE_ROLE_OPTIONS}
@@ -402,12 +402,12 @@ export default function AdminAccountPage() {
                 <>
                   <div>
                     <CustomSelect
-                      label="Chuyên khoa"
+                      label="Specialty"
                       value={form.specialtyId}
-                      placeholder="Chọn chuyên khoa"
+                      placeholder="Select specialty"
                       onChange={(specialtyId) => onFormChange({ target: { name: "specialtyId", value: specialtyId } })}
                       options={[
-                        { value: "", label: "Chọn chuyên khoa" },
+                        { value: "", label: "Select specialty" },
                         ...specialties.map((item) => ({ value: item._id, label: item.name })),
                       ]}
                       invalid={Boolean(fieldError("specialtyId"))}
@@ -419,12 +419,12 @@ export default function AdminAccountPage() {
 
                   <div>
                     <CustomSelect
-                      label="Khoa/phòng ban"
+                      label="Department"
                       value={form.departmentId}
-                      placeholder="Chọn khoa/phòng ban"
+                      placeholder="Select department"
                       onChange={(departmentId) => onFormChange({ target: { name: "departmentId", value: departmentId } })}
                       options={[
-                        { value: "", label: "Chọn khoa/phòng ban" },
+                        { value: "", label: "Select department" },
                         ...departments.map((item) => ({ value: item._id, label: item.name })),
                       ]}
                       invalid={Boolean(fieldError("departmentId"))}
@@ -435,7 +435,7 @@ export default function AdminAccountPage() {
                   </div>
 
                   <label>
-                    Số giấy phép
+                    License number
                     <input
                       name="licenseNo"
                       value={form.licenseNo}
@@ -449,39 +449,39 @@ export default function AdminAccountPage() {
                   </label>
 
                   <label>
-                    Tiểu sử
+                    Bio
                     <textarea
                       name="bio"
                       value={form.bio}
                       onChange={onFormChange}
                       rows={3}
-                      placeholder="Tiểu sử nghề nghiệp ngắn (tùy chọn)"
+                      placeholder="Short professional bio (optional)"
                     />
                   </label>
                 </>
               )}
 
               <label>
-                Mật khẩu
+                Password
                 <input
                   type="password"
                   name="password"
                   value={form.password}
                   onChange={onFormChange}
-                  placeholder="Tối thiểu 8 ký tự, chữ và số"
+                  placeholder="At least 8 characters, letters and numbers"
                   aria-invalid={Boolean(fieldError("password"))}
                 />
                 {fieldError("password") && <span className="field-error">{fieldError("password")}</span>}
               </label>
 
               <label>
-                Xác nhận mật khẩu
+                Confirm password
                 <input
                   type="password"
                   name="confirmPassword"
                   value={form.confirmPassword}
                   onChange={onFormChange}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Re-enter password"
                   aria-invalid={Boolean(fieldError("confirmPassword"))}
                 />
                 {fieldError("confirmPassword") && (
@@ -491,10 +491,10 @@ export default function AdminAccountPage() {
 
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
-                  Hủy
+                  Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={creating}>
-                  {creating ? "Đang tạo…" : "Tạo tài khoản"}
+                  {creating ? "Creating…" : "Create account"}
                 </button>
               </div>
             </form>

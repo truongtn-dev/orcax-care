@@ -8,10 +8,10 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { formatRoleLabel } from "../utils/roleLabels.js";
 
 const GENDER_OPTIONS = [
-  { value: "", label: "Không muốn tiết lộ" },
-  { value: "male", label: "Nam" },
-  { value: "female", label: "Nữ" },
-  { value: "other", label: "Khác" },
+  { value: "", label: "Prefer not to say" },
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "other", label: "Other" },
 ];
 
 export default function EditProfilePage() {
@@ -121,7 +121,7 @@ export default function EditProfilePage() {
       };
       setProfileData(updatedData);
       setForm(updatedData);
-      setSuccess("Cập nhật hồ sơ thành công.");
+      setSuccess("Profile updated successfully.");
       updateProfileMeta(data.fullName, data.phone);
       setIsModalOpen(false);
     } catch (err) {
@@ -145,15 +145,15 @@ export default function EditProfilePage() {
 
   const getGenderLabel = (val) => {
     const opt = GENDER_OPTIONS.find((o) => o.value === val);
-    return opt ? opt.label : "Chưa cập nhật";
+    return opt ? opt.label : "Not provided";
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return "Chưa cập nhật";
+    if (!dateStr) return "Not provided";
     try {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString("vi-VN", {
+      return d.toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -166,21 +166,21 @@ export default function EditProfilePage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Hồ sơ cá nhân</h1>
-        <p>Xem và cập nhật thông tin tài khoản của bạn.</p>
+        <h1>Profile</h1>
+        <p>View and update your account information.</p>
       </div>
 
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải hồ sơ…
+          Loading profile…
         </div>
       ) : error ? (
         <div className="card form-card-centered">
           <div className="alert alert-error">{error}</div>
           <div style={{ marginTop: "1rem", textAlign: "center" }}>
             <Link to={backLink} className="btn btn-outline">
-              Về trang cá nhân
+              Back to dashboard
             </Link>
           </div>
         </div>
@@ -202,40 +202,40 @@ export default function EditProfilePage() {
               </h2>
               <div className="profile-sub-meta">
                 <div>Email: <strong>{profileData.email}</strong></div>
-                <div>Số điện thoại: <strong>{profileData.phone || "Chưa cập nhật"}</strong></div>
+                <div>Phone: <strong>{profileData.phone || "Not provided"}</strong></div>
               </div>
             </div>
 
             <div className="profile-actions">
               <button onClick={handleOpenModal} className="btn btn-primary">
-                Sửa hồ sơ
+                Edit profile
               </button>
             </div>
           </div>
 
           {role === "patient" && (
             <div className="profile-grid-section">
-              <h3>Thông tin bệnh nhân</h3>
+              <h3>Patient information</h3>
               <div className="profile-grid">
                 <div className="profile-item">
-                  <span className="profile-item-label">Ngày sinh</span>
+                  <span className="profile-item-label">Date of birth</span>
                   <span className="profile-item-value">{formatDate(profileData.dateOfBirth)}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Giới tính</span>
+                  <span className="profile-item-label">Gender</span>
                   <span className="profile-item-value">{getGenderLabel(profileData.gender)}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Địa chỉ</span>
-                  <span className="profile-item-value">{profileData.address || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">Address</span>
+                  <span className="profile-item-value">{profileData.address || "Not provided"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Tên liên hệ khẩn cấp</span>
-                  <span className="profile-item-value">{profileData.emergencyContactName || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">Emergency contact name</span>
+                  <span className="profile-item-value">{profileData.emergencyContactName || "Not provided"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">SĐT liên hệ khẩn cấp</span>
-                  <span className="profile-item-value">{profileData.emergencyContactPhone || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">Emergency contact phone</span>
+                  <span className="profile-item-value">{profileData.emergencyContactPhone || "Not provided"}</span>
                 </div>
               </div>
             </div>
@@ -243,23 +243,23 @@ export default function EditProfilePage() {
 
           {role === "doctor" && (
             <div className="profile-grid-section">
-              <h3>Thông tin bác sĩ</h3>
+              <h3>Doctor information</h3>
               <div className="profile-grid">
                 <div className="profile-item">
-                  <span className="profile-item-label">Số giấy phép</span>
-                  <span className="profile-item-value">{profileData.licenseNo || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">License number</span>
+                  <span className="profile-item-value">{profileData.licenseNo || "Not provided"}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-item-label">Chuyên khoa</span>
-                  <span className="profile-item-value">{profileData.specialtyName || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">Specialty</span>
+                  <span className="profile-item-value">{profileData.specialtyName || "Not provided"}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Khoa/phòng ban</span>
-                  <span className="profile-item-value">{profileData.departmentName || "Chưa cập nhật"}</span>
+                  <span className="profile-item-label">Department</span>
+                  <span className="profile-item-value">{profileData.departmentName || "Not provided"}</span>
                 </div>
                 <div className="profile-item profile-grid-full">
-                  <span className="profile-item-label">Tiểu sử nghề nghiệp</span>
-                  <span className="profile-item-value bio-text">{profileData.bio || "Chưa có tiểu sử nghề nghiệp."}</span>
+                  <span className="profile-item-label">Professional bio</span>
+                  <span className="profile-item-value bio-text">{profileData.bio || "No professional bio yet."}</span>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function EditProfilePage() {
 
           <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
             <Link to={backLink} className="btn btn-outline">
-              Về trang cá nhân
+              Back to dashboard
             </Link>
           </div>
         </div>
@@ -277,7 +277,7 @@ export default function EditProfilePage() {
         <div className="modal-backdrop" onClick={handleCloseModal}>
           <div className="card modal-card animate-scale" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Sửa hồ sơ</h3>
+              <h3>Edit profile</h3>
               <button className="modal-close-btn" onClick={handleCloseModal}>
                 &times;
               </button>
@@ -287,14 +287,14 @@ export default function EditProfilePage() {
               {modalError && <div className="alert alert-error">{modalError}</div>}
 
               <fieldset className="form-section">
-                <legend>Tài khoản</legend>
+                <legend>Account</legend>
                 <div className="form-grid">
                   <label>
-                    Họ và tên
-                    <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Họ và tên đầy đủ" />
+                    Full name
+                    <input name="fullName" value={form.fullName} onChange={onChange} required placeholder="Full legal name" />
                   </label>
                   <label>
-                    Số điện thoại
+                    Phone number
                     <input name="phone" value={form.phone} onChange={onChange} placeholder="0901234567" />
                   </label>
                   <label className="form-grid-span-2">
@@ -306,38 +306,38 @@ export default function EditProfilePage() {
 
               {role === "patient" && (
                 <fieldset className="form-section">
-                  <legend>Thông tin bệnh nhân</legend>
+                  <legend>Patient information</legend>
                   <div className="form-grid">
                     <label>
-                      Ngày sinh
+                      Date of birth
                       <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
                     </label>
                     <CustomSelect
-                      label="Giới tính"
+                      label="Gender"
                       value={form.gender}
                       onChange={(gender) => onChange({ target: { name: "gender", value: gender } })}
                       options={GENDER_OPTIONS}
                     />
                     <label className="form-grid-span-2">
-                      Địa chỉ
-                      <input name="address" value={form.address} onChange={onChange} placeholder="Thành phố, quận/huyện, đường…" />
+                      Address
+                      <input name="address" value={form.address} onChange={onChange} placeholder="City, district, street…" />
                     </label>
                     <label>
-                      Tên liên hệ khẩn cấp
+                      Emergency contact name
                       <input
                         name="emergencyContactName"
                         value={form.emergencyContactName}
                         onChange={onChange}
-                        placeholder="Tên người liên hệ"
+                        placeholder="Contact name"
                       />
                     </label>
                     <label>
-                      SĐT liên hệ khẩn cấp
+                      Emergency contact phone
                       <input
                         name="emergencyContactPhone"
                         value={form.emergencyContactPhone}
                         onChange={onChange}
-                        placeholder="Số điện thoại"
+                        placeholder="Phone number"
                       />
                     </label>
                   </div>
@@ -346,28 +346,28 @@ export default function EditProfilePage() {
 
               {role === "doctor" && (
                 <fieldset className="form-section">
-                  <legend>Thông tin bác sĩ</legend>
+                  <legend>Doctor information</legend>
                   <div className="form-grid">
                     <label>
-                      Số giấy phép
+                      License number
                       <input name="licenseNo" value={form.licenseNo} readOnly disabled className="input-readonly" />
                     </label>
                     <label>
-                      Chuyên khoa
+                      Specialty
                       <input name="specialtyName" value={form.specialtyName} readOnly disabled className="input-readonly" />
                     </label>
                     <label className="form-grid-span-2">
-                      Khoa/phòng ban
+                      Department
                       <input name="departmentName" value={form.departmentName} readOnly disabled className="input-readonly" />
                     </label>
                     <label className="form-grid-span-2">
-                      Tiểu sử nghề nghiệp
+                      Professional bio
                       <textarea
                         name="bio"
                         value={form.bio}
                         onChange={onChange}
                         rows={4}
-                        placeholder="Viết vài dòng giới thiệu về bản thân…"
+                        placeholder="Write a brief introduction about yourself…"
                         maxLength={1000}
                       />
                     </label>
@@ -377,10 +377,10 @@ export default function EditProfilePage() {
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "Đang lưu…" : "Lưu thay đổi"}
+                  {saving ? "Saving…" : "Save changes"}
                 </button>
                 <button type="button" className="btn btn-outline" onClick={handleCloseModal}>
-                  Hủy
+                  Cancel
                 </button>
               </div>
             </form>

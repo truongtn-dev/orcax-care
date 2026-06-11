@@ -50,12 +50,12 @@ export default function ResendVerificationForm({ defaultEmail = "", compact = fa
   return (
     <form onSubmit={onSubmit} className={`form ${compact ? "form-compact" : ""}`}>
       <p className="muted resend-description">
-        Chưa nhận được email xác minh? Nhập email và gửi lại bên dưới.
+        Didn&apos;t receive a verification email? Enter your email below to resend it.
       </p>
       {error && <div className="alert alert-error">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
       <label>
-        Địa chỉ email
+        Email address
         <input
           type="email"
           value={email}
@@ -71,10 +71,10 @@ export default function ResendVerificationForm({ defaultEmail = "", compact = fa
         disabled={loading || cooldown > 0}
       >
         {loading
-          ? "Đang gửi…"
+          ? "Sending…"
           : cooldown > 0
-            ? `Gửi lại sau ${cooldown}s`
-            : "Gửi lại email xác minh"}
+            ? `Resend in ${cooldown}s`
+            : "Resend verification email"}
       </button>
     </form>
   );

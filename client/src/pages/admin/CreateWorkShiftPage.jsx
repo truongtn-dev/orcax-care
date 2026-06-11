@@ -6,13 +6,13 @@ import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
 const DAY_OPTIONS = [
-  { value: "0", label: "Chủ nhật" },
-  { value: "1", label: "Thứ 2" },
-  { value: "2", label: "Thứ 3" },
-  { value: "3", label: "Thứ 4" },
-  { value: "4", label: "Thứ 5" },
-  { value: "5", label: "Thứ 6" },
-  { value: "6", label: "Thứ 7" },
+  { value: "0", label: "Sunday" },
+  { value: "1", label: "Monday" },
+  { value: "2", label: "Tuesday" },
+  { value: "3", label: "Wednesday" },
+  { value: "4", label: "Thursday" },
+  { value: "5", label: "Friday" },
+  { value: "6", label: "Saturday" },
 ];
 
 const emptyForm = {
@@ -83,15 +83,15 @@ export default function CreateWorkShiftPage() {
   };
 
   const doctorOptions = [
-    { value: "", label: "Chọn bác sĩ" },
+    { value: "", label: "Select doctor" },
     ...doctors.map((item) => ({
       value: item._id,
-      label: `${item.fullName} — ${item.specialtyName || "Chuyên khoa"}`,
+      label: `${item.fullName} — ${item.specialtyName || "Specialty"}`,
     })),
   ];
 
   const roomOptions = [
-    { value: "", label: "Không gán phòng" },
+    { value: "", label: "No room assigned" },
     ...rooms.map((item) => ({
       value: item._id,
       label: `${item.roomNumber || item.roomCode || ""} ${item.name}`.trim(),
@@ -101,31 +101,31 @@ export default function CreateWorkShiftPage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Tạo ca làm việc</h1>
-        <p>Thiết lập mẫu ca theo ngày trong tuần cho bác sĩ. Dùng để sinh slot đặt lịch sau này.</p>
+        <h1>Create work shift</h1>
+        <p>Set up a weekly shift template for a doctor. Used to generate appointment slots later.</p>
       </div>
 
       <div className="card form-card-centered">
         {loading ? (
-          <p>Đang tải danh sách bác sĩ và phòng khám…</p>
+          <p>Loading doctors and clinic rooms…</p>
         ) : (
           <form onSubmit={onSubmit} className="form">
             {error && <div className="alert alert-error">{error}</div>}
             {created && (
               <div className="alert alert-success">
-                Đã tạo ca {created.dayLabel} ({created.startTime}–{created.endTime}) cho {created.doctorName}.
-                Mỗi slot {created.slotDurationMin} phút, tối đa {created.maxPatients} bệnh nhân.
+                Created shift {created.dayLabel} ({created.startTime}–{created.endTime}) for {created.doctorName}.
+                Each slot {created.slotDurationMin} min, up to {created.maxPatients} patients.
               </div>
             )}
 
             <fieldset className="form-section">
-              <legend>Thông tin ca làm</legend>
+              <legend>Shift details</legend>
 
               <CustomSelect
                 id="work-shift-doctor"
-                label="Bác sĩ"
+                label="Doctor"
                 value={form.doctorId}
-                placeholder="Chọn bác sĩ"
+                placeholder="Select doctor"
                 onChange={(doctorId) => setForm((current) => ({ ...current, doctorId }))}
                 options={doctorOptions}
                 required
@@ -133,16 +133,16 @@ export default function CreateWorkShiftPage() {
 
               <CustomSelect
                 id="work-shift-room"
-                label="Phòng khám"
+                label="Clinic room"
                 value={form.roomId}
-                placeholder="Không gán phòng"
+                placeholder="No room assigned"
                 onChange={(roomId) => setForm((current) => ({ ...current, roomId }))}
                 options={roomOptions}
               />
 
               <CustomSelect
                 id="work-shift-day"
-                label="Ngày trong tuần"
+                label="Day of week"
                 value={form.dayOfWeek}
                 onChange={(dayOfWeek) => setForm((current) => ({ ...current, dayOfWeek }))}
                 options={DAY_OPTIONS}
@@ -150,17 +150,17 @@ export default function CreateWorkShiftPage() {
 
               <div className="form-row">
                 <label>
-                  Giờ bắt đầu
+                  Start time
                   <input type="time" name="startTime" value={form.startTime} onChange={onChange} required />
                 </label>
                 <label>
-                  Giờ kết thúc
+                  End time
                   <input type="time" name="endTime" value={form.endTime} onChange={onChange} required />
                 </label>
               </div>
 
               <label>
-                Số bệnh nhân tối đa
+                Maximum patients
                 <input
                   type="number"
                   name="maxPatients"
@@ -175,10 +175,10 @@ export default function CreateWorkShiftPage() {
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving || !form.doctorId}>
-                {saving ? "Đang lưu…" : "Tạo ca làm việc"}
+                {saving ? "Saving…" : "Create work shift"}
               </button>
               <Link to="/admin/doctors" className="btn btn-secondary">
-                Quay lại danh sách bác sĩ
+                Back to doctor list
               </Link>
             </div>
           </form>

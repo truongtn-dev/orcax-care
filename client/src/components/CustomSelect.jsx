@@ -22,7 +22,7 @@ export default function CustomSelect({
   value,
   onChange,
   options,
-  placeholder = "Chọn…",
+  placeholder = "Select…",
   className = "",
   invalid = false,
   disabled = false,

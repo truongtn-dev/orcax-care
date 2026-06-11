@@ -5,8 +5,8 @@ import LogoIcon from "./LogoIcon.jsx";
 import { formatRoleLabel } from "../utils/roleLabels.js";
 
 const NAV_LINKS = [
-  { to: "/", label: "Trang chủ" },
-  { to: "/search-doctors", label: "Tìm bác sĩ" },
+  { to: "/", label: "Home" },
+  { to: "/search-doctors", label: "Find doctors" },
 ];
 
 export default function AppHeader() {
@@ -45,7 +45,7 @@ export default function AppHeader() {
     role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "patient" ? "/patient" : null;
 
   const dashboardLabel =
-    role === "admin" ? "Quản trị hệ thống" : role === "doctor" ? "Khu vực bác sĩ" : "Trang cá nhân";
+    role === "admin" ? "Admin dashboard" : role === "doctor" ? "Doctor portal" : "My dashboard";
 
   const isActive = (path) => location.pathname === path;
 
@@ -59,7 +59,7 @@ export default function AppHeader() {
           </span>
         </Link>
 
-        <nav className={`nav ${menuOpen ? "nav-open" : ""}`} aria-label="Điều hướng chính">
+        <nav className={`nav ${menuOpen ? "nav-open" : ""}`} aria-label="Main navigation">
           <div className="nav-links">
             {NAV_LINKS.map(({ to, label }) => (
               <Link key={to} to={to} className={`nav-link ${isActive(to) ? "nav-link-active" : ""}`}>
@@ -80,15 +80,15 @@ export default function AppHeader() {
             {!isAuthenticated ? (
               <>
                 <Link to="/login" className="btn btn-ghost btn-block">
-                  Đăng nhập
+                  Sign in
                 </Link>
                 <Link to="/register" className="btn btn-primary btn-block">
-                  Đăng ký
+                  Sign up
                 </Link>
               </>
             ) : (
               <button type="button" className="btn btn-outline btn-block" onClick={handleLogout}>
-                Đăng xuất
+                Log out
               </button>
             )}
           </div>
@@ -98,10 +98,10 @@ export default function AppHeader() {
           {!isAuthenticated ? (
             <>
               <Link to="/login" className="btn btn-ghost hide-mobile">
-                Đăng nhập
+                Sign in
               </Link>
               <Link to="/register" className="btn btn-primary hide-mobile">
-                Đăng ký
+                Sign up
               </Link>
             </>
           ) : (
@@ -112,11 +112,11 @@ export default function AppHeader() {
                 onClick={() => setUserMenuOpen((v) => !v)}
                 aria-expanded={userMenuOpen}
                 aria-haspopup="true"
-                aria-label="Menu người dùng"
+                aria-label="User menu"
               >
                 <span className="avatar">{fullName?.charAt(0)?.toUpperCase() || "U"}</span>
                 <span className="avatar-info hide-mobile">
-                  <span className="avatar-name">{fullName || "Người dùng"}</span>
+                  <span className="avatar-name">{fullName || "User"}</span>
                   <span className="avatar-role">{formatRoleLabel(role)}</span>
                 </span>
                 <svg className="avatar-chevron hide-mobile" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -144,14 +144,14 @@ export default function AppHeader() {
                       </Link>
                     )}
                     <Link to="/profile" role="menuitem" onClick={() => setUserMenuOpen(false)}>
-                      Sửa hồ sơ
+                      Edit profile
                     </Link>
                     <Link to="/change-password" role="menuitem" onClick={() => setUserMenuOpen(false)}>
-                      Đổi mật khẩu
+                      Change password
                     </Link>
                     <div className="dropdown-divider" />
                     <button type="button" role="menuitem" className="dropdown-danger" onClick={handleLogout}>
-                      Đăng xuất
+                      Log out
                     </button>
                   </div>
                 </>
@@ -164,7 +164,7 @@ export default function AppHeader() {
             className={`menu-toggle ${menuOpen ? "menu-toggle-open" : ""}`}
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}
-            aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
             <span />
             <span />

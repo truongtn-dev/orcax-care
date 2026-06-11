@@ -46,8 +46,8 @@ export default function DepartmentCreatePage() {
   return (
     <PageLayout>
       <div className="page-header">
-        <h1>Tạo khoa/phòng ban</h1>
-        <p>Nhập tên, vị trí, số điện thoại và trạng thái để tạo dữ liệu khoa/phòng ban.</p>
+        <h1>Create department</h1>
+        <p>Enter name, location, phone number, and status to create department data.</p>
       </div>
 
       <div className="card form-card-centered">
@@ -55,15 +55,15 @@ export default function DepartmentCreatePage() {
           {error && <div className="alert alert-error">{error}</div>}
           {created && (
             <div className="alert alert-success">
-              Tạo khoa/phòng ban thành công.{" "}
-              <Link to={`/admin/departments/${created._id}`}>Xem chi tiết</Link>
+              Department created successfully.{" "}
+              <Link to={`/admin/departments/${created._id}`}>View details</Link>
             </div>
           )}
 
           <fieldset className="form-section">
-            <legend>Thông tin khoa/phòng ban</legend>
+            <legend>Department information</legend>
             <label>
-              Tên khoa/phòng ban
+              Department name
               <input
                 type="text"
                 name="name"
@@ -74,7 +74,7 @@ export default function DepartmentCreatePage() {
               />
             </label>
             <label>
-              Vị trí
+              Location
               <input
                 type="text"
                 name="location"
@@ -85,29 +85,29 @@ export default function DepartmentCreatePage() {
               />
             </label>
             <label>
-              Số điện thoại
+              Phone number
               <input
                 type="tel"
                 name="phone"
                 value={form.phone}
                 onChange={onChange}
                 pattern="[0-9+\-\s()]{8,20}"
-                title="Dùng 8-20 ký tự gồm số, khoảng trắng, +, -, hoặc ngoặc đơn."
+                title="Use 8–20 characters including digits, spaces, +, -, or parentheses."
                 required
               />
             </label>
             <label className="checkbox-row">
               <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
-              Khoa/phòng ban đang hoạt động
+              Department is active
             </label>
           </fieldset>
 
           <div className="form-actions">
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? "Đang lưu..." : "Tạo khoa/phòng ban"}
+              {saving ? "Saving..." : "Create department"}
             </button>
             <Link to="/admin" className="btn btn-outline">
-              Hủy
+              Cancel
             </Link>
           </div>
         </form>

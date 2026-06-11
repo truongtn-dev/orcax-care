@@ -6,7 +6,7 @@ import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 function formatRating(value) {
-  if (value == null) return "Chưa có đánh giá";
+  if (value == null) return "No ratings yet";
   return `${value.toFixed(1)} / 5.0`;
 }
 
@@ -35,8 +35,8 @@ export default function DoctorPublicProfilePage() {
     navigate("/search-doctors");
   };
 
-  const languages = doctor?.languages?.length ? doctor.languages : ["Tiếng Việt"];
-  const workplace = doctor?.workplace || doctor?.department?.name || "Chưa cập nhật";
+  const languages = doctor?.languages?.length ? doctor.languages : ["Vietnamese"];
+  const workplace = doctor?.workplace || doctor?.department?.name || "Not provided";
 
   return (
     <PageLayout>
@@ -44,10 +44,10 @@ export default function DoctorPublicProfilePage() {
         <div className="page-header-row">
           <div>
             <Link to="/search-doctors" className="back-link">
-              ← Quay lại tìm bác sĩ
+              ← Back to find a doctor
             </Link>
-            <h1>Hồ sơ bác sĩ</h1>
-            <p>Xem thông tin chuyên khoa, ngôn ngữ, nơi làm việc và đánh giá của bác sĩ.</p>
+            <h1>Doctor profile</h1>
+            <p>View specialty, languages, workplace, and patient ratings for this doctor.</p>
           </div>
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function DoctorPublicProfilePage() {
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
-          Đang tải hồ sơ…
+          Loading profile…
         </div>
       )}
 
@@ -75,7 +75,7 @@ export default function DoctorPublicProfilePage() {
               <h2>{doctor.fullName}</h2>
               {doctor.specialty?.name && <p className="doctor-meta">{doctor.specialty.name}</p>}
               {doctor.department?.name && (
-                <p className="doctor-meta">Nơi làm việc: {workplace}</p>
+                <p className="doctor-meta">Workplace: {workplace}</p>
               )}
               <div className="doctor-profile-tags">
                 {doctor.specialty?.code && <Tag>{doctor.specialty.code}</Tag>}
@@ -85,50 +85,50 @@ export default function DoctorPublicProfilePage() {
             <div className="doctor-profile-action">
               {isAuthenticated ? (
                 <button type="button" className="btn btn-primary" onClick={handleBook}>
-                  Đặt lịch khám
+                  Book an appointment
                 </button>
               ) : (
-                <p className="field-note">Đăng nhập để đặt lịch khám.</p>
+                <p className="field-note">Sign in to book an appointment.</p>
               )}
             </div>
           </div>
 
           <div className="detail-grid">
             <section className="card detail-section">
-              <h3>Giới thiệu</h3>
-              <p>{doctor.bio || "Chưa có mô tả hồ sơ."}</p>
+              <h3>About</h3>
+              <p>{doctor.bio || "No profile description available."}</p>
             </section>
 
             <section className="card detail-section">
-              <h3>Thông tin bác sĩ</h3>
+              <h3>Doctor details</h3>
               <div className="detail-list">
                 <div className="detail-item">
-                  <span className="detail-label">Chuyên khoa</span>
+                  <span className="detail-label">Specialty</span>
                   <span className="detail-value">{doctor.specialty?.name || "—"}</span>
                 </div>
                 <div className="detail-item">
-                  <span className="detail-label">Nơi làm việc</span>
+                  <span className="detail-label">Workplace</span>
                   <span className="detail-value">{workplace}</span>
                 </div>
                 <div className="detail-item">
-                  <span className="detail-label">Ngôn ngữ</span>
+                  <span className="detail-label">Languages</span>
                   <span className="detail-value">{languages.join(", ")}</span>
                 </div>
                 <div className="detail-item">
-                  <span className="detail-label">Đánh giá</span>
+                  <span className="detail-label">Rating</span>
                   <span className="detail-value">
                     {doctor.reviewCount > 0 ? (
                       <>
-                        {formatRating(doctor.reviewRating)} · {doctor.reviewCount} đánh giá
+                        {formatRating(doctor.reviewRating)} · {doctor.reviewCount} reviews
                       </>
                     ) : (
-                      "Chưa có đánh giá"
+                      "No ratings yet"
                     )}
                   </span>
                 </div>
                 {doctor.reviewSummary && (
                   <div className="detail-item detail-item-full">
-                    <span className="detail-label">Tóm tắt</span>
+                    <span className="detail-label">Summary</span>
                     <span className="detail-value">{doctor.reviewSummary}</span>
                   </div>
                 )}

@@ -35,7 +35,7 @@ export default function AppPagination({
   limit = 20,
   itemLabel,
   onPageChange,
-  ariaLabel = "Phân trang",
+  ariaLabel = "Pagination",
 }) {
   const resultRange = useMemo(() => getResultRange(page, total, limit), [page, total, limit]);
   const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
@@ -45,11 +45,11 @@ export default function AppPagination({
   return (
     <div className={`search-pagination-shell ${totalPages <= 1 ? "search-pagination-single" : ""}`}>
       <p className="search-pagination-summary">
-        Hiển thị <strong>{resultRange.start}–{resultRange.end}</strong> trong tổng <strong>{total}</strong> {itemLabel}
+        Showing <strong>{resultRange.start}–{resultRange.end}</strong> of <strong>{total}</strong> {itemLabel}
         {totalPages > 1 && (
           <>
             {" "}
-            · Trang <strong>{page}</strong> / <strong>{totalPages}</strong>
+            · Page <strong>{page}</strong> / <strong>{totalPages}</strong>
           </>
         )}
       </p>
@@ -59,7 +59,7 @@ export default function AppPagination({
           className="search-page-btn search-page-btn-nav"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
-          aria-label="Trang trước"
+          aria-label="Previous page"
         >
           <ChevronIcon direction="prev" />
         </button>
@@ -88,7 +88,7 @@ export default function AppPagination({
           className="search-page-btn search-page-btn-nav"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          aria-label="Trang sau"
+          aria-label="Next page"
         >
           <ChevronIcon direction="next" />
         </button>

@@ -56,11 +56,11 @@ function isTrue(value) {
 
 async function requireReference(Model, id, label) {
   if (!isValidObjectId(id)) {
-    return { error: { status: 400, body: { message: `${label} không hợp lệ` } } };
+    return { error: { status: 400, body: { message: `Invalid ${label.toLowerCase()}` } } };
   }
   const record = await Model.findById(id).lean();
   if (!record) {
-    return { error: { status: 404, body: { message: `Không tìm thấy ${label.toLowerCase()}` } } };
+    return { error: { status: 404, body: { message: `${label} not found` } } };
   }
   return { record };
 }
@@ -124,25 +124,25 @@ export async function listDoctors({
 
 export async function getDoctor(id) {
   if (!isValidObjectId(id)) {
-    return { status: 404, body: { message: "Không tìm thấy bác sĩ" } };
+    return { status: 404, body: { message: "Doctor not found" } };
   }
 
   const doctor = await doctorPopulate(Doctor.findById(id)).lean();
-  if (!doctor) return { status: 404, body: { message: "Không tìm thấy bác sĩ" } };
+  if (!doctor) return { status: 404, body: { message: "Doctor not found" } };
 
   return { status: 200, body: mapDoctor(doctor) };
 }
 
 export async function updateDoctor(id, dto) {
   if (!isValidObjectId(id)) {
-    return { status: 404, body: { message: "Không tìm thấy bác sĩ" } };
+    return { status: 404, body: { message: "Doctor not found" } };
   }
 
   const doctor = await Doctor.findById(id);
-  if (!doctor) return { status: 404, body: { message: "Không tìm thấy bác sĩ" } };
+  if (!doctor) return { status: 404, body: { message: "Doctor not found" } };
 
   const user = await User.findById(doctor.userId);
-  if (!user) return { status: 404, body: { message: "Không tìm thấy tài khoản bác sĩ" } };
+  if (!user) return { status: 404, body: { message: "Doctor account not found" } };
 
   const email = normalizeEmail(dto.email || user.email);
   const fullName = String(dto.fullName || "").trim();
@@ -153,22 +153,22 @@ export async function updateDoctor(id, dto) {
 
   const emailError = validateRequired(email, "Email");
   if (emailError) return { status: 400, body: { message: emailError } };
-  const fullNameError = validateRequired(fullName, "Họ và tên");
+  const fullNameError = validateRequired(fullName, "Full name");
   if (fullNameError) return { status: 400, body: { message: fullNameError } };
   const phoneError = validatePhoneOptional(phone);
   if (phoneError) return { status: 400, body: { message: phoneError } };
-  const licenseError = validateRequired(licenseNo, "Số giấy phép");
+  const licenseError = validateRequired(licenseNo, "License number");
   if (licenseError) return { status: 400, body: { message: licenseError } };
 
   const duplicateEmail = await User.findOne({ email, _id: { $ne: user._id } }).lean();
-  if (duplicateEmail) return { status: 409, body: { message: "Email đã được sử dụng" } };
+  if (duplicateEmail) return { status: 409, body: { message: "Email already in use" } };
 
   const duplicateLicense = await Doctor.findOne({ licenseNo, _id: { $ne: doctor._id } }).lean();
-  if (duplicateLicense) return { status: 409, body: { message: "Số giấy phép đã được sử dụng" } };
+  if (duplicateLicense) return { status: 409, body: { message: "License number already in use" } };
 
-  const specialtyCheck = await requireReference(Specialty, specialtyId, "Chuyên khoa");
+  const specialtyCheck = await requireReference(Specialty, specialtyId, "Specialty");
   if (specialtyCheck.error) return specialtyCheck.error;
-  const departmentCheck = await requireReference(Department, departmentId, "Khoa/phòng ban");
+  const departmentCheck = await requireReference(Department, departmentId, "Department");
   if (departmentCheck.error) return departmentCheck.error;
 
   const specialtyChanged = doctor.specialtyId.toString() !== specialtyId;

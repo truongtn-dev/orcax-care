@@ -1,10 +1,10 @@
 const ROLE_LABELS = {
-  admin: "Quản trị viên",
-  doctor: "Bác sĩ",
-  staff: "Nhân viên",
-  patient: "Bệnh nhân",
+  admin: "Administrator",
+  doctor: "Doctor",
+  staff: "Staff",
+  patient: "Patient",
 };
 
 export function formatRoleLabel(role) {
-  return ROLE_LABELS[role] || role || "Người dùng";
+  return ROLE_LABELS[role] || role || "User";
 }

@@ -6,40 +6,40 @@ import { formatRoleLabel } from "../utils/roleLabels.js";
 import "./AdminLayout.css";
 
 export const ADMIN_DASHBOARD_TABS = [
-  { id: "accounts", label: "Tài khoản" },
-  { id: "specialties", label: "Chuyên khoa" },
-  { id: "rooms", label: "Phòng khám" },
-  { id: "doctors", label: "Hồ sơ bác sĩ" },
-  { id: "departments", label: "Khoa/phòng ban" },
+  { id: "accounts", label: "Accounts" },
+  { id: "specialties", label: "Specialties" },
+  { id: "rooms", label: "Clinic rooms" },
+  { id: "doctors", label: "Doctor profiles" },
+  { id: "departments", label: "Departments" },
 ];
 
 export const ADMIN_PAGE_LINKS = [
-  { to: "/admin/account", label: "Danh sách tài khoản", match: ["/admin/account"] },
-  { to: "/admin/patient", label: "Quản lý bệnh nhân", match: ["/admin/patient"] },
-  { to: "/admin/specialty", label: "Quản lý chuyên khoa", match: ["/admin/specialty"] },
-  { to: "/admin/clinic-room", label: "Quản lý phòng khám", match: ["/admin/clinic-room"] },
+  { to: "/admin/account", label: "Account list", match: ["/admin/account"] },
+  { to: "/admin/patient", label: "Patient management", match: ["/admin/patient"] },
+  { to: "/admin/specialty", label: "Specialty management", match: ["/admin/specialty"] },
+  { to: "/admin/clinic-room", label: "Clinic room management", match: ["/admin/clinic-room"] },
 ];
 
 const TAB_META = {
   accounts: {
-    title: "Tài khoản",
-    description: "Quản lý tài khoản hệ thống, vai trò và trạng thái hoạt động.",
+    title: "Accounts",
+    description: "Manage system accounts, roles, and active status.",
   },
   specialties: {
-    title: "Chuyên khoa",
-    description: "Danh mục chuyên khoa lâm sàng trên hệ thống.",
+    title: "Specialties",
+    description: "Clinical specialty catalog across the system.",
   },
   rooms: {
-    title: "Phòng khám",
-    description: "Quản lý phòng khám và trạng thái sử dụng.",
+    title: "Clinic rooms",
+    description: "Manage clinic rooms and availability status.",
   },
   doctors: {
-    title: "Hồ sơ bác sĩ",
-    description: "Tra cứu và xuất danh sách bác sĩ.",
+    title: "Doctor profiles",
+    description: "Search and export doctor listings.",
   },
   departments: {
-    title: "Khoa/phòng ban",
-    description: "Danh mục khoa, phòng ban và thông tin liên quan.",
+    title: "Departments",
+    description: "Department catalog and related information.",
   },
 };
 
@@ -138,10 +138,10 @@ function isPathActive(pathname, matchPaths) {
 }
 
 function buildBreadcrumbs({ isDashboard, activeTab, pathname, pageTitle }) {
-  const crumbs = [{ label: "Quản trị", to: "/admin" }];
+  const crumbs = [{ label: "Admin", to: "/admin" }];
 
   if (isDashboard) {
-    crumbs.push({ label: "Tổng quan", to: `/admin?tab=${activeTab}` });
+    crumbs.push({ label: "Overview", to: `/admin?tab=${activeTab}` });
     const tab = ADMIN_DASHBOARD_TABS.find((item) => item.id === activeTab);
     crumbs.push({ label: tab?.label || pageTitle, current: true });
     return crumbs;
@@ -191,9 +191,9 @@ export default function AdminLayout({ children, title, description, actions }) {
   const activeTab = searchParams.get("tab") || "accounts";
   const tabMeta = isDashboard ? TAB_META[activeTab] : null;
 
-  const pageTitle = title || tabMeta?.title || "Quản trị hệ thống";
+  const pageTitle = title || tabMeta?.title || "System administration";
   const pageDescription =
-    description || tabMeta?.description || "Quản lý dữ liệu và cấu hình hệ thống OrcaXCare.";
+    description || tabMeta?.description || "Manage OrcaXCare data and system configuration.";
   const breadcrumbs = buildBreadcrumbs({
     isDashboard,
     activeTab,
@@ -218,13 +218,13 @@ export default function AdminLayout({ children, title, description, actions }) {
               <span className="admin-sidebar-logo-title">
                 Orca<span className="logo-accent">X</span>Care
               </span>
-              <small>Quản trị</small>
+              <small>Admin</small>
             </span>
           </Link>
         </div>
 
-        <nav className="admin-sidebar-nav" aria-label="Điều hướng quản trị">
-          <p className="admin-sidebar-label">Tổng quan</p>
+        <nav className="admin-sidebar-nav" aria-label="Admin navigation">
+          <p className="admin-sidebar-label">Overview</p>
           <ul>
             {ADMIN_DASHBOARD_TABS.map((tab) => {
               const active = isDashboard && activeTab === tab.id;
@@ -243,7 +243,7 @@ export default function AdminLayout({ children, title, description, actions }) {
             })}
           </ul>
 
-          <p className="admin-sidebar-label">Quản lý chi tiết</p>
+          <p className="admin-sidebar-label">Detailed management</p>
           <ul>
             {ADMIN_PAGE_LINKS.map((item) => {
               const active = isPathActive(location.pathname, item.match);
@@ -269,18 +269,18 @@ export default function AdminLayout({ children, title, description, actions }) {
               {userInitial}
             </span>
             <div className="admin-user-meta">
-              <span className="admin-user-name">{fullName || "Quản trị viên"}</span>
+              <span className="admin-user-name">{fullName || "Administrator"}</span>
               <span className="admin-user-role">{formatRoleLabel(role)}</span>
             </div>
           </div>
           <div className="admin-sidebar-actions">
             <Link to="/" className="admin-sidebar-action" onClick={() => setSidebarOpen(false)}>
               <FooterIcon name="home" />
-              Về trang chủ
+              Back to home
             </Link>
             <button type="button" className="admin-sidebar-action admin-sidebar-action-muted" onClick={handleLogout}>
               <FooterIcon name="logout" />
-              Đăng xuất
+              Log out
             </button>
           </div>
         </div>
@@ -290,7 +290,7 @@ export default function AdminLayout({ children, title, description, actions }) {
         <button
           type="button"
           className="admin-sidebar-backdrop"
-          aria-label="Đóng menu"
+          aria-label="Close menu"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -300,7 +300,7 @@ export default function AdminLayout({ children, title, description, actions }) {
           <button
             type="button"
             className="admin-menu-toggle"
-            aria-label="Mở menu quản trị"
+            aria-label="Open admin menu"
             onClick={() => setSidebarOpen(true)}
           >
             <span />

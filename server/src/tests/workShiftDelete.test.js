@@ -152,7 +152,7 @@ describe("UC-29 Delete Work Shift", () => {
     });
     assert.equal(res.status, 409);
     const body = await res.json();
-    assert.match(body.message, /lịch hẹn/i);
+    assert.match(body.message, /appointments/i);
     assert.equal(body.futureBookings, 1);
 
     const stillThere = await WorkShift.findById(shift._id);
