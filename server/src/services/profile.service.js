@@ -36,6 +36,7 @@ export async function getProfile(userId, role) {
           address: patient.address || "",
           emergencyContactName: patient.emergencyContactName || "",
           emergencyContactPhone: patient.emergencyContactPhone || "",
+          avatarUrl: patient.avatarUrl || "",
         },
       },
     };
@@ -54,6 +55,7 @@ export async function getProfile(userId, role) {
         ...base,
         profile: {
           bio: doctor.bio || "",
+          photoUrl: doctor.photoUrl || "",
           licenseNo: doctor.licenseNo,
           specialty: doctor.specialtyId
             ? { id: doctor.specialtyId._id, name: doctor.specialtyId.name }
@@ -108,6 +110,9 @@ export async function updateProfile(userId, role, payload) {
     patient.address = payload.address?.trim() || "";
     patient.emergencyContactName = payload.emergencyContactName?.trim() || "";
     patient.emergencyContactPhone = payload.emergencyContactPhone?.trim() || "";
+    if (payload.avatarUrl !== undefined) {
+      patient.avatarUrl = String(payload.avatarUrl || "").trim();
+    }
     await patient.save();
   }
 
@@ -115,6 +120,9 @@ export async function updateProfile(userId, role, payload) {
     const doctor = await Doctor.findOne({ userId: user._id });
     if (!doctor) return { status: 404, body: { message: "Doctor profile not found" } };
     doctor.bio = payload.bio?.trim()?.slice(0, 1000) || "";
+    if (payload.photoUrl !== undefined) {
+      doctor.photoUrl = String(payload.photoUrl || "").trim();
+    }
     await doctor.save();
   }
 

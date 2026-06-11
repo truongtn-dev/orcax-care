@@ -42,10 +42,24 @@ export default function AppHeader() {
   };
 
   const dashboardLink =
-    role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "patient" ? "/patient" : null;
+    role === "admin"
+      ? "/admin"
+      : role === "doctor"
+        ? "/doctor/schedule"
+        : role === "staff"
+          ? "/staff"
+          : role === "patient"
+            ? "/patient"
+            : null;
 
   const dashboardLabel =
-    role === "admin" ? "Admin dashboard" : role === "doctor" ? "Doctor portal" : "My dashboard";
+    role === "admin"
+      ? "Admin dashboard"
+      : role === "doctor"
+        ? "Doctor portal"
+        : role === "staff"
+          ? "Staff portal"
+          : "My dashboard";
 
   const isActive = (path) => location.pathname === path;
 

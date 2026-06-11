@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children, roles }) {
 
   if (roles && !roles.includes(role)) {
     const fallback =
-      role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "staff" ? "/profile" : "/patient";
+      role === "admin" ? "/admin" : role === "doctor" ? "/doctor/schedule" : role === "staff" ? "/staff" : "/patient";
     return <Navigate to={fallback} replace />;
   }
 

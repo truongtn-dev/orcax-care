@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 function ChevronIcon({ open }) {
   return (
@@ -31,16 +32,60 @@ export default function CustomSelect({
   const id = idProp || autoId;
   const listboxId = `${id}-listbox`;
   const rootRef = useRef(null);
+  const menuRef = useRef(null);
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
 
   const selected = options.find((o) => o.value === value);
   const displayLabel = selected?.label ?? placeholder;
 
+  const updateMenuPosition = useCallback(() => {
+    const trigger = rootRef.current?.querySelector(".custom-select-trigger");
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const gap = 6;
+    const maxHeight = 240;
+    const spaceBelow = window.innerHeight - rect.bottom - gap - 8;
+    const spaceAbove = rect.top - gap - 8;
+    const openUpward = spaceBelow < 120 && spaceAbove > spaceBelow;
+    const availableHeight = Math.min(maxHeight, openUpward ? spaceAbove : spaceBelow);
+
+    setMenuStyle({
+      position: "fixed",
+      left: rect.left,
+      width: rect.width,
+      top: openUpward ? rect.top - gap - availableHeight : rect.bottom + gap,
+      maxHeight: availableHeight,
+      zIndex: 10000,
+    });
+  }, []);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setMenuStyle(null);
+      return undefined;
+    }
+
+    updateMenuPosition();
+
+    const onScrollOrResize = () => updateMenuPosition();
+    window.addEventListener("resize", onScrollOrResize);
+    window.addEventListener("scroll", onScrollOrResize, true);
+
+    return () => {
+      window.removeEventListener("resize", onScrollOrResize);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+    };
+  }, [open, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!open) return undefined;
 
     const onDocMouseDown = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) {
+      const inRoot = rootRef.current?.contains(e.target);
+      const inMenu = menuRef.current?.contains(e.target);
+      if (!inRoot && !inMenu) {
         setOpen(false);
       }
     };
@@ -61,6 +106,41 @@ export default function CustomSelect({
     onChange(nextValue);
     setOpen(false);
   };
+
+  const menu = open && menuStyle && (
+    <ul
+      ref={menuRef}
+      id={listboxId}
+      className="custom-select-menu custom-select-menu-portal"
+      role="listbox"
+      aria-label={label || placeholder}
+      style={menuStyle}
+    >
+      {options.map((opt) => {
+        const isSelected = opt.value === value;
+        return (
+          <li key={opt.value || "__empty"} role="presentation">
+            <button
+              type="button"
+              role="option"
+              aria-selected={isSelected}
+              className={`custom-select-option ${isSelected ? "custom-select-option-selected" : ""}`}
+              onClick={() => pick(opt.value)}
+            >
+              <span className="custom-select-check" aria-hidden="true">
+                {isSelected && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                )}
+              </span>
+              <span>{opt.label}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <div
@@ -98,33 +178,7 @@ export default function CustomSelect({
         <ChevronIcon open={open} />
       </button>
 
-      {open && (
-        <ul id={listboxId} className="custom-select-menu" role="listbox" aria-label={label || placeholder}>
-          {options.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <li key={opt.value || "__empty"} role="presentation">
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={`custom-select-option ${isSelected ? "custom-select-option-selected" : ""}`}
-                  onClick={() => pick(opt.value)}
-                >
-                  <span className="custom-select-check" aria-hidden="true">
-                    {isSelected && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M20 6 9 17l-5-5" />
-                      </svg>
-                    )}
-                  </span>
-                  <span>{opt.label}</span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {menu && createPortal(menu, document.body)}
     </div>
   );
 }

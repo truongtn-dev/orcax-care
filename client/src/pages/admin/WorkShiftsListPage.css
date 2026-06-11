@@ -1,0 +1,7 @@
+@import "../../styles/adminPeopleList.shared.css";
+
+.work-shifts-page .people-list-toolbar .filters-toolbar-actions .btn-primary:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}

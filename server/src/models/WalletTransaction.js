@@ -22,6 +22,10 @@ const walletTransactionSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     failureReason: { type: String, default: "" },
     balanceAfter: { type: Number, default: null },
+    checkoutSnapshot: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { timestamps: true }
 );

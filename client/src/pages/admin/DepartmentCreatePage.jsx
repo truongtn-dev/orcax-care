@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -44,12 +45,11 @@ export default function DepartmentCreatePage() {
   };
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Create department</h1>
-        <p>Enter name, location, phone number, and status to create department data.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Create department"
+        description="Enter name, location, phone number, and status to create department data."
+      >
       <div className="card form-card-centered">
         <form onSubmit={onSubmit} className="form">
           {error && <div className="alert alert-error">{error}</div>}
@@ -112,6 +112,7 @@ export default function DepartmentCreatePage() {
           </div>
         </form>
       </div>
+      </AdminLayout>
     </PageLayout>
   );
 }

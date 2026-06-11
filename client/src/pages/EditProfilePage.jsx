@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AdminLayout from "../components/AdminLayout.jsx";
+import DoctorLayout from "../components/DoctorLayout.jsx";
+import StaffLayout from "../components/StaffLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import CloudinaryAvatarUpload from "../components/CloudinaryAvatarUpload.jsx";
+import RecordAvatar from "../components/RecordAvatar.jsx";
 import { ProfileApiClient } from "../services/profileApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -30,6 +35,8 @@ export default function EditProfilePage() {
     licenseNo: "",
     specialtyName: "",
     departmentName: "",
+    avatarUrl: "",
+    photoUrl: "",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -54,6 +61,8 @@ export default function EditProfilePage() {
           licenseNo: data.profile?.licenseNo || "",
           specialtyName: data.profile?.specialty?.name || "",
           departmentName: data.profile?.department?.name || "",
+          avatarUrl: data.profile?.avatarUrl || "",
+          photoUrl: data.profile?.photoUrl || "",
         };
         setProfileData(mappedData);
         setForm(mappedData);
@@ -99,11 +108,13 @@ export default function EditProfilePage() {
         address: form.address,
         emergencyContactName: form.emergencyContactName,
         emergencyContactPhone: form.emergencyContactPhone,
+        avatarUrl: form.avatarUrl,
       });
     }
 
     if (role === "doctor") {
       payload.bio = form.bio;
+      payload.photoUrl = form.photoUrl;
     }
 
     try {
@@ -118,6 +129,8 @@ export default function EditProfilePage() {
         emergencyContactName: data.profile?.emergencyContactName || "",
         emergencyContactPhone: data.profile?.emergencyContactPhone || "",
         bio: data.profile?.bio || "",
+        avatarUrl: data.profile?.avatarUrl || "",
+        photoUrl: data.profile?.photoUrl || "",
       };
       setProfileData(updatedData);
       setForm(updatedData);
@@ -131,17 +144,10 @@ export default function EditProfilePage() {
     }
   };
 
-  const backLink = role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : "/patient";
-
-  const getInitials = (name) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
+  const backLink =
+    role === "admin" ? "/admin" : role === "doctor" ? "/doctor/schedule" : role === "staff" ? "/staff" : "/patient";
+  const PortalLayout =
+    role === "admin" ? AdminLayout : role === "doctor" ? DoctorLayout : role === "staff" ? StaffLayout : null;
 
   const getGenderLabel = (val) => {
     const opt = GENDER_OPTIONS.find((o) => o.value === val);
@@ -163,13 +169,8 @@ export default function EditProfilePage() {
     }
   };
 
-  return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Profile</h1>
-        <p>View and update your account information.</p>
-      </div>
-
+  const profileContent = (
+    <>
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
@@ -189,9 +190,10 @@ export default function EditProfilePage() {
           {success && <div className="alert alert-success">{success}</div>}
 
           <div className="profile-hero">
-            <div className="profile-avatar-wrapper">
-              {getInitials(profileData.fullName)}
-            </div>
+            <RecordAvatar
+              name={profileData.fullName}
+              imageUrl={role === "doctor" ? profileData.photoUrl : profileData.avatarUrl}
+            />
 
             <div className="profile-meta-info">
               <h2>
@@ -307,6 +309,14 @@ export default function EditProfilePage() {
               {role === "patient" && (
                 <fieldset className="form-section">
                   <legend>Patient information</legend>
+                  <CloudinaryAvatarUpload
+                    label="Profile photo"
+                    name="avatarUrl"
+                    value={form.avatarUrl}
+                    onChange={onChange}
+                    fallbackName={form.fullName}
+                    folder="orcaxcare/avatars/patients"
+                  />
                   <div className="form-grid">
                     <label>
                       Date of birth
@@ -347,6 +357,14 @@ export default function EditProfilePage() {
               {role === "doctor" && (
                 <fieldset className="form-section">
                   <legend>Doctor information</legend>
+                  <CloudinaryAvatarUpload
+                    label="Profile photo"
+                    name="photoUrl"
+                    value={form.photoUrl}
+                    onChange={onChange}
+                    fallbackName={form.fullName}
+                    folder="orcaxcare/avatars/doctors"
+                  />
                   <div className="form-grid">
                     <label>
                       License number
@@ -387,6 +405,26 @@ export default function EditProfilePage() {
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (PortalLayout) {
+    return (
+      <PageLayout dashboard>
+        <PortalLayout title="Profile" description="View and update your account information.">
+          {profileContent}
+        </PortalLayout>
+      </PageLayout>
+    );
+  }
+
+  return (
+    <PageLayout>
+      <div className="page-header">
+        <h1>Profile</h1>
+        <p>View and update your account information.</p>
+      </div>
+      {profileContent}
     </PageLayout>
   );
 }

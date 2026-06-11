@@ -32,27 +32,15 @@ export default function AppPagination({
   page,
   totalPages,
   total,
-  limit = 20,
-  itemLabel,
   onPageChange,
   ariaLabel = "Pagination",
 }) {
-  const resultRange = useMemo(() => getResultRange(page, total, limit), [page, total, limit]);
   const pageNumbers = useMemo(() => getPageNumbers(page, totalPages), [page, totalPages]);
 
-  if (!total || !resultRange) return null;
+  if (!total) return null;
 
   return (
     <div className={`search-pagination-shell ${totalPages <= 1 ? "search-pagination-single" : ""}`}>
-      <p className="search-pagination-summary">
-        Showing <strong>{resultRange.start}–{resultRange.end}</strong> of <strong>{total}</strong> {itemLabel}
-        {totalPages > 1 && (
-          <>
-            {" "}
-            · Page <strong>{page}</strong> / <strong>{totalPages}</strong>
-          </>
-        )}
-      </p>
       <nav className="search-pagination" aria-label={ariaLabel}>
         <button
           type="button"

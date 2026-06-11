@@ -158,15 +158,7 @@ export default function AdminClinicRoomPage() {
 
   return (
     <PageLayout dashboard>
-      <AdminLayout
-        title="Clinic room management"
-        description="Manage clinic rooms by department, capacity, and operational status."
-        actions={
-          <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Create clinic room
-          </button>
-        }
-      >
+      <AdminLayout title="Clinic room management">
       <div className="card filters-card">
         <div className="filters-toolbar">
           <div className="filters-toolbar-fields">
@@ -202,6 +194,9 @@ export default function AdminClinicRoomPage() {
             </button>
             <button type="button" className="btn btn-outline" onClick={clearFilters}>
               Clear filters
+            </button>
+            <button type="button" className="btn btn-primary" onClick={openCreateModal}>
+              Create clinic room
             </button>
           </div>
         </div>

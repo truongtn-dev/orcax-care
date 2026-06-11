@@ -1,15 +1,31 @@
-import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import "./WorkShiftsListPage.css";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import FilterSearchField from "../../components/FilterSearchField.jsx";
+import WorkShiftWeekBoard from "../../components/WorkShiftWeekBoard.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
-const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const STATUS_OPTIONS = [
+  { value: "", label: "All statuses" },
+  { value: "true", label: "Active" },
+  { value: "false", label: "Inactive" },
+];
+
+const emptyFilters = {
+  q: "",
+  specialtyId: "",
+  departmentId: "",
+  isActive: "",
+};
 
 export default function WorkShiftsListPage() {
-  const [doctors, setDoctors] = useState([]);
-  const [doctorId, setDoctorId] = useState("");
+  const [filters, setFilters] = useState(emptyFilters);
+  const [specialties, setSpecialties] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [result, setResult] = useState({ items: [], weeklyPattern: [], total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,104 +46,128 @@ export default function WorkShiftsListPage() {
 
   useEffect(() => {
     async function init() {
-      const doctorRes = await AdminApiClient.getDoctors({ activeOnly: true, limit: 100 });
-      setDoctors(doctorRes.data.items || []);
+      try {
+        const [specialtyRes, departmentRes] = await Promise.all([
+          AdminApiClient.getSpecialties({ activeOnly: false }),
+          AdminApiClient.getDepartments({ activeOnly: false }),
+        ]);
+        setSpecialties(specialtyRes.data.items || []);
+        setDepartments(departmentRes.data.items || []);
+      } catch (err) {
+        setError(getApiErrorMessage(err));
+      }
       await loadShifts({});
     }
     init();
   }, [loadShifts]);
 
-  const doctorOptions = [
-    { value: "", label: "All doctors" },
-    ...doctors.map((item) => ({
-      value: item._id,
-      label: item.fullName,
-    })),
-  ];
+  const applyFilters = () => {
+    const params = {};
+    if (filters.q.trim()) params.q = filters.q.trim();
+    if (filters.specialtyId) params.specialtyId = filters.specialtyId;
+    if (filters.departmentId) params.departmentId = filters.departmentId;
+    if (filters.isActive) params.isActive = filters.isActive;
+    loadShifts(params);
+  };
 
-  const patternByDay = Object.fromEntries(
-    (result.weeklyPattern || []).map((day) => [day.dayOfWeek, day])
+  const clearFilters = () => {
+    setFilters(emptyFilters);
+    loadShifts({});
+  };
+
+  const hasActiveFilters = Boolean(
+    filters.q.trim() || filters.specialtyId || filters.departmentId || filters.isActive,
   );
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <h1>Work shifts</h1>
-            <p>Weekly shift templates. Filter by doctor to review the recurring schedule.</p>
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Work shifts"
+        description="Browse weekly shift templates by doctor, specialty, or department."
+      >
+        <div className="people-list-page work-shifts-page">
+          {error && <div className="alert alert-error">{error}</div>}
+
+          <div className="card filters-card people-list-toolbar">
+            <div className="filters-toolbar">
+              <div className="filters-toolbar-fields">
+                <FilterSearchField
+                  id="work-shifts-search"
+                  placeholder="Search by doctor name, email, or license…"
+                  value={filters.q}
+                  onChange={(e) => setFilters((current) => ({ ...current, q: e.target.value }))}
+                  onSearch={applyFilters}
+                />
+                <CustomSelect
+                  className="filter-field"
+                  label="Specialty"
+                  value={filters.specialtyId}
+                  onChange={(specialtyId) => setFilters((current) => ({ ...current, specialtyId }))}
+                  options={[
+                    { value: "", label: "All specialties" },
+                    ...specialties.map((item) => ({ value: item._id, label: item.name })),
+                  ]}
+                />
+                <CustomSelect
+                  className="filter-field"
+                  label="Department"
+                  value={filters.departmentId}
+                  onChange={(departmentId) => setFilters((current) => ({ ...current, departmentId }))}
+                  options={[
+                    { value: "", label: "All departments" },
+                    ...departments.map((item) => ({ value: item._id, label: item.name })),
+                  ]}
+                />
+                <CustomSelect
+                  className="filter-field"
+                  label="Status"
+                  value={filters.isActive}
+                  onChange={(isActive) => setFilters((current) => ({ ...current, isActive }))}
+                  options={STATUS_OPTIONS}
+                />
+              </div>
+              <div className="filters-toolbar-actions">
+                <button type="button" className="btn btn-primary" onClick={applyFilters}>
+                  Search
+                </button>
+                {hasActiveFilters && (
+                  <button type="button" className="btn btn-outline" onClick={clearFilters}>
+                    Clear
+                  </button>
+                )}
+                <Link to="/admin/work-shifts/new" className="btn btn-primary">
+                  Create shift
+                </Link>
+              </div>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-            <Link to="/admin/appointment-slots/generate" className="btn btn-secondary">
-              Generate slots
-            </Link>
-            <Link to="/admin/work-shifts/new" className="btn btn-primary">
-              Create shift
-            </Link>
-          </div>
+
+          <WorkShiftWeekBoard
+            weeklyPattern={result.weeklyPattern}
+            total={result.total}
+            loading={loading}
+            showDoctor
+            editHrefPrefix="/admin/work-shifts"
+            emptyTitle="No work shifts found"
+            emptyDescription={
+              hasActiveFilters
+                ? "Try different search terms or clear filters to see all shift templates."
+                : "Create a weekly shift template to start generating appointment slots."
+            }
+            emptyAction={
+              hasActiveFilters ? (
+                <button type="button" className="btn btn-outline btn-sm" onClick={clearFilters}>
+                  Clear filters
+                </button>
+              ) : (
+                <Link to="/admin/work-shifts/new" className="btn btn-primary btn-sm">
+                  Create shift
+                </Link>
+              )
+            }
+          />
         </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: "1.25rem" }}>
-        <CustomSelect
-          id="work-shift-list-doctor"
-          label="Doctor"
-          value={doctorId}
-          placeholder="All doctors"
-          onChange={(value) => {
-            setDoctorId(value);
-            loadShifts(value ? { doctorId: value } : {});
-          }}
-          options={doctorOptions}
-        />
-      </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-
-      {loading ? (
-        <p>Loading shifts…</p>
-      ) : result.total === 0 ? (
-        <div className="empty-state card">
-          <h3>No work shifts yet</h3>
-          <p>Create a weekly shift template to start generating appointment slots.</p>
-          <Link to="/admin/work-shifts/new" className="btn btn-primary">
-            Create shift
-          </Link>
-        </div>
-      ) : (
-        <>
-          <p className="text-muted" style={{ marginBottom: "1rem" }}>
-            {result.total} shift template{result.total === 1 ? "" : "s"}
-          </p>
-          <div className="work-shift-week-grid">
-            {DAY_ORDER.map((dayOfWeek) => {
-              const day = patternByDay[dayOfWeek];
-              return (
-                <section key={dayOfWeek} className="work-shift-day card">
-                  <h3 className="work-shift-day-title">{day?.dayLabel || `Day ${dayOfWeek}`}</h3>
-                  {!day?.shifts?.length ? (
-                    <p className="work-shift-day-empty">No shifts</p>
-                  ) : (
-                    <ul className="work-shift-day-list">
-                      {day.shifts.map((shift) => (
-                        <li key={shift._id} className="work-shift-card">
-                          <strong>{shift.startTime} – {shift.endTime}</strong>
-                          <span>{shift.doctorName}</span>
-                          {shift.roomName && <span>{shift.roomName}</span>}
-                          <span>Max {shift.maxPatients} · {shift.slotDurationMin} min/slot</span>
-                          <Link to={`/admin/work-shifts/${shift._id}/edit`} className="btn btn-secondary btn-sm">
-                            Edit
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              );
-            })}
-          </div>
-        </>
-      )}
+      </AdminLayout>
     </PageLayout>
   );
 }

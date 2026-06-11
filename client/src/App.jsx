@@ -13,9 +13,9 @@ import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
 import PatientWalletPage from "./pages/PatientWalletPage.jsx";
+import PatientWalletCheckoutPage from "./pages/PatientWalletCheckoutPage.jsx";
 import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
-import PatientWalletVnpayMockCheckoutPage from "./pages/PatientWalletVnpayMockCheckoutPage.jsx";
 import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
@@ -25,7 +25,6 @@ import AdminPatientDetailPage from "./pages/AdminPatientDetailPage.jsx";
 import AdminPatientEditPage from "./pages/AdminPatientEditPage.jsx";
 import AdminPatientPage from "./pages/AdminPatientPage.jsx";
 import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
-import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
 import CreateWorkShiftPage from "./pages/admin/CreateWorkShiftPage.jsx";
@@ -33,6 +32,7 @@ import EditWorkShiftPage from "./pages/admin/EditWorkShiftPage.jsx";
 import GenerateAppointmentSlotsPage from "./pages/admin/GenerateAppointmentSlotsPage.jsx";
 import WorkShiftsListPage from "./pages/admin/WorkShiftsListPage.jsx";
 import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
+import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
@@ -40,9 +40,11 @@ import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
 import DepartmentDetailPage from "./pages/admin/DepartmentDetailPage.jsx";
 import PatientEditPage from "./pages/admin/PatientEditPage.jsx";
 import PatientsListPage from "./pages/admin/PatientsListPage.jsx";
+import StaffListPage from "./pages/admin/StaffListPage.jsx";
 import SpecialtiesListPage from "./pages/admin/SpecialtiesListPage.jsx";
 import "./App.css";
 import "./glass.css";
+import "./styles/adminRecordPages.css";
 import "./scroll-reveal.css";
 
 export default function App() {
@@ -106,18 +108,18 @@ export default function App() {
             }
           />
           <Route
-            path="/patient/wallet/payos/mock"
+            path="/patient/wallet/checkout/:provider/:ref"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientWalletMockCheckoutPage />
+                <PatientWalletCheckoutPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/patient/wallet/vnpay/mock"
+            path="/patient/wallet/payos/mock"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientWalletVnpayMockCheckoutPage />
+                <PatientWalletMockCheckoutPage />
               </ProtectedRoute>
             }
           />
@@ -134,6 +136,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientInsuranceCardsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff"
+            element={
+              <ProtectedRoute roles={["staff"]}>
+                <StaffDashboardPage />
               </ProtectedRoute>
             }
           />
@@ -158,6 +168,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminAccountDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/account/:id/edit"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AccountEditPage />
               </ProtectedRoute>
             }
           />
@@ -222,6 +240,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <GenerateAppointmentSlotsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/staff"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <StaffListPage />
               </ProtectedRoute>
             }
           />
@@ -301,7 +327,7 @@ export default function App() {
             path="/doctor"
             element={
               <ProtectedRoute roles={["doctor"]}>
-                <DoctorDashboardPage />
+                <Navigate to="/doctor/schedule" replace />
               </ProtectedRoute>
             }
           />

@@ -1,36 +1,49 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import WalletShell, {
+  WalletAlert,
+  WalletCard,
+  WalletHero,
+  WalletLoading,
+  WalletPageBody,
+} from "../components/wallet/WalletShell.jsx";
+import WalletPaymentMethodPicker from "../components/wallet/WalletPaymentMethodPicker.jsx";
+import WalletTransactionList from "../components/wallet/WalletTransactionList.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
-import { getApiErrorMessage } from "../services/api.js";
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-}
+import {
+  WALLET_AMOUNT_PRESETS,
+  WALLET_LIMITS,
+  WALLET_PAYMENT_METHODS,
+  formatWalletCurrency,
+  getWalletErrorMessage,
+  resolveCheckoutPath,
+} from "../utils/walletUtils.js";
 
 export default function PatientWalletPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [wallet, setWallet] = useState(null);
   const [amount, setAmount] = useState("100000");
   const [paymentMethod, setPaymentMethod] = useState("payos");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
   const [receipt, setReceipt] = useState(null);
 
+  const minTopup = wallet?.limits?.minTopup ?? WALLET_LIMITS.minTopup;
+  const maxTopup = wallet?.limits?.maxTopup ?? WALLET_LIMITS.maxTopup;
+
   const loadWallet = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setLoadError("");
     try {
       const { data } = await PatientApiClient.getWallet();
       setWallet(data);
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      setLoadError(getWalletErrorMessage(err));
       setWallet(null);
     } finally {
       setLoading(false);
@@ -40,6 +53,18 @@ export default function PatientWalletPage() {
   useEffect(() => {
     loadWallet();
   }, [loadWallet]);
+
+  const enabledMethods = WALLET_PAYMENT_METHODS.filter((method) => {
+    const remote = wallet?.paymentMethods?.find((item) => item.id === method.id);
+    return remote ? remote.enabled : true;
+  });
+
+  useEffect(() => {
+    if (!enabledMethods.length) return;
+    if (!enabledMethods.some((method) => method.id === paymentMethod)) {
+      setPaymentMethod(enabledMethods[0].id);
+    }
+  }, [enabledMethods, paymentMethod]);
 
   useEffect(() => {
     const paymentStatus = searchParams.get("payment");
@@ -57,185 +82,187 @@ export default function PatientWalletPage() {
         .catch(() => setReceipt(null));
       loadWallet();
     } else if (paymentStatus === "cancelled") {
-      setError(reason || "Payment was cancelled. Your balance is unchanged.");
+      setFormError(reason || "Payment cancelled. Your balance was not changed.");
     } else if (paymentStatus === "failed") {
-      setError(reason || "Payment failed. Your balance is unchanged.");
+      setFormError(reason || "Payment failed. Your balance was not changed.");
     }
 
     setSearchParams({}, { replace: true });
   }, [loadWallet, searchParams, setSearchParams]);
 
-  const redirectToCheckout = (data) => {
-    if (data.checkoutMethod === "POST" && data.checkoutFields) {
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = data.checkoutUrl;
-      Object.entries(data.checkoutFields).forEach(([name, value]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = name;
-        input.value = String(value);
-        form.appendChild(input);
-      });
-      document.body.appendChild(form);
-      form.submit();
-      return;
-    }
-
-    window.location.href = data.checkoutUrl;
-  };
-
   const onTopup = async (event) => {
     event.preventDefault();
     setSubmitting(true);
-    setError("");
+    setFormError("");
     setNotice("");
     setReceipt(null);
     try {
       const payload = { amount: Number(amount) };
       let response;
-      if (paymentMethod === "vnpay") {
-        response = await PatientApiClient.createVnpayTopup(payload);
-      } else if (paymentMethod === "sepay") {
+      if (paymentMethod === "sepay") {
         response = await PatientApiClient.createSepayTopup(payload);
       } else {
         response = await PatientApiClient.createPayosTopup(payload);
       }
-      redirectToCheckout(response.data);
+      const checkoutPath =
+        response.data.checkoutPath || resolveCheckoutPath(response.data.checkoutUrl);
+      if (!checkoutPath) {
+        throw new Error("No checkout link returned from the server.");
+      }
+      navigate(checkoutPath);
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      setFormError(getWalletErrorMessage(err));
       setSubmitting(false);
     }
   };
 
+  const handleCancelPending = async (txn) => {
+    const ref = txn.provider === "payos" ? txn.orderCode : txn.providerOrderId;
+    if (!ref) return;
+    try {
+      await PatientApiClient.cancelTopup(txn.provider, ref);
+      await loadWallet();
+    } catch (err) {
+      setFormError(getWalletErrorMessage(err));
+    }
+  };
+
+  const submitLabel =
+    paymentMethod === "payos" ? "Continue — scan QR" : "Continue with SePay";
+
   return (
     <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <h1>Wallet</h1>
-            <p>Top up with PayOS, VNPay, or SePay and use your balance when confirming bookings.</p>
-          </div>
-          <Link to="/patient" className="btn btn-secondary">
-            Back to dashboard
-          </Link>
-        </div>
-      </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {notice && <div className="alert alert-success">{notice}</div>}
-
-      {loading ? (
-        <p>Loading wallet…</p>
-      ) : (
-        <>
-          <div className="card wallet-balance-card">
-            <p className="text-muted">Current balance</p>
-            <h2 className="wallet-balance-value">{formatCurrency(wallet?.balance)}</h2>
-            {(wallet?.payosMockMode || wallet?.vnpayMockMode || wallet?.sepayMockMode) && (
-              <p className="text-muted">
-                Payment sandbox mock mode is active for local development.
-              </p>
-            )}
-          </div>
-
-          {receipt && (
-            <div className="card wallet-receipt-card">
-              <h3>Receipt summary</h3>
-              <dl className="detail-list">
-                <div>
-                  <dt>Reference</dt>
-                  <dd>{receipt.referenceId || receipt.providerOrderId || receipt.orderCode}</dd>
-                </div>
-                <div>
-                  <dt>Provider</dt>
-                  <dd>{receipt.provider}</dd>
-                </div>
-                <div>
-                  <dt>Amount</dt>
-                  <dd>{formatCurrency(receipt.amount)}</dd>
-                </div>
-                <div>
-                  <dt>Status</dt>
-                  <dd>{receipt.status}</dd>
-                </div>
-              </dl>
+      <WalletShell>
+        <WalletHero
+          eyebrow="Patient wallet"
+          title="OrcaXCare Wallet"
+          lead="Top up securely via PayOS VietQR or SePay. Balance is used when you confirm an appointment."
+          balance={formatWalletCurrency(wallet?.balance)}
+          balanceLoading={loading}
+          actions={
+            <div className="wallet-hero-actions">
+              <Link
+                to="/patient"
+                className="btn btn-outline btn-sm"
+                style={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
+              >
+                Back to dashboard
+              </Link>
             </div>
-          )}
+          }
+        />
 
-          <div className="card form-card-centered">
-            <form onSubmit={onTopup} className="form">
-              <fieldset className="form-section">
-                <legend>Top up wallet</legend>
-                <label>
-                  Payment method
-                  <select
-                    value={paymentMethod}
-                    onChange={(event) => setPaymentMethod(event.target.value)}
-                  >
-                    {(wallet?.paymentMethods || []).map((method) => (
-                      <option key={method.id} value={method.id}>
-                        {method.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Amount (VND)
-                  <input
-                    type="number"
-                    min={wallet?.limits?.minTopup || 10000}
-                    max={wallet?.limits?.maxTopup || 50000000}
-                    step="1000"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    required
-                  />
-                </label>
-                <p className="text-muted">
-                  Min {formatCurrency(wallet?.limits?.minTopup)} · Max{" "}
-                  {formatCurrency(wallet?.limits?.maxTopup)}
-                </p>
-              </fieldset>
-              <div className="form-actions">
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting
-                    ? "Redirecting…"
-                    : paymentMethod === "vnpay"
-                      ? "Continue to VNPay"
-                      : paymentMethod === "sepay"
-                        ? "Continue to SePay"
-                        : "Continue to PayOS"}
-                </button>
+        <WalletPageBody>
+        {loadError && (
+          <WalletAlert type="error" title="Could not load wallet" onRetry={loadWallet}>
+            {loadError}
+          </WalletAlert>
+        )}
+        {formError && (
+          <WalletAlert type="error" title="Payment unsuccessful">{formError}</WalletAlert>
+        )}
+        {notice && <WalletAlert type="success" title="Success">{notice}</WalletAlert>}
+
+        {receipt && (
+          <div className="wallet-receipt">
+            <h3>Transaction receipt</h3>
+            <div className="wallet-receipt-grid">
+              <div className="wallet-receipt-item">
+                <span>Reference</span>
+                <strong>{receipt.referenceId || receipt.providerOrderId || receipt.orderCode}</strong>
               </div>
-            </form>
+              <div className="wallet-receipt-item">
+                <span>Payment gateway</span>
+                <strong>{receipt.provider}</strong>
+              </div>
+              <div className="wallet-receipt-item">
+                <span>Amount</span>
+                <strong>{formatWalletCurrency(receipt.amount)}</strong>
+              </div>
+              <div className="wallet-receipt-item">
+                <span>Status</span>
+                <strong>{receipt.status}</strong>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="card">
-            <h3>Recent transactions</h3>
-            {!wallet?.transactions?.length ? (
-              <p className="text-muted">No transactions yet.</p>
-            ) : (
-              <ul className="wallet-transaction-list">
-                {wallet.transactions.map((txn) => (
-                  <li key={txn._id} className="wallet-transaction-item">
-                    <div>
-                      <strong>{txn.type === "topup" ? "Top-up" : txn.type}</strong>
-                      <span>{txn.description || txn.provider}</span>
-                    </div>
-                    <div>
-                      <strong>{formatCurrency(txn.amount)}</strong>
-                      <span className={`wallet-status wallet-status-${txn.status}`}>
-                        {txn.status}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+        {loading ? (
+          <WalletLoading label="Loading wallet…" />
+        ) : (
+          <div className="wallet-layout">
+            <WalletCard
+              title="Top up wallet"
+              lead="Choose a payment gateway and amount. PayOS shows a VietQR code on the checkout page to scan."
+              elevated
+            >
+              <form onSubmit={onTopup} className="wallet-topup-form">
+                <section className="wallet-form-block">
+                  <h3 className="wallet-form-block-title">Payment method</h3>
+                  <WalletPaymentMethodPicker
+                    methods={enabledMethods}
+                    value={paymentMethod}
+                    onChange={setPaymentMethod}
+                  />
+                  {!enabledMethods.length && (
+                    <WalletAlert type="error" title="Not ready">
+                      Payment gateways are not configured. Please contact support.
+                    </WalletAlert>
+                  )}
+                </section>
+
+                <section className="wallet-form-block">
+                  <h3 className="wallet-form-block-title">Amount (VND)</h3>
+                  <div className="wallet-presets">
+                    {WALLET_AMOUNT_PRESETS.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className={`wallet-preset ${Number(amount) === preset ? "is-active" : ""}`}
+                        onClick={() => setAmount(String(preset))}
+                      >
+                        {formatWalletCurrency(preset)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="wallet-amount-field">
+                    <label>
+                      Custom amount
+                      <input
+                        type="number"
+                        min={minTopup}
+                        max={maxTopup}
+                        step="1000"
+                        value={amount}
+                        onChange={(event) => setAmount(event.target.value)}
+                        required
+                      />
+                    </label>
+                    <p className="wallet-amount-hint">
+                      Min {formatWalletCurrency(minTopup)} · Max {formatWalletCurrency(maxTopup)}
+                    </p>
+                  </div>
+                </section>
+
+                <div className="wallet-form-footer">
+                  <button type="submit" className="btn btn-primary" disabled={submitting || !enabledMethods.length}>
+                    {submitting ? "Creating transaction…" : submitLabel}
+                  </button>
+                </div>
+              </form>
+            </WalletCard>
+
+            <WalletCard title="Recent transactions" elevated variant="transactions">
+              <WalletTransactionList
+                transactions={wallet?.transactions}
+                emptyText="No transactions yet. Top up to get started."
+                onCancelPending={handleCancelPending}
+              />
+            </WalletCard>
           </div>
-        </>
-      )}
+        )}
+        </WalletPageBody>
+      </WalletShell>
     </PageLayout>
   );
 }

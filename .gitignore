@@ -25,6 +25,9 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Large project documents (keep local only)
+docs/WDP301-SE1816-GROUP4_Document_Final.pdf
+
 # Misc
 *.tgz
 .cache/

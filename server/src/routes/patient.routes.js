@@ -16,6 +16,18 @@ patientRouter.post("/wallet/payos/mock-confirm", PatientWalletController.confirm
 patientRouter.post("/wallet/vnpay/mock-confirm", PatientWalletController.confirmMockVnpayTopup);
 patientRouter.post("/wallet/sepay/mock-confirm", PatientWalletController.confirmMockSepayTopup);
 patientRouter.post("/wallet/deduct", PatientWalletController.deductWallet);
+patientRouter.post(
+  "/wallet/topups/:provider/:ref/cancel",
+  PatientWalletController.cancelTopup
+);
+patientRouter.get(
+  "/wallet/topups/:provider/:ref/checkout",
+  PatientWalletController.getTopupCheckout
+);
+patientRouter.get(
+  "/wallet/topups/:provider/:ref/status",
+  PatientWalletController.getTopupStatus
+);
 patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopupReceipt);
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);

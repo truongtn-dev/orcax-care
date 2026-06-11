@@ -1,0 +1,316 @@
+.portal-shell {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  width: 100%;
+  min-height: 100vh;
+  background: #eef4f6;
+}
+
+.portal-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--gradient-brand);
+  color: rgba(255, 255, 255, 0.92);
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 4px 0 24px rgba(17, 94, 89, 0.15);
+  z-index: 40;
+}
+
+.portal-sidebar-brand {
+  padding: 1.35rem 1.1rem 1.1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.portal-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #fff;
+  text-decoration: none;
+}
+
+.portal-sidebar-logo:hover {
+  color: #fff;
+  opacity: 0.95;
+}
+
+.portal-sidebar-logo .logo-icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+}
+
+.portal-sidebar-logo-title {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.portal-sidebar-logo-title .logo-accent {
+  color: #99f6e4;
+}
+
+.portal-sidebar-logo small {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.portal-sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 0.75rem;
+}
+
+.portal-sidebar-label {
+  margin: 0.35rem 0.75rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.portal-sidebar-nav ul {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+}
+
+.portal-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.68rem 0.8rem;
+  margin-bottom: 0.18rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portal-nav-icon {
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.portal-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.portal-sidebar-link-active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+
+.portal-sidebar-link-active .portal-nav-icon {
+  opacity: 1;
+}
+
+.portal-sidebar-footer {
+  padding: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.portal-user-card {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem;
+  margin-bottom: 0.55rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.portal-user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-primary-hover);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.portal-user-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.portal-user-name {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portal-user-role {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.portal-sidebar-action {
+  width: 100%;
+  padding: 0.62rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.portal-sidebar-action-muted:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.portal-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #eef4f6;
+}
+
+.portal-page-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.75rem 0.25rem;
+  background: transparent;
+}
+
+.portal-page-title {
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.portal-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.portal-content {
+  padding: 0.75rem 1.75rem 2rem;
+}
+
+.portal-content .card {
+  background: #fff;
+  border: 1px solid rgba(8, 145, 178, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+}
+
+.portal-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid rgba(8, 145, 178, 0.15);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.portal-menu-toggle span {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--color-navy);
+  border-radius: 1px;
+}
+
+.portal-sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .portal-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: min(288px, 88vw);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .portal-sidebar-open {
+    transform: translateX(0);
+  }
+
+  .portal-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    border: none;
+    background: rgba(17, 94, 89, 0.35);
+    backdrop-filter: blur(2px);
+    z-index: 35;
+    cursor: pointer;
+  }
+
+  .portal-menu-toggle {
+    display: flex;
+  }
+
+  .portal-page-top,
+  .portal-content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .portal-page-actions {
+    justify-content: stretch;
+  }
+
+  .portal-page-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .portal-page-title {
+    font-size: 1.375rem;
+  }
+}

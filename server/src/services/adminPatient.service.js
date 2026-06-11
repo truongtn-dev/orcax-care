@@ -47,6 +47,7 @@ function toPatientDetail(user, patient) {
       address: patient?.address || "",
       emergencyContactName: patient?.emergencyContactName || "",
       emergencyContactPhone: patient?.emergencyContactPhone || "",
+      avatarUrl: patient?.avatarUrl || "",
     },
   };
 }

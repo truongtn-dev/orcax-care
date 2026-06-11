@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import CloudinaryAvatarUpload from "../../components/CloudinaryAvatarUpload.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -109,20 +111,11 @@ export default function PatientEditPage() {
   };
 
   return (
-    <PageLayout>
-      <nav className="admin-breadcrumb" aria-label="Navigation">
-        <Link to="/admin">Admin</Link>
-        <span>/</span>
-        <Link to="/admin/patients">Patients</Link>
-        <span>/</span>
-        <span>Edit</span>
-      </nav>
-
-      <div className="page-header">
-        <h1>Update Patient Profile</h1>
-        <p>Edit patient profile fields as an admin. Email is shown for reference.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Update patient profile"
+        description="Edit patient profile fields as an admin. Email is shown for reference."
+      >
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
@@ -165,6 +158,14 @@ export default function PatientEditPage() {
 
             <fieldset className="form-section">
               <legend>Patient details</legend>
+              <CloudinaryAvatarUpload
+                label="Patient photo"
+                name="avatarUrl"
+                value={form.avatarUrl}
+                onChange={onChange}
+                fallbackName={form.fullName}
+                folder="orcaxcare/avatars/patients"
+              />
               <div className="form-grid">
                 <label>
                   Date of birth
@@ -194,10 +195,6 @@ export default function PatientEditPage() {
                     pattern="[0-9+\-\s()]{8,20}"
                   />
                 </label>
-                <label className="form-grid-span-2">
-                  Avatar URL
-                  <input type="url" name="avatarUrl" value={form.avatarUrl} onChange={onChange} />
-                </label>
                 <label className="checkbox-row">
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
                   Patient profile is active
@@ -216,6 +213,7 @@ export default function PatientEditPage() {
           </form>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

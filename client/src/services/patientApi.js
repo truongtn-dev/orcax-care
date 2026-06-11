@@ -9,10 +9,6 @@ export const PatientApiClient = {
     return api.post("/api/patient/wallet/topups/payos", payload);
   },
 
-  createVnpayTopup(payload) {
-    return api.post("/api/patient/wallet/topups/vnpay", payload);
-  },
-
   createSepayTopup(payload) {
     return api.post("/api/patient/wallet/topups/sepay", payload);
   },
@@ -21,12 +17,20 @@ export const PatientApiClient = {
     return api.post("/api/patient/wallet/payos/mock-confirm", payload);
   },
 
-  confirmMockVnpayTopup(payload) {
-    return api.post("/api/patient/wallet/vnpay/mock-confirm", payload);
-  },
-
   confirmMockSepayTopup(payload) {
     return api.post("/api/patient/wallet/sepay/mock-confirm", payload);
+  },
+
+  getTopupCheckout(provider, ref) {
+    return api.get(`/api/patient/wallet/topups/${provider}/${ref}/checkout`);
+  },
+
+  cancelTopup(provider, ref) {
+    return api.post(`/api/patient/wallet/topups/${provider}/${ref}/cancel`);
+  },
+
+  getTopupStatus(provider, ref) {
+    return api.get(`/api/patient/wallet/topups/${provider}/${ref}/status`);
   },
 
   getTopupReceipt(ref) {

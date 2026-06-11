@@ -1,0 +1,388 @@
+/* Admin record pages — detail, edit, create (portal + modals) */
+
+.portal-shell .profile-form-card,
+.portal-shell .form-card-centered {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  border-radius: var(--radius-xl) !important;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06) !important;
+  overflow: hidden;
+}
+
+.portal-shell .profile-form-card {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.portal-shell .profile-form-card > .form,
+.portal-shell .form-card-centered > .form {
+  padding: 1.75rem 2rem 0;
+}
+
+/* ─── Form fields — solid, visible controls ─── */
+
+.portal-shell .form input,
+.portal-shell .form textarea,
+.portal-shell .form select,
+.portal-shell .profile-form-card .custom-select-trigger,
+.modal.card .form input,
+.modal.card .form textarea,
+.modal.card .custom-select-trigger {
+  background: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  color: var(--color-navy);
+  font-size: 0.9375rem;
+  min-height: 2.75rem;
+}
+
+.portal-shell .form input:hover,
+.portal-shell .form textarea:hover,
+.portal-shell .profile-form-card .custom-select-trigger:hover,
+.modal.card .form input:hover,
+.modal.card .custom-select-trigger:hover {
+  border-color: #94a3b8 !important;
+}
+
+.portal-shell .form input:focus,
+.portal-shell .form textarea:focus,
+.portal-shell .form select:focus,
+.portal-shell .profile-form-card .custom-select-trigger:focus,
+.modal.card .form input:focus,
+.modal.card .form textarea:focus,
+.modal.card .custom-select-trigger:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.14) !important;
+  outline: none;
+}
+
+.portal-shell .form textarea {
+  min-height: 120px;
+  line-height: 1.55;
+  padding: 0.85rem 1rem !important;
+}
+
+.portal-shell .form label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+/* ─── Form sections ─── */
+
+.portal-shell .form-section {
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  gap: 1rem;
+}
+
+.portal-shell .form-section + .form-section {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: none;
+}
+
+.portal-shell .form-section legend {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.85rem;
+  padding: 0 0 0.65rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #0e7490;
+}
+
+.portal-shell .form-grid {
+  gap: 1rem 1.25rem;
+}
+
+/* Read-only meta in edit forms */
+.portal-shell .admin-detail-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+}
+
+.portal-shell .admin-detail-list div {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: var(--radius-md);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.portal-shell .admin-detail-list span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+
+.portal-shell .admin-detail-list strong {
+  text-align: left;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  word-break: break-word;
+}
+
+/* Checkbox rows */
+.portal-shell .checkbox-row {
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-md);
+  margin-top: 0.25rem;
+}
+
+.portal-shell .checkbox-row input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 0;
+}
+
+/* ─── Form footer ─── */
+
+.portal-shell .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 1.5rem -2rem 0;
+  padding: 1.15rem 2rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.portal-shell .form-actions .btn-ghost {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .portal-shell .profile-form-card > .form,
+  .portal-shell .form-card-centered > .form {
+    padding: 1.25rem 1.25rem 0;
+  }
+
+  .portal-shell .form-actions {
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .portal-shell .form-actions .btn-ghost {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ─── Detail pages ─── */
+
+.portal-shell .account-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1.35rem;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #ecfeff 0%, #fff 48%, #f8fafc 100%);
+  border: 1px solid rgba(8, 145, 178, 0.14);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 4px 20px rgba(8, 145, 178, 0.08);
+}
+
+.portal-shell .account-detail-avatar,
+.portal-shell .record-avatar--lg {
+  width: 76px;
+  height: 76px;
+  font-size: 1.65rem;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.25);
+}
+
+.record-avatar {
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ecfeff, #cffafe);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.25);
+}
+
+.record-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.record-avatar-initials {
+  font-weight: 800;
+  color: #0e7490;
+}
+
+.record-avatar--lg {
+  width: 76px;
+  height: 76px;
+  font-size: 1.65rem;
+}
+
+.portal-shell .account-detail-header h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.portal-shell .account-detail-header p {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.portal-shell .status-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.portal-shell .detail-grid {
+  gap: 1.25rem;
+}
+
+.portal-shell .detail-section {
+  padding: 1.35rem 1.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  background: #fff;
+}
+
+.portal-shell .detail-section h3 {
+  margin: 0 0 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.portal-shell .detail-section-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.portal-shell .detail-section-header h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.portal-shell .detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.portal-shell .detail-item {
+  gap: 0.3rem;
+  padding: 0.8rem 0.95rem;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  border-radius: var(--radius-md);
+}
+
+.portal-shell .detail-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.portal-shell .detail-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  line-height: 1.45;
+}
+
+.portal-shell .detail-item-full {
+  grid-column: 1 / -1;
+}
+
+.portal-shell .detail-note {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-primary);
+}
+
+/* Page header actions */
+.portal-shell .portal-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.portal-shell .portal-page-top {
+  margin-bottom: 0.5rem;
+}
+
+/* Modals — create account / staff */
+.modal.card .form-section {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.modal.card .form label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.modal.card .modal-footer,
+.modal.card .form-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 768px) {
+  .portal-shell .detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-shell .account-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.35rem 1.5rem;
+  }
+}

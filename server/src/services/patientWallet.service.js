@@ -8,12 +8,18 @@ import {
   isVnpayPaymentSuccess,
   verifyVnpayCallback,
 } from "./vnpay.service.js";
-import { createPayosPaymentLink, isPayosMockMode, verifyPayosPayment } from "./payos.service.js";
 import {
-  createSepayCheckout,
+  createPayosPaymentLink,
+  isPayosMockMode,
+  verifyPayosPayment,
+  verifyPayosWebhook,
+} from "./payos.service.js";
+import {
+  initializeSepayCheckout,
   isSepayMockMode,
   isSepayOrderPaid,
   verifySepayIpnSecret,
+  verifySepayOrderStatus,
 } from "./sepay.service.js";
 import {
   completeTopupTransaction,
@@ -46,14 +52,10 @@ export async function getPatientWallet(userId, query = {}) {
     body: {
       ...overview,
       paymentMethods: [
-        { id: "payos", label: "PayOS", enabled: true },
-        { id: "vnpay", label: "VNPay", enabled: true },
-        { id: "sepay", label: "SePay", enabled: true },
+        { id: "payos", label: "PayOS", enabled: !isPayosMockMode() },
+        { id: "sepay", label: "SePay", enabled: !isSepayMockMode() },
       ],
       limits: { minTopup, maxTopup },
-      payosMockMode: isPayosMockMode(),
-      vnpayMockMode: isVnpayMockMode(),
-      sepayMockMode: isSepayMockMode(),
     },
   };
 }
@@ -78,16 +80,44 @@ export async function createPayosTopup(userId, payload = {}, req) {
     description: payload.description?.trim() || "OrcaXCare wallet top-up",
   });
 
-  const payment = await createPayosPaymentLink({
-    orderCode,
-    amount: validated.value,
-    description: txn.description,
-    returnUrl,
-    cancelUrl,
-  });
+  let payment;
+  try {
+    payment = await createPayosPaymentLink({
+      orderCode,
+      amount: validated.value,
+      description: txn.description,
+      returnUrl,
+      cancelUrl,
+    });
+  } catch (err) {
+    console.error("PayOS create payment link failed:", err);
+    await markTopupFailed(orderCode, err?.message || "PayOS unavailable");
+    return {
+      status: 502,
+      body: {
+        message:
+          "Could not create PayOS payment link. Check gateway configuration or try again later.",
+      },
+    };
+  }
 
   txn.paymentLinkId = payment.paymentLinkId;
+  txn.checkoutSnapshot = payment.mock
+    ? null
+    : {
+        qrCode: payment.qrCode,
+        checkoutUrl: payment.checkoutUrl,
+        accountNumber: payment.accountNumber,
+        accountName: payment.accountName,
+        bin: payment.bin,
+        currency: payment.currency,
+        expiredAt: payment.expiredAt,
+      };
   await txn.save();
+
+  const checkoutPath = payment.mock
+    ? `/patient/wallet/payos/mock?orderCode=${orderCode}`
+    : `/patient/wallet/checkout/payos/${orderCode}`;
 
   return {
     status: 201,
@@ -95,11 +125,11 @@ export async function createPayosTopup(userId, payload = {}, req) {
       transactionId: txn._id.toString(),
       orderCode,
       amount: validated.value,
-      checkoutUrl: payment.mock
-        ? `${clientOrigin}/patient/wallet/payos/mock?orderCode=${orderCode}`
-        : payment.checkoutUrl,
+      checkoutPath,
+      checkoutUrl: `${clientOrigin}${checkoutPath}`,
+      externalCheckoutUrl: payment.mock ? null : payment.checkoutUrl,
       paymentMethod: "payos",
-      mockMode: payment.mock,
+      checkoutMode: payment.mock ? "mock" : "embedded",
     },
   };
 }
@@ -201,17 +231,26 @@ export async function createVnpayTopup(userId, payload = {}, req) {
     ipAddr,
   });
 
+  if (!payment.mock) {
+    txn.checkoutSnapshot = { payUrl: payment.payUrl };
+    await txn.save();
+  }
+
+  const checkoutPath = payment.mock
+    ? `/patient/wallet/vnpay/mock?orderId=${providerOrderId}`
+    : `/patient/wallet/checkout/vnpay/${providerOrderId}`;
+
   return {
     status: 201,
     body: {
       transactionId: txn._id.toString(),
       providerOrderId,
       amount: validated.value,
-      checkoutUrl: payment.mock
-        ? `${clientOrigin}/patient/wallet/vnpay/mock?orderId=${providerOrderId}`
-        : payment.payUrl,
+      checkoutPath,
+      checkoutUrl: `${clientOrigin}${checkoutPath}`,
+      externalCheckoutUrl: payment.mock ? null : payment.payUrl,
       paymentMethod: "vnpay",
-      mockMode: payment.mock,
+      checkoutMode: payment.mock ? "mock" : "embedded",
     },
   };
 }
@@ -307,15 +346,46 @@ export async function createSepayTopup(userId, payload = {}, req) {
     description: payload.description?.trim() || "OrcaXCare wallet top-up via SePay",
   });
 
-  const payment = createSepayCheckout({
-    orderInvoiceNumber: providerOrderId,
-    amount: validated.value,
-    description: txn.description,
-    successUrl,
-    errorUrl,
-    cancelUrl,
-    customerId: userId.toString(),
-  });
+  let payment;
+  try {
+    payment = await initializeSepayCheckout({
+      orderInvoiceNumber: providerOrderId,
+      amount: validated.value,
+      description: txn.description,
+      successUrl,
+      errorUrl,
+      cancelUrl,
+      customerId: userId.toString(),
+    });
+  } catch (err) {
+    console.error("SePay checkout init failed:", err);
+    await markTopupFailed({ providerOrderId }, err?.message || "SePay unavailable");
+    return {
+      status: 502,
+      body: {
+        message:
+          "Could not create SePay checkout session. Check gateway configuration or try again later.",
+      },
+    };
+  }
+
+  if (!payment.mock) {
+    txn.checkoutSnapshot = {
+      qrCode: payment.qrCode,
+      accountNumber: payment.accountNumber,
+      bin: payment.bin,
+      transferContent: payment.transferContent,
+      sepayOrderId: payment.sepayOrderId,
+      checkoutPageUrl: payment.checkoutPageUrl,
+      currency: payment.currency,
+    };
+    txn.providerReferenceId = payment.sepayOrderId || "";
+    await txn.save();
+  }
+
+  const checkoutPath = payment.mock
+    ? `/patient/wallet/sepay/mock?orderId=${providerOrderId}`
+    : `/patient/wallet/checkout/sepay/${providerOrderId}`;
 
   return {
     status: 201,
@@ -323,13 +393,10 @@ export async function createSepayTopup(userId, payload = {}, req) {
       transactionId: txn._id.toString(),
       providerOrderId,
       amount: validated.value,
-      checkoutUrl: payment.mock
-        ? `${clientOrigin}/patient/wallet/sepay/mock?orderId=${providerOrderId}`
-        : payment.checkoutUrl,
-      checkoutFields: payment.checkoutFields,
-      checkoutMethod: payment.checkoutMethod,
+      checkoutPath,
+      checkoutUrl: `${clientOrigin}${checkoutPath}`,
       paymentMethod: "sepay",
-      mockMode: payment.mock,
+      checkoutMode: payment.mock ? "mock" : "qr",
     },
   };
 }
@@ -463,6 +530,200 @@ export async function confirmMockVnpayTopup(userId, payload = {}) {
 
 export async function deductPatientWallet(userId, payload = {}) {
   return deductWalletBalance(userId, payload.amount, payload.description);
+}
+
+async function findTopupTransaction(userId, provider, ref) {
+  const refText = String(ref || "").trim();
+  const numericRef = /^\d+$/.test(refText) ? Number(refText) : null;
+
+  if (provider === "payos" && numericRef != null) {
+    return WalletTransaction.findOne({ userId, orderCode: numericRef, type: "topup" });
+  }
+
+  return WalletTransaction.findOne({ userId, providerOrderId: refText, type: "topup" });
+}
+
+export async function cancelTopup(userId, provider, ref) {
+  const txn = await findTopupTransaction(userId, provider, ref);
+  if (!txn) {
+    return { status: 404, body: { message: "Top-up transaction not found" } };
+  }
+  if (txn.status === "success") {
+    return { status: 409, body: { message: "Transaction is already paid and cannot be cancelled" } };
+  }
+  if (txn.status === "cancelled" || txn.status === "failed") {
+    return { status: 200, body: { transaction: serializeTransaction(txn) } };
+  }
+  const result = await markTopupCancelled(
+    txn.provider === "payos" ? txn.orderCode : { providerOrderId: txn.providerOrderId },
+    "Cancelled by patient"
+  );
+  return result;
+}
+
+export async function getTopupCheckout(userId, provider, ref) {
+  const txn = await findTopupTransaction(userId, provider, ref);
+  if (!txn) {
+    return { status: 404, body: { message: "Top-up transaction not found" } };
+  }
+
+  return {
+    status: 200,
+    body: {
+      transactionId: txn._id.toString(),
+      provider: txn.provider,
+      orderCode: txn.orderCode,
+      providerOrderId: txn.providerOrderId,
+      amount: txn.amount,
+      status: txn.status,
+      description: txn.description,
+      checkoutSnapshot: txn.checkoutSnapshot || null,
+      mockMode:
+        txn.provider === "payos"
+          ? isPayosMockMode()
+          : txn.provider === "vnpay"
+            ? isVnpayMockMode()
+            : isSepayMockMode(),
+    },
+  };
+}
+
+export async function getTopupStatus(userId, provider, ref) {
+  const txn = await findTopupTransaction(userId, provider, ref);
+  if (!txn) {
+    return { status: 404, body: { message: "Top-up transaction not found" } };
+  }
+
+  if (txn.status === "success") {
+    return {
+      status: 200,
+      body: {
+        paid: true,
+        status: txn.status,
+        provider: txn.provider,
+        orderCode: txn.orderCode,
+        providerOrderId: txn.providerOrderId,
+        amount: txn.amount,
+      },
+    };
+  }
+
+  if (txn.status === "failed" || txn.status === "cancelled") {
+    return {
+      status: 200,
+      body: {
+        paid: false,
+        status: txn.status,
+        provider: txn.provider,
+        orderCode: txn.orderCode,
+        providerOrderId: txn.providerOrderId,
+        amount: txn.amount,
+        failureReason: txn.failureReason || "",
+      },
+    };
+  }
+
+  if (txn.provider === "sepay" && txn.providerOrderId && !isSepayMockMode()) {
+    const verification = await verifySepayOrderStatus(txn.providerOrderId);
+    if (verification.paid) {
+      const result = await completeTopupTransaction(
+        { providerOrderId: txn.providerOrderId },
+        { providerReferenceId: verification.sepayOrderId || txn.providerReferenceId || "" }
+      );
+      if (result.status === 200) {
+        return {
+          status: 200,
+          body: {
+            paid: true,
+            status: "success",
+            provider: txn.provider,
+            providerOrderId: txn.providerOrderId,
+            amount: txn.amount,
+            receipt: result.body.receipt,
+          },
+        };
+      }
+    }
+    return {
+      status: 200,
+      body: {
+        paid: false,
+        status: "pending",
+        provider: txn.provider,
+        providerOrderId: txn.providerOrderId,
+        gatewayStatus: verification.status,
+        amount: txn.amount,
+      },
+    };
+  }
+
+  if (txn.provider === "payos" && txn.orderCode && !isPayosMockMode()) {
+    const verification = await verifyPayosPayment(txn.orderCode);
+    if (verification.paid) {
+      const result = await completeTopupTransaction(txn.orderCode);
+      if (result.status === 200) {
+        return {
+          status: 200,
+          body: {
+            paid: true,
+            status: "success",
+            provider: txn.provider,
+            orderCode: txn.orderCode,
+            amount: txn.amount,
+            receipt: result.body.receipt,
+          },
+        };
+      }
+    }
+    return {
+      status: 200,
+      body: {
+        paid: false,
+        status: "pending",
+        provider: txn.provider,
+        orderCode: txn.orderCode,
+        gatewayStatus: verification.status,
+        amount: txn.amount,
+      },
+    };
+  }
+
+  return {
+    status: 200,
+    body: {
+      paid: false,
+      status: txn.status,
+      provider: txn.provider,
+      orderCode: txn.orderCode,
+      providerOrderId: txn.providerOrderId,
+      amount: txn.amount,
+    },
+  };
+}
+
+export async function handlePayosWebhook(payload = {}) {
+  try {
+    const data = await verifyPayosWebhook(payload);
+    if (!data?.orderCode) {
+      return { status: 400, body: { message: "Invalid PayOS webhook payload" } };
+    }
+
+    const result = await completeTopupTransaction(data.orderCode, {
+      providerReferenceId: data.reference || data.paymentLinkId || "",
+    });
+
+    if (result.status === 200) {
+      return { status: 200, body: { success: true } };
+    }
+
+    return {
+      status: 200,
+      body: { success: true, message: result.body?.message || "Already processed" },
+    };
+  } catch (err) {
+    console.error("PayOS webhook error:", err);
+    return { status: 400, body: { message: "Webhook verification failed" } };
+  }
 }
 
 export async function getTopupReceipt(userId, ref) {

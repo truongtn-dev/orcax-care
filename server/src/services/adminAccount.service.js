@@ -43,7 +43,7 @@ async function getLinkedProfileIds(user) {
   };
 }
 
-export async function listAccounts({ q, role, page = 1, limit = 20 } = {}) {
+export async function listAccounts({ q, role, isActive, page = 1, limit = 20 } = {}) {
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
 
@@ -53,6 +53,9 @@ export async function listAccounts({ q, role, page = 1, limit = 20 } = {}) {
   if (role && allowedRoles.includes(role)) {
     filter.role = role;
   }
+
+  if (isActive === "true") filter.isActive = true;
+  if (isActive === "false") filter.isActive = false;
 
   const search = (q || "").trim();
   if (search) {
@@ -72,20 +75,38 @@ export async function listAccounts({ q, role, page = 1, limit = 20 } = {}) {
     User.countDocuments(filter),
   ]);
 
+  const userIds = items.map((user) => user._id);
+  let patientByUser = {};
+  let doctorByUser = {};
+
+  if (userIds.length > 0) {
+    const [patients, doctors] = await Promise.all([
+      Patient.find({ userId: { $in: userIds } }).select("userId").lean(),
+      Doctor.find({ userId: { $in: userIds } }).select("userId").lean(),
+    ]);
+    patientByUser = Object.fromEntries(patients.map((p) => [p.userId.toString(), p._id]));
+    doctorByUser = Object.fromEntries(doctors.map((d) => [d.userId.toString(), d._id]));
+  }
+
   return {
-    items: items.map((user) => ({
-      _id: user._id.toString(),
-      email: user.email,
-      role: user.role,
-      fullName: user.fullName,
-      phone: user.phone || "",
-      isActive: user.isActive,
-      isEmailVerified: user.isEmailVerified,
-      isLocked: user.isLocked,
-      lastLoginAt: user.lastLoginAt,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    })),
+    items: items.map((user) => {
+      const id = user._id.toString();
+      return {
+        _id: id,
+        email: user.email,
+        role: user.role,
+        fullName: user.fullName,
+        phone: user.phone || "",
+        isActive: user.isActive,
+        isEmailVerified: user.isEmailVerified,
+        isLocked: user.isLocked,
+        lastLoginAt: user.lastLoginAt,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        patientId: patientByUser[id]?.toString() ?? null,
+        doctorId: doctorByUser[id]?.toString() ?? null,
+      };
+    }),
     page: pageNum,
     limit: limitNum,
     total,
@@ -208,6 +229,7 @@ export async function getAccount(userId) {
         address: patient.address || "",
         emergencyContactName: patient.emergencyContactName || "",
         emergencyContactPhone: patient.emergencyContactPhone || "",
+        avatarUrl: patient.avatarUrl || "",
         isActive: patient.isActive,
       };
     }

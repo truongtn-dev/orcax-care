@@ -566,6 +566,17 @@
   width: 100%;
 }
 
+.btn-danger {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  border: 1px solid #b91c1c;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+}
+
 .btn-sm {
   padding: 0.4375rem 0.875rem;
   font-size: 0.8125rem;
@@ -1506,8 +1517,14 @@
 }
 
 .filters-card {
+  position: relative;
+  z-index: 5;
   margin-bottom: 1.25rem;
   padding: 1.25rem 1.5rem;
+}
+
+.filters-card:has(.custom-select-open) {
+  z-index: 20;
 }
 
 .filters-row,
@@ -1590,8 +1607,7 @@
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-  flex-wrap: nowrap;
-  overflow: hidden;
+  flex-wrap: wrap;
 }
 
 .filters-toolbar-actions .btn,
@@ -1946,6 +1962,26 @@
   width: calc(100% + 2 * var(--page-gutter));
 }
 
+.search-doctors-page-staff {
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
+}
+
+.search-staff-bar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+}
+
+.search-staff-bar .search-input-wrap {
+  flex: 1;
+  min-width: min(100%, 280px);
+}
+
 .search-hero {
   position: relative;
   margin: 0 0 2rem;
@@ -2211,21 +2247,20 @@
 }
 
 .custom-select-menu {
-  position: absolute;
-  z-index: 50;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
   margin: 0;
   padding: 0.375rem;
   list-style: none;
-  max-height: 240px;
   overflow-y: auto;
   border-radius: var(--radius-md);
   background: var(--glass-bg-solid, #fff);
   border: 1px solid var(--glass-border, var(--color-border));
   box-shadow: var(--shadow-lg);
   animation: custom-select-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.custom-select-menu-portal {
+  position: fixed;
+  z-index: 10000;
 }
 
 @keyframes custom-select-in {
@@ -2652,9 +2687,7 @@
 .search-pagination-shell {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
+  justify-content: center;
   margin-top: 2rem;
   padding: 1rem 1.25rem;
   border-radius: var(--radius-lg);
@@ -2663,23 +2696,11 @@
   box-shadow: var(--shadow-sm);
 }
 
-.search-pagination-summary {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-.search-pagination-summary strong {
-  color: var(--color-navy);
-  font-weight: 700;
-}
-
 .search-pagination {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  margin-left: auto;
 }
 
 .search-page-numbers {
@@ -3112,6 +3133,18 @@
   font-size: 1.0625rem;
 }
 
+.detail-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-section-header h3 {
+  margin: 0;
+}
+
 .detail-list {
   display: flex;
   flex-direction: column;
@@ -3347,16 +3380,6 @@
     grid-template-columns: 1fr;
   }
 
-  .search-pagination-shell {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-
-  .search-pagination {
-    margin-left: 0;
-    justify-content: center;
-  }
 }
 
 /* ─── Profile Read-Only & Modal Styles ───────────────────── */

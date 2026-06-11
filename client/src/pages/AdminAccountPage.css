@@ -1,0 +1,44 @@
+@import "../styles/adminPeopleList.shared.css";
+
+/* Account list — role badges (not used on patient/doctor/staff pages). */
+
+.people-list-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.people-list-role svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.people-list-role--admin {
+  background: rgba(215, 0, 21, 0.1);
+  color: #b91c1c;
+  border: 1px solid rgba(215, 0, 21, 0.15);
+}
+
+.people-list-role--doctor {
+  background: rgba(124, 58, 237, 0.1);
+  color: #6d28d9;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+}
+
+.people-list-role--staff {
+  background: rgba(8, 145, 178, 0.1);
+  color: #0e7490;
+  border: 1px solid rgba(8, 145, 178, 0.15);
+}
+
+.people-list-role--patient {
+  background: rgba(5, 150, 105, 0.1);
+  color: #047857;
+  border: 1px solid rgba(5, 150, 105, 0.15);
+}

@@ -173,8 +173,48 @@ export function buildWeeklyPattern(shifts) {
   return buckets;
 }
 
+async function resolveDoctorIdsForShiftFilter({ doctorId = "", q = "", specialtyId = "", departmentId = "" } = {}) {
+  if (doctorId && mongoose.Types.ObjectId.isValid(doctorId)) {
+    return [new mongoose.Types.ObjectId(doctorId)];
+  }
+
+  const text = String(q || "").trim().toLowerCase();
+  const hasDoctorFilter = Boolean(text || specialtyId || departmentId);
+  if (!hasDoctorFilter) return null;
+
+  const doctorFilter = {};
+  if (specialtyId && mongoose.Types.ObjectId.isValid(specialtyId)) {
+    doctorFilter.specialtyId = new mongoose.Types.ObjectId(specialtyId);
+  }
+  if (departmentId && mongoose.Types.ObjectId.isValid(departmentId)) {
+    doctorFilter.departmentId = new mongoose.Types.ObjectId(departmentId);
+  }
+
+  let doctors = await Doctor.find(doctorFilter)
+    .populate("userId", "fullName email")
+    .populate("specialtyId", "name")
+    .populate("departmentId", "name")
+    .lean();
+
+  if (text) {
+    doctors = doctors.filter((doctor) => {
+      const user = doctor.userId || {};
+      const specialty = doctor.specialtyId || {};
+      const department = doctor.departmentId || {};
+      return [user.fullName, user.email, doctor.licenseNo, specialty.name, department.name]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(text));
+    });
+  }
+
+  return doctors.map((doctor) => doctor._id);
+}
+
 export async function listWorkShifts({
   doctorId = "",
+  q = "",
+  specialtyId = "",
+  departmentId = "",
   isActive = "",
   page = 1,
   limit = 50,
@@ -183,8 +223,26 @@ export async function listWorkShifts({
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
   const filter = {};
 
-  if (doctorId && mongoose.Types.ObjectId.isValid(doctorId)) {
-    filter.doctorId = new mongoose.Types.ObjectId(doctorId);
+  const doctorIds = await resolveDoctorIdsForShiftFilter({ doctorId, q, specialtyId, departmentId });
+  if (doctorIds !== null) {
+    if (doctorIds.length === 0) {
+      return {
+        items: [],
+        weeklyPattern: buildWeeklyPattern([]),
+        page: pageNum,
+        limit: limitNum,
+        total: 0,
+        totalPages: 0,
+        filters: {
+          doctorId: doctorId || null,
+          q: q || null,
+          specialtyId: specialtyId || null,
+          departmentId: departmentId || null,
+          isActive: String(isActive || "").trim().toLowerCase() || "all",
+        },
+      };
+    }
+    filter.doctorId = doctorIds.length === 1 ? doctorIds[0] : { $in: doctorIds };
   }
 
   const activeFilter = String(isActive || "").trim().toLowerCase();
@@ -209,6 +267,9 @@ export async function listWorkShifts({
     totalPages: Math.ceil(total / limitNum) || 1,
     filters: {
       doctorId: doctorId || null,
+      q: q || null,
+      specialtyId: specialtyId || null,
+      departmentId: departmentId || null,
       isActive: activeFilter || "all",
     },
   };

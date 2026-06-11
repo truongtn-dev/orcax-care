@@ -77,8 +77,9 @@ describe("UC-19.4 SePay Wallet Payment", () => {
     });
     assert.equal(res.status, 200);
     const body = await res.json();
-    assert.ok(body.paymentMethods.some((item) => item.id === "sepay"));
-    assert.equal(body.sepayMockMode, true);
+    const sepay = body.paymentMethods.find((item) => item.id === "sepay");
+    assert.ok(sepay);
+    assert.equal(sepay.enabled, false);
   });
 
   test("completes mock SePay top-up with reference id", async () => {
@@ -92,7 +93,7 @@ describe("UC-19.4 SePay Wallet Payment", () => {
     });
     assert.equal(createRes.status, 201);
     const created = await createRes.json();
-    assert.ok(created.mockMode);
+    assert.equal(created.checkoutMode, "mock");
     assert.ok(created.providerOrderId);
 
     const confirmRes = await fetch(`${baseUrl}/api/patient/wallet/sepay/mock-confirm`, {

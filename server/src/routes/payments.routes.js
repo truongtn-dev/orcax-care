@@ -9,6 +9,7 @@ export const paymentsRouter = Router();
 paymentsRouter.use(requireDatabase);
 
 paymentsRouter.get("/payos/return", PayosPaymentController.payosReturn);
+paymentsRouter.post("/payos/webhook", PayosPaymentController.payosWebhook);
 paymentsRouter.get("/payos/cancel", PayosPaymentController.payosCancel);
 paymentsRouter.get("/vnpay/return", VnpayPaymentController.vnpayReturn);
 paymentsRouter.get("/vnpay/ipn", VnpayPaymentController.vnpayIpn);

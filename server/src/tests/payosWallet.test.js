@@ -105,7 +105,7 @@ describe("UC-19.2 PayOS Wallet Payment", () => {
     });
     assert.equal(createRes.status, 201);
     const created = await createRes.json();
-    assert.ok(created.mockMode);
+    assert.equal(created.checkoutMode, "mock");
     assert.ok(created.orderCode);
 
     const confirmRes = await fetch(`${baseUrl}/api/patient/wallet/payos/mock-confirm`, {

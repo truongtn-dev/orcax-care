@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AdminLayout from "../components/AdminLayout.jsx";
+import RecordAvatar from "../components/RecordAvatar.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -12,7 +14,13 @@ const GENDER_LABELS = {
 
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleString();
+  return new Date(value).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatDateOnly(value) {
@@ -53,23 +61,18 @@ export default function AdminPatientDetailPage() {
   }, [id]);
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <div className="page-header-row">
-          <div>
-            <Link to="/admin/account" className="back-link">
-              ← Back to account list
-            </Link>
-            <h1>Patient details</h1>
-            <p>View and manage patient information.</p>
-          </div>
-          {patient && (
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Patient details"
+        description="View and manage patient information."
+        actions={
+          patient ? (
             <Link to={`/admin/patient/${id}/edit`} className="btn btn-primary">
               Edit patient
             </Link>
-          )}
-        </div>
-      </div>
+          ) : null
+        }
+      >
 
       {loading && (
         <div className="loading-state">
@@ -83,7 +86,7 @@ export default function AdminPatientDetailPage() {
       {!loading && patient && (
         <>
           <div className="card account-detail-header">
-            <div className="account-detail-avatar">{patient.fullName?.charAt(0)?.toUpperCase() || "?"}</div>
+            <RecordAvatar name={patient.fullName} imageUrl={patient.profile?.avatarUrl} />
             <div>
               <h2>{patient.fullName}</h2>
               <p>{patient.email}</p>
@@ -158,6 +161,7 @@ export default function AdminPatientDetailPage() {
           </div>
         </>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

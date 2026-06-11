@@ -25,6 +25,16 @@ export async function payosReturn(req, res) {
   }
 }
 
+export async function payosWebhook(req, res) {
+  try {
+    const result = await PatientWalletService.handlePayosWebhook(req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function payosCancel(req, res) {
   try {
     const result = await PatientWalletService.handlePayosCancel(req.query);

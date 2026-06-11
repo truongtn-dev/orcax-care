@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import TimePicker from "../../components/TimePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -112,12 +114,11 @@ export default function EditWorkShiftPage() {
   ];
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Edit work shift</h1>
-        <p>Adjust hours, capacity, or room. Future appointment slots may need regeneration.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Edit work shift"
+        description="Adjust hours, capacity, or room. Future appointment slots may need regeneration."
+      >
       <div className="card form-card-centered">
         {loading ? (
           <p>Loading shift…</p>
@@ -152,14 +153,24 @@ export default function EditWorkShiftPage() {
               />
 
               <div className="form-row">
-                <label>
-                  Start time
-                  <input type="time" name="startTime" value={form.startTime} onChange={onChange} required />
-                </label>
-                <label>
-                  End time
-                  <input type="time" name="endTime" value={form.endTime} onChange={onChange} required />
-                </label>
+                <TimePicker
+                  id="edit-work-shift-start"
+                  label="Start time"
+                  name="startTime"
+                  value={form.startTime}
+                  onChange={onChange}
+                  max={form.endTime}
+                  required
+                />
+                <TimePicker
+                  id="edit-work-shift-end"
+                  label="End time"
+                  name="endTime"
+                  value={form.endTime}
+                  onChange={onChange}
+                  min={form.startTime}
+                  required
+                />
               </div>
 
               <label>
@@ -200,6 +211,7 @@ export default function EditWorkShiftPage() {
           </form>
         )}
       </div>
+      </AdminLayout>
     </PageLayout>
   );
 }

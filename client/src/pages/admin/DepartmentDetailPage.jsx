@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -33,29 +34,16 @@ export default function DepartmentDetailPage() {
   }, [id]);
 
   return (
-    <PageLayout>
-      <nav className="admin-breadcrumb" aria-label="Navigation">
-        <Link to="/admin">Admin</Link>
-        <span>/</span>
-        <Link to="/admin/departments/new">Department</Link>
-        <span>/</span>
-        <span>Details</span>
-      </nav>
-
-      <div className="page-header">
-        <h1>Department details</h1>
-        <p>Department information with doctor overview.</p>
-      </div>
-
-      <div className="card admin-toolbar">
-        <Link to="/admin" className="btn btn-outline">
-          Back to admin
-        </Link>
-        <Link to="/admin/departments/new" className="btn btn-primary">
-          Create department
-        </Link>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Department details"
+        description="Department information with doctor overview."
+        actions={
+          <Link to="/admin/departments/new" className="btn btn-primary">
+            Create department
+          </Link>
+        }
+      >
       {loading && (
         <div className="loading-state">
           <div className="loading-spinner" />
@@ -167,6 +155,7 @@ export default function DepartmentDetailPage() {
           </div>
         </>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

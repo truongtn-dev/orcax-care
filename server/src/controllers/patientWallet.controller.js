@@ -80,6 +80,48 @@ export async function deductWallet(req, res) {
   }
 }
 
+export async function cancelTopup(req, res) {
+  try {
+    const result = await PatientWalletService.cancelTopup(
+      req.user.userId,
+      req.params.provider,
+      req.params.ref
+    );
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function getTopupCheckout(req, res) {
+  try {
+    const result = await PatientWalletService.getTopupCheckout(
+      req.user.userId,
+      req.params.provider,
+      req.params.ref
+    );
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function getTopupStatus(req, res) {
+  try {
+    const result = await PatientWalletService.getTopupStatus(
+      req.user.userId,
+      req.params.provider,
+      req.params.ref
+    );
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function getTopupReceipt(req, res) {
   try {
     const result = await PatientWalletService.getTopupReceipt(

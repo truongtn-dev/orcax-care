@@ -1,0 +1,22 @@
+@import "../../styles/adminPeopleList.shared.css";
+
+@media (max-width: 900px) {
+  .people-list-toolbar .filters-toolbar-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .people-list-toolbar .filters-toolbar-fields > .filter-field,
+  .people-list-toolbar .filters-toolbar-fields > .custom-select {
+    flex: 1 1 calc(50% - 0.625rem);
+    min-width: min(100%, 200px);
+  }
+}
+
+@media (max-width: 560px) {
+  .people-list-toolbar .filters-toolbar-fields > .filter-field,
+  .people-list-toolbar .filters-toolbar-fields > .custom-select {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+}

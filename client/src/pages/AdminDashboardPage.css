@@ -1,3 +1,415 @@
+/* ─── Admin overview dashboard ─────────────────────────── */
+
+.admin-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.admin-overview-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  padding: 1.5rem 1.75rem;
+  background: var(--gradient-brand);
+  color: #fff;
+  box-shadow: 0 12px 40px rgba(17, 94, 89, 0.22);
+}
+
+.admin-overview-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.admin-overview-hero-orb--1 {
+  width: 220px;
+  height: 220px;
+  top: -80px;
+  right: -40px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-overview-hero-orb--2 {
+  width: 120px;
+  height: 120px;
+  bottom: -50px;
+  left: 35%;
+  background: rgba(153, 246, 228, 0.12);
+}
+
+.admin-overview-hero-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.admin-overview-hero-icon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.admin-overview-hero-icon svg {
+  width: 28px;
+  height: 28px;
+  color: #ccfbf1;
+}
+
+.admin-overview-hero-eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.admin-overview-hero-lead {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.92);
+  max-width: 52ch;
+}
+
+.admin-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 1rem;
+}
+
+.admin-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.admin-stat-card:hover {
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.admin-stat-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-stat-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.admin-stat-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-stat-skeleton {
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.4rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: adminStatShimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes adminStatShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.admin-stat-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.admin-stat-arrow {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--transition), transform var(--transition), background var(--transition);
+}
+
+.admin-stat-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-stat-card:hover .admin-stat-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Stat & shortcut color themes */
+.admin-stat-icon--cyan,
+.admin-shortcut-icon--cyan { background: linear-gradient(135deg, #ecfeff, #cffafe); color: #0891b2; }
+.admin-stat-icon--violet,
+.admin-shortcut-icon--violet { background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #7c3aed; }
+.admin-stat-icon--emerald,
+.admin-shortcut-icon--emerald { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #059669; }
+.admin-stat-icon--sky,
+.admin-shortcut-icon--sky { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); color: #0284c7; }
+.admin-stat-icon--amber,
+.admin-shortcut-icon--amber { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #d97706; }
+.admin-stat-icon--indigo,
+.admin-shortcut-icon--indigo { background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: #4f46e5; }
+.admin-stat-icon--rose,
+.admin-shortcut-icon--rose { background: linear-gradient(135deg, #fff1f2, #ffe4e6); color: #e11d48; }
+.admin-stat-icon--teal,
+.admin-shortcut-icon--teal { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); color: #0d9488; }
+
+.admin-stat-card--cyan:hover { border-color: rgba(8, 145, 178, 0.35); box-shadow: 0 10px 28px rgba(8, 145, 178, 0.12); }
+.admin-stat-card--cyan:hover .admin-stat-arrow { background: #ecfeff; color: #0891b2; }
+.admin-stat-card--violet:hover { border-color: rgba(124, 58, 237, 0.3); box-shadow: 0 10px 28px rgba(124, 58, 237, 0.1); }
+.admin-stat-card--violet:hover .admin-stat-arrow { background: #f5f3ff; color: #7c3aed; }
+.admin-stat-card--emerald:hover { border-color: rgba(5, 150, 105, 0.3); box-shadow: 0 10px 28px rgba(5, 150, 105, 0.1); }
+.admin-stat-card--emerald:hover .admin-stat-arrow { background: #ecfdf5; color: #059669; }
+.admin-stat-card--sky:hover { border-color: rgba(2, 132, 199, 0.3); box-shadow: 0 10px 28px rgba(2, 132, 199, 0.1); }
+.admin-stat-card--sky:hover .admin-stat-arrow { background: #f0f9ff; color: #0284c7; }
+.admin-stat-card--amber:hover { border-color: rgba(217, 119, 6, 0.3); box-shadow: 0 10px 28px rgba(217, 119, 6, 0.1); }
+.admin-stat-card--amber:hover .admin-stat-arrow { background: #fffbeb; color: #d97706; }
+.admin-stat-card--indigo:hover { border-color: rgba(79, 70, 229, 0.3); box-shadow: 0 10px 28px rgba(79, 70, 229, 0.1); }
+.admin-stat-card--indigo:hover .admin-stat-arrow { background: #eef2ff; color: #4f46e5; }
+
+.admin-overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-section-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.4rem 0.9rem 0.4rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.admin-section-pill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-section-pill-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-section-pill--cyan { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
+.admin-section-pill--sky { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.admin-section-pill--rose { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+
+.admin-shortcut-grid {
+  display: grid;
+  gap: 1.15rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+
+.admin-shortcut-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-shortcut-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-shortcut-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-shortcut {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1.5rem 1.5rem 1.35rem;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.admin-shortcut::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0.85;
+}
+
+.admin-shortcut--cyan::before { background: linear-gradient(90deg, #06b6d4, #0891b2); }
+.admin-shortcut--violet::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.admin-shortcut--emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
+.admin-shortcut--sky::before { background: linear-gradient(90deg, #38bdf8, #0284c7); }
+.admin-shortcut--amber::before { background: linear-gradient(90deg, #fbbf24, #d97706); }
+.admin-shortcut--indigo::before { background: linear-gradient(90deg, #818cf8, #4f46e5); }
+.admin-shortcut--rose::before { background: linear-gradient(90deg, #fb7185, #e11d48); }
+.admin-shortcut--teal::before { background: linear-gradient(90deg, #2dd4bf, #0d9488); }
+
+.admin-shortcut:hover {
+  transform: translateY(-3px);
+  text-decoration: none;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+}
+
+.admin-shortcut-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.admin-shortcut-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.admin-shortcut-badge {
+  width: fit-content;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.admin-shortcut-badge--cyan { background: #ecfeff; color: #0e7490; }
+.admin-shortcut-badge--violet { background: #f5f3ff; color: #6d28d9; }
+.admin-shortcut-badge--emerald { background: #ecfdf5; color: #047857; }
+.admin-shortcut-badge--sky { background: #f0f9ff; color: #0369a1; }
+.admin-shortcut-badge--amber { background: #fffbeb; color: #b45309; }
+.admin-shortcut-badge--indigo { background: #eef2ff; color: #4338ca; }
+.admin-shortcut-badge--rose { background: #fff1f2; color: #be123c; }
+.admin-shortcut-badge--teal { background: #f0fdfa; color: #0f766e; }
+
+.admin-shortcut h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.admin-shortcut p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.admin-shortcut-arrow {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding-top: 0.35rem;
+}
+
+.admin-shortcut-arrow svg {
+  width: 16px;
+  height: 16px;
+  transition: transform var(--transition);
+}
+
+.admin-shortcut--cyan .admin-shortcut-arrow { color: #0891b2; }
+.admin-shortcut--violet .admin-shortcut-arrow { color: #7c3aed; }
+.admin-shortcut--emerald .admin-shortcut-arrow { color: #059669; }
+.admin-shortcut--sky .admin-shortcut-arrow { color: #0284c7; }
+.admin-shortcut--amber .admin-shortcut-arrow { color: #d97706; }
+.admin-shortcut--indigo .admin-shortcut-arrow { color: #4f46e5; }
+.admin-shortcut--rose .admin-shortcut-arrow { color: #e11d48; }
+.admin-shortcut--teal .admin-shortcut-arrow { color: #0d9488; }
+
+.admin-shortcut:hover .admin-shortcut-arrow svg {
+  transform: translateX(3px);
+}
+
+@media (max-width: 1200px) {
+  .admin-shortcut-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-shortcut-grid--3,
+  .admin-shortcut-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-overview-hero-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-shortcut-grid,
+  .admin-shortcut-grid--2,
+  .admin-shortcut-grid--3,
+  .admin-shortcut-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-card {
   padding: 1.25rem 1.5rem;
   background: #fff;

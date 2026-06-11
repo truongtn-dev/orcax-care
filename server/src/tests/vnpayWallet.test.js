@@ -77,8 +77,9 @@ describe("UC-19.3 VNPay Wallet Payment", () => {
     });
     assert.equal(res.status, 200);
     const body = await res.json();
-    assert.ok(body.paymentMethods.some((item) => item.id === "vnpay"));
-    assert.equal(body.vnpayMockMode, true);
+    const vnpay = body.paymentMethods.find((item) => item.id === "vnpay");
+    assert.ok(vnpay);
+    assert.equal(vnpay.enabled, false);
   });
 
   test("completes mock VNPay top-up with reference id", async () => {
@@ -92,7 +93,7 @@ describe("UC-19.3 VNPay Wallet Payment", () => {
     });
     assert.equal(createRes.status, 201);
     const created = await createRes.json();
-    assert.ok(created.mockMode);
+    assert.equal(created.checkoutMode, "mock");
     assert.ok(created.providerOrderId);
 
     const confirmRes = await fetch(`${baseUrl}/api/patient/wallet/vnpay/mock-confirm`, {

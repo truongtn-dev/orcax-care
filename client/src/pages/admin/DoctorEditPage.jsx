@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import CloudinaryAvatarUpload from "../../components/CloudinaryAvatarUpload.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -108,20 +110,11 @@ export default function DoctorEditPage() {
   };
 
   return (
-    <PageLayout>
-      <nav className="admin-breadcrumb" aria-label="Navigation">
-        <Link to="/admin">Admin</Link>
-        <span>/</span>
-        <Link to="/admin/doctors">Doctor</Link>
-        <span>/</span>
-        <span>Edit</span>
-      </nav>
-
-      <div className="page-header">
-        <h1>Update doctor</h1>
-        <p>Edit professional details, linked account, and patient-facing visibility status.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Update doctor"
+        description="Edit professional details, linked account, and patient-facing visibility status."
+      >
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
@@ -164,6 +157,14 @@ export default function DoctorEditPage() {
 
             <fieldset className="form-section">
               <legend>Professional details</legend>
+              <CloudinaryAvatarUpload
+                label="Doctor photo"
+                name="photoUrl"
+                value={form.photoUrl}
+                onChange={onChange}
+                fallbackName={form.fullName}
+                folder="orcaxcare/avatars/doctors"
+              />
               <div className="form-grid">
                 <CustomSelect
                   label="Specialty"
@@ -189,10 +190,6 @@ export default function DoctorEditPage() {
                   License number
                   <input type="text" name="licenseNo" value={form.licenseNo} onChange={onChange} minLength={3} required />
                 </label>
-                <label>
-                  Avatar URL
-                  <input type="url" name="photoUrl" value={form.photoUrl} onChange={onChange} />
-                </label>
                 <label className="checkbox-row">
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
                   Doctor is active
@@ -211,13 +208,14 @@ export default function DoctorEditPage() {
               <button type="button" className="btn btn-outline" onClick={() => navigate("/admin/doctors")}>
                 Cancel
               </button>
-              <Link to="/search-doctors" className="btn btn-ghost">
+              <Link to="/search-doctors" className="btn btn-outline btn-sm">
                 View patient side
               </Link>
             </div>
           </form>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

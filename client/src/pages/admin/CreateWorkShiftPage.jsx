@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import SearchableSelect from "../../components/SearchableSelect.jsx";
+import TimePicker from "../../components/TimePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -26,7 +29,6 @@ const emptyForm = {
 
 export default function CreateWorkShiftPage() {
   const [form, setForm] = useState(emptyForm);
-  const [doctors, setDoctors] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [created, setCreated] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,11 +39,7 @@ export default function CreateWorkShiftPage() {
     async function loadOptions() {
       setLoading(true);
       try {
-        const [doctorRes, roomRes] = await Promise.all([
-          AdminApiClient.getDoctors({ activeOnly: true, limit: 100 }),
-          AdminApiClient.listClinicRooms({ isActive: "true", limit: 100 }),
-        ]);
-        setDoctors(doctorRes.data.items || []);
+        const roomRes = await AdminApiClient.listClinicRooms({ isActive: "true", limit: 100 });
         setRooms(roomRes.data.items || []);
       } catch (err) {
         setError(getApiErrorMessage(err));
@@ -82,13 +80,18 @@ export default function CreateWorkShiftPage() {
     }
   };
 
-  const doctorOptions = [
-    { value: "", label: "Select doctor" },
-    ...doctors.map((item) => ({
+  const loadDoctorOptions = useCallback(async (query) => {
+    const { data } = await AdminApiClient.getDoctors({
+      activeOnly: true,
+      q: query,
+      limit: 30,
+    });
+    const items = (data.items || []).map((item) => ({
       value: item._id,
       label: `${item.fullName} — ${item.specialtyName || "Specialty"}`,
-    })),
-  ];
+    }));
+    return query ? items : [{ value: "", label: "Select doctor" }, ...items];
+  }, []);
 
   const roomOptions = [
     { value: "", label: "No room assigned" },
@@ -99,15 +102,14 @@ export default function CreateWorkShiftPage() {
   ];
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Create work shift</h1>
-        <p>Set up a weekly shift template for a doctor. Used to generate appointment slots later.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Create work shift"
+        description="Set up a weekly shift template for a doctor. Used to generate appointment slots later."
+      >
       <div className="card form-card-centered">
         {loading ? (
-          <p>Loading doctors and clinic rooms…</p>
+          <p>Loading clinic rooms…</p>
         ) : (
           <form onSubmit={onSubmit} className="form">
             {error && <div className="alert alert-error">{error}</div>}
@@ -121,13 +123,14 @@ export default function CreateWorkShiftPage() {
             <fieldset className="form-section">
               <legend>Shift details</legend>
 
-              <CustomSelect
+              <SearchableSelect
                 id="work-shift-doctor"
                 label="Doctor"
                 value={form.doctorId}
                 placeholder="Select doctor"
+                searchPlaceholder="Search doctor name, email, license…"
                 onChange={(doctorId) => setForm((current) => ({ ...current, doctorId }))}
-                options={doctorOptions}
+                loadOptions={loadDoctorOptions}
                 required
               />
 
@@ -149,14 +152,24 @@ export default function CreateWorkShiftPage() {
               />
 
               <div className="form-row">
-                <label>
-                  Start time
-                  <input type="time" name="startTime" value={form.startTime} onChange={onChange} required />
-                </label>
-                <label>
-                  End time
-                  <input type="time" name="endTime" value={form.endTime} onChange={onChange} required />
-                </label>
+                <TimePicker
+                  id="work-shift-start"
+                  label="Start time"
+                  name="startTime"
+                  value={form.startTime}
+                  onChange={onChange}
+                  max={form.endTime}
+                  required
+                />
+                <TimePicker
+                  id="work-shift-end"
+                  label="End time"
+                  name="endTime"
+                  value={form.endTime}
+                  onChange={onChange}
+                  min={form.startTime}
+                  required
+                />
               </div>
 
               <label>
@@ -184,6 +197,7 @@ export default function CreateWorkShiftPage() {
           </form>
         )}
       </div>
+      </AdminLayout>
     </PageLayout>
   );
 }

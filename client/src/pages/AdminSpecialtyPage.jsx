@@ -188,15 +188,7 @@ export default function AdminSpecialtyPage() {
 
   return (
     <PageLayout dashboard>
-      <AdminLayout
-        title="Specialty management"
-        description="Clinical specialty catalog and usage status across the system."
-        actions={
-          <button type="button" className="btn btn-primary" onClick={openCreateModal}>
-            Create specialty
-          </button>
-        }
-      >
+      <AdminLayout title="Specialty management">
       <div className="card filters-card">
         <div className="filters-toolbar">
           <div className="filters-toolbar-fields">
@@ -221,6 +213,9 @@ export default function AdminSpecialtyPage() {
             </button>
             <button type="button" className="btn btn-outline" onClick={clearFilters}>
               Clear filters
+            </button>
+            <button type="button" className="btn btn-primary" onClick={openCreateModal}>
+              Create specialty
             </button>
           </div>
         </div>

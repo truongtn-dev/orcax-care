@@ -1,0 +1,222 @@
+.ws-shell {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ws-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid rgba(8, 145, 178, 0.1);
+  background: #fff;
+}
+
+.ws-toolbar > .custom-select {
+  flex: 0 1 280px;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.ws-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ws-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  background: #eef4f6;
+  border: 1px solid rgba(8, 145, 178, 0.1);
+}
+
+.ws-stat strong {
+  color: var(--color-primary-hover);
+}
+
+.ws-body {
+  background: #f8fafb;
+}
+
+.ws-loading,
+.ws-empty {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.ws-empty h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  color: var(--color-navy);
+}
+
+.ws-empty p {
+  margin: 0 0 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.ws-week-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-top: 1px solid rgba(8, 145, 178, 0.08);
+  max-height: min(70vh, 520px);
+  overflow: hidden;
+}
+
+.ws-week-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid rgba(8, 145, 178, 0.08);
+  background: #fff;
+}
+
+.ws-week-col:last-child {
+  border-right: none;
+}
+
+.ws-week-col.is-today .ws-week-head {
+  background: rgba(8, 145, 178, 0.08);
+}
+
+.ws-week-head {
+  padding: 0.65rem 0.45rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(8, 145, 178, 0.1);
+  background: #f8fafb;
+  flex-shrink: 0;
+}
+
+.ws-week-head strong {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.ws-week-head span {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.ws-week-slots {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ws-week-off {
+  margin: 0;
+  padding: 1.25rem 0.35rem;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.ws-shift-card {
+  border: 1px solid rgba(8, 145, 178, 0.14);
+  border-radius: 10px;
+  padding: 0.55rem 0.6rem;
+  background: linear-gradient(160deg, rgba(8, 145, 178, 0.1) 0%, rgba(13, 148, 136, 0.06) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.ws-shift-card.is-inactive {
+  opacity: 0.55;
+  background: #f1f5f9;
+  border-style: dashed;
+}
+
+.ws-shift-time {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  letter-spacing: 0.01em;
+}
+
+.ws-shift-line {
+  font-size: 0.68rem;
+  color: var(--color-text-secondary);
+  line-height: 1.35;
+}
+
+.ws-shift-line strong {
+  color: var(--color-primary-hover);
+  font-weight: 700;
+}
+
+.ws-shift-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  margin-top: 0.15rem;
+}
+
+.ws-shift-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(8, 145, 178, 0.14);
+  color: var(--color-primary-hover);
+}
+
+.ws-shift-edit {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+}
+
+.ws-shift-edit:hover {
+  background: rgba(8, 145, 178, 0.1);
+}
+
+@media (max-width: 900px) {
+  .ws-week-board {
+    grid-template-columns: repeat(7, minmax(118px, 1fr));
+    overflow-x: auto;
+  }
+
+  .ws-week-col {
+    min-width: 118px;
+  }
+
+  .ws-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ws-toolbar .filters-toolbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .ws-stats {
+    justify-content: center;
+  }
+}

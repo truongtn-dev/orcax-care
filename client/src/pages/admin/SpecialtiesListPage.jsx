@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -31,16 +32,12 @@ export default function SpecialtiesListPage() {
   }, [activeOnly, loadSpecialties]);
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Specialty list</h1>
-        <p>Specialty data used for admin and doctor search filters.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Specialty list"
+        description="Specialty data used for admin and doctor search filters."
+      >
       <div className="card admin-toolbar">
-        <Link to="/admin" className="btn btn-outline">
-          Back to admin
-        </Link>
         <label className="checkbox-row">
           <input
             type="checkbox"
@@ -98,6 +95,7 @@ export default function SpecialtiesListPage() {
           </table>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }

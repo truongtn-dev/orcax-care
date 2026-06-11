@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PageLayout from "../components/PageLayout.jsx";
+import StaffLayout from "../components/StaffLayout.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
 import AppPagination, { getResultRange } from "../components/AppPagination.jsx";
@@ -50,6 +52,8 @@ function buildActiveFilters(filters, specialties, departments) {
 }
 
 export default function SearchDoctorsPage() {
+  const { role } = useAuth();
+  const isStaffPortal = role === "staff";
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
@@ -131,9 +135,9 @@ export default function SearchDoctorsPage() {
   const popularSpecialties = specialties.slice(0, 8);
   const specialistLabel = result.total === 1 ? "doctor" : "doctors";
 
-  return (
-    <PageLayout>
-      <div className="search-doctors-page">
+  const searchPage = (
+      <div className={`search-doctors-page ${isStaffPortal ? "search-doctors-page-staff" : ""}`}>
+        {!isStaffPortal && (
         <section className="search-hero" aria-labelledby="search-doctors-title">
           <div className="search-hero-bg" aria-hidden="true" />
           <div className="search-hero-inner">
@@ -175,8 +179,36 @@ export default function SearchDoctorsPage() {
             )}
           </div>
         </section>
+        )}
 
         <div className="search-body">
+          {isStaffPortal && (
+            <form
+              className="card search-staff-bar"
+              onSubmit={(event) => {
+                event.preventDefault();
+                applySearch({ q: filters.q });
+              }}
+            >
+              <label className="search-input-wrap" htmlFor="doctor-search-q-staff">
+                <span className="search-input-icon">
+                  <SearchIcon />
+                </span>
+                <input
+                  id="doctor-search-q-staff"
+                  type="search"
+                  placeholder="Doctor name, specialty, or department…"
+                  value={filters.q}
+                  onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
+                  autoComplete="off"
+                />
+              </label>
+              <button type="submit" className="btn btn-primary">
+                Search
+              </button>
+            </form>
+          )}
+
           <div className="search-toolbar card">
             <div className="search-toolbar-head">
               <h2 className="search-toolbar-title">Filter results</h2>
@@ -315,6 +347,20 @@ export default function SearchDoctorsPage() {
           </div>
         </div>
       </div>
-    </PageLayout>
   );
+
+  if (isStaffPortal) {
+    return (
+      <PageLayout dashboard>
+        <StaffLayout
+          title="Find doctors"
+          description="Search verified doctors by name, specialty, or department to assist patients."
+        >
+          {searchPage}
+        </StaffLayout>
+      </PageLayout>
+    );
+  }
+
+  return <PageLayout>{searchPage}</PageLayout>;
 }

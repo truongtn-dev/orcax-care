@@ -180,7 +180,15 @@ export default function HomePage() {
 
   const dashboardPath =
 
-    role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "patient" ? "/patient" : null;
+    role === "admin"
+      ? "/admin"
+      : role === "doctor"
+        ? "/doctor/schedule"
+        : role === "staff"
+          ? "/staff"
+          : role === "patient"
+            ? "/patient"
+            : null;
 
 
 

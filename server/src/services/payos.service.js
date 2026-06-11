@@ -44,6 +44,13 @@ export async function createPayosPaymentLink({
   return {
     checkoutUrl: paymentLink.checkoutUrl,
     paymentLinkId: String(paymentLink.paymentLinkId || ""),
+    qrCode: paymentLink.qrCode || "",
+    accountNumber: paymentLink.accountNumber || "",
+    accountName: paymentLink.accountName || "",
+    bin: paymentLink.bin || "",
+    currency: paymentLink.currency || "VND",
+    expiredAt: paymentLink.expiredAt || null,
+    status: paymentLink.status || "PENDING",
     mock: false,
   };
 }
@@ -61,4 +68,13 @@ export async function verifyPayosPayment(orderCode) {
     status,
     mock: false,
   };
+}
+
+export async function verifyPayosWebhook(payload = {}) {
+  if (isPayosMockMode()) {
+    return payload?.data || null;
+  }
+
+  const payos = getPayosClient();
+  return payos.webhooks.verify(payload);
 }

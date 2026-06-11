@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 
@@ -83,12 +84,15 @@ export default function AccountEditPage() {
   };
 
   return (
-    <PageLayout>
-      <div className="page-header">
-        <h1>Update account</h1>
-        <p>Load an existing user, edit contact information, and save account status.</p>
-      </div>
-
+    <PageLayout dashboard>
+      <AdminLayout
+        title="Edit account"
+        actions={
+          <Link to={`/admin/account/${id}`} className="btn btn-outline btn-sm">
+            ← Back to details
+          </Link>
+        }
+      >
       {loading ? (
         <div className="loading-state">
           <div className="loading-spinner" />
@@ -165,16 +169,17 @@ export default function AccountEditPage() {
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? "Saving..." : "Save changes"}
               </button>
-              <button type="button" className="btn btn-outline" onClick={() => navigate("/admin")}>
+              <button type="button" className="btn btn-outline" onClick={() => navigate(`/admin/account/${id}`)}>
                 Cancel
               </button>
-              <Link to="/admin" className="btn btn-ghost">
-                Back to admin dashboard
+              <Link to="/admin/account" className="btn btn-ghost">
+                Back to account list
               </Link>
             </div>
           </form>
         </div>
       )}
+      </AdminLayout>
     </PageLayout>
   );
 }
