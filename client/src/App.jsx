@@ -26,6 +26,7 @@ import AdminPatientEditPage from "./pages/AdminPatientEditPage.jsx";
 import AdminPatientPage from "./pages/AdminPatientPage.jsx";
 import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
 import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
+import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
 import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
 import CreateWorkShiftPage from "./pages/admin/CreateWorkShiftPage.jsx";
 import EditWorkShiftPage from "./pages/admin/EditWorkShiftPage.jsx";
@@ -327,7 +328,7 @@ export default function App() {
             path="/doctor"
             element={
               <ProtectedRoute roles={["doctor"]}>
-                <Navigate to="/doctor/schedule" replace />
+                <DoctorDashboardPage />
               </ProtectedRoute>
             }
           />

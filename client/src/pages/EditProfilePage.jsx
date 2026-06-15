@@ -145,7 +145,7 @@ export default function EditProfilePage() {
   };
 
   const backLink =
-    role === "admin" ? "/admin" : role === "doctor" ? "/doctor/schedule" : role === "staff" ? "/staff" : "/patient";
+    role === "admin" ? "/admin" : role === "doctor" ? "/doctor" : role === "staff" ? "/staff" : "/patient";
   const PortalLayout =
     role === "admin" ? AdminLayout : role === "doctor" ? DoctorLayout : role === "staff" ? StaffLayout : null;
 
