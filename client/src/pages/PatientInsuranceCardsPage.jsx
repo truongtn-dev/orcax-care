@@ -22,6 +22,7 @@ export default function PatientInsuranceCardsPage() {
   const [saving, setSaving] = useState(false);
   const [ocrBusy, setOcrBusy] = useState(false);
   const [ocrMessage, setOcrMessage] = useState("");
+  const [ocrFileName, setOcrFileName] = useState("");
   const [error, setError] = useState("");
 
   const loadCards = useCallback(async () => {
@@ -57,6 +58,7 @@ export default function PatientInsuranceCardsPage() {
     if (!file) return;
 
     setOcrBusy(true);
+    setOcrFileName(file.name);
     setOcrMessage("");
     setError("");
 
@@ -73,7 +75,6 @@ export default function PatientInsuranceCardsPage() {
       setError(getApiErrorMessage(err));
     } finally {
       setOcrBusy(false);
-      event.target.value = "";
     }
   };
 
@@ -92,6 +93,8 @@ export default function PatientInsuranceCardsPage() {
         isPrimary: form.isPrimary,
       });
       setForm(emptyForm);
+      setOcrFileName("");
+      setOcrMessage("");
       setShowForm(false);
       await loadCards();
     } catch (err) {
@@ -167,6 +170,7 @@ export default function PatientInsuranceCardsPage() {
                         ? "Reading image..."
                         : "OCR is a demo stub. It suggests a policy number from the file name."}
                     </span>
+                    {ocrFileName && <span className="hint">Selected file: {ocrFileName}</span>}
                   </label>
                   {ocrMessage && <div className="alert alert-success">{ocrMessage}</div>}
                   <label>
