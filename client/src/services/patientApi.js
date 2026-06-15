@@ -37,6 +37,18 @@ export const PatientApiClient = {
     return api.get(`/api/patient/wallet/receipts/${ref}`);
   },
 
+  listAppointments(params) {
+    return api.get("/api/patient/appointments", { params });
+  },
+
+  getAppointment(id) {
+    return api.get(`/api/patient/appointments/${id}`);
+  },
+
+  rescheduleAppointment(id, payload) {
+    return api.put(`/api/patient/appointments/${id}/reschedule`, payload);
+  },
+
   listInsuranceCards() {
     return api.get("/api/patient/insurance-cards");
   },

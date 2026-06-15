@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as PatientAppointmentController from "../controllers/patientAppointment.controller.js";
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
@@ -29,6 +30,13 @@ patientRouter.get(
   PatientWalletController.getTopupStatus
 );
 patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopupReceipt);
+
+patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
+patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointment);
+patientRouter.put(
+  "/appointments/:id/reschedule",
+  PatientAppointmentController.rescheduleAppointment
+);
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
