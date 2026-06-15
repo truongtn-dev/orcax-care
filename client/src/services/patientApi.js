@@ -44,4 +44,8 @@ export const PatientApiClient = {
   createInsuranceCard(payload) {
     return api.post("/api/patient/insurance-cards", payload);
   },
+
+  extractInsuranceCardOcr(payload) {
+    return api.post("/api/patient/insurance-cards/ocr", payload);
+  },
 };
