@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import "./DoctorPublicProfilePage.css";
 import PageLayout from "../components/PageLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
+import { PatientApiClient } from "../services/patientApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -22,10 +23,12 @@ function formatRating(value, reviewCount) {
 export default function DoctorPublicProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, role } = useAuth();
   const [doctor, setDoctor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -36,8 +39,49 @@ export default function DoctorPublicProfilePage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  useEffect(() => {
+    if (!isAuthenticated || role !== "patient") {
+      setIsFavorite(false);
+      return;
+    }
+
+    let active = true;
+    PatientApiClient.listFavoriteDoctors()
+      .then(({ data }) => {
+        if (!active) return;
+        const found = (data.items || []).some((item) => item.doctorId === id);
+        setIsFavorite(found);
+      })
+      .catch(() => {
+        if (active) setIsFavorite(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [id, isAuthenticated, role]);
+
   const handleBook = () => {
     navigate(`/patient/book?doctorId=${id}`);
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated || role !== "patient") return;
+
+    setFavoriteLoading(true);
+    try {
+      if (isFavorite) {
+        await PatientApiClient.removeFavoriteDoctor(id);
+        setIsFavorite(false);
+      } else {
+        await PatientApiClient.addFavoriteDoctor(id);
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   const languages = doctor?.languages?.length ? doctor.languages : ["Vietnamese"];
@@ -112,10 +156,24 @@ export default function DoctorPublicProfilePage() {
                         </svg>
                         Verified profile
                       </span>
-                      {isAuthenticated ? (
-                        <button type="button" className="btn doctor-profile-book-btn" onClick={handleBook}>
-                          Book an appointment
-                        </button>
+                      {isAuthenticated && role === "patient" ? (
+                        <div className="doctor-profile-hero-actions">
+                          <button type="button" className="btn doctor-profile-book-btn" onClick={handleBook}>
+                            Book an appointment
+                          </button>
+                          <button
+                            type="button"
+                            className="btn doctor-profile-favorite-btn"
+                            onClick={handleToggleFavorite}
+                            disabled={favoriteLoading}
+                          >
+                            {favoriteLoading
+                              ? "Updating..."
+                              : isFavorite
+                                ? "Remove from favorites"
+                                : "Add to favorites"}
+                          </button>
+                        </div>
                       ) : (
                         <p className="doctor-profile-signin-note">
                           <Link to="/login" style={{ color: "inherit", fontWeight: 700 }}>

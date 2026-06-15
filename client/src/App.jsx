@@ -17,6 +17,7 @@ import PatientWalletCheckoutPage from "./pages/PatientWalletCheckoutPage.jsx";
 import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
 import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
+import PatientFavoritesPage from "./pages/PatientFavoritesPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
@@ -136,6 +137,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientInsuranceCardsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/favorites"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientFavoritesPage />
               </ProtectedRoute>
             }
           />
@@ -320,14 +329,6 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminClinicRoomPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/doctor"
-            element={
-              <ProtectedRoute roles={["doctor"]}>
-                <Navigate to="/doctor/schedule" replace />
               </ProtectedRoute>
             }
           />

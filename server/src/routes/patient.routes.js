@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as PatientFavoriteDoctorController from "../controllers/patientFavoriteDoctor.controller.js";
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
@@ -32,3 +33,7 @@ patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopu
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
+
+patientRouter.get("/favorites", PatientFavoriteDoctorController.listFavoriteDoctors);
+patientRouter.post("/favorites/:doctorId", PatientFavoriteDoctorController.addFavoriteDoctor);
+patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.removeFavoriteDoctor);
