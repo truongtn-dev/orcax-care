@@ -1,6 +1,18 @@
 import { api } from "./api.js";
 
 export const PatientApiClient = {
+  listFavoriteDoctors() {
+    return api.get("/api/patient/favorites");
+  },
+
+  addFavoriteDoctor(doctorId) {
+    return api.post(`/api/patient/favorites/${doctorId}`);
+  },
+
+  removeFavoriteDoctor(doctorId) {
+    return api.delete(`/api/patient/favorites/${doctorId}`);
+  },
+
   getWallet(params) {
     return api.get("/api/patient/wallet", { params });
   },
