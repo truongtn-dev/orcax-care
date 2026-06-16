@@ -142,11 +142,11 @@ export default function PatientWalletPage() {
           actions={
             <div className="wallet-hero-actions">
               <Link
-                to="/patient"
+                to="/patient/wallet"
                 className="btn btn-outline btn-sm"
                 style={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
               >
-                Back to dashboard
+                ← Back to wallet
               </Link>
             </div>
           }

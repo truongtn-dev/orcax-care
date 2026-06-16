@@ -13,6 +13,7 @@ import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
 import PatientWalletPage from "./pages/PatientWalletPage.jsx";
+import WalletDashboardPage from "./pages/WalletDashboardPage.jsx";
 import PatientWalletCheckoutPage from "./pages/PatientWalletCheckoutPage.jsx";
 import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
@@ -102,6 +103,14 @@ export default function App() {
           />
           <Route
             path="/patient/wallet"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <WalletDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/wallet/topup"
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientWalletPage />

@@ -1,0 +1,559 @@
+/* ════════════════════════════════════════════════════
+   WalletDashboardPage.css
+   Wallet overview dashboard – premium design
+   ════════════════════════════════════════════════════ */
+
+/* ── Page wrapper ───────────────────────────────────── */
+.wdb-page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+.wdb-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.wdb-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-decoration: none;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  margin-top: 0.2rem;
+}
+
+.wdb-back-link svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.wdb-back-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.wdb-header-titles {
+  flex: 1;
+}
+
+.wdb-page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+.wdb-page-lead {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0.25rem 0 0;
+}
+
+.wdb-refresh-btn {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.625rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  margin-top: 0.15rem;
+}
+
+.wdb-refresh-btn:hover:not(:disabled) {
+  border-color: #0e7490;
+  color: #0e7490;
+  background: #ecfeff;
+}
+
+.wdb-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wdb-refresh-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+@keyframes wdb-spin {
+  to { transform: rotate(360deg); }
+}
+.wdb-spin {
+  animation: wdb-spin 0.8s linear infinite;
+}
+
+/* ── Error banner ────────────────────────────────────── */
+.wdb-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.125rem;
+  font-size: 0.9rem;
+  color: #991b1b;
+}
+
+.wdb-error-banner svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+.wdb-retry-btn {
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: auto;
+  transition: background 0.2s;
+}
+
+.wdb-retry-btn:hover { background: #b91c1c; }
+
+/* ═══════════════════════════════════════════════════════
+   BALANCE CARD
+   ═══════════════════════════════════════════════════════ */
+.wdb-balance-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0c4a6e 0%, #0e7490 45%, #0891b2 100%);
+  border-radius: 1.5rem;
+  padding: 2rem 2.25rem;
+  color: white;
+  box-shadow:
+    0 20px 60px rgba(8, 145, 178, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* decorative orbs */
+.wdb-balance-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.wdb-balance-orb--1 {
+  width: 280px;
+  height: 280px;
+  background: rgba(255, 255, 255, 0.06);
+  top: -80px;
+  right: -60px;
+}
+
+.wdb-balance-orb--2 {
+  width: 180px;
+  height: 180px;
+  background: rgba(255, 255, 255, 0.04);
+  bottom: -60px;
+  left: 30%;
+}
+
+.wdb-balance-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.wdb-balance-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.wdb-balance-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.wdb-balance-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.01em;
+}
+
+.wdb-balance-amount {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.625rem;
+  margin-bottom: 1.75rem;
+}
+
+.wdb-balance-value {
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.wdb-balance-currency {
+  font-size: 1rem;
+  opacity: 0.65;
+  padding-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+/* loading dots */
+.wdb-balance-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-bottom: 0.25rem;
+}
+
+.wdb-balance-dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  animation: wdb-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.wdb-balance-dot:nth-child(2) { animation-delay: 0.2s; }
+.wdb-balance-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes wdb-dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* footer row */
+.wdb-balance-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* verified badge */
+.wdb-ledger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2rem;
+}
+
+.wdb-ledger-badge svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.wdb-ledger-badge--ok {
+  background: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.wdb-ledger-badge--checking {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.wdb-pulse {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  display: inline-block;
+  animation: wdb-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes wdb-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* top-up button inside card */
+.wdb-topup-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  color: #0c4a6e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.6rem 1.25rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wdb-topup-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.wdb-topup-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════
+   STATS ROW
+   ═══════════════════════════════════════════════════════ */
+.wdb-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .wdb-stats-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wdb-stat-card {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.wdb-stat-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+  transform: translateY(-2px);
+}
+
+.wdb-stat-icon {
+  font-size: 1.4rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.wdb-stat-card--green .wdb-stat-icon {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.wdb-stat-card--rose .wdb-stat-icon {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.wdb-stat-card--amber .wdb-stat-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.wdb-stat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.wdb-stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wdb-stat-label {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════════════════
+   QUICK ACTIONS
+   ═══════════════════════════════════════════════════════ */
+.wdb-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.875rem;
+}
+
+.wdb-qa-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.875rem;
+}
+
+@media (max-width: 600px) {
+  .wdb-qa-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wdb-qa-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.wdb-qa-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+.wdb-qa-card--cyan {
+  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%);
+  border-color: #a5f3fc;
+}
+
+.wdb-qa-card--teal {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #bbf7d0;
+}
+
+.wdb-qa-card--indigo {
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-color: #c7d2fe;
+}
+
+.wdb-qa-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.wdb-qa-icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.wdb-qa-card--cyan .wdb-qa-icon { background: rgba(6,182,212,0.15); color: #0e7490; }
+.wdb-qa-card--teal .wdb-qa-icon { background: rgba(20,184,166,0.15); color: #0d9488; }
+.wdb-qa-card--indigo .wdb-qa-icon { background: rgba(99,102,241,0.15); color: #4f46e5; }
+
+.wdb-qa-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.wdb-qa-hint {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.wdb-qa-arrow {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.4;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.wdb-qa-card:hover .wdb-qa-arrow {
+  opacity: 0.8;
+  transform: translateX(3px);
+}
+
+/* ═══════════════════════════════════════════════════════
+   TRANSACTIONS SECTION
+   ═══════════════════════════════════════════════════════ */
+.wdb-transactions-section {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+}
+
+.wdb-txn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+}
+
+.wdb-txn-header .wdb-section-title {
+  margin: 0;
+}
+
+.wdb-view-topup-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0e7490;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.wdb-view-topup-link:hover { color: #0c4a6e; }
+
+/* skeleton loaders */
+.wdb-txn-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wdb-txn-skeleton {
+  height: 4rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: wdb-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes wdb-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

@@ -51,6 +51,24 @@ async function findTopupTransaction(ref = {}) {
 
 export async function getWalletOverview(userId, { limit = 10 } = {}) {
   const wallet = await getOrCreateWallet(userId);
+
+  // Ledger reconciliation check
+  const allSuccessfulTxns = await WalletTransaction.find({ userId, status: "success" }).lean();
+  let ledgerSum = 0;
+  for (const txn of allSuccessfulTxns) {
+    if (txn.type === "topup" || txn.type === "refund") {
+      ledgerSum += txn.amount;
+    } else if (txn.type === "deduct") {
+      ledgerSum -= txn.amount;
+    }
+  }
+
+  if (wallet.balance !== ledgerSum) {
+    console.warn(`Wallet balance discrepancy detected for user ${userId}. Wallet: ${wallet.balance}, Ledger: ${ledgerSum}. Reconciling...`);
+    wallet.balance = ledgerSum;
+    await wallet.save();
+  }
+
   const transactions = await WalletTransaction.find({ userId })
     .sort({ createdAt: -1 })
     .limit(Math.min(50, Math.max(1, parseInt(limit, 10) || 10)))
@@ -191,6 +209,35 @@ export async function deductWalletBalance(userId, amount, description = "Booking
   const txn = await WalletTransaction.create({
     userId,
     type: "deduct",
+    amount: value,
+    status: "success",
+    provider: "internal",
+    description,
+    balanceAfter: wallet.balance,
+  });
+
+  return {
+    status: 200,
+    body: {
+      balance: wallet.balance,
+      transaction: serializeTransaction(txn),
+    },
+  };
+}
+
+export async function refundWalletBalance(userId, amount, description = "Appointment refund") {
+  const value = parseInt(amount, 10);
+  if (!value || value < 1) {
+    return { status: 400, body: { message: "Invalid refund amount" } };
+  }
+
+  const wallet = await getOrCreateWallet(userId);
+  wallet.balance += value;
+  await wallet.save();
+
+  const txn = await WalletTransaction.create({
+    userId,
+    type: "refund",
     amount: value,
     status: "success",
     provider: "internal",
