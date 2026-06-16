@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { Specialty } from "../models/Specialty.js";
 import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
-import { buildDoctorDocumentProfile, rankByNGram } from "./search/ngramEngine.js";
 import { extractQueryEntities } from "./search/hmmExtractor.js";
+import { rankDoctors } from "./search/retrievalEngine.js";
 import { getAvailabilitySummariesForDoctors } from "./doctorAvailability.service.js";
 import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
 
@@ -169,29 +169,26 @@ export async function searchDoctors({ q, name, specialtyId, departmentId, page =
   let doctors = await fetchDoctorRecords(matchStage);
 
   const searchText = rawQuery || resolvedName;
-  if (searchText) {
-    doctors = doctors.map((doc) => ({
-      ...doc,
-      _ngram: buildDoctorDocumentProfile(doc),
-    }));
-    doctors = rankByNGram(doctors, searchText).filter((d) => d._searchScore > 0.02 || !rawQuery);
+  const MIN_RELEVANCE = 0.08;
 
-    if (rawQuery && doctors.every((d) => d._searchScore <= 0.02)) {
-      doctors = rankByNGram(
-        (await fetchDoctorRecords({ isActive: true })).map((doc) => ({
-          ...doc,
-          _ngram: buildDoctorDocumentProfile(doc),
-        })),
-        searchText
-      );
+  const catalog = { specialties, departments };
+
+  if (searchText) {
+    doctors = rankDoctors(doctors, searchText, catalog).filter(
+      (d) => d._searchScore >= MIN_RELEVANCE || !rawQuery
+    );
+
+    if (rawQuery && doctors.every((d) => d._searchScore < MIN_RELEVANCE)) {
+      doctors = rankDoctors(await fetchDoctorRecords({ isActive: true }), searchText, catalog);
     }
   }
 
   const total = doctors.length;
   const skip = (pageNum - 1) * limitNum;
-  let items = doctors.slice(skip, skip + limitNum).map(({ _ngram, _searchScore, ...doc }) => ({
+  let items = doctors.slice(skip, skip + limitNum).map(({ _searchScore, _matchPercent, ...doc }) => ({
     ...doc,
     searchScore: _searchScore != null ? Number(_searchScore.toFixed(4)) : undefined,
+    matchPercent: _matchPercent ?? undefined,
   }));
 
   const summaries = await getAvailabilitySummariesForDoctors(items.map((item) => item._id.toString()));
@@ -214,13 +211,17 @@ export async function searchDoctors({ q, name, specialtyId, departmentId, page =
     total,
     totalPages: Math.ceil(total / limitNum) || 1,
     searchEngine: {
-      type: "NGram + HMM",
+      type: "BM25 + NGramIndex + HMM",
       query: rawQuery || null,
       extraction: extracted
         ? {
             name: extracted.nameText || null,
             specialty: extracted.specialtyName,
+            specialtyMatchPercent: extracted.specialtyMatchPercent,
+            specialtyAlternatives: extracted.specialtyAlternatives,
             department: extracted.departmentName,
+            departmentMatchPercent: extracted.departmentMatchPercent,
+            departmentAlternatives: extracted.departmentAlternatives,
             tokens: extracted.tokens,
             labels: extracted.labels,
           }
