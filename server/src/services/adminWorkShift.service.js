@@ -10,6 +10,8 @@ import {
 } from "../utils/shiftTime.js";
 import {
   analyzeDeleteShiftImpact,
+  countFutureBookedSlots,
+  didShiftTimingChange,
   planShiftSlots,
   regenerateFutureSlotsForShift,
   startOfToday,
@@ -389,6 +391,22 @@ export async function updateWorkShift(shiftId, payload) {
     };
   }
 
+  const timingChanged = didShiftTimingChange(existing, timing);
+  if (timingChanged) {
+    const futureBooked = await countFutureBookedSlots(existing._id);
+    if (futureBooked > 0 && payload.regenerateFutureSlots !== true) {
+      return {
+        status: 409,
+        body: {
+          message:
+            "This shift has future booked appointments. Enable regenerate future slots before changing day, hours, or capacity.",
+          code: "FUTURE_BOOKINGS_REQUIRE_REGEN",
+          futureBooked,
+        },
+      };
+    }
+  }
+
   existing.dayOfWeek = timing.day;
   existing.startTime = timing.start;
   existing.endTime = timing.end;
@@ -444,16 +462,6 @@ export async function deleteWorkShift(shiftId) {
   }
 
   const impact = await analyzeDeleteShiftImpact(existing._id);
-  if (!impact.canDelete) {
-    return {
-      status: 409,
-      body: {
-        message: "Cannot delete work shift because future appointments are booked",
-        futureBookings: impact.futureBooked,
-        ...impact,
-      },
-    };
-  }
 
   await AppointmentSlot.deleteMany({
     workShiftId: existing._id,
@@ -463,10 +471,15 @@ export async function deleteWorkShift(shiftId) {
 
   await existing.deleteOne();
 
+  const message =
+    impact.futureBooked > 0
+      ? `Work shift deleted. ${impact.futureBooked} booked appointment${impact.futureBooked === 1 ? "" : "s"} remain on the calendar.`
+      : "Work shift deleted";
+
   return {
     status: 200,
     body: {
-      message: "Work shift deleted",
+      message,
       deletedShiftId: shiftId,
       ...impact,
     },

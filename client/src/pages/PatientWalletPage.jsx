@@ -10,6 +10,7 @@ import WalletShell, {
 } from "../components/wallet/WalletShell.jsx";
 import WalletPaymentMethodPicker from "../components/wallet/WalletPaymentMethodPicker.jsx";
 import WalletTransactionList from "../components/wallet/WalletTransactionList.jsx";
+import { IconWalletReceipt, IconWalletTopup, IconWalletTransactions } from "../components/wallet/WalletPanelIcons.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import {
   WALLET_AMOUNT_PRESETS,
@@ -165,7 +166,14 @@ export default function PatientWalletPage() {
 
         {receipt && (
           <div className="wallet-receipt">
-            <h3>Transaction receipt</h3>
+            <div className="wallet-receipt-head patient-panel-head">
+              <span className="patient-panel-icon" aria-hidden="true">
+                <IconWalletReceipt />
+              </span>
+              <div className="patient-panel-head-main">
+                <h3 className="patient-panel-title">Transaction receipt</h3>
+              </div>
+            </div>
             <div className="wallet-receipt-grid">
               <div className="wallet-receipt-item">
                 <span>Reference</span>
@@ -194,11 +202,12 @@ export default function PatientWalletPage() {
             <WalletCard
               title="Top up wallet"
               lead="Choose a payment gateway and amount. PayOS shows a VietQR code on the checkout page to scan."
+              icon={<IconWalletTopup />}
               elevated
             >
               <form onSubmit={onTopup} className="wallet-topup-form">
-                <section className="wallet-form-block">
-                  <h3 className="wallet-form-block-title">Payment method</h3>
+                <section className="patient-form-block">
+                  <p className="patient-section-label">Payment method</p>
                   <WalletPaymentMethodPicker
                     methods={enabledMethods}
                     value={paymentMethod}
@@ -211,8 +220,8 @@ export default function PatientWalletPage() {
                   )}
                 </section>
 
-                <section className="wallet-form-block">
-                  <h3 className="wallet-form-block-title">Amount (VND)</h3>
+                <section className="patient-form-block">
+                  <p className="patient-section-label">Amount (VND)</p>
                   <div className="wallet-presets">
                     {WALLET_AMOUNT_PRESETS.map((preset) => (
                       <button
@@ -252,7 +261,12 @@ export default function PatientWalletPage() {
               </form>
             </WalletCard>
 
-            <WalletCard title="Recent transactions" elevated variant="transactions">
+            <WalletCard
+              title="Recent transactions"
+              icon={<IconWalletTransactions />}
+              elevated
+              variant="transactions"
+            >
               <WalletTransactionList
                 transactions={wallet?.transactions}
                 emptyText="No transactions yet. Top up to get started."

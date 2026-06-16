@@ -307,7 +307,11 @@ export default function TimePicker({
       {label && (
         <span className="time-picker-label">
           {label}
-          {required && <span className="time-picker-required"> *</span>}
+          {required && (
+            <span className="field-required-mark" aria-hidden="true">
+              *
+            </span>
+          )}
         </span>
       )}
 

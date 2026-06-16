@@ -95,11 +95,13 @@
   width: 36px;
   height: 36px;
   color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .logo-icon svg {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 .logo-text {
@@ -658,17 +660,25 @@
   font: inherit;
 }
 
-.checkbox-row {
+.checkbox-row,
+.form label.checkbox-label {
   flex-direction: row !important;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.625rem !important;
   font-weight: 500 !important;
   cursor: pointer;
 }
 
-.checkbox-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+.checkbox-row input[type="checkbox"],
+.form label.checkbox-label input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  min-height: 0;
+  padding: 0;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+  border: none;
+  box-shadow: none;
   accent-color: var(--color-primary);
   cursor: pointer;
 }
@@ -1563,13 +1573,38 @@
 
 .filter-field-label,
 .custom-select-label {
-  display: block;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.15rem;
+  width: fit-content;
+  max-width: 100%;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--color-text-muted);
   margin-bottom: 0.5rem;
+}
+
+.form label.custom-select-label {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.15rem;
+  width: fit-content;
+  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.field-required-mark {
+  color: #dc2626;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .filter-field-control {
@@ -2592,6 +2627,13 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.doctor-card-availability {
+  margin: -0.35rem 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-primary-hover);
 }
 
 .doctor-card-premium-footer {

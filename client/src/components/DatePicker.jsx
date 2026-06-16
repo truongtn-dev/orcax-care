@@ -282,7 +282,11 @@ export default function DatePicker({
       {label && (
         <span className="date-picker-label">
           {label}
-          {required && <span className="date-picker-required"> *</span>}
+          {required && (
+            <span className="field-required-mark" aria-hidden="true">
+              *
+            </span>
+          )}
         </span>
       )}
 

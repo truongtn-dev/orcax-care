@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import "./schedulingFormPages.css";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 import ShiftPlanPreview from "../../components/ShiftPlanPreview.jsx";
 import TimePicker from "../../components/TimePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
@@ -23,12 +25,14 @@ export default function EditWorkShiftPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [deleteImpact, setDeleteImpact] = useState(null);
   const [regenerateFutureSlots, setRegenerateFutureSlots] = useState(true);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -69,6 +73,7 @@ export default function EditWorkShiftPage() {
     if (!form?.doctorId) return undefined;
 
     const timer = window.setTimeout(async () => {
+      setPreviewLoading(true);
       try {
         const { data } = await AdminApiClient.previewWorkShift({
           doctorId: form.doctorId,
@@ -82,6 +87,8 @@ export default function EditWorkShiftPage() {
         setPreview(data);
       } catch {
         setPreview(null);
+      } finally {
+        setPreviewLoading(false);
       }
     }, 400);
 
@@ -97,22 +104,23 @@ export default function EditWorkShiftPage() {
     setError("");
   };
 
-  const onDelete = async () => {
-    const impactText = deleteImpact
-      ? `\nFuture booked: ${deleteImpact.futureBooked}\nSlots removed: ${deleteImpact.slotsRemovedIfDeleted}`
-      : "";
-    const confirmed = window.confirm(
-      `Delete this shift template?${impactText}\n\nThis cannot be undone if there are no future bookings.`
-    );
-    if (!confirmed) return;
+  const openDeleteConfirm = () => setDeleteConfirmOpen(true);
 
+  const closeDeleteConfirm = () => {
+    if (deleting) return;
+    setDeleteConfirmOpen(false);
+  };
+
+  const confirmDelete = async () => {
     setDeleting(true);
     setError("");
     try {
       await AdminApiClient.deleteWorkShift(id);
+      setDeleteConfirmOpen(false);
       navigate("/admin/work-shifts");
     } catch (err) {
       setError(getApiErrorMessage(err));
+      setDeleteConfirmOpen(false);
     } finally {
       setDeleting(false);
     }
@@ -152,98 +160,112 @@ export default function EditWorkShiftPage() {
     <PageLayout dashboard>
       <AdminLayout
         title="Edit work shift"
-        description="Adjust hours, capacity, or room. Future appointment slots may need regeneration."
+        description="Update weekly template — tick regenerate if hours or capacity change."
       >
-      <div className="card form-card-centered">
+      <div className="card scheduling-form-card scheduling-form-card--wide">
         {loading ? (
-          <p>Loading shift…</p>
+          <p style={{ padding: "1.75rem 2rem" }}>Loading shift…</p>
         ) : !form ? (
-          <div className="alert alert-error">{error || "Shift not found."}</div>
+          <div className="alert alert-error" style={{ margin: "1.75rem 2rem" }}>{error || "Shift not found."}</div>
         ) : (
           <form onSubmit={onSubmit} className="form">
             {error && <div className="alert alert-error">{error}</div>}
 
-            <fieldset className="form-section">
-              <legend>Shift details</legend>
+            <div className="scheduling-form-layout scheduling-form-layout--split">
+              <div className="scheduling-form-main">
+                <fieldset className="form-section">
+                  <legend>Shift details</legend>
 
-              <p className="text-muted">
-                Doctor: <strong>{form.doctorName}</strong>
-              </p>
+                  <div className="scheduling-form-grid">
+                    <div className="scheduling-form-span-2 scheduling-doctor-chip">
+                      <span>Doctor</span>
+                      <strong>{form.doctorName}</strong>
+                    </div>
 
-              <CustomSelect
-                id="edit-work-shift-room"
-                label="Clinic room"
-                value={form.roomId}
-                placeholder="No room assigned"
-                onChange={(roomId) => setForm((current) => ({ ...current, roomId }))}
-                options={roomOptions}
-              />
+                    <CustomSelect
+                      id="edit-work-shift-room"
+                      label="Clinic room"
+                      value={form.roomId}
+                      placeholder="No room assigned"
+                      onChange={(roomId) => setForm((current) => ({ ...current, roomId }))}
+                      options={roomOptions}
+                    />
 
-              <CustomSelect
-                id="edit-work-shift-day"
-                label="Day of week"
-                value={form.dayOfWeek}
-                onChange={(dayOfWeek) => setForm((current) => ({ ...current, dayOfWeek }))}
-                options={DAY_OPTIONS}
-              />
+                    <CustomSelect
+                      id="edit-work-shift-day"
+                      label="Day of week"
+                      value={form.dayOfWeek}
+                      onChange={(dayOfWeek) => setForm((current) => ({ ...current, dayOfWeek }))}
+                      options={DAY_OPTIONS}
+                    />
 
-              <div className="form-row">
-                <TimePicker
-                  id="edit-work-shift-start"
-                  label="Start time"
-                  name="startTime"
-                  value={form.startTime}
-                  onChange={onChange}
-                  max={form.endTime}
-                  required
-                />
-                <TimePicker
-                  id="edit-work-shift-end"
-                  label="End time"
-                  name="endTime"
-                  value={form.endTime}
-                  onChange={onChange}
-                  min={form.startTime}
-                  required
-                />
+                    <TimePicker
+                      id="edit-work-shift-start"
+                      label="Start time"
+                      name="startTime"
+                      value={form.startTime}
+                      onChange={onChange}
+                      max={form.endTime}
+                      required
+                    />
+                    <TimePicker
+                      id="edit-work-shift-end"
+                      label="End time"
+                      name="endTime"
+                      value={form.endTime}
+                      onChange={onChange}
+                      min={form.startTime}
+                      required
+                    />
+
+                    <label className="scheduling-form-span-2">
+                      Max patients
+                      <input
+                        type="number"
+                        name="maxPatients"
+                        min="1"
+                        max="50"
+                        value={form.maxPatients}
+                        onChange={onChange}
+                        required
+                      />
+                    </label>
+
+                    <label className="checkbox-row scheduling-form-span-2">
+                      <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
+                      Active shift template
+                    </label>
+
+                    <div className="scheduling-form-span-2">
+                      <label className="checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={regenerateFutureSlots}
+                          onChange={(event) => setRegenerateFutureSlots(event.target.checked)}
+                        />
+                        Regenerate future slots (preserve booked)
+                      </label>
+                      {deleteImpact?.futureBooked > 0 && (
+                        <p className="scheduling-form-hint scheduling-form-hint--warn">
+                          {deleteImpact.futureBooked} future booking
+                          {deleteImpact.futureBooked === 1 ? "" : "s"} — enable regenerate before changing hours or
+                          capacity.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </fieldset>
               </div>
 
-              <label>
-                Max patients
-                <input
-                  type="number"
-                  name="maxPatients"
-                  min="1"
-                  max="50"
-                  value={form.maxPatients}
-                  onChange={onChange}
-                  required
+              <aside className="scheduling-form-aside">
+                <ShiftPlanPreview
+                  preview={preview}
+                  loading={previewLoading}
+                  title="Updated shift validation"
+                  emptyMessage="Change shift details to refresh validation."
                 />
-              </label>
-
-              <label className="checkbox-label">
-                <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
-                Active shift template
-              </label>
-
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={regenerateFutureSlots}
-                  onChange={(event) => setRegenerateFutureSlots(event.target.checked)}
-                />
-                Regenerate future slots (delta sync, preserve booked appointments)
-              </label>
-            </fieldset>
-
-            <ShiftPlanPreview preview={preview} title="Updated shift validation" />
-
-            {deleteImpact && (
-              <div className="alert alert-info">
-                Delete impact: {deleteImpact.futureBooked} future booked,{" "}
-                {deleteImpact.futureAvailable + deleteImpact.futureBlocked} open/blocked slots would be removed.
-              </div>
-            )}
+              </aside>
+            </div>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving || deleting}>
@@ -254,16 +276,50 @@ export default function EditWorkShiftPage() {
               </Link>
               <button
                 type="button"
-                className="btn btn-outline"
-                onClick={onDelete}
+                className="btn btn-danger"
+                onClick={openDeleteConfirm}
                 disabled={saving || deleting}
               >
-                {deleting ? "Deleting…" : "Delete shift"}
+                Delete shift
               </button>
             </div>
           </form>
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="Delete work shift?"
+        description="Removes this weekly template and deletes open future slots. Booked appointments stay on the calendar."
+        confirmText="Delete shift"
+        cancelText="Cancel"
+        variant="danger"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteConfirm}
+      >
+        {deleteImpact && (
+          <>
+            <ul className="confirm-dialog-stats">
+              <li>
+                <span>Open slots removed</span>
+                <strong>{deleteImpact.slotsRemovedIfDeleted}</strong>
+              </li>
+              <li>
+                <span>Booked kept</span>
+                <strong>{deleteImpact.futureBooked}</strong>
+              </li>
+            </ul>
+            <p className="confirm-dialog-note">This action cannot be undone. Past slots are not affected.</p>
+            {deleteImpact.futureBooked > 0 && (
+              <p className="confirm-dialog-warning">
+                {deleteImpact.futureBooked} patient booking
+                {deleteImpact.futureBooked === 1 ? "" : "s"} will remain — cancel or reschedule separately if needed.
+              </p>
+            )}
+          </>
+        )}
+      </ConfirmDialog>
       </AdminLayout>
     </PageLayout>
   );

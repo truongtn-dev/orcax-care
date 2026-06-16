@@ -1,5 +1,6 @@
 .slot-gen {
-  max-width: 720px;
+  max-width: 960px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -77,6 +78,15 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-navy);
+}
+
+.slot-gen-block .searchable-select,
+.slot-gen-block .custom-select {
+  width: 100%;
+}
+
+.slot-gen-block .custom-select-label {
+  width: fit-content;
 }
 
 .slot-gen-presets,

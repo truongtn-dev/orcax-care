@@ -154,4 +154,27 @@ describe("UC-20 Block/Unlock Timeslot", () => {
     });
     assert.equal(res.status, 409);
   });
+
+  test("rejects blocking a past slot", async () => {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - 2);
+    pastDate.setHours(0, 0, 0, 0);
+
+    const pastSlot = await AppointmentSlot.create({
+      doctorId: doctor._id,
+      workShiftId: shift._id,
+      date: pastDate,
+      startTime: "08:00",
+      endTime: "08:30",
+      status: "available",
+    });
+
+    const res = await fetch(`${baseUrl}/api/doctor/appointment-slots/${pastSlot._id}/block`, {
+      method: "PUT",
+      headers: { Authorization: await authHeaderFor(doctorUser) },
+    });
+    assert.equal(res.status, 409);
+    const body = await res.json();
+    assert.match(body.message, /past/i);
+  });
 });

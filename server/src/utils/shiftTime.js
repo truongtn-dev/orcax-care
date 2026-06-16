@@ -78,6 +78,27 @@ export function eachDateInclusive(startDate, endDate) {
   return dates;
 }
 
+export function startOfToday() {
+  const day = new Date();
+  day.setHours(0, 0, 0, 0);
+  return day;
+}
+
+/** True when the slot start is before now (past calendar day, or earlier time today). */
+export function isSlotDatetimePast(date, startTime) {
+  if (!date || !isValidTimeString(startTime)) return false;
+
+  const slotDay = new Date(date);
+  slotDay.setHours(0, 0, 0, 0);
+  const today = startOfToday();
+
+  if (slotDay < today) return true;
+  if (slotDay > today) return false;
+
+  const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  return timeToMinutes(startTime) <= nowMinutes;
+}
+
 export const DAY_OF_WEEK_LABELS = [
   "Sunday",
   "Monday",

@@ -1,4 +1,5 @@
 import * as DoctorSearchService from "../services/doctorSearch.service.js";
+import * as DoctorAvailabilityService from "../services/doctorAvailability.service.js";
 
 export async function listSpecialties(req, res) {
   try {
@@ -14,6 +15,16 @@ export async function listDepartments(req, res) {
   try {
     const items = await DoctorSearchService.listDepartments();
     return res.json({ items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function getDoctorAvailability(req, res) {
+  try {
+    const result = await DoctorAvailabilityService.getDoctorAvailability(req.params.id, req.query);
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "System error" });

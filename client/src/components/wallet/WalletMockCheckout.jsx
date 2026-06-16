@@ -9,6 +9,8 @@ import WalletShell, {
   WalletProviderBadge,
   WalletToolbar,
 } from "./WalletShell.jsx";
+import WalletCancelConfirmDialog from "./WalletCancelConfirmDialog.jsx";
+import { IconWalletSimulate } from "./WalletPanelIcons.jsx";
 import { PatientApiClient } from "../../services/patientApi.js";
 import { getWalletErrorMessage } from "../../utils/walletUtils.js";
 
@@ -36,13 +38,15 @@ const MOCK_CONFIG = {
 export default function WalletMockCheckout({ provider, reference }) {
   const navigate = useNavigate();
   const config = MOCK_CONFIG[provider];
-  const [loading, setLoading] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [error, setError] = useState(reference ? "" : `Missing ${config?.refLabel || "reference"}.`);
 
   if (!config) return null;
 
   const onConfirm = async () => {
-    setLoading(true);
+    setConfirming(true);
     setError("");
     try {
       await config.confirm(reference);
@@ -50,13 +54,39 @@ export default function WalletMockCheckout({ provider, reference }) {
     } catch (err) {
       setError(getWalletErrorMessage(err));
     } finally {
-      setLoading(false);
+      setConfirming(false);
     }
   };
 
-  const onCancel = () => {
-    navigate(`/patient/wallet?payment=cancelled&reason=${encodeURIComponent(config.cancelReason)}`);
+  const openCancelConfirm = () => {
+    if (confirming || cancelling) return;
+    setCancelConfirmOpen(true);
   };
+
+  const closeCancelConfirm = () => {
+    if (cancelling) return;
+    setCancelConfirmOpen(false);
+  };
+
+  const confirmCancelPayment = async () => {
+    setCancelling(true);
+    setError("");
+    try {
+      if (reference) {
+        await PatientApiClient.cancelTopup(config.provider, reference);
+      }
+      setCancelConfirmOpen(false);
+      navigate(
+        `/patient/wallet?payment=cancelled&reason=${encodeURIComponent(config.cancelReason)}`
+      );
+    } catch (err) {
+      setError(getWalletErrorMessage(err));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const busy = confirming || cancelling;
 
   return (
     <WalletShell variant="checkout">
@@ -74,17 +104,25 @@ export default function WalletMockCheckout({ provider, reference }) {
 
       <WalletToolbar>
         <WalletBackLink to="/patient/wallet" label="Back to wallet" />
+        <div className="wallet-toolbar-actions">
+          <button
+            type="button"
+            className="btn btn-outline btn-sm wallet-checkout-cancel-btn"
+            onClick={openCancelConfirm}
+            disabled={busy}
+          >
+            Cancel payment
+          </button>
+        </div>
       </WalletToolbar>
 
       <WalletPageBody>
         {error && <WalletAlert type="error">{error}</WalletAlert>}
 
         <div className="wallet-mock-stage">
-          <WalletCard elevated>
-            <div className="wallet-mock-ref">
-              <span>{config.refLabel}</span>
-              <strong>{reference || "—"}</strong>
-            </div>
+          <WalletCard title="Simulate payment" lead={config.lead} icon={<IconWalletSimulate />} elevated>
+            <p className="patient-section-label">{config.refLabel}</p>
+            <p className="wallet-mock-ref-value">{reference || "—"}</p>
             <p className="wallet-mock-hint">
               Tap the button below to simulate a successful payment and credit your wallet.
             </p>
@@ -93,17 +131,31 @@ export default function WalletMockCheckout({ provider, reference }) {
                 type="button"
                 className="btn btn-primary"
                 onClick={onConfirm}
-                disabled={loading || !reference}
+                disabled={busy || !reference}
               >
-                {loading ? "Processing…" : "Simulate successful payment"}
+                {confirming ? "Processing…" : "Simulate successful payment"}
               </button>
-              <button type="button" className="btn btn-outline" onClick={onCancel} disabled={loading}>
+              <button
+                type="button"
+                className="btn btn-outline wallet-checkout-cancel-btn"
+                onClick={openCancelConfirm}
+                disabled={busy}
+              >
                 Cancel payment
               </button>
             </div>
           </WalletCard>
         </div>
       </WalletPageBody>
+
+      <WalletCancelConfirmDialog
+        open={cancelConfirmOpen}
+        loading={cancelling}
+        provider={config.provider}
+        reference={reference}
+        onConfirm={confirmCancelPayment}
+        onCancel={closeCancelConfirm}
+      />
     </WalletShell>
   );
 }

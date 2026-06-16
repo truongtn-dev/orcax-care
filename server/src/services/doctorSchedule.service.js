@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { Doctor } from "../models/Doctor.js";
-import { formatDateOnly, parseDateOnly } from "../utils/shiftTime.js";
-
-const STATUS_LABELS = {
-  available: "Available",
-  booked: "Booked",
-  blocked: "Blocked",
-};
+import {
+  buildDayEntries,
+  groupSlotsByDate,
+  serializeSlot,
+  summarizeSlots,
+} from "../utils/appointmentSlotSerializer.js";
+import { formatDateOnly, isSlotDatetimePast, parseDateOnly } from "../utils/shiftTime.js";
 
 async function resolveDoctorForUser(userId) {
   const doctor = await Doctor.findOne({ userId, isActive: true })
@@ -19,76 +19,6 @@ async function resolveDoctorForUser(userId) {
   }
 
   return doctor;
-}
-
-function serializeSlot(slot) {
-  const room = slot.roomId;
-
-  return {
-    _id: slot._id.toString(),
-    doctorId: slot.doctorId?.toString() || "",
-    workShiftId: slot.workShiftId?.toString() || "",
-    roomId: room?._id?.toString() || slot.roomId?.toString() || null,
-    roomName: room?.name || "",
-    date: formatDateOnly(slot.date),
-    startTime: slot.startTime,
-    endTime: slot.endTime,
-    status: slot.status,
-    statusLabel: STATUS_LABELS[slot.status] || slot.status,
-    createdAt: slot.createdAt,
-    updatedAt: slot.updatedAt,
-  };
-}
-
-function groupSlotsByDate(slots) {
-  const buckets = new Map();
-
-  for (const slot of slots) {
-    const dateKey = formatDateOnly(slot.date);
-    if (!buckets.has(dateKey)) {
-      buckets.set(dateKey, []);
-    }
-    buckets.get(dateKey).push(serializeSlot(slot));
-  }
-
-  for (const daySlots of buckets.values()) {
-    daySlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
-  }
-
-  return buckets;
-}
-
-function buildDayEntries(startDate, endDate, buckets) {
-  const days = [];
-  const cursor = new Date(startDate);
-  cursor.setHours(0, 0, 0, 0);
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-
-  while (cursor <= end) {
-    const dateKey = formatDateOnly(cursor);
-    days.push({
-      date: dateKey,
-      dayOfWeek: cursor.getDay(),
-      slots: buckets.get(dateKey) || [],
-    });
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return days;
-}
-
-function summarizeSlots(slots) {
-  return slots.reduce(
-    (summary, slot) => {
-      summary.total += 1;
-      if (slot.status === "available") summary.available += 1;
-      if (slot.status === "booked") summary.booked += 1;
-      if (slot.status === "blocked") summary.blocked += 1;
-      return summary;
-    },
-    { total: 0, available: 0, booked: 0, blocked: 0 }
-  );
 }
 
 export async function getScheduleCalendar(userId, query = {}) {
@@ -122,7 +52,7 @@ export async function getScheduleCalendar(userId, query = {}) {
 
   const buckets = groupSlotsByDate(rows);
   const days = buildDayEntries(rangeStart, rangeEnd, buckets);
-  const flatSlots = rows.map(serializeSlot);
+  const flatSlots = rows.map((row) => serializeSlot(row));
 
   return {
     status: 200,
@@ -194,6 +124,13 @@ export async function blockAppointmentSlot(userId, slotId) {
 
   const { slot } = result;
 
+  if (isSlotDatetimePast(slot.date, slot.startTime)) {
+    return {
+      status: 409,
+      body: { message: "Cannot change status of a past appointment slot" },
+    };
+  }
+
   if (slot.status === "booked") {
     return {
       status: 409,
@@ -223,6 +160,13 @@ export async function unblockAppointmentSlot(userId, slotId) {
   if (result.error) return result.error;
 
   const { slot } = result;
+
+  if (isSlotDatetimePast(slot.date, slot.startTime)) {
+    return {
+      status: 409,
+      body: { message: "Cannot change status of a past appointment slot" },
+    };
+  }
 
   if (slot.status === "booked") {
     return {

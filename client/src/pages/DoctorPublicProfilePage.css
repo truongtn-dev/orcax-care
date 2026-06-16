@@ -252,9 +252,17 @@
 
 .doctor-profile-body {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
   gap: 1.25rem;
   align-items: start;
+}
+
+.doctor-profile-main,
+.doctor-profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
 }
 
 .doctor-profile-panel {
@@ -265,32 +273,58 @@
   box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
 }
 
+.doctor-profile-panel--compact {
+  padding: 1.15rem 1.35rem;
+}
+
+.doctor-profile-panel--booking {
+  padding-bottom: 1.25rem;
+}
+
+.doctor-profile-panel--booking .doctor-profile-panel-head {
+  margin-bottom: 0.85rem;
+}
+
 .doctor-profile-panel-head {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  margin-bottom: 0.85rem;
+  margin: -1.15rem -1.35rem 1rem;
+  padding: 0.85rem 1.35rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.doctor-profile-panel--booking .doctor-profile-panel-head {
+  margin: -1.5rem -1.55rem 1rem;
+  padding: 0.9rem 1.55rem;
 }
 
 .doctor-profile-panel-icon {
+  flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-brand-tint);
-  color: var(--color-primary-hover);
+  background: #fff;
+  color: #0e7490;
+  border: 1px solid rgba(8, 145, 178, 0.18);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .doctor-profile-panel-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 19px;
+  height: 19px;
+  display: block;
 }
 
 .doctor-profile-panel h2 {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--color-navy);
 }
 
@@ -301,59 +335,47 @@
   color: var(--color-text-secondary);
 }
 
+.doctor-profile-panel--compact .doctor-profile-panel-head {
+  margin-bottom: 0;
+}
+
 .doctor-profile-facts {
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 }
 
 .doctor-profile-fact {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(7rem, 38%) 1fr;
   gap: 0.75rem;
-  padding: 0.85rem 0.9rem;
-  border-radius: var(--radius-lg);
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.05);
+  align-items: baseline;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.doctor-profile-fact-icon {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  color: var(--color-primary-hover);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+.doctor-profile-fact:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-.doctor-profile-fact-icon svg {
-  width: 17px;
-  height: 17px;
-}
-
-.doctor-profile-fact-label {
-  display: block;
-  margin-bottom: 0.15rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.doctor-profile-fact dt {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--color-text-muted);
 }
 
-.doctor-profile-fact-value {
-  font-size: 0.92rem;
+.doctor-profile-fact dd {
+  margin: 0;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-navy);
   line-height: 1.4;
 }
 
 .doctor-profile-review {
-  grid-column: 1 / -1;
+  /* stays in sidebar stack */
 }
 
 .doctor-profile-review p {
@@ -375,6 +397,14 @@
 @media (max-width: 960px) {
   .doctor-profile-body {
     grid-template-columns: 1fr;
+  }
+
+  .doctor-profile-sidebar {
+    order: 2;
+  }
+
+  .doctor-profile-main {
+    order: 1;
   }
 }
 
@@ -406,5 +436,18 @@
 
   .doctor-profile-signin-note {
     text-align: center;
+  }
+
+  .doctor-profile-panel-head,
+  .doctor-profile-panel--booking .doctor-profile-panel-head {
+    margin-left: -1.15rem;
+    margin-right: -1.15rem;
+    padding-left: 1.15rem;
+    padding-right: 1.15rem;
+  }
+
+  .doctor-profile-fact {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
   }
 }

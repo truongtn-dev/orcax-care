@@ -9,5 +9,6 @@ publicRouter.use(requireDatabase);
 publicRouter.get("/specialties", PublicController.listSpecialties);
 publicRouter.get("/departments", PublicController.listDepartments);
 publicRouter.get("/doctors/featured", PublicController.listFeaturedDoctors);
+publicRouter.get("/doctors/:id/availability", PublicController.getDoctorAvailability);
 publicRouter.get("/doctors/:id", PublicController.getDoctor);
 publicRouter.get("/doctors", PublicController.searchDoctors);

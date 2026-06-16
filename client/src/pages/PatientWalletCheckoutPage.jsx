@@ -12,6 +12,12 @@ import WalletShell, {
   WalletProviderBadge,
   WalletToolbar,
 } from "../components/wallet/WalletShell.jsx";
+import {
+  IconWalletBank,
+  IconWalletHelp,
+  IconWalletQrScan,
+} from "../components/wallet/WalletPanelIcons.jsx";
+import WalletCancelConfirmDialog from "../components/wallet/WalletCancelConfirmDialog.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import {
   WALLET_PROVIDER_LABELS,
@@ -35,6 +41,46 @@ export default function PatientWalletCheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [pollStatus, setPollStatus] = useState("pending");
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+
+  const canCancel =
+    checkout &&
+    pollStatus !== "success" &&
+    pollStatus !== "failed" &&
+    pollStatus !== "cancelled" &&
+    checkout.status !== "success";
+
+  const openCancelConfirm = () => {
+    if (!canCancel || cancelling) return;
+    setCancelConfirmOpen(true);
+  };
+
+  const closeCancelConfirm = () => {
+    if (cancelling) return;
+    setCancelConfirmOpen(false);
+  };
+
+  const confirmCancelPayment = async () => {
+    if (!canCancel || cancelling) return;
+
+    setCancelling(true);
+    setError("");
+    try {
+      await PatientApiClient.cancelTopup(provider, ref);
+      setPollStatus("cancelled");
+      setCancelConfirmOpen(false);
+      navigate(
+        `/patient/wallet?payment=cancelled&reason=${encodeURIComponent("Payment cancelled. Your balance was not changed.")}`,
+        { replace: true }
+      );
+    } catch (err) {
+      setError(getWalletErrorMessage(err));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const loadCheckout = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -90,6 +136,15 @@ export default function PatientWalletCheckoutPage() {
   const snapshot = checkout?.checkoutSnapshot || {};
   const providerLabel = WALLET_PROVIDER_LABELS[provider] || provider;
   const expiryText = formatWalletExpiry(snapshot.expiredAt);
+  const qrCode = snapshot.qrCode;
+  const scanHint =
+    provider === "payos"
+      ? "Scan with your banking app and confirm the exact amount."
+      : "Scan VietQR and include the transfer memo shown in bank details.";
+  const scanSteps =
+    provider === "payos"
+      ? ["Open banking app", "Scan VietQR", "Confirm amount"]
+      : ["Open banking app", "Scan VietQR", "Check memo"];
 
   return (
     <PageLayout>
@@ -113,6 +168,18 @@ export default function PatientWalletCheckoutPage() {
 
         <WalletToolbar>
           <WalletBackLink to="/patient/wallet" label="Back to wallet" />
+          {canCancel && (
+            <div className="wallet-toolbar-actions">
+              <button
+                type="button"
+                className="btn btn-outline btn-sm wallet-checkout-cancel-btn"
+                onClick={openCancelConfirm}
+                disabled={cancelling}
+              >
+                {cancelling ? "Cancelling…" : "Cancel payment"}
+              </button>
+            </div>
+          )}
         </WalletToolbar>
 
         <WalletPageBody>
@@ -126,71 +193,99 @@ export default function PatientWalletCheckoutPage() {
             <WalletLoading label="Loading payment details…" />
           ) : checkout ? (
             <div className="wallet-checkout-stage">
-              <WalletCard className="wallet-checkout-pay-panel" elevated>
-                <div className="wallet-checkout-summary">
-                  <div>
-                    <span>Top-up amount</span>
-                    <p className="wallet-checkout-amount">{formatWalletCurrency(checkout.amount)}</p>
-                  </div>
-                  <WalletProviderBadge provider={provider} />
-                </div>
-                <p className="wallet-card-lead" style={{ margin: 0 }}>
-                  {checkout.description}
-                </p>
+              <WalletCard
+                className="wallet-checkout-pay-panel"
+                title="Scan to pay"
+                lead={`Pay with ${providerLabel} — balance updates automatically after confirmation.`}
+                icon={<IconWalletQrScan />}
+                elevated
+              >
+                {qrCode ? (
+                  <div className={`wallet-checkout-pay-stage wallet-checkout-pay-stage--${provider}`}>
+                    <div className="wallet-checkout-pay-stage-head">
+                      <div className="wallet-checkout-pay-amount">
+                        <span className="patient-section-label">Top-up amount</span>
+                        <strong>{formatWalletCurrency(checkout.amount)}</strong>
+                      </div>
+                      <WalletProviderBadge provider={provider} />
+                    </div>
 
-                {provider === "payos" && snapshot.qrCode && (
-                  <div className="wallet-checkout-qr-wrap">
-                    <div className="wallet-checkout-qr">
-                      {isWalletQrImageSource(snapshot.qrCode) ? (
-                        <img src={snapshot.qrCode} alt="PayOS VietQR code" />
-                      ) : (
-                        <QRCodeSVG value={snapshot.qrCode} size={280} level="M" includeMargin />
+                    <div className="wallet-checkout-pay-stage-body">
+                      <span className="wallet-checkout-vietqr-badge">VietQR</span>
+                      <div className="wallet-checkout-qr-shell">
+                        {isWalletQrImageSource(qrCode) ? (
+                          <img src={qrCode} alt={`${providerLabel} VietQR code`} className="wallet-checkout-qr-img" />
+                        ) : (
+                          <QRCodeSVG value={qrCode} size={240} level="M" includeMargin className="wallet-checkout-qr-svg" />
+                        )}
+                      </div>
+
+                      <p className="wallet-checkout-qr-hint">{scanHint}</p>
+
+                      <div className="wallet-checkout-scan-steps" aria-label="Quick steps">
+                        {scanSteps.map((step) => (
+                          <span key={step} className="wallet-checkout-scan-step">
+                            {step}
+                          </span>
+                        ))}
+                      </div>
+
+                      {provider === "payos" && snapshot.checkoutUrl && (
+                        <a
+                          href={snapshot.checkoutUrl}
+                          className="btn btn-outline btn-sm wallet-checkout-alt-link"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Open PayOS page
+                        </a>
                       )}
                     </div>
-                    <p className="wallet-checkout-qr-hint">
-                      Open your banking app → Scan QR / VietQR → Confirm the amount shown.
-                    </p>
-                    {snapshot.checkoutUrl && (
-                      <a
-                        href={snapshot.checkoutUrl}
-                        className="btn btn-outline btn-sm"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Open PayOS page
-                      </a>
+
+                    {(expiryText || canCancel) && (
+                      <div className="wallet-checkout-pay-stage-foot">
+                        {expiryText && (
+                          <p className="wallet-checkout-timer">Link expires: {expiryText}</p>
+                        )}
+                        {canCancel && (
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm wallet-checkout-cancel-btn"
+                            onClick={openCancelConfirm}
+                            disabled={cancelling}
+                          >
+                            {cancelling ? "Cancelling…" : "Cancel payment"}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
-                )}
-
-                {provider === "sepay" && snapshot.qrCode && (
-                  <div className="wallet-checkout-qr-wrap">
-                    <div className="wallet-checkout-qr">
-                      {isWalletQrImageSource(snapshot.qrCode) ? (
-                        <img src={snapshot.qrCode} alt="SePay VietQR code" />
-                      ) : (
-                        <QRCodeSVG value={snapshot.qrCode} size={280} level="M" includeMargin />
-                      )}
-                    </div>
-                    <p className="wallet-checkout-qr-hint">
-                      Open your banking app → Scan VietQR → Confirm the amount and transfer memo.
+                ) : (
+                  <div className="wallet-checkout-pay-stage wallet-checkout-pay-stage--error">
+                    <p>
+                      Could not load the payment QR code. Cancel this transaction and try again from your wallet.
                     </p>
+                    {canCancel && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm wallet-checkout-cancel-btn"
+                        onClick={openCancelConfirm}
+                        disabled={cancelling}
+                      >
+                        {cancelling ? "Cancelling…" : "Cancel payment"}
+                      </button>
+                    )}
                   </div>
-                )}
-
-                {provider === "sepay" && !snapshot.qrCode && (
-                  <div className="wallet-sepay-launcher wallet-sepay-launcher--error">
-                    <p>Could not load the SePay QR code. Cancel the transaction and try again from the wallet page.</p>
-                  </div>
-                )}
-
-                {expiryText && (
-                  <p className="wallet-checkout-timer">Payment link expires: {expiryText}</p>
                 )}
               </WalletCard>
 
               <div className="wallet-checkout-side">
-                <WalletCard title={`How to pay — ${providerLabel}`}>
+                <WalletCard
+                  title="How to pay"
+                  lead={`Steps for ${providerLabel}`}
+                  icon={<IconWalletHelp />}
+                  elevated
+                >
                   {provider === "payos" ? (
                     <ol className="wallet-checkout-steps">
                       <li>Open your banking app on your phone.</li>
@@ -212,7 +307,7 @@ export default function PatientWalletCheckoutPage() {
                   snapshot.accountName ||
                   snapshot.transferContent ||
                   snapshot.bin) && (
-                  <WalletCard title="Bank transfer details">
+                  <WalletCard title="Bank transfer details" icon={<IconWalletBank />} elevated>
                     <div className="wallet-checkout-bank">
                       {snapshot.accountName && (
                         <div className="wallet-checkout-bank-row">
@@ -270,6 +365,16 @@ export default function PatientWalletCheckoutPage() {
             </div>
           ) : null}
         </WalletPageBody>
+
+        <WalletCancelConfirmDialog
+          open={cancelConfirmOpen}
+          loading={cancelling}
+          amount={checkout?.amount}
+          provider={provider}
+          reference={checkout?.orderCode || checkout?.providerOrderId || ref}
+          onConfirm={confirmCancelPayment}
+          onCancel={closeCancelConfirm}
+        />
       </WalletShell>
     </PageLayout>
   );

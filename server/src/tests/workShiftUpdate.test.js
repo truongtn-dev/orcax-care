@@ -5,6 +5,7 @@ import http from "node:http";
 import path from "node:path";
 import { createApp } from "../app.js";
 import { connectDatabase, disconnectDatabase } from "../config/database.js";
+import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { AuthToken } from "../models/AuthToken.js";
 import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
@@ -32,6 +33,13 @@ function close(server) {
 async function authHeaderFor(user) {
   const session = await issueAuthToken(user._id);
   return `Token ${session.plainToken}`;
+}
+
+function futureDate(daysAhead = 7) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
 
 describe("UC-29 Update Work Shift", () => {
@@ -149,6 +157,32 @@ describe("UC-29 Update Work Shift", () => {
     assert.equal(res.status, 409);
     const body = await res.json();
     assert.match(body.message, /overlap/i);
+  });
+
+  test("rejects timing change when future bookings exist without regeneration", async () => {
+    await AppointmentSlot.create({
+      doctorId: doctor._id,
+      workShiftId: shift._id,
+      date: futureDate(5),
+      startTime: "08:00",
+      endTime: "08:30",
+      status: "booked",
+    });
+
+    const res = await fetch(`${baseUrl}/api/admin/work-shifts/${shift._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: await authHeaderFor(admin),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        endTime: "11:00",
+        regenerateFutureSlots: false,
+      }),
+    });
+    assert.equal(res.status, 409);
+    const body = await res.json();
+    assert.match(body.message, /regenerate future slots/i);
   });
 
   test("returns 404 for missing shift", async () => {

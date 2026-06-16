@@ -37,6 +37,8 @@ const DATE_PRESETS = [
   { id: "30d", label: "30 days", startOffset: 1, endOffset: 30 },
 ];
 
+const todayIso = defaultDate(0);
+
 export default function GenerateAppointmentSlotsPage() {
   const [form, setForm] = useState({
     startDate: defaultDate(1),
@@ -261,6 +263,7 @@ export default function GenerateAppointmentSlotsPage() {
                     name="startDate"
                     value={form.startDate}
                     onChange={onChange}
+                    min={todayIso}
                     max={form.endDate}
                     required
                   />
@@ -273,7 +276,7 @@ export default function GenerateAppointmentSlotsPage() {
                     name="endDate"
                     value={form.endDate}
                     onChange={onChange}
-                    min={form.startDate}
+                    min={form.startDate < todayIso ? todayIso : form.startDate}
                     required
                   />
                 </div>

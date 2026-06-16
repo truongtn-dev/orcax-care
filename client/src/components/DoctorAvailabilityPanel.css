@@ -1,0 +1,194 @@
+.doctor-availability {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.doctor-availability--profile {
+  gap: 0.75rem;
+}
+
+.doctor-availability--loading,
+.doctor-availability--empty {
+  padding: 1rem 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.doctor-availability--profile.doctor-availability--loading,
+.doctor-availability--profile.doctor-availability--empty {
+  padding: 0.5rem 0;
+  text-align: left;
+}
+
+.doctor-availability--empty p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.doctor-availability-section-label {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.doctor-availability--profile .doctor-availability-section-label + .doctor-availability-days,
+.doctor-availability--profile .doctor-availability-section-label + .doctor-availability-slots,
+.patient-panel-body .doctor-availability-section-label + .doctor-availability-days,
+.patient-panel-body .doctor-availability-section-label + .doctor-availability-slots {
+  margin-top: -0.15rem;
+}
+
+.doctor-availability-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.doctor-availability-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.65rem;
+}
+
+.doctor-availability-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(8, 145, 178, 0.12);
+  color: var(--color-primary-hover);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.doctor-availability-fee {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.doctor-availability-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.doctor-availability-day {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-navy);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.doctor-availability-day em {
+  font-style: normal;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-primary-hover);
+}
+
+.doctor-availability-day.is-active {
+  border-color: var(--color-primary);
+  background: rgba(8, 145, 178, 0.08);
+}
+
+.doctor-availability-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-availability-slots li {
+  margin: 0;
+}
+
+.doctor-availability-slot {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  min-width: 9.5rem;
+  padding: 0.55rem 0.65rem 0.55rem 0.75rem;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-navy);
+  text-decoration: none;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.doctor-availability-slot strong {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #0f172a;
+}
+
+.doctor-availability-room {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.18rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(14, 116, 144, 0.1);
+  color: #0e7490;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.doctor-availability-slot:hover,
+.doctor-availability-slot.is-selected {
+  border-color: #0e7490;
+  background: rgba(8, 145, 178, 0.05);
+  box-shadow: 0 0 0 1px rgba(8, 145, 178, 0.18);
+}
+
+.doctor-availability-slot.is-selected .doctor-availability-room {
+  background: rgba(8, 145, 178, 0.16);
+  color: #0e7490;
+}
+
+.doctor-availability--profile .doctor-availability-slots {
+  padding-top: 0.15rem;
+}
+
+@media (max-width: 640px) {
+  .doctor-availability-toolbar {
+    align-items: stretch;
+  }
+
+  .doctor-availability-toolbar .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

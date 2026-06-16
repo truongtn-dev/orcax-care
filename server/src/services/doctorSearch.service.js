@@ -4,6 +4,8 @@ import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { buildDoctorDocumentProfile, rankByNGram } from "./search/ngramEngine.js";
 import { extractQueryEntities } from "./search/hmmExtractor.js";
+import { getAvailabilitySummariesForDoctors } from "./doctorAvailability.service.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
 
 let catalogCache = null;
 
@@ -96,7 +98,20 @@ export async function getDoctorById(doctorId) {
 
   const matchStage = { isActive: true, _id: new mongoose.Types.ObjectId(doctorId) };
   const doctors = await fetchDoctorRecords(matchStage);
-  return doctors.length > 0 ? doctors[0] : null;
+  if (!doctors.length) return null;
+
+  const doctor = doctors[0];
+  const summaries = await getAvailabilitySummariesForDoctors([doctor._id.toString()]);
+  const availability = summaries.get(doctor._id.toString()) || {
+    availableCount: 0,
+    nextAvailableDate: null,
+  };
+
+  return {
+    ...doctor,
+    consultationFee: DEFAULT_CONSULTATION_FEE_VND,
+    availability,
+  };
 }
 
 export async function getFeaturedDoctors(limit = 6) {
@@ -174,10 +189,23 @@ export async function searchDoctors({ q, name, specialtyId, departmentId, page =
 
   const total = doctors.length;
   const skip = (pageNum - 1) * limitNum;
-  const items = doctors.slice(skip, skip + limitNum).map(({ _ngram, _searchScore, ...doc }) => ({
+  let items = doctors.slice(skip, skip + limitNum).map(({ _ngram, _searchScore, ...doc }) => ({
     ...doc,
     searchScore: _searchScore != null ? Number(_searchScore.toFixed(4)) : undefined,
   }));
+
+  const summaries = await getAvailabilitySummariesForDoctors(items.map((item) => item._id.toString()));
+  items = items.map((item) => {
+    const availability = summaries.get(item._id.toString()) || {
+      availableCount: 0,
+      nextAvailableDate: null,
+    };
+    return {
+      ...item,
+      consultationFee: DEFAULT_CONSULTATION_FEE_VND,
+      availability,
+    };
+  });
 
   return {
     items,

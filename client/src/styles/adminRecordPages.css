@@ -67,7 +67,7 @@
   padding: 0.85rem 1rem !important;
 }
 
-.portal-shell .form label {
+.portal-shell .form label:not(.custom-select-label) {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-secondary);

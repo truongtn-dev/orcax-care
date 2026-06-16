@@ -59,6 +59,17 @@ function formatNavDate(date, view, rangeEnd) {
   return `${DAY_LABELS[date.getDay()]}, ${date.getDate()} ${MONTH_LABELS[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function formatDayChipLabel(dateStr) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return `${DAY_LABELS[date.getDay()]} ${day}/${month}`;
+}
+
+function parseDateOnly(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function buildTimeAxis(slots) {
   if (!slots.length) {
     const rows = [];
@@ -106,7 +117,91 @@ function SlotButton({ slot, selected, onSelect }) {
   );
 }
 
-function DayTimeline({ day, selectedSlotId, onSelectSlot }) {
+function WeekContextStrip({ days, activeDate, onSelectDate }) {
+  if (!days.length) return null;
+
+  return (
+    <div className="cal-week-strip" role="group" aria-label="Days this week">
+      {days.map((day) => {
+        const count = day.slots.length;
+        const isActive = day.date === activeDate;
+        const hasSlots = count > 0;
+
+        return (
+          <button
+            key={day.date}
+            type="button"
+            className={`cal-week-strip-day${isActive ? " is-active" : ""}${hasSlots ? " has-slots" : ""}`}
+            onClick={() => onSelectDate(day.date)}
+            aria-current={isActive ? "date" : undefined}
+          >
+            <span className="cal-week-strip-label">{formatDayChipLabel(day.date)}</span>
+            <span className="cal-week-strip-count">
+              {hasSlots ? `${count} slot${count === 1 ? "" : "s"}` : "—"}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CalendarEmptyState({
+  title,
+  message,
+  weekDays = [],
+  activeDate = "",
+  onSelectDate,
+  onSwitchToWeek,
+}) {
+  const nearbyDays = weekDays.filter((day) => day.slots.length > 0);
+
+  return (
+    <div className="cal-empty">
+      <div className="cal-empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <rect x="6" y="10" width="36" height="32" rx="6" stroke="currentColor" strokeWidth="2" />
+          <path d="M6 18h36" stroke="currentColor" strokeWidth="2" />
+          <path d="M16 6v8M32 6v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </div>
+      <h3>{title}</h3>
+      <p>{message}</p>
+
+      {nearbyDays.length > 0 && onSelectDate && (
+        <div className="cal-empty-nearby">
+          <span className="cal-empty-nearby-label">Slots this week</span>
+          <div className="cal-empty-nearby-list">
+            {nearbyDays.map((day) => (
+              <button
+                key={day.date}
+                type="button"
+                className="cal-empty-nearby-btn"
+                onClick={() => onSelectDate(day.date)}
+              >
+                {formatDayChipLabel(day.date)}
+                <span>{day.slots.length} slots</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="cal-empty-actions">
+        {onSwitchToWeek && (
+          <button type="button" className="btn btn-primary btn-sm" onClick={onSwitchToWeek}>
+            View week
+          </button>
+        )}
+        <Link to="/doctor/work-shifts" className="btn btn-secondary btn-sm">
+          View work shifts
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function DayTimeline({ day, weekDays, activeDate, selectedSlotId, onSelectSlot, onSelectDate, onSwitchToWeek }) {
   const slots = day?.slots || [];
   const timeAxis = useMemo(() => buildTimeAxis(slots), [slots]);
   const slotsByStart = useMemo(
@@ -115,19 +210,26 @@ function DayTimeline({ day, selectedSlotId, onSelectSlot }) {
   );
 
   if (!slots.length) {
+    const dayLabel = activeDate ? formatDayChipLabel(activeDate) : "This day";
     return (
-      <div className="cal-empty">
-        <h3>No slots on this day</h3>
-        <p>Appointment slots will appear here once admin generates them from your work shifts.</p>
-        <Link to="/doctor/work-shifts" className="btn btn-secondary btn-sm">
-          View work shifts
-        </Link>
+      <div className="cal-day-empty-wrap">
+        <WeekContextStrip days={weekDays} activeDate={activeDate} onSelectDate={onSelectDate} />
+        <CalendarEmptyState
+          title="No slots on this day"
+          message={`${dayLabel} has no appointment slots. Slots only appear on days that match your weekly work shifts after admin generates them.`}
+          weekDays={weekDays}
+          activeDate={activeDate}
+          onSelectDate={onSelectDate}
+          onSwitchToWeek={onSwitchToWeek}
+        />
       </div>
     );
   }
 
   return (
-    <div className="cal-day-timeline">
+    <div className="cal-day-view">
+      <WeekContextStrip days={weekDays} activeDate={activeDate} onSelectDate={onSelectDate} />
+      <div className="cal-day-timeline">
       {timeAxis.map((minute) => {
         const timeLabel = minutesToTime(minute);
         const slot = slotsByStart[timeLabel];
@@ -149,39 +251,49 @@ function DayTimeline({ day, selectedSlotId, onSelectSlot }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
 
-function WeekBoard({ days, selectedSlotId, onSelectSlot, todayKey }) {
+function WeekBoard({ days, selectedSlotId, onSelectSlot, todayKey, onSelectDate }) {
   const hasAnySlot = days.some((day) => day.slots.length > 0);
 
   if (!hasAnySlot) {
     return (
-      <div className="cal-empty">
-        <h3>No slots this week</h3>
-        <p>When slots are generated, they will show up as compact chips in each day column.</p>
-        <Link to="/doctor/work-shifts" className="btn btn-secondary btn-sm">
-          View work shifts
-        </Link>
-      </div>
+      <CalendarEmptyState
+        title="No slots this week"
+        message="Appointment slots appear on days that match your weekly work shifts. Ask admin to generate slots from Work shifts, or check another week."
+        onSwitchToWeek={null}
+      />
     );
   }
 
   return (
     <div className="cal-week-board">
-      {days.map((day) => (
+      {days.map((day) => {
+        const hasSlots = day.slots.length > 0;
+
+        return (
         <section
           key={day.date}
-          className={`cal-week-col ${day.date === todayKey ? "is-today" : ""}`}
+          className={`cal-week-col ${day.date === todayKey ? "is-today" : ""}${hasSlots ? " has-slots" : " is-empty"}`}
         >
           <header className="cal-week-head">
             <strong>{DAY_LABELS[day.dayOfWeek]}</strong>
             <span>{day.date.slice(5).replace("-", "/")}</span>
+            {hasSlots && <em className="cal-week-head-count">{day.slots.length}</em>}
           </header>
           <div className="cal-week-slots">
-            {!day.slots.length ? (
-              <p className="cal-week-col-empty">—</p>
+            {!hasSlots ? (
+              <button
+                type="button"
+                className="cal-week-col-empty"
+                onClick={() => onSelectDate?.(day.date)}
+                title="Open day view"
+              >
+                No slots
+              </button>
             ) : (
               day.slots.map((slot) => (
                 <button
@@ -201,12 +313,15 @@ function WeekBoard({ days, selectedSlotId, onSelectSlot, todayKey }) {
             )}
           </div>
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 function SlotInspector({ slotDetail, detailLoading, statusUpdating, onClose, onBlock, onUnblock }) {
+  const isPast = slotDetail?.isPast;
+
   return (
     <aside className="cal-inspector">
       <div className="cal-inspector-header">
@@ -248,7 +363,10 @@ function SlotInspector({ slotDetail, detailLoading, statusUpdating, onClose, onB
           </dl>
 
           <div className="cal-inspector-actions">
-            {slotDetail.status === "available" && (
+            {isPast && (
+              <p className="cal-inspector-hint">Past slots are read-only and cannot be blocked or unlocked.</p>
+            )}
+            {!isPast && slotDetail.status === "available" && (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -258,7 +376,7 @@ function SlotInspector({ slotDetail, detailLoading, statusUpdating, onClose, onB
                 {statusUpdating ? "Updating…" : "Block slot"}
               </button>
             )}
-            {slotDetail.status === "blocked" && (
+            {!isPast && slotDetail.status === "blocked" && (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -280,7 +398,7 @@ function SlotInspector({ slotDetail, detailLoading, statusUpdating, onClose, onB
 
 export default function DoctorScheduleCalendarPage() {
   const [anchorDate, setAnchorDate] = useState(() => new Date());
-  const [view, setView] = useState("day");
+  const [view, setView] = useState("week");
   const [calendar, setCalendar] = useState(null);
   const [selectedSlotId, setSelectedSlotId] = useState("");
   const [slotDetail, setSlotDetail] = useState(null);
@@ -290,13 +408,10 @@ export default function DoctorScheduleCalendarPage() {
   const [error, setError] = useState("");
 
   const range = useMemo(() => {
-    if (view === "day") {
-      const day = new Date(anchorDate);
-      day.setHours(0, 0, 0, 0);
-      return { start: day, end: day };
-    }
     return { start: startOfWeek(anchorDate), end: endOfWeek(anchorDate) };
-  }, [anchorDate, view]);
+  }, [anchorDate]);
+
+  const activeDateKey = formatDateOnly(anchorDate);
 
   const todayKey = formatDateOnly(new Date());
 
@@ -356,6 +471,12 @@ export default function DoctorScheduleCalendarPage() {
     setSelectedSlotId("");
   };
 
+  const jumpToDate = (dateKey) => {
+    setAnchorDate(parseDateOnly(dateKey));
+    setView("day");
+    setSelectedSlotId("");
+  };
+
   const refreshAfterStatusChange = async (data) => {
     setSlotDetail(data);
     await loadCalendar();
@@ -389,13 +510,12 @@ export default function DoctorScheduleCalendarPage() {
     }
   };
 
-  const daysToRender =
+  const daysToRender = calendar?.days || [];
+  const activeDay = daysToRender.find((day) => day.date === activeDateKey) || null;
+  const navLabel =
     view === "day"
-      ? calendar?.days?.filter((day) => day.date === formatDateOnly(range.start)) || []
-      : calendar?.days || [];
-
-  const activeDay = daysToRender[0] || null;
-  const navLabel = formatNavDate(range.start, view, range.end);
+      ? formatNavDate(anchorDate, "day", range.end)
+      : formatNavDate(range.start, "week", range.end);
 
   return (
     <PageLayout dashboard>
@@ -461,8 +581,12 @@ export default function DoctorScheduleCalendarPage() {
               ) : view === "day" ? (
                 <DayTimeline
                   day={activeDay}
+                  weekDays={daysToRender}
+                  activeDate={activeDateKey}
                   selectedSlotId={selectedSlotId}
                   onSelectSlot={setSelectedSlotId}
+                  onSelectDate={jumpToDate}
+                  onSwitchToWeek={() => setView("week")}
                 />
               ) : (
                 <WeekBoard
@@ -470,6 +594,7 @@ export default function DoctorScheduleCalendarPage() {
                   selectedSlotId={selectedSlotId}
                   onSelectSlot={setSelectedSlotId}
                   todayKey={todayKey}
+                  onSelectDate={jumpToDate}
                 />
               )}
             </div>

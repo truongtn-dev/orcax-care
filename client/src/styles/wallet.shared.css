@@ -15,6 +15,18 @@
   max-width: 1320px;
   margin: 0 auto;
   padding: 0.9rem clamp(1rem, 3vw, 2.5rem) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.wallet-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
 }
 
 .wallet-page-body {
@@ -287,32 +299,31 @@
   overflow: hidden;
 }
 
-.wallet-card--elevated:not(:has(.wallet-card-header)) {
+.wallet-card--elevated:has(.patient-panel-head) {
+  padding: 0;
+  overflow: hidden;
+}
+
+.wallet-card--elevated:not(:has(.wallet-card-header)):not(:has(.patient-panel-head)) {
   padding: clamp(1.35rem, 3vw, 2rem);
 }
 
 .wallet-card-header {
-  padding: 1.35rem 1.5rem 1.15rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  background: linear-gradient(180deg, #fff 0%, #fafbfc 100%);
+  /* Uses .patient-panel-head from patient.shared.css */
 }
 
 .wallet-card-body {
-  padding: 1.35rem 1.5rem 1.5rem;
+  /* Uses .patient-panel-body when elevated with header */
 }
 
-.wallet-card-title {
-  margin: 0 0 0.4rem;
-  font-size: 1.12rem;
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
-.wallet-card-lead {
+.wallet-card-title,
+.patient-panel-title {
   margin: 0;
-  font-size: 0.86rem;
-  line-height: 1.55;
-  color: var(--color-text-secondary);
+}
+
+.wallet-card-lead,
+.patient-panel-lead {
+  margin: 0.3rem 0 0;
 }
 
 .wallet-layout {
@@ -328,44 +339,48 @@
   height: 100%;
 }
 
-.wallet-layout .wallet-card-body {
+.wallet-layout .wallet-card-body,
+.wallet-layout .patient-panel-body {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-.wallet-layout .wallet-card--transactions .wallet-card-body {
+.wallet-layout .wallet-card--transactions .wallet-card-body,
+.wallet-layout .wallet-card--transactions .patient-panel-body {
   max-height: 640px;
   overflow-y: auto;
 }
 
-/* Top-up form blocks */
-.wallet-topup-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  flex: 1;
-}
-
-.wallet-form-block {
-  padding-bottom: 1.35rem;
-  margin-bottom: 1.35rem;
+/* Top-up form blocks — use patient-form-block + patient-section-label */
+.wallet-form-block,
+.patient-form-block {
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
   border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.wallet-form-block:last-of-type {
+.wallet-form-block:last-of-type,
+.patient-form-block:last-of-type {
   border-bottom: none;
   margin-bottom: 0;
   padding-bottom: 0;
 }
 
 .wallet-form-block-title {
-  margin: 0 0 0.85rem;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  margin: 0 0 0.65rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+}
+
+.wallet-topup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
 }
 
 .wallet-form-footer {
@@ -554,33 +569,65 @@
 
 /* Receipt */
 .wallet-receipt {
-  padding: 1rem 1.1rem;
-  border-radius: var(--radius-lg);
+  padding: 0;
+  border-radius: var(--radius-xl);
   border: 1px solid #a7f3d0;
-  background: linear-gradient(180deg, #ecfdf5, #f0fdf9);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
 }
 
-.wallet-receipt h3 {
-  margin: 0 0 0.65rem;
-  font-size: 0.95rem;
+.wallet-receipt .wallet-receipt-head {
+  border-bottom: 1px solid rgba(5, 150, 105, 0.15);
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf9 100%);
+}
+
+.wallet-receipt .patient-panel-icon {
+  background: #fff;
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.2);
+}
+
+.wallet-receipt-head {
+  margin: 0;
+  padding: 0.85rem 1.35rem;
+}
+
+.wallet-receipt-head .patient-panel-title {
+  font-size: 1.125rem;
 }
 
 .wallet-receipt-grid {
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem 1.35rem 1.15rem;
+}
+
+.wallet-receipt-item {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem 1rem;
+  grid-template-columns: minmax(7rem, 38%) 1fr;
+  gap: 0.75rem;
+  align-items: baseline;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.wallet-receipt-item:last-child {
+  border-bottom: none;
 }
 
 .wallet-receipt-item span {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .wallet-receipt-item strong {
-  font-size: 0.88rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
   color: var(--color-navy);
 }
 
@@ -789,24 +836,168 @@
   gap: 1rem;
 }
 
-.wallet-checkout-summary {
+.wallet-checkout-pay-panel .patient-panel-body {
+  padding: 0 0 0.15rem;
+}
+
+.wallet-checkout-pay-panel .wallet-checkout-pay-stage {
+  margin: 0 1.15rem 1.15rem;
+}
+
+.wallet-checkout-pay-stage {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+}
+
+.wallet-checkout-pay-stage--payos {
+  box-shadow: inset 0 3px 0 #0891b2;
+}
+
+.wallet-checkout-pay-stage--sepay {
+  box-shadow: inset 0 3px 0 #059669;
+}
+
+.wallet-checkout-pay-stage--error {
+  margin: 1.15rem 1.35rem 1.35rem;
+  padding: 1.25rem;
+  border-color: #fecaca;
+  background: #fef2f2;
+  text-align: center;
+}
+
+.wallet-checkout-pay-stage--error p {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #991b1b;
+}
+
+.wallet-checkout-pay-stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.wallet-checkout-pay-stage--payos .wallet-checkout-pay-stage-head {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.08) 0%, rgba(240, 253, 250, 0.9) 100%);
+}
+
+.wallet-checkout-pay-stage--sepay .wallet-checkout-pay-stage-head {
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(240, 253, 244, 0.95) 100%);
+}
+
+.wallet-checkout-pay-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.wallet-checkout-pay-amount .patient-section-label {
+  margin: 0;
+}
+
+.wallet-checkout-pay-amount strong {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-navy);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.wallet-checkout-pay-stage-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.85rem;
+  padding: 1.35rem 1.25rem 1.15rem;
+}
+
+.wallet-checkout-vietqr-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.wallet-checkout-qr-shell {
+  padding: 0.65rem;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 12px 28px rgba(15, 23, 42, 0.08);
+}
+
+.wallet-checkout-qr-img,
+.wallet-checkout-qr-svg {
+  display: block;
+  width: min(240px, 72vw);
+  height: min(240px, 72vw);
+}
+
+.wallet-checkout-qr-hint {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.wallet-checkout-scan-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.wallet-checkout-scan-step {
+  padding: 0.32rem 0.65rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.wallet-checkout-alt-link {
+  margin-top: 0.15rem;
+}
+
+.wallet-checkout-pay-stage-foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: var(--radius-lg);
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  gap: 0.65rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  background: #fafbfc;
 }
 
-.wallet-checkout-summary span {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+.wallet-checkout-pay-stage-foot .wallet-checkout-timer {
+  margin: 0;
+}
+
+/* Legacy checkout blocks — kept for mock/sepay launcher fallbacks */
+.wallet-checkout-summary {
+  display: none;
 }
 
 .wallet-checkout-amount {
@@ -932,15 +1123,6 @@
   color: var(--color-text-secondary);
 }
 
-.wallet-checkout-qr-hint {
-  margin: 0;
-  font-size: 0.82rem;
-  color: var(--color-text-secondary);
-  text-align: center;
-  max-width: 30ch;
-  line-height: 1.45;
-}
-
 .wallet-checkout-steps {
   margin: 0;
   padding-left: 1.15rem;
@@ -1018,9 +1200,24 @@
 }
 
 .wallet-checkout-timer {
-  margin: 0.65rem 0 0;
+  margin: 0;
   font-size: 0.8rem;
   color: var(--color-text-muted);
+}
+
+.wallet-checkout-actions {
+  display: none;
+}
+
+.wallet-checkout-cancel-btn {
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.wallet-checkout-cancel-btn:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
 }
 
 /* Mock checkout */
@@ -1030,26 +1227,10 @@
   width: 100%;
 }
 
-.wallet-mock-ref {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.85rem 1rem;
-  border-radius: var(--radius-md);
-  background: #f8fafc;
-  margin-bottom: 0.85rem;
-}
-
-.wallet-mock-ref span {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
-}
-
-.wallet-mock-ref strong {
+.wallet-mock-ref-value {
+  margin: 0 0 0.85rem;
   font-size: 1.05rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--color-navy);
 }
@@ -1088,10 +1269,6 @@
   }
 
   .wallet-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .wallet-receipt-grid {
     grid-template-columns: 1fr;
   }
 }

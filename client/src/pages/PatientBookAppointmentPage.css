@@ -1,0 +1,63 @@
+.patient-book-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.patient-book-loading .patient-panel-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1.35rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.patient-book-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.patient-book-wallet-hint {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #b45309;
+  line-height: 1.5;
+}
+
+.patient-book-form {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.patient-book-reason-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.patient-book-reason-field textarea {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.patient-book-reason-field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary-hover);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+@media (max-width: 900px) {
+  .patient-book-layout {
+    grid-template-columns: 1fr;
+  }
+}

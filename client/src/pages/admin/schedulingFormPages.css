@@ -1,0 +1,131 @@
+/* Work shift & slot generation — compact form, wide only when preview panel is shown */
+
+.portal-shell .scheduling-form-card {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.portal-shell .scheduling-form-card--wide {
+  max-width: 920px;
+}
+
+.portal-shell .scheduling-form-card > .form {
+  padding: 1.75rem 2rem 0;
+}
+
+.scheduling-form-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.scheduling-form-layout--split {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  gap: 1.5rem 1.75rem;
+}
+
+.scheduling-form-main {
+  min-width: 0;
+}
+
+.scheduling-form-aside {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 901px) {
+  .scheduling-form-layout--split .scheduling-form-aside {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.scheduling-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.scheduling-form-span-2 {
+  grid-column: 1 / -1;
+}
+
+.scheduling-doctor-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-md);
+}
+
+.scheduling-doctor-chip span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.scheduling-doctor-chip strong {
+  font-size: 1rem;
+  color: var(--color-navy);
+}
+
+.scheduling-form-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.scheduling-form-hint--warn {
+  color: #b45309;
+}
+
+.scheduling-form-meta {
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: var(--radius-md);
+}
+
+.scheduling-form-aside .shift-plan-preview {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .portal-shell .scheduling-form-card--wide {
+    max-width: 640px;
+  }
+
+  .scheduling-form-layout--split {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduling-form-layout--split .scheduling-form-aside {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .portal-shell .scheduling-form-card > .form {
+    padding: 1.25rem 1.25rem 0;
+  }
+
+  .scheduling-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .scheduling-form-span-2 {
+    grid-column: auto;
+  }
+}

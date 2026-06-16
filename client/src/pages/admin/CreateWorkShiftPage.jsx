@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import "./schedulingFormPages.css";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
@@ -132,15 +133,19 @@ export default function CreateWorkShiftPage() {
     })),
   ];
 
+  const showPreviewPanel = Boolean(form.doctorId);
+  const cardClassName = `card scheduling-form-card${showPreviewPanel ? " scheduling-form-card--wide" : ""}`;
+  const layoutClassName = `scheduling-form-layout${showPreviewPanel ? " scheduling-form-layout--split" : ""}`;
+
   return (
     <PageLayout dashboard>
       <AdminLayout
         title="Create work shift"
-        description="Set up a weekly shift template for a doctor. Used to generate appointment slots later."
+        description="Weekly template for a doctor — used when generating appointment slots."
       >
-      <div className="card form-card-centered">
+      <div className={cardClassName}>
         {loading ? (
-          <p>Loading clinic rooms…</p>
+          <p className="scheduling-form-main" style={{ padding: "1.75rem 2rem" }}>Loading clinic rooms…</p>
         ) : (
           <form onSubmit={onSubmit} className="form">
             {error && <div className="alert alert-error">{error}</div>}
@@ -151,81 +156,94 @@ export default function CreateWorkShiftPage() {
               </div>
             )}
 
-            <fieldset className="form-section">
-              <legend>Shift details</legend>
+            <div className={layoutClassName}>
+              <div className="scheduling-form-main">
+                <fieldset className="form-section">
+                  <legend>Shift details</legend>
 
-              <SearchableSelect
-                id="work-shift-doctor"
-                label="Doctor"
-                value={form.doctorId}
-                placeholder="Select doctor"
-                searchPlaceholder="Search doctor name, email, license…"
-                onChange={(doctorId) => setForm((current) => ({ ...current, doctorId }))}
-                loadOptions={loadDoctorOptions}
-                required
-              />
+                  <div className="scheduling-form-grid">
+                    <div className="scheduling-form-span-2">
+                      <SearchableSelect
+                        id="work-shift-doctor"
+                        label="Doctor"
+                        value={form.doctorId}
+                        placeholder="Select doctor"
+                        searchPlaceholder="Search doctor name, email, license…"
+                        onChange={(doctorId) => setForm((current) => ({ ...current, doctorId }))}
+                        loadOptions={loadDoctorOptions}
+                        required
+                      />
+                    </div>
 
-              <CustomSelect
-                id="work-shift-room"
-                label="Clinic room"
-                value={form.roomId}
-                placeholder="No room assigned"
-                onChange={(roomId) => setForm((current) => ({ ...current, roomId }))}
-                options={roomOptions}
-              />
+                    <CustomSelect
+                      id="work-shift-room"
+                      label="Clinic room"
+                      value={form.roomId}
+                      placeholder="No room assigned"
+                      onChange={(roomId) => setForm((current) => ({ ...current, roomId }))}
+                      options={roomOptions}
+                    />
 
-              <CustomSelect
-                id="work-shift-day"
-                label="Day of week"
-                value={form.dayOfWeek}
-                onChange={(dayOfWeek) => setForm((current) => ({ ...current, dayOfWeek }))}
-                options={DAY_OPTIONS}
-              />
+                    <CustomSelect
+                      id="work-shift-day"
+                      label="Day of week"
+                      value={form.dayOfWeek}
+                      onChange={(dayOfWeek) => setForm((current) => ({ ...current, dayOfWeek }))}
+                      options={DAY_OPTIONS}
+                    />
 
-              <div className="form-row">
-                <TimePicker
-                  id="work-shift-start"
-                  label="Start time"
-                  name="startTime"
-                  value={form.startTime}
-                  onChange={onChange}
-                  max={form.endTime}
-                  required
-                />
-                <TimePicker
-                  id="work-shift-end"
-                  label="End time"
-                  name="endTime"
-                  value={form.endTime}
-                  onChange={onChange}
-                  min={form.startTime}
-                  required
-                />
+                    <TimePicker
+                      id="work-shift-start"
+                      label="Start time"
+                      name="startTime"
+                      value={form.startTime}
+                      onChange={onChange}
+                      max={form.endTime}
+                      required
+                    />
+                    <TimePicker
+                      id="work-shift-end"
+                      label="End time"
+                      name="endTime"
+                      value={form.endTime}
+                      onChange={onChange}
+                      min={form.startTime}
+                      required
+                    />
+
+                    <label className="scheduling-form-span-2">
+                      Maximum patients
+                      <input
+                        type="number"
+                        name="maxPatients"
+                        min="1"
+                        max="50"
+                        value={form.maxPatients}
+                        onChange={onChange}
+                        required
+                      />
+                    </label>
+                  </div>
+                </fieldset>
               </div>
 
-              <label>
-                Maximum patients
-                <input
-                  type="number"
-                  name="maxPatients"
-                  min="1"
-                  max="50"
-                  value={form.maxPatients}
-                  onChange={onChange}
-                  required
-                />
-              </label>
-            </fieldset>
-
-            {previewLoading && <p className="text-muted">Calculating slot plan…</p>}
-            <ShiftPlanPreview preview={preview} />
+              {showPreviewPanel && (
+                <aside className="scheduling-form-aside">
+                  <ShiftPlanPreview
+                    preview={preview}
+                    loading={previewLoading}
+                    emptyMessage="Adjust day, times, or capacity to refresh the slot plan."
+                  />
+                </aside>
+              )}
+            </div>
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving || !form.doctorId}>
                 {saving ? "Saving…" : "Create work shift"}
               </button>
-              <Link to="/admin/doctors" className="btn btn-secondary">
-                Back to doctor list
+              <Link to="/admin/work-shifts" className="btn btn-secondary">
+                Cancel
               </Link>
             </div>
           </form>

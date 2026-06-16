@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import AuthPageLayout from "../components/AuthPageLayout.jsx";
 import FormField from "../components/FormField.jsx";
 import ResendVerificationForm from "../components/ResendVerificationForm.jsx";
@@ -10,6 +10,8 @@ import { firstFormError, getFieldError, validateLoginForm } from "../utils/valid
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = searchParams.get("next") || "";
   const { loginSuccess } = useAuth();
   const [form, setForm] = useState({ email: "", password: "", rememberMe: false });
   const [fieldErrors, setFieldErrors] = useState({});
@@ -34,6 +36,10 @@ export default function LoginPage() {
   };
 
   const redirectByRole = (role) => {
+    if (nextPath.startsWith("/") && !nextPath.startsWith("//")) {
+      navigate(nextPath, { replace: true });
+      return;
+    }
     if (role === "admin") navigate("/admin", { replace: true });
     else if (role === "doctor") navigate("/doctor/schedule", { replace: true });
     else if (role === "staff") navigate("/staff", { replace: true });

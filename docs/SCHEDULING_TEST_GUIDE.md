@@ -4,6 +4,31 @@ Tài liệu này hướng dẫn test end-to-end các chức năng **Work Shift �
 
 ---
 
+## Business rules (nghiệp vụ)
+
+### Hai lớp dữ liệu — đừng nhầm
+
+| Khái niệm | Có ngày cụ thể? | Ai quản lý |
+|-----------|-----------------|------------|
+| **Work Shift** | Không — chỉ **thứ trong tuần** (Mon, Tue…) | Admin Create/Edit/Delete |
+| **Appointment Slot** | Có — **ngày + giờ** cụ thể | Admin Generate; Doctor Block/Unblock |
+
+> **Work Shift không “quá ngày”.** Ca “Monday 08:00–12:00” là template lặp hàng tuần — admin **luôn sửa được** template.  
+> Cái “quá ngày” là **Appointment Slot** (vd. slot 3/6/2026 09:00 đã qua).
+
+### Quy tắc đã enforce trong code
+
+| Rule | Hành vi |
+|------|---------|
+| Generate slots | **Không** tạo slot cho ngày quá khứ; From < hôm nay → tự cắt về hôm nay |
+| Block / Unblock | **Không** đổi slot đã qua (ngày cũ hoặc giờ đã qua trong hôm nay) |
+| Edit shift — đổi giờ/ngày/số BN | Nếu có slot **booked tương lai** → bắt tick **Regenerate future slots** |
+| Edit shift — đổi phòng / active | Cho phép; slot cũ giữ phòng cũ đến khi regenerate |
+| Delete shift | Xóa template; xóa slot available/blocked tương lai; **giữ slot booked** |
+| Overlap doctor / room | Chặn khi Create/Edit ca active |
+
+---
+
 ## 0. Chuẩn bị môi trường
 
 ### Chạy app
@@ -95,8 +120,10 @@ Admin: Delete Work Shift
 ### TC-01 — Create Work Shift
 
 **Actor:** Admin  
-**URL:** Sidebar → **Scheduling → Work shifts** → **Create shift**  
-Hoặc: http://localhost:5173/admin/work-shifts/new  
+**URL:** Sidebar → **Work shifts** → nút **Create shift** (hoặc Dashboard → card **Work shifts** → **Create shift**)  
+Hoặc trực tiếp: http://localhost:5173/admin/work-shifts/new  
+
+> **Lưu ý UI:** *Scheduling* chỉ là **nhãn nhóm** trên sidebar (chữ nhỏ, không bấm được). Menu thật là **Work shifts** và **Generate slots**.
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
@@ -276,12 +303,14 @@ http://localhost:5173/admin/work-shifts/:id/edit
 | 2 | **Delete shift** → confirm | Về list, ca biến mất |
 | 3 | Doctor calendar | Slot **available/blocked** tương lai của ca đó cũng bị xóa |
 
-#### TC-07b — Không xóa được (có booking tương lai)
+#### TC-07b — Xóa khi có slot booked (vẫn được)
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
 | 1 | Có slot `booked` gắn `workShiftId` của ca (TC-04b) | |
-| 2 | **Delete shift** | Lỗi 409: *Cannot delete work shift because future appointments are booked* |
+| 2 | **Delete shift** → confirm modal | **Thành công** — template biến mất |
+| 3 | Doctor calendar | Slot **booked** vẫn còn (lịch bệnh nhân không mất) |
+| 4 | Slot available/blocked tương lai của ca | **Bị xóa** cùng template |
 
 ---
 
@@ -303,19 +332,21 @@ http://localhost:5173/admin/work-shifts/:id/edit
 | 12 | Update shift — lưu được | ☐ | |
 | 13 | Update shift — chặn overlap | ☐ | |
 | 14 | Delete shift — thành công | ☐ | |
-| 15 | Delete shift — chặn khi có booked | ☐ | Optional (DB) |
+| 15 | Delete shift — booked vẫn giữ trên calendar | ☐ | Optional (DB) |
 
 ---
 
 ## 5. Sidebar — đường dẫn UI
 
+**Scheduling** trên sidebar chỉ là nhãn nhóm (uppercase, màu mờ) — không phải menu item. Các mục bấm được nằm ngay bên dưới.
+
 ### Admin (`/admin`)
 
-| Menu | Path |
-|------|------|
-| Work shifts | `/admin/work-shifts` |
-| Create shift | `/admin/work-shifts/new` |
-| Generate slots | `/admin/appointment-slots/generate` |
+| Menu (sidebar) | Path | Ghi chú |
+|----------------|------|---------|
+| Work shifts | `/admin/work-shifts` | Nút **Create shift** ở góc trang list |
+| Generate slots | `/admin/appointment-slots/generate` | |
+| Create shift (form) | `/admin/work-shifts/new` | Không có trong sidebar |
 | Doctor list (tìm ID) | `/admin/doctors` |
 
 ### Doctor (`/doctor`)

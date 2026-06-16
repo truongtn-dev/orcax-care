@@ -1,9 +1,11 @@
-import React from "react";
+import { useEffect } from "react";
+import "./ConfirmDialog.css";
 
 export default function ConfirmDialog({
   open,
   title,
   description,
+  children,
   confirmText = "Confirm",
   cancelText = "Cancel",
   variant = "default",
@@ -11,25 +13,56 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape" && !loading) {
+        onCancel?.();
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open, loading, onCancel]);
+
   if (!open) return null;
 
+  const handleBackdropClick = () => {
+    if (!loading) onCancel?.();
+  };
+
   return (
-    <div className="modal-backdrop" onClick={onCancel}>
+    <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div
-        className="modal card"
+        className="modal card confirm-dialog animate-scale"
         role="dialog"
         aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
+        aria-labelledby="confirm-dialog-title"
+        onClick={(event) => event.stopPropagation()}
       >
         <div className="modal-header">
           <div>
-            <h2>{title}</h2>
+            <h2 id="confirm-dialog-title">{title}</h2>
             {description && <p>{description}</p>}
           </div>
-          <button type="button" className="modal-close" onClick={onCancel} aria-label="Close">
+          <button
+            type="button"
+            className="modal-close"
+            onClick={onCancel}
+            disabled={loading}
+            aria-label="Close"
+          >
             ×
           </button>
         </div>
+
+        {children && <div className="confirm-dialog-body">{children}</div>}
 
         <div className="modal-actions">
           <button type="button" className="btn btn-outline" onClick={onCancel} disabled={loading}>

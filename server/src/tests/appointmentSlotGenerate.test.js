@@ -215,4 +215,28 @@ describe("UC-29 Generate Appointment Slots", () => {
     assert.equal(duplicateBody.created, 0);
     assert.equal(duplicateBody.skipped, 4);
   });
+
+  test("rejects generation for an entirely past date range", async () => {
+    const pastStart = new Date();
+    pastStart.setDate(pastStart.getDate() - 14);
+    const pastEnd = new Date();
+    pastEnd.setDate(pastEnd.getDate() - 7);
+
+    const res = await fetch(`${baseUrl}/api/admin/appointment-slots/generate`, {
+      method: "POST",
+      headers: {
+        Authorization: await authHeaderFor(admin),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        startDate: formatDateOnly(pastStart),
+        endDate: formatDateOnly(pastEnd),
+        doctorId: doctor._id.toString(),
+      }),
+    });
+
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.match(body.message, /past/i);
+  });
 });

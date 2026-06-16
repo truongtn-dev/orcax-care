@@ -20,4 +20,8 @@ export const PublicApiClient = {
   getDoctor(id) {
     return api.get(`/api/public/doctors/${id}`);
   },
+
+  getDoctorAvailability(id, params) {
+    return api.get(`/api/public/doctors/${id}/availability`, { params });
+  },
 };

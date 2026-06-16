@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { formatWalletCurrency } from "../utils/walletUtils.js";
 
 function getInitials(name) {
   if (!name) return "D";
@@ -8,8 +9,10 @@ function getInitials(name) {
 }
 
 export default function DoctorSearchCard({ doctor }) {
-  const { _id, fullName, bio, photoUrl, specialty, department, licenseNo } = doctor;
+  const { _id, fullName, bio, photoUrl, specialty, department, licenseNo, availability, consultationFee } =
+    doctor;
   const initials = getInitials(fullName);
+  const openSlots = availability?.availableCount || 0;
 
   return (
     <article className="doctor-card-premium">
@@ -64,6 +67,13 @@ export default function DoctorSearchCard({ doctor }) {
       </div>
 
       <p className="doctor-card-premium-bio">{bio || "Experienced physician dedicated to patient care."}</p>
+
+      {openSlots > 0 && (
+        <p className="doctor-card-availability">
+          {openSlots} open slot{openSlots === 1 ? "" : "s"} · from{" "}
+          {formatWalletCurrency(consultationFee || 200000)}
+        </p>
+      )}
 
       <div className="doctor-card-premium-footer">
         <span className="doctor-card-verified">

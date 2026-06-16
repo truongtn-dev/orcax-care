@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
 import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { WorkShift } from "../models/WorkShift.js";
-import { buildSlotTimes, eachDateInclusive, parseDateOnly } from "../utils/shiftTime.js";
+import { buildSlotTimes, eachDateInclusive, formatDateOnly } from "../utils/shiftTime.js";
 import {
   loadHolidayDateSet,
   normalizeDay,
+  resolveGenerationDateRange,
   simulateSlotGeneration,
 } from "../utils/schedulingEngine.js";
 
@@ -49,14 +50,11 @@ export async function previewAppointmentSlots(payload = {}) {
 export async function generateAppointmentSlots(payload = {}) {
   const { startDate, endDate, doctorId = "", workShiftId = "" } = payload;
 
-  const rangeStart = parseDateOnly(startDate);
-  const rangeEnd = parseDateOnly(endDate);
-  if (!rangeStart || !rangeEnd) {
-    return { status: 400, body: { message: "Start/end date must use YYYY-MM-DD format" } };
+  const resolved = resolveGenerationDateRange(startDate, endDate);
+  if (resolved.error) {
+    return resolved.error;
   }
-  if (rangeEnd < rangeStart) {
-    return { status: 400, body: { message: "End date must be on or after start date" } };
-  }
+  const { rangeStart, rangeEnd, startDateClamped } = resolved;
 
   const built = buildShiftFilter({ doctorId, workShiftId });
   if (built.error) {
@@ -131,8 +129,9 @@ export async function generateAppointmentSlots(payload = {}) {
       holidaysSkipped,
       shiftsProcessed: shiftsProcessed.size,
       range: {
-        startDate: startDate.trim(),
-        endDate: endDate.trim(),
+        startDate: formatDateOnly(rangeStart),
+        endDate: formatDateOnly(rangeEnd),
+        startDateClamped,
       },
       filters: {
         doctorId: doctorId || null,

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import "../../styles/wallet.shared.css";
+import "../../styles/patient.shared.css";
 
 export function WalletBackLink({ to = "/patient/wallet", label = "Back to wallet" }) {
   return (
@@ -75,6 +76,7 @@ export function WalletProviderBadge({ provider }) {
 export function WalletCard({
   title,
   lead,
+  icon,
   children,
   className = "",
   elevated = false,
@@ -82,25 +84,35 @@ export function WalletCard({
 }) {
   const variantClass = variant ? `wallet-card--${variant}` : "";
 
+  const panelHead = (title || lead) && (
+    <>
+      {icon && (
+        <span className="patient-panel-icon" aria-hidden="true">
+          {icon}
+        </span>
+      )}
+      <div className="patient-panel-head-main">
+        {title && <h2 className="wallet-card-title patient-panel-title">{title}</h2>}
+        {lead && <p className="wallet-card-lead patient-panel-lead">{lead}</p>}
+      </div>
+    </>
+  );
+
   if (elevated && title) {
     return (
       <section
-        className={`wallet-card wallet-card--elevated ${variantClass} ${className}`.trim()}
+        className={`wallet-card wallet-card--elevated patient-panel ${variantClass} ${className}`.trim()}
       >
-        <div className="wallet-card-header">
-          <h2 className="wallet-card-title">{title}</h2>
-          {lead && <p className="wallet-card-lead">{lead}</p>}
-        </div>
-        <div className="wallet-card-body">{children}</div>
+        <div className="wallet-card-header patient-panel-head">{panelHead}</div>
+        <div className="wallet-card-body patient-panel-body">{children}</div>
       </section>
     );
   }
 
   return (
-    <section className={`wallet-card ${elevated ? "wallet-card--elevated" : ""} ${className}`.trim()}>
-      {title && <h2 className="wallet-card-title">{title}</h2>}
-      {lead && <p className="wallet-card-lead">{lead}</p>}
-      {children}
+    <section className={`wallet-card patient-panel ${elevated ? "wallet-card--elevated" : ""} ${className}`.trim()}>
+      {panelHead && <div className="patient-panel-head">{panelHead}</div>}
+      <div className={title || lead ? "patient-panel-body" : "wallet-card-body"}>{children}</div>
     </section>
   );
 }

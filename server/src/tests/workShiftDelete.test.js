@@ -136,8 +136,8 @@ describe("UC-29 Delete Work Shift", () => {
     assert.equal(slots, 0);
   });
 
-  test("blocks delete when future booked slots exist", async () => {
-    await AppointmentSlot.create({
+  test("deletes shift and preserves future booked slots", async () => {
+    const booked = await AppointmentSlot.create({
       doctorId: doctor._id,
       workShiftId: shift._id,
       date: futureDate(5),
@@ -146,17 +146,37 @@ describe("UC-29 Delete Work Shift", () => {
       status: "booked",
     });
 
+    await AppointmentSlot.create({
+      doctorId: doctor._id,
+      workShiftId: shift._id,
+      date: futureDate(5),
+      startTime: "09:30",
+      endTime: "10:00",
+      status: "available",
+    });
+
     const res = await fetch(`${baseUrl}/api/admin/work-shifts/${shift._id}`, {
       method: "DELETE",
       headers: { Authorization: await authHeaderFor(admin) },
     });
-    assert.equal(res.status, 409);
+    assert.equal(res.status, 200);
     const body = await res.json();
-    assert.match(body.message, /appointments/i);
-    assert.equal(body.futureBookings, 1);
+    assert.match(body.message, /booked appointment/i);
+    assert.equal(body.futureBooked, 1);
+    assert.equal(body.slotsRemovedIfDeleted, 1);
 
-    const stillThere = await WorkShift.findById(shift._id);
-    assert.ok(stillThere);
+    const remainingShift = await WorkShift.findById(shift._id);
+    assert.equal(remainingShift, null);
+
+    const preserved = await AppointmentSlot.findById(booked._id);
+    assert.ok(preserved);
+    assert.equal(preserved.status, "booked");
+
+    const openSlots = await AppointmentSlot.countDocuments({
+      workShiftId: shift._id,
+      status: { $in: ["available", "blocked"] },
+    });
+    assert.equal(openSlots, 0);
   });
 
   test("returns 404 for missing shift", async () => {

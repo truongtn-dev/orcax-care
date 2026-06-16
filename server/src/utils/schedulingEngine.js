@@ -26,6 +26,51 @@ export function startOfToday() {
   return normalizeDay(new Date());
 }
 
+export function resolveGenerationDateRange(startDate, endDate) {
+  const rangeStart = parseDateOnly(startDate);
+  const rangeEnd = parseDateOnly(endDate);
+  if (!rangeStart || !rangeEnd) {
+    return { error: { status: 400, body: { message: "Start/end date must use YYYY-MM-DD format" } } };
+  }
+  if (rangeEnd < rangeStart) {
+    return { error: { status: 400, body: { message: "End date must be on or after start date" } } };
+  }
+
+  const today = startOfToday();
+  if (rangeEnd < today) {
+    return {
+      error: {
+        status: 400,
+        body: { message: "Cannot generate appointment slots for a date range entirely in the past" },
+      },
+    };
+  }
+
+  const effectiveStart = rangeStart < today ? today : rangeStart;
+  return {
+    rangeStart: effectiveStart,
+    rangeEnd,
+    startDateClamped: effectiveStart.getTime() !== rangeStart.getTime(),
+  };
+}
+
+export async function countFutureBookedSlots(shiftId) {
+  return AppointmentSlot.countDocuments({
+    workShiftId: shiftId,
+    status: "booked",
+    date: { $gte: startOfToday() },
+  });
+}
+
+export function didShiftTimingChange(existing, timing) {
+  return (
+    timing.day !== existing.dayOfWeek ||
+    timing.start !== existing.startTime ||
+    timing.end !== existing.endTime ||
+    timing.capacity !== existing.maxPatients
+  );
+}
+
 export async function loadHolidayDateSet(startDate, endDate) {
   const holidays = await Holiday.find({
     isActive: true,
@@ -210,14 +255,9 @@ function buildShiftFilter({ doctorId = "", workShiftId = "" } = {}) {
 export async function simulateSlotGeneration(payload = {}) {
   const { startDate, endDate, doctorId = "", workShiftId = "" } = payload;
 
-  const rangeStart = parseDateOnly(startDate);
-  const rangeEnd = parseDateOnly(endDate);
-  if (!rangeStart || !rangeEnd) {
-    return { error: { status: 400, body: { message: "Start/end date must use YYYY-MM-DD format" } } };
-  }
-  if (rangeEnd < rangeStart) {
-    return { error: { status: 400, body: { message: "End date must be on or after start date" } } };
-  }
+  const resolved = resolveGenerationDateRange(startDate, endDate);
+  if (resolved.error) return resolved.error;
+  const { rangeStart, rangeEnd, startDateClamped } = resolved;
 
   const shifts = await WorkShift.find(buildShiftFilter({ doctorId, workShiftId })).lean();
   if (!shifts.length) {
@@ -286,6 +326,7 @@ export async function simulateSlotGeneration(payload = {}) {
     shiftsProcessed: shiftsProcessed.size,
     sampleDates,
     holidayNames: [...holidayDates.values()].slice(0, 5),
+    startDateClamped,
   };
 }
 
@@ -310,11 +351,12 @@ export async function analyzeDeleteShiftImpact(shiftId) {
   ]);
 
   return {
-    canDelete: futureBooked === 0,
+    canDelete: true,
     futureBooked,
     futureAvailable,
     futureBlocked,
     slotsRemovedIfDeleted: futureAvailable + futureBlocked,
+    bookedPreservedIfDeleted: futureBooked,
   };
 }
 

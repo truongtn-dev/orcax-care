@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
+import * as PatientAppointmentController from "../controllers/patientAppointment.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -32,3 +33,7 @@ patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopu
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
+
+patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
+patientRouter.post("/appointments", PatientAppointmentController.createAppointment);
+patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointment);

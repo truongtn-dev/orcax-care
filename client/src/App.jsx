@@ -12,6 +12,8 @@ import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
+import PatientBookAppointmentPage from "./pages/PatientBookAppointmentPage.jsx";
+import PatientAppointmentsPage from "./pages/PatientAppointmentsPage.jsx";
 import PatientWalletPage from "./pages/PatientWalletPage.jsx";
 import PatientWalletCheckoutPage from "./pages/PatientWalletCheckoutPage.jsx";
 import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
@@ -87,7 +89,7 @@ export default function App() {
             path="/patient/book"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientPortalPlaceholderPage type="book" />
+                <PatientBookAppointmentPage />
               </ProtectedRoute>
             }
           />
@@ -95,7 +97,7 @@ export default function App() {
             path="/patient/appointments"
             element={
               <ProtectedRoute roles={["patient"]}>
-                <PatientPortalPlaceholderPage type="appointments" />
+                <PatientAppointmentsPage />
               </ProtectedRoute>
             }
           />

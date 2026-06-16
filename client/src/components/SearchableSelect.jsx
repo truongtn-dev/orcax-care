@@ -243,7 +243,11 @@ export default function SearchableSelect({
       {label && (
         <label className="custom-select-label" htmlFor={`${id}-trigger`}>
           {label}
-          {required && <span className="searchable-select-required"> *</span>}
+          {required && (
+            <span className="field-required-mark" aria-hidden="true">
+              *
+            </span>
+          )}
         </label>
       )}
 
