@@ -1,0 +1,99 @@
+@startuml CD_ComplaintsPatient
+' Class Diagram – UC-12 Submit Complaint
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ComplaintsPatientPage {
+  - category : String
+  - subject : String
+  - description : String
+  - attachmentUrl : String
+  - complaints : Array
+  - selectedComplaintId : ObjectId
+  - errorMessage : String
+  --
+  + loadMyComplaints() : void
+  + handleChange(event : Event) : void
+  + validateForm() : boolean
+  + handleSubmit() : void
+  + openDetail(complaintId : ObjectId) : void
+  + showError(message : String) : void
+}
+
+class ComplaintApiClient {
+  --
+  + submitComplaint(payload : Object) : Promise<ComplaintResponse>
+  + getMyComplaints() : Promise<Array>
+  + getComplaintDetail(id : ObjectId) : Promise<ComplaintDetailResponse>
+}
+
+class ComplaintController {
+  - complaintService : ComplaintService
+  --
+  + submitComplaint(req : Request, res : Response) : void
+  + getMyComplaints(req : Request, res : Response) : void
+  + getComplaintDetail(req : Request, res : Response) : void
+}
+
+class ComplaintService {
+  --
+  + submitComplaint(patientId : ObjectId, payload : Object) : ComplaintDocument
+  + listMyComplaints(patientId : ObjectId) : Array
+  + getComplaintDetail(id : ObjectId, patientId : ObjectId) : ComplaintDetail
+  + validateInput(payload : Object) : void
+}
+
+class ComplaintModel {
+  - patientId : ObjectId
+  - category : String
+  - subject : String
+  - description : String
+  - attachmentUrl : String
+  - status : String
+  --
+  + create(doc : Object) : ComplaintDocument
+  + find(filter : Object) : Array
+  + findOne(filter : Object) : ComplaintDocument
+}
+
+class ComplaintReplyModel {
+  - complaintId : ObjectId
+  - staffId : ObjectId
+  - message : String
+  --
+  + find(filter : Object) : Array
+}
+
+class NotificationModel {
+  - userId : ObjectId
+  - type : String
+  - title : String
+  - refId : ObjectId
+  --
+  + create(doc : Object) : NotificationDocument
+}
+
+' Bố cục
+ComplaintsPatientPage -[hidden]r- ComplaintApiClient
+ComplaintApiClient -[hidden]r- ComplaintController
+ComplaintController -[hidden]d- ComplaintService
+ComplaintService -[hidden]d- ComplaintModel
+ComplaintModel -[hidden]r- ComplaintReplyModel
+ComplaintReplyModel -[hidden]r- NotificationModel
+
+' Association
+ComplaintsPatientPage "1" --> "1" ComplaintApiClient : uses
+ComplaintApiClient "1" --> "1" ComplaintController : calls
+ComplaintController "1" --> "1" ComplaintService : uses
+ComplaintService "1" --> "1" ComplaintModel : uses
+ComplaintService "1" --> "1" ComplaintReplyModel : uses
+ComplaintService "1" --> "1" NotificationModel : creates
+
+@enduml

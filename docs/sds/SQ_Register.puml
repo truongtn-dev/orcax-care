@@ -1,0 +1,128 @@
+@startuml SQ_Register
+' Sequence Diagram – UC-2 Register
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Guest
+participant RegisterPage as View
+participant AuthApiClient as Api
+participant AuthController as Ctrl
+participant AuthService as Svc
+participant UserModel as UM
+participant PatientModel as PM
+participant EmailVerificationTokenModel as ETM
+participant MailService as Mail
+database MongoDB as DB
+
+== Register request ==
+
+Guest -> View ++ : 1. Enter email, password,\nfull name, phone, terms
+
+View -> View : 2. validateForm()
+
+View -> Api ++ : 3. register({ email, password,\nfullName, phone })
+
+Api -> Ctrl ++ : 4. POST /api/auth/register\n{ email, password, fullName, phone }
+
+Ctrl -> Svc ++ : 5. registerPatient(body)
+
+alt [1] Invalid input\n(email format, password strength,\nmissing full name, terms)
+
+  Svc --> Ctrl -- : 6. HTTP 400\nvalidation message
+  Ctrl --> Api -- : 7. error response
+  Api --> View -- : 8. error response
+  View -> Guest : 9. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Email already registered
+
+  Svc -> UM ++ : 10. findOne({ email })
+
+  UM -> DB : 11. query users collection\n{ email: email.toLowerCase() }
+
+  DB --> UM -- : 12. user document
+
+  UM --> Svc -- : 13. UserDocument
+  deactivate UM
+
+  Svc --> Ctrl -- : 14. HTTP 409\n"Email already registered."
+  Ctrl --> Api -- : 15. error response
+  Api --> View -- : 16. error response
+  View -> Guest : 17. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [3] Valid registration
+
+  Svc -> UM ++ : 18. findOne({ email })
+
+  UM -> DB : 19. query users collection
+
+  DB --> UM -- : 20. null
+
+  UM --> Svc -- : 21. null
+  deactivate UM
+
+  Svc -> Svc : 22. hashPassword(password)
+
+  Svc -> UM ++ : 23. create({ email, passwordHash,\nfullName, phone, role: patient })
+
+  UM -> DB : 24. insert users
+
+  DB --> UM -- : 25. UserDocument
+
+  UM --> Svc -- : 26. UserDocument
+  deactivate UM
+
+  Svc -> PM ++ : 27. create({ userId })
+
+  PM -> DB : 28. insert patients
+
+  DB --> PM -- : 29. PatientDocument
+
+  PM --> Svc -- : 30. PatientDocument
+  deactivate PM
+
+  Svc -> ETM ++ : 31. create({ userId, token, expiresAt })
+
+  ETM -> DB : 32. insert emailTokens
+
+  DB --> ETM -- : 33. ack
+
+  ETM --> Svc -- : 34. EmailVerificationTokenDocument
+  deactivate ETM
+
+  Svc -> UM ++ : 35. save(lastVerificationSentAt)
+
+  UM -> DB : 36. update users
+
+  DB --> UM -- : 37. ack
+
+  UM --> Svc -- : 38. void
+  deactivate UM
+
+  Svc -> Mail ++ : 39. sendVerificationEmail(user, token)
+
+  Mail --> Svc -- : 40. void
+  deactivate Mail
+
+  Svc --> Ctrl -- : 41. HTTP 201\n"Check your email"
+  Ctrl --> Api -- : 42. success response
+  Api --> View -- : 43. success response
+  View -> Guest : 44. showSuccess(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

@@ -1,6 +1,20 @@
 # OrcaXCare — Hướng dẫn test Payment (Wallet)
 
-Tài liệu test **UI/UX thanh toán** cho bệnh nhân: nạp tiền ví qua **PayOS**, **VNPay**, **SePay**.
+Tài liệu test **UI/UX thanh toán thật** cho bệnh nhân: nạp tiền ví qua **PayOS** và **SePay** (sandbox/production API — **không dùng mock nội bộ**).
+
+---
+
+## ⚠ Quy tắc WDP301 — mọi thứ phải REAL
+
+| Yêu cầu | Chi tiết |
+|---------|----------|
+| **Không mock UI** | Không dùng `/patient/wallet/*/mock`, không bật `*_MOCK=true` khi demo / báo cáo |
+| **Cổng thật** | PayOS VietQR + SePay checkout qua API sandbox/production |
+| **`.env` bắt buộc** | `PAYOS_MOCK=false`, `SEPAY_MOCK=false` + đủ credentials từ dashboard PayOS / SePay |
+| **Webhook / IPN** | PayOS webhook + SePay IPN trỏ về `{API_PUBLIC_ORIGIN}/api/payments/...` (local: dùng ngrok nếu cần) |
+| **Hủy thanh toán** | Qua nút **Cancel** trên giao dịch `pending` hoặc cancel URL của cổng — **không** simulate trên trang mock |
+
+> Mock mode (`PAYOS_MOCK`, `SEPAY_MOCK`, `mock-confirm` API) chỉ phục vụ **unit test tự động** trong repo — **không** dùng cho demo WDP301.
 
 ---
 
@@ -9,16 +23,16 @@ Tài liệu test **UI/UX thanh toán** cho bệnh nhân: nạp tiền ví qua **
 | Có trong app | Chưa có |
 |--------------|---------|
 | Ví bệnh nhân (balance) | Thanh toán đặt lịch khám trực tiếp trên UI |
-| Nạp tiền (top-up) 3 cổng | Trừ tiền ví khi book appointment (API `deduct` có, UI chưa) |
+| Nạp tiền (top-up) PayOS + SePay | Trừ tiền ví khi book appointment (API `deduct` có, UI chưa) |
 | Lịch sử giao dịch | Hoàn tiền / refund UI |
-| Checkout in-app + VietQR (PayOS) | Admin xem giao dịch toàn hệ thống |
-| Polling trạng thái + PayOS webhook | |
+| Checkout in-app + VietQR (PayOS, SePay) | Admin xem giao dịch toàn hệ thống |
+| Polling trạng thái + PayOS webhook + SePay IPN | |
 
 **Luồng nghiệp vụ (hiện tại):**
 
 ```
-Bệnh nhân nạp ví (PayOS / VNPay / SePay)
-    → Số dư tăng
+Bệnh nhân nạp ví (PayOS / SePay — cổng thật)
+    → Số dư tăng (webhook/IPN hoặc polling xác nhận)
     → (sau này) Dùng số dư khi xác nhận đặt lịch khám
 ```
 
@@ -40,20 +54,27 @@ cd client && npm run dev
 - Backend: http://localhost:5000  
 - Đăng nhập: http://localhost:5173/login  
 
-### Cấu hình `server/.env` (tham khảo)
+### Cấu hình `server/.env` (bắt buộc cho test thật)
 
-| Biến | Ý nghĩa | Gợi ý test UI |
-|------|---------|----------------|
-| `PAYOS_MOCK=false` | PayOS **thật** — QR VietQR trong app | Mặc định khi đã có credentials |
-| `PAYOS_MOCK=true` | Trang mock nội bộ (dev only) | Chỉ khi chưa có key PayOS |
-| `VNPAY_MOCK=false` | VNPay sandbox thật | Trang checkout trong app → redirect VNPay |
-| `SEPAY_MOCK=false` | SePay sandbox thật | Mở cổng SePay tab mới, poll IPN |
+| Biến | Giá trị demo WDP301 | Ghi chú |
+|------|---------------------|---------|
+| `PAYOS_MOCK` | **`false`** | Bắt buộc |
+| `SEPAY_MOCK` | **`false`** | Bắt buộc |
+| `PAYOS_CLIENT_ID`, `PAYOS_API_KEY`, `PAYOS_CHECKSUM_KEY` | Từ https://my.payos.vn/ | Channel credentials |
+| `SEPAY_MERCHANT_ID`, `SEPAY_SECRET_KEY` | Từ https://my.sepay.vn/ | Sandbox: `SP-TEST-...` |
 | `WALLET_MIN_TOPUP=10000` | Tối thiểu 10.000 ₫ | Test validation |
 | `WALLET_MAX_TOPUP=50000000` | Tối đa 50.000.000 ₫ | |
-| `API_PUBLIC_ORIGIN=http://localhost:5000` | Callback return/cancel | Bắt buộc khi test flow redirect |
+| `API_PUBLIC_ORIGIN` | `http://localhost:5000` hoặc ngrok HTTPS | Callback return/cancel + webhook |
 | `CLIENT_ORIGIN=http://localhost:5173` | Redirect về client sau thanh toán | |
 
-> **Thanh toán thật:** `PAYOS_MOCK=false`, `SEPAY_MOCK=false`, `VNPAY_MOCK=false`. PayOS hiển thị **mã QR VietQR** ngay trong app (`/patient/wallet/checkout/payos/{orderCode}`). Đăng ký webhook PayOS: `{API_PUBLIC_ORIGIN}/api/payments/payos/webhook`.
+**Đăng ký URL trên dashboard cổng:**
+
+| Cổng | URL |
+|------|-----|
+| PayOS webhook | `{API_PUBLIC_ORIGIN}/api/payments/payos/webhook` |
+| SePay IPN | `{API_PUBLIC_ORIGIN}/api/payments/sepay/ipn` |
+
+Sau khi sửa `.env`: **restart server**.
 
 ---
 
@@ -67,18 +88,14 @@ Chỉ **patient** mới vào được Wallet và thanh toán.
 
 ---
 
-## 3. Đường dẫn UI (Patient)
+## 3. Đường dẫn UI (Patient — real checkout)
 
 | Màn hình | URL |
 |----------|-----|
 | Dashboard bệnh nhân | `/patient` |
 | **Wallet (chính)** | `/patient/wallet` |
-| **Checkout PayOS (QR thật)** | `/patient/wallet/checkout/payos/{orderCode}` |
-| Checkout VNPay | `/patient/wallet/checkout/vnpay/{orderId}` |
-| Checkout SePay | `/patient/wallet/checkout/sepay/{orderId}` |
-| PayOS mock checkout (dev) | `/patient/wallet/payos/mock?orderCode=...` |
-| VNPay mock checkout | `/patient/wallet/vnpay/mock?orderId=...` |
-| SePay mock checkout | `/patient/wallet/sepay/mock?orderId=...` |
+| **Checkout PayOS (QR VietQR thật)** | `/patient/wallet/checkout/payos/{orderCode}` |
+| **Checkout SePay (QR / chuyển khoản thật)** | `/patient/wallet/checkout/sepay/{orderId}` |
 
 **Vào Wallet từ dashboard:** shortcut **Wallet** (badge Payments).
 
@@ -90,111 +107,110 @@ Chỉ **patient** mới vào được Wallet và thanh toán.
 
 | Khu vực | Mô tả UI | Ghi chú UX |
 |---------|----------|------------|
-| **Header** | Tiêu đề "Wallet", mô tả 3 cổng, nút Back to dashboard | |
-| **Balance card** | Số dư VND lớn (`wallet-balance-card`) | Format tiền Việt |
-| **Mock banner** | Dòng xám *"Payment sandbox mock mode is active…"* | Chỉ hiện khi có cổng đang mock |
+| **Header** | Tiêu đề "Wallet", mô tả PayOS + SePay, nút Back to dashboard | |
+| **Balance card** | Số dư VND lớn | Format tiền Việt |
 | **Receipt card** | Reference, Provider, Amount, Status | Sau top-up thành công |
-| **Form Top up** | Dropdown Payment method, input Amount, min/max | |
-| **Nút Continue** | Đổi label theo cổng: PayOS / VNPay / SePay | Trạng thái "Redirecting…" khi submit |
-| **Recent transactions** | List: loại, mô tả, số tiền, badge status | `success` xanh, `pending` vàng, `failed`/`cancelled` đỏ |
+| **Form Top up** | Dropdown Payment method (PayOS / SePay), input Amount | |
+| **Nút Continue** | "Continue — scan QR" (PayOS) / "Continue with SePay" | Trạng thái "Redirecting…" khi submit |
+| **Recent transactions** | List + badge status | `success` xanh, `pending` vàng, `failed`/`cancelled` đỏ |
+| **Pending actions** | **Resume payment** + **Cancel** | Chỉ giao dịch `pending` |
 
-### 4.2 Trang Mock checkout (3 cổng — giao diện tương tự)
+### 4.2 Trang Checkout thật (`/patient/wallet/checkout/...`)
 
 | Thành phần | UX |
 |------------|-----|
-| Tiêu đề | "PayOS / VNPay / SePay sandbox checkout" |
-| Mô tả | "Mock payment page… No real charge" |
-| Order code / order id | Hiển thị mã giao dịch |
-| **Simulate successful payment** | Nạp thành công → về Wallet |
-| **Cancel payment** | Hủy → alert đỏ trên Wallet |
-| **Back to wallet** | Link secondary |
+| Hero | "Complete top-up" — mô tả quét QR / cổng thật |
+| QR VietQR | PayOS hoặc SePay — quét bằng app ngân hàng |
+| Polling | Trang tự poll mỗi 3s; thành công → redirect Wallet + alert xanh |
+| **Back to wallet** | Quay về Wallet — giao dịch vẫn **pending** cho đến khi hủy hoặc thanh toán |
+| PayOS | Có thêm link **Open PayOS page** (trang cổng PayOS) |
 
 ### 4.3 Sau khi quay về Wallet
 
 | Query URL | UI |
 |-----------|-----|
 | `?payment=success&orderCode=...` | Alert xanh + receipt + balance cập nhật |
-| `?payment=cancelled` | Alert đỏ, balance không đổi |
+| `?payment=cancelled` | Alert đỏ, balance **không đổi** |
 | `?payment=failed` | Alert đỏ |
 
 ---
 
-## 5. Kịch bản test chi tiết
+## 5. Kịch bản test chi tiết (REAL only)
 
-### TC-P01 — Xem Wallet lần đầu (empty state)
+### TC-P01 — Xem Wallet lần đầu
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
 | 1 | Login `patient@orcaxcare.com` / `Patient@123` | Vào patient portal |
 | 2 | Dashboard → **Wallet** | Mở `/patient/wallet` |
-| 3 | Quan sát UI | Balance **0 ₫** (hoặc số cũ), form top-up hiện đủ |
-| 4 | Recent transactions | "No transactions yet." |
-
-**UI checklist:** Header, balance card, form, empty list — layout gọn, không lỗi loading.
+| 3 | Quan sát UI | Balance hiện đúng, form top-up có PayOS + SePay |
+| 4 | Recent transactions | "No transactions yet." (nếu chưa có lịch sử) |
 
 ---
 
-### TC-P02 — PayOS top-up thành công (mock — khuyến nghị)
+### TC-P02 — PayOS top-up thành công (REAL)
 
-**Điều kiện:** `PAYOS_MOCK=true` trong `.env`, restart server.
+**Điều kiện:** `PAYOS_MOCK=false`, credentials PayOS hợp lệ, server đã restart.
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
 | 1 | Wallet → Payment method: **PayOS** | |
 | 2 | Amount: **100000** (100.000 ₫) | |
-| 3 | **Continue to PayOS** | Chuyển sang `/patient/wallet/payos/mock?orderCode=...` |
-| 4 | Quan sát mock page | Tiêu đề PayOS sandbox, có order code |
-| 5 | **Simulate successful payment** | Về Wallet |
-| 6 | Wallet | Alert xanh "Top-up successful…" |
+| 3 | **Continue — scan QR** | Chuyển `/patient/wallet/checkout/payos/{orderCode}` |
+| 4 | Quan sát checkout | QR VietQR thật, có amount, polling "pending" |
+| 5 | Quét QR bằng app ngân hàng **hoặc** mở **Open PayOS page** và thanh toán sandbox PayOS | |
+| 6 | Chờ webhook/polling | Tự redirect về Wallet, alert xanh |
 | 7 | Balance | Tăng **100.000 ₫** |
-| 8 | Receipt summary | Provider: payos, Status: success |
-| 9 | Transactions | 1 dòng Top-up, badge **success** |
+| 8 | Transactions | 1 dòng Top-up, badge **success** |
 
 ---
 
-### TC-P03 — PayOS hủy thanh toán
+### TC-P03 — PayOS hủy thanh toán (REAL)
+
+**Cách 1 — Hủy trong app (khuyến nghị demo):**
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
-| 1 | Top-up PayOS → mock page | |
-| 2 | **Cancel payment** | Về Wallet |
-| 3 | UI | Alert đỏ "Payment was cancelled…" |
-| 4 | Balance | **Không đổi** |
-| 5 | Transactions | Giao dịch **cancelled** (nếu có trong list) |
+| 1 | Top-up PayOS → checkout page | Giao dịch `pending` |
+| 2 | **Back to wallet** (không quét QR) | Về Wallet, giao dịch vẫn **pending** |
+| 3 | Trong Recent transactions → **Cancel** | Gọi `POST /api/patient/wallet/topups/payos/{orderCode}/cancel` |
+| 4 | UI | Giao dịch chuyển **cancelled**, balance **không đổi** |
+
+**Cách 2 — Hủy trên cổng PayOS:**
+
+| Bước | Thao tác | Kết quả mong đợi |
+|------|----------|------------------|
+| 1 | **Open PayOS page** trên checkout | Trang PayOS thật |
+| 2 | Chọn hủy / thoát theo UI PayOS | PayOS gọi `cancelUrl` → server `markTopupCancelled` |
+| 3 | Redirect | `/patient/wallet?payment=cancelled` — alert đỏ |
+
+> **Lưu ý:** Chỉ bấm "Back to wallet" **không** hủy giao dịch — phải dùng **Cancel** hoặc hủy trên cổng.
 
 ---
 
-### TC-P04 — SePay top-up thành công (mock)
+### TC-P04 — SePay top-up thành công (REAL)
 
-**Điều kiện:** `SEPAY_MOCK=true`
+**Điều kiện:** `SEPAY_MOCK=false`, `SEPAY_MERCHANT_ID` + `SEPAY_SECRET_KEY` sandbox.
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
-| 1 | Payment method: **SePay** | Nút đổi thành "Continue to SePay" |
+| 1 | Payment method: **SePay** | Nút "Continue with SePay" |
 | 2 | Amount: **200000** | |
-| 3 | Continue | `/patient/wallet/sepay/mock?orderId=...` |
-| 4 | Simulate success | Balance +200.000 ₫ |
-| 5 | Receipt | Provider: sepay |
-
-**So sánh UX:** Mock SePay giống PayOS — kiểm tra label nút và receipt đúng cổng.
+| 3 | Continue | `/patient/wallet/checkout/sepay/{orderId}` |
+| 4 | Quan sát | QR VietQR + chi tiết chuyển khoản (STK, nội dung CK) |
+| 5 | Chuyển khoản đúng số tiền + memo theo SePay sandbox | SePay IPN → server cộng ví |
+| 6 | Polling / redirect | Balance +200.000 ₫, status **success** |
 
 ---
 
-### TC-P05 — VNPay
-
-#### Nhánh A — Mock (`VNPAY_MOCK=true`) — test UI trong app
-
-Giống TC-P02 nhưng chọn **VNPay** → `/patient/wallet/vnpay/mock?orderId=...`
-
-#### Nhánh B — Sandbox thật (`VNPAY_MOCK=false`) — như `.env` hiện tại của bạn
+### TC-P05 — SePay hủy thanh toán (REAL)
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
-| 1 | Chọn VNPay, Continue | **Redirect ra trang sandbox VNPay** (ngoài OrcaXCare) |
-| 2 | Thanh toán trên sandbox | Quay về app qua return URL |
-| 3 | Wallet | Balance cập nhật nếu thanh toán OK |
+| 1 | Tạo top-up SePay, không chuyển khoản | Giao dịch **pending** |
+| 2 | Wallet → **Cancel** trên dòng pending | Status **cancelled**, balance không đổi |
 
-> Demo UI nội bộ: nên bật `VNPAY_MOCK=true` để không phụ thuộc cổng ngoài.
+*(SePay cancel URL: `{API_PUBLIC_ORIGIN}/api/payments/sepay/cancel?orderId=...` — khi user hủy trên flow redirect nếu có.)*
 
 ---
 
@@ -212,11 +228,11 @@ Giống TC-P02 nhưng chọn **VNPay** → `/patient/wallet/vnpay/mock?orderId=.
 
 | Bước | Thao tác | Kết quả mong đợi |
 |------|----------|------------------|
-| 1 | Top-up PayOS 100k — success | |
-| 2 | Top-up SePay 50k — success | |
-| 3 | Top-up PayOS — cancel | |
-| 4 | Recent transactions | ≥3 dòng, sắp xếp mới nhất trước |
-| 5 | Badge màu | success / cancelled phân biệt rõ |
+| 1 | Top-up PayOS 100k — success (REAL) | |
+| 2 | Top-up SePay 50k — success (REAL) | |
+| 3 | Top-up PayOS — **Cancel** pending | |
+| 4 | Recent transactions | ≥3 dòng, mới nhất trước |
+| 5 | Badge màu | success / cancelled / pending phân biệt rõ |
 
 ---
 
@@ -225,48 +241,58 @@ Giống TC-P02 nhưng chọn **VNPay** → `/patient/wallet/vnpay/mock?orderId=.
 | Kiểm tra | Mong đợi |
 |----------|----------|
 | Submit top-up | Nút disabled + text "Redirecting…" |
-| Mock confirm | "Processing…" khi đang gọi API |
-| Mobile width | Balance card + form không vỡ layout |
+| Checkout polling | Thông báo pending → success/failed/cancelled |
+| Mobile width | QR + form không vỡ layout |
 
 ---
 
-## 6. Checklist demo UI/UX (tick khi test)
+## 6. Checklist demo WDP301 (REAL — tick khi test)
 
 | # | Hạng mục | Pass? |
 |---|----------|-------|
-| 1 | Vào Wallet từ dashboard | ☐ |
-| 2 | Balance hiển thị đúng format VND | ☐ |
-| 3 | Mock mode banner (nếu bật mock) | ☐ |
-| 4 | Dropdown 3 payment methods | ☐ |
+| 1 | `.env`: `PAYOS_MOCK=false`, `SEPAY_MOCK=false` | ☐ |
+| 2 | Vào Wallet từ dashboard | ☐ |
+| 3 | Balance hiển thị đúng format VND | ☐ |
+| 4 | Dropdown PayOS + SePay (không mock page) | ☐ |
 | 5 | Min/max hint dưới ô amount | ☐ |
-| 6 | PayOS mock → success → receipt | ☐ |
-| 7 | PayOS mock → cancel → alert đỏ | ☐ |
-| 8 | SePay mock → success | ☐ |
-| 9 | VNPay (mock hoặc sandbox) | ☐ |
-| 10 | Transaction list + status màu | ☐ |
-| 11 | Back to dashboard | ☐ |
-| 12 | Lỗi amount < 10.000 hiển thị rõ | ☐ |
+| 6 | PayOS REAL → QR → success → receipt | ☐ |
+| 7 | PayOS pending → **Cancel** → cancelled | ☐ |
+| 8 | SePay REAL → QR/CK → success | ☐ |
+| 9 | Transaction list + status màu | ☐ |
+| 10 | Back to dashboard | ☐ |
+| 11 | Lỗi amount < 10.000 hiển thị rõ | ☐ |
 
 ---
 
-## 7. Luồng kỹ thuật (để hiểu redirect)
+## 7. Luồng kỹ thuật (REAL)
 
 ```mermaid
 sequenceDiagram
   participant P as Patient UI
   participant S as Server API
-  participant G as Gateway / Mock page
+  participant G as PayOS / SePay
 
-  P->>S: POST /api/patient/wallet/topups/payos
-  S-->>P: checkoutUrl (mock hoặc PayOS)
-  P->>G: Redirect checkout
-  G->>S: Confirm / return callback
-  S-->>P: Redirect /patient/wallet?payment=success
-  P->>S: GET /api/patient/wallet
-  S-->>P: balance + transactions
+  P->>S: POST /api/patient/wallet/topups/payos|sepay
+  S->>G: Create payment / checkout session
+  G-->>S: QR / payment link
+  S-->>P: checkoutPath → /patient/wallet/checkout/...
+  P->>P: Display VietQR + poll status
+  G->>S: Webhook (PayOS) / IPN (SePay)
+  S->>S: completeTopupTransaction
+  P->>S: GET topup status (poll)
+  S-->>P: paid → redirect /patient/wallet?payment=success
 ```
 
-**Mock mode:** bỏ qua cổng thật → trang mock trong app → `mock-confirm` API → cộng tiền.
+**Hủy (REAL):**
+
+```
+Patient → Cancel (Wallet list)
+  → POST .../topups/{provider}/{ref}/cancel
+  → markTopupCancelled → status cancelled, balance unchanged
+
+PayOS cancel URL → GET /api/payments/payos/cancel → markTopupCancelled
+SePay cancel URL → GET /api/payments/sepay/cancel → markTopupCancelled
+```
 
 ---
 
@@ -286,37 +312,44 @@ sequenceDiagram
 | Triệu chứng | Cách xử lý |
 |-------------|------------|
 | Wallet loading mãi | Server chưa chạy / chưa login patient |
-| Continue không chuyển trang | Xem Network tab; kiểm tra API topup 201 |
-| Mock page "Missing order code" | URL thiếu query — tạo top-up lại từ Wallet |
-| Success nhưng balance không đổi | Refresh; kiểm tra transaction status trong DB |
-| VNPay redirect lỗi | Cần `API_PUBLIC_ORIGIN`; hoặc bật `VNPAY_MOCK=true` |
-| Không thấy mock banner | Cả 3 cổng đều `*_MOCK=false` và có credential thật |
+| Continue không chuyển trang | Network tab; API topup phải 201 |
+| Checkout "Could not load" | Kiểm tra credentials PayOS/SePay; restart server |
+| Quét QR xong balance không đổi | Webhook/IPN chưa tới server — dùng ngrok cho `API_PUBLIC_ORIGIN` |
+| Giao dịch kẹt **pending** | Dùng **Cancel** trên Wallet hoặc hủy trên cổng |
+| Redirect lỗi sau PayOS/SePay | `API_PUBLIC_ORIGIN` + `CLIENT_ORIGIN` đúng trong `.env` |
+| Thấy URL `/mock` | Sai cấu hình — đặt `*_MOCK=false` và restart |
 
 ---
 
-## 10. API tham khảo (debug)
+## 10. API tham khảo (debug — REAL)
 
 | Method | Endpoint | Auth |
 |--------|----------|------|
 | GET | `/api/patient/wallet` | Patient |
 | POST | `/api/patient/wallet/topups/payos` | Patient |
-| POST | `/api/patient/wallet/topups/vnpay` | Patient |
 | POST | `/api/patient/wallet/topups/sepay` | Patient |
-| POST | `/api/patient/wallet/payos/mock-confirm` | Patient (mock) |
-| POST | `/api/patient/wallet/vnpay/mock-confirm` | Patient (mock) |
-| POST | `/api/patient/wallet/sepay/mock-confirm` | Patient (mock) |
+| POST | `/api/patient/wallet/topups/payos/:orderCode/cancel` | Patient |
+| POST | `/api/patient/wallet/topups/sepay/:ref/cancel` | Patient |
+| GET | `/api/patient/wallet/topups/:provider/:ref/checkout` | Patient |
+| GET | `/api/patient/wallet/topups/:provider/:ref/status` | Patient |
 | GET | `/api/patient/wallet/receipts/:ref` | Patient |
+| POST | `/api/payments/payos/webhook` | PayOS |
+| GET | `/api/payments/payos/cancel` | PayOS redirect |
+| POST | `/api/payments/sepay/ipn` | SePay |
+| GET | `/api/payments/sepay/cancel` | SePay redirect |
+
+*(Các endpoint `mock-confirm` chỉ dùng cho automated tests — không dùng demo WDP301.)*
 
 ---
 
-## 11. Gợi ý thứ tự demo nhanh (5 phút)
+## 11. Gợi ý thứ tự demo nhanh (REAL — ~10 phút)
 
-1. Login patient → **Wallet**  
-2. PayOS 100k → **Simulate success** → chụp receipt + balance  
-3. SePay 50k → success → xem transaction list  
-4. PayOS → **Cancel** → chụp alert đỏ  
-5. (Tùy chọn) Đổi `VNPAY_MOCK=true`, test VNPay mock cho đủ 3 cổng cùng UI
+1. Xác nhận `.env`: `PAYOS_MOCK=false`, `SEPAY_MOCK=false` → restart server  
+2. Login patient → **Wallet**  
+3. PayOS 100k → checkout QR → thanh toán sandbox → chụp receipt + balance  
+4. SePay 50k → quét QR / CK sandbox → xem transaction list  
+5. PayOS mới → **Back to wallet** → **Cancel** pending → chụp status **cancelled**
 
 ---
 
-*Tài liệu cập nhật theo module Wallet — PayOS / VNPay / SePay (OrcaXCare).*
+*Tài liệu cập nhật theo module Wallet — PayOS / SePay REAL (OrcaXCare, WDP301).*

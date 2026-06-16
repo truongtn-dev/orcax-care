@@ -1,0 +1,26 @@
+@startuml SF11_PatientProfile
+title Screen Flow - View / Update Own Profile
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Patient Dashboard" as Dash
+rectangle "My Profile\n(personal + medical tab)" as Profile
+rectangle "Edit Profile" as Edit
+usecase "Upload Avatar Popup\n(crop + preview)" as Avatar
+
+Dash --> Profile : Click avatar >\n"My Profile"
+Profile --> Edit : Click "Edit"\nbutton
+Edit --> Edit : Validation error\n(invalid phone, etc.)
+Edit --> Profile : Click "Save"\n(changes persisted)
+Profile --> Avatar : Click camera icon\non avatar
+Avatar --> Profile : Upload successfully\n(avatar updated)
+
+@enduml

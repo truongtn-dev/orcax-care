@@ -1,0 +1,183 @@
+@startuml SQ_ManageAppointments
+' Sequence Diagram – UC-9 Manage Appointments
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant ManageAppointmentsPage as View
+participant AppointmentApiClient as Api
+participant AppointmentController as Ctrl
+participant AppointmentService as Svc
+participant AppointmentModel as AM
+participant AppointmentSlotModel as SM
+participant WalletModel as WM
+participant WalletTransactionModel as WTM
+participant ReviewModel as RM
+database MongoDB as DB
+
+== List appointments ==
+
+Patient -> View ++ : 1. Open My Appointments\n(select Upcoming / Past tab)
+
+View -> Api ++ : 2. listAppointments(tab, page)
+
+Api -> Ctrl ++ : 3. GET /api/appointments?tab=upcoming
+
+Ctrl -> Svc ++ : 4. listAppointments(patientId, tab)
+
+Svc -> AM ++ : 5. find({ patientId, status })
+
+AM -> DB : 6. query appointments collection\nsort by startTime
+
+  DB --> AM -- : 7. appointment list
+
+  AM --> Svc -- : 8. Array
+deactivate AM
+
+Svc --> Ctrl -- : 9. appointments
+Ctrl --> Api -- : 10. HTTP 200\nappointment list
+Api --> View -- : 11. success response
+View -> Patient : 12. render appointment cards
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Cancel appointment ==
+
+Patient -> View ++ : 13. Click Cancel on detail\nand confirm
+
+View -> Api ++ : 14. cancelAppointment(appointmentId)
+
+Api -> Ctrl ++ : 15. POST /api/appointments/:id/cancel
+
+Ctrl -> Svc ++ : 16. cancelAppointment(id, patientId)
+
+Svc -> AM ++ : 17. findById(appointmentId)
+
+AM -> DB : 18. query appointments
+
+  DB --> AM -- : 19. AppointmentDocument
+
+  AM --> Svc -- : 20. AppointmentDocument
+deactivate AM
+
+alt [1] Policy violation\n(< 24h before start or not confirmed)
+
+  Svc -> Svc : 21. validateCancelPolicy(appointment)
+  Svc --> Ctrl -- : 22. HTTP 403\n"Cancellation not allowed."
+  Ctrl --> Api -- : 23. error response
+  Api --> View -- : 24. error response
+  View -> Patient : 25. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Cancel with refund
+
+  Svc -> Svc : 26. validateCancelPolicy(appointment)
+
+  Svc -> AM ++ : 27. updateOne({ _id }, { status: "cancelled",\ncancelledAt })
+
+  AM -> DB : 28. update appointments
+
+  DB --> AM -- : 29. ack
+
+  AM --> Svc -- : 30. void
+  deactivate AM
+
+  Svc -> SM ++ : 31. updateOne({ _id: slotId }, { status: "available" })
+
+  SM -> DB : 32. update appointment_slots
+
+  DB --> SM -- : 33. ack
+
+  SM --> Svc -- : 34. void
+  deactivate SM
+
+  Svc -> WM ++ : 35. updateOne({ patientId },\n{ $inc: { balance: refundAmount } })
+
+  WM -> DB : 36. update wallets
+
+  DB --> WM -- : 37. ack
+
+  WM --> Svc -- : 38. void
+  deactivate WM
+
+  Svc -> WTM ++ : 39. create({ walletId, type: "refund",\namount, refType: "appointment" })
+
+  WTM -> DB : 40. insert wallet_transactions
+
+  DB --> WTM -- : 41. ack
+
+  WTM --> Svc -- : 42. WalletTransactionDocument
+  deactivate WTM
+
+  Svc --> Ctrl -- : 43. { status: "cancelled", refundAmount }
+  Ctrl --> Api -- : 44. HTTP 200\ncancellation confirmed
+  Api --> View -- : 45. success response
+  View -> Patient : 46. refresh list
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Rate doctor ==
+
+Patient -> View ++ : 47. Submit stars + comment\n(completed visit)
+
+View -> Api ++ : 48. rateDoctor(appointmentId, { rating, comment })
+
+Api -> Ctrl ++ : 49. POST /api/appointments/:id/review
+
+Ctrl -> Svc ++ : 50. rateDoctor(id, payload)
+
+Svc -> AM ++ : 51. findById(appointmentId)
+
+AM -> DB : 52. query appointments\n{ status: "completed" }
+
+  DB --> AM -- : 53. AppointmentDocument
+
+  AM --> Svc -- : 54. AppointmentDocument
+deactivate AM
+
+alt [1] Not eligible\n(not completed or already rated)
+
+  Svc --> Ctrl -- : 55. HTTP 400\n"Cannot rate this appointment."
+  Ctrl --> Api -- : 56. error response
+  Api --> View -- : 57. error response
+  View -> Patient : 58. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Review submitted
+
+  Svc -> RM ++ : 59. create({ appointmentId, doctorId,\npatientId, rating, comment })
+
+  RM -> DB : 60. insert reviews
+
+  DB --> RM -- : 61. ReviewDocument
+
+  RM --> Svc -- : 62. ReviewDocument
+  deactivate RM
+
+  Svc --> Ctrl -- : 63. review data
+  Ctrl --> Api -- : 64. HTTP 201\nreview created
+  Api --> View -- : 65. success response
+  View -> Patient : 66. hide rate form
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

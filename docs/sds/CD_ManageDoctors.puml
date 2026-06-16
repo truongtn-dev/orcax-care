@@ -1,0 +1,129 @@
+@startuml CD_ManageDoctors
+' Class Diagram – UC-29 Manage Doctors
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageDoctorsPage {
+  - doctors : Array
+  - specialtyFilter : ObjectId
+  - departmentFilter : ObjectId
+  - statusFilter : String
+  - importFile : File
+  - errorMessage : String
+  --
+  + loadDoctors() : void
+  + applyFilters() : void
+  + handleCreateDoctor(payload : Object) : void
+  + handleUpdateDoctor(id : ObjectId, payload : Object) : void
+  + handleImportExcel(file : File) : void
+  + handleExportExcel() : void
+  + openShiftsPanel(doctorId : ObjectId) : void
+  + handleCreateShift(payload : Object) : void
+}
+
+class DoctorMgmtApiClient {
+  --
+  + getDoctors(filters : Object) : Promise<Array>
+  + createDoctor(payload : Object) : Promise<DoctorResponse>
+  + updateDoctor(id : ObjectId, payload : Object) : Promise<DoctorResponse>
+  + importDoctors(file : File) : Promise<ImportResponse>
+  + exportDoctors(filters : Object) : Promise<Blob>
+  + createShift(doctorId : ObjectId, payload : Object) : Promise<ShiftResponse>
+  + generateSlots(shiftId : ObjectId) : Promise<void>
+}
+
+class DoctorMgmtController {
+  - doctorMgmtService : DoctorMgmtService
+  --
+  + getDoctors(req : Request, res : Response) : void
+  + createDoctor(req : Request, res : Response) : void
+  + updateDoctor(req : Request, res : Response) : void
+  + importDoctors(req : Request, res : Response) : void
+  + exportDoctors(req : Request, res : Response) : void
+  + createShift(req : Request, res : Response) : void
+  + generateSlots(req : Request, res : Response) : void
+}
+
+class DoctorMgmtService {
+  --
+  + listDoctors(filters : Object) : Array
+  + createDoctorWithAccount(payload : Object) : DoctorDocument
+  + updateDoctor(id : ObjectId, payload : Object) : DoctorDocument
+  + importFromExcel(file : Object) : ImportResult
+  + exportToExcel(filters : Object) : Buffer
+  + createShift(doctorId : ObjectId, payload : Object) : WorkShiftDocument
+  + generateSlotsFromShift(shiftId : ObjectId) : void
+}
+
+class DoctorModel {
+  - userId : ObjectId
+  - specialtyId : ObjectId
+  - departmentId : ObjectId
+  - degree : String
+  - consultationFee : Number
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : DoctorDocument
+  + updateOne(filter : Object, update : Object) : void
+  + aggregate(pipeline : Array) : Array
+}
+
+class UserModel {
+  - email : String
+  - fullName : String
+  - role : String
+  - isActive : boolean
+  --
+  + insertOne(doc : Object) : UserDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class WorkShiftModel {
+  - doctorId : ObjectId
+  - roomId : ObjectId
+  - date : Date
+  - startTime : String
+  - endTime : String
+  --
+  + insertOne(doc : Object) : WorkShiftDocument
+}
+
+class AppointmentSlotModel {
+  - doctorId : ObjectId
+  - shiftId : ObjectId
+  - roomId : ObjectId
+  - date : Date
+  - startTime : String
+  - endTime : String
+  - status : String
+  --
+  + insertOne(doc : Object) : AppointmentSlotDocument
+}
+
+' Bố cục
+ManageDoctorsPage -[hidden]r- DoctorMgmtApiClient
+DoctorMgmtApiClient -[hidden]r- DoctorMgmtController
+DoctorMgmtController -[hidden]d- DoctorMgmtService
+DoctorMgmtService -[hidden]d- DoctorModel
+DoctorModel -[hidden]r- UserModel
+UserModel -[hidden]r- WorkShiftModel
+WorkShiftModel -[hidden]r- AppointmentSlotModel
+
+' Association
+ManageDoctorsPage "1" --> "1" DoctorMgmtApiClient : uses
+DoctorMgmtApiClient "1" --> "1" DoctorMgmtController : calls
+DoctorMgmtController "1" --> "1" DoctorMgmtService : uses
+DoctorMgmtService "1" --> "1" DoctorModel : uses
+DoctorMgmtService "1" --> "1" UserModel : uses
+DoctorMgmtService "1" --> "1" WorkShiftModel : creates
+DoctorMgmtService "1" --> "0..*" AppointmentSlotModel : creates
+
+@enduml

@@ -1,0 +1,70 @@
+@startuml SF3_Doctor
+title Screen Flow of Doctor
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+skinparam nodesep 30
+skinparam ranksep 45
+
+rectangle "Login" as Login
+rectangle "Doctor Dashboard" as Dash
+
+rectangle "Today Appointments" as Today
+rectangle "Consultation Screen\n(encounter record)" as Consult
+rectangle "Encounter Detail\n(notes + diagnosis +\nimaging + prescription tab)" as Encounter
+usecase "Diagnosis Popup\n(ICD-10 search)" as Diagnosis
+usecase "Sign Off Confirm Popup" as SignOff
+rectangle "Medical Imaging Gallery" as Imaging
+usecase "Image Fullscreen Popup" as ImgFull
+rectangle "Create Prescription\n(line items)" as Rx
+rectangle "Prescription Detail\n(QR / Export PDF)" as RxDetail
+
+rectangle "Queue Session" as QueueSession
+usecase "Call Next / Recall Popup" as QueueCtl
+
+rectangle "Work Shift Schedule" as Shift
+rectangle "Appointment Calendar" as Calendar
+usecase "Block / Unblock\nSlot Popup" as BlockSlot
+rectangle "Patient EMR Timeline" as EMR
+
+rectangle "My Profile" as MyProfile
+usecase "Change Password Popup" as ChangePw
+
+Login --> Dash : Login successfully\n(role = doctor)
+
+Dash --> Today : Click "Today's\nAppointments"
+Today --> Consult : Click "Start\nConsultation" button
+Consult --> Encounter : Encounter created
+Encounter --> Diagnosis : Click "Add Diagnosis"\nbutton
+Encounter --> Imaging : Click "Imaging" tab
+Imaging --> ImgFull : Click an image
+Encounter --> Rx : Click "Create\nPrescription" button
+Rx --> RxDetail : Click "Save"\nbutton
+Encounter --> SignOff : Click "Sign Off"\nbutton
+Encounter --> EMR : Click "View EMR\nTimeline" link
+
+Dash --> QueueSession : Click "Open Queue\nSession" button
+QueueSession --> QueueCtl : Click "Call Next" /\n"Recall" button
+QueueCtl --> Consult : Patient checked-in\nand called
+
+Dash --> Shift : Click "Work Shifts"\nmenu
+Dash --> Calendar : Click "Calendar"\nmenu
+Calendar --> BlockSlot : Click a time slot
+
+Dash --> MyProfile : Click avatar >\n"My Profile"
+MyProfile --> ChangePw : Click "Change\nPassword" button
+
+legend left
+  **Note:**
+  * Screen: rectangle
+  * Popup: oval
+endlegend
+
+@enduml

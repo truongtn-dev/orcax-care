@@ -1,0 +1,127 @@
+@startuml SQ_ManageProfile
+' Sequence Diagram – UC-7 Manage Profile
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant ManageProfilePage as View
+participant ProfileApiClient as Api
+participant ProfileController as Ctrl
+participant ProfileService as Svc
+participant UserModel as UM
+participant PatientModel as PM
+database MongoDB as DB
+
+== Load profile ==
+
+Patient -> View ++ : 1. Open My Profile page
+
+View -> Api ++ : 2. getProfile()
+
+Api -> Ctrl ++ : 3. GET /api/profile
+
+Ctrl -> Svc ++ : 4. getProfile(userId, role)
+
+Svc -> UM ++ : 5. findById(userId)
+
+UM -> DB : 6. query users collection\n{ _id: userId }
+
+  DB --> UM -- : 7. user document
+
+  UM --> Svc -- : 8. UserDocument
+deactivate UM
+
+Svc -> PM ++ : 9. findOne({ userId })
+
+PM -> DB : 10. query patients collection\n{ userId }
+
+  DB --> PM -- : 11. patient document / null
+
+  PM --> Svc -- : 12. PatientDocument
+deactivate PM
+
+Svc --> Ctrl -- : 13. { user, profile }
+Ctrl --> Api -- : 14. HTTP 200\nprofile data
+Api --> View -- : 15. success response
+View -> Patient : 16. render profile view
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Update profile ==
+
+Patient -> View ++ : 17. Edit fields and click Save
+
+View -> View : 18. validateForm()
+
+View -> Api ++ : 19. updateProfile(payload)
+
+Api -> Ctrl ++ : 20. PUT /api/profile\n{ fullName, phone, ... }
+
+Ctrl -> Svc ++ : 21. updateProfile(userId, role, payload)
+
+alt [1] Invalid input\n(missing full name, invalid phone, invalid DOB)
+
+  Svc --> Ctrl -- : 22. HTTP 400\nvalidation message
+  Ctrl --> Api -- : 23. error response
+  Api --> View -- : 24. error response
+  View -> Patient : 25. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Valid update
+
+  Svc -> UM ++ : 26. findById(userId)
+
+  UM -> DB : 27. query users
+
+  DB --> UM -- : 28. UserDocument
+
+  UM --> Svc -- : 29. UserDocument
+  deactivate UM
+
+  Svc -> UM ++ : 30. save({ fullName, phone })
+
+  UM -> DB : 31. update users
+
+  DB --> UM -- : 32. ack
+
+  UM --> Svc -- : 33. void
+  deactivate UM
+
+  Svc -> PM ++ : 34. findOne({ userId })
+
+  PM -> DB : 35. query patients
+
+  DB --> PM -- : 36. PatientDocument
+
+  PM --> Svc -- : 37. PatientDocument
+  deactivate PM
+
+  Svc -> PM ++ : 38. save({ dateOfBirth, gender,\naddress, emergencyContact })
+
+  PM -> DB : 39. update patients
+
+  DB --> PM -- : 40. ack
+
+  PM --> Svc -- : 41. void
+  deactivate PM
+
+  Svc --> Ctrl -- : 42. updated profile
+  Ctrl --> Api -- : 43. HTTP 200\nprofile data
+  Api --> View -- : 44. success response
+  View -> Patient : 45. showSuccess(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

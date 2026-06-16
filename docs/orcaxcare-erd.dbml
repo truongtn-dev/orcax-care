@@ -1,0 +1,434 @@
+// OrcaXCare — Entity Relationship Diagram (MongoDB collections)
+// Paste this file at https://dbdiagram.io/d  → Export PNG/SVG → insert as Figure 10 (ERD)
+//
+// Payment gateways PayOS + SePay are EXTERNAL APIs (no momo_wallets table).
+// Updated: 2026-06-12 — replaces legacy car-rental / MoMo template ERD.
+
+Project OrcaXCare {
+  database_type: 'MongoDB'
+  Note: '''
+    OrcaXCare clinic management system (WDP301 SE1816 Group 4).
+    Wallet top-up: PayOS (VietQR + webhook) and SePay (VietQR + IPN).
+    Booking payment methods: wallet | payos | sepay.
+  '''
+}
+
+// ─── External payment providers (not DB tables) ─────────────────────────────
+
+TableGroup external_gateways [color: #fef3c7] {
+  payos_api
+  sepay_api
+}
+
+Table payos_api {
+  Note: 'External — PayOS Payment Gateway. Top-up via VietQR. Webhook: /api/payments/payos/webhook'
+  client_id varchar
+  api_key varchar
+  checksum_key varchar
+}
+
+Table sepay_api {
+  Note: 'External — SePay Payment Gateway. Top-up via VietQR. IPN: /api/payments/sepay/ipn'
+  merchant_id varchar [note: 'SP-TEST-* sandbox | SP-LIVE-* production']
+  secret_key varchar
+}
+
+// ─── 1. Authentication & accounts ─────────────────────────────────────────
+
+TableGroup auth_users [color: #ecfeff] {
+  users
+  auth_tokens
+  verification_tokens
+  patients
+  doctors
+}
+
+Table users {
+  _id objectid [pk]
+  email varchar [unique, not null]
+  password_hash varchar [not null]
+  role varchar [not null, note: 'patient | doctor | staff | admin']
+  full_name varchar [not null]
+  phone varchar
+  is_active boolean [default: true]
+  is_email_verified boolean [default: false]
+  is_locked boolean [default: false]
+  last_login_at datetime
+  created_at datetime
+  updated_at datetime
+}
+
+Table auth_tokens {
+  _id objectid [pk]
+  user_id objectid [ref: > users._id, not null]
+  token_hash varchar [not null]
+  remember_me boolean [default: false]
+  expires_at datetime
+  revoked_at datetime
+}
+
+Table verification_tokens {
+  _id objectid [pk]
+  user_id objectid [ref: > users._id, not null]
+  type varchar [not null, note: 'verify_email | reset_password']
+  token_hash varchar [not null]
+  expires_at datetime
+  used_at datetime
+}
+
+Table patients {
+  _id objectid [pk]
+  user_id objectid [ref: - users._id, unique, not null]
+  date_of_birth date
+  gender varchar
+  address varchar
+  blood_type varchar
+  allergies varchar
+  emergency_contact_name varchar
+  emergency_contact_phone varchar
+  avatar_url varchar
+  is_active boolean [default: true]
+  created_at datetime
+  updated_at datetime
+}
+
+Table doctors {
+  _id objectid [pk]
+  user_id objectid [ref: - users._id, unique, not null]
+  specialty_id objectid [ref: > specialties._id, not null]
+  department_id objectid [ref: > departments._id, not null]
+  license_no varchar [unique, not null]
+  title varchar
+  years_of_experience int
+  bio varchar
+  photo_url varchar
+  rating_avg decimal
+  rating_count int
+  is_featured boolean
+  is_active boolean [default: true]
+  created_at datetime
+  updated_at datetime
+}
+
+// ─── 2. Master data ─────────────────────────────────────────────────────────
+
+TableGroup master_data [color: #dbeafe] {
+  specialties
+  departments
+  clinic_rooms
+  branches
+  icd10_catalog
+  medicines
+}
+
+Table specialties {
+  _id objectid [pk]
+  name varchar [unique, not null]
+  code varchar
+  description varchar
+  is_deleted boolean [default: false]
+}
+
+Table departments {
+  _id objectid [pk]
+  name varchar [not null]
+  location varchar
+  phone varchar
+  is_active boolean [default: true]
+}
+
+Table clinic_rooms {
+  _id objectid [pk]
+  department_id objectid [ref: > departments._id, not null]
+  name varchar [not null]
+  code varchar
+  is_active boolean [default: true]
+}
+
+Table branches {
+  _id objectid [pk]
+  name varchar [not null]
+  address varchar
+  phone varchar
+  lat decimal
+  lng decimal
+  is_active boolean [default: true]
+}
+
+Table icd10_catalog {
+  _id objectid [pk]
+  code varchar [unique, not null]
+  name varchar [not null]
+}
+
+Table medicines {
+  _id objectid [pk]
+  name varchar [not null]
+  code varchar [unique, not null]
+  unit varchar
+  price decimal
+  stock_qty int
+  is_active boolean [default: true]
+}
+
+// ─── 3. Scheduling & appointments ───────────────────────────────────────────
+
+TableGroup scheduling [color: #e0e7ff] {
+  work_shifts
+  appointment_slots
+  appointments
+}
+
+Table work_shifts {
+  _id objectid [pk]
+  doctor_id objectid [ref: > doctors._id, not null]
+  room_id objectid [ref: > clinic_rooms._id]
+  date date [not null]
+  start_time varchar [not null]
+  end_time varchar [not null]
+  status varchar
+}
+
+Table appointment_slots {
+  _id objectid [pk]
+  doctor_id objectid [ref: > doctors._id, not null]
+  work_shift_id objectid [ref: > work_shifts._id, not null]
+  date date [not null]
+  start_time varchar [not null]
+  end_time varchar [not null]
+  status varchar [not null, note: 'available | booked | blocked']
+}
+
+Table appointments {
+  _id objectid [pk]
+  patient_id objectid [ref: > patients._id, not null]
+  doctor_id objectid [ref: > doctors._id, not null]
+  slot_id objectid [ref: > appointment_slots._id, not null]
+  room_id objectid [ref: > clinic_rooms._id]
+  status varchar [not null, note: 'pending | confirmed | completed | cancelled']
+  reason varchar
+  fee decimal [not null]
+  discount_amount decimal
+  cancelled_at datetime
+  completed_at datetime
+  created_at datetime
+}
+
+// ─── 4. Payment & wallet (PayOS + SePay) ────────────────────────────────────
+
+TableGroup payment_wallet [color: #cffafe] {
+  wallets
+  wallet_transactions
+  payments
+  insurance_cards
+}
+
+Table wallets {
+  _id objectid [pk]
+  patient_id objectid [ref: - patients._id, unique, not null]
+  balance decimal [not null, default: 0, note: 'VND, never negative']
+  currency varchar [default: 'VND']
+  created_at datetime
+  updated_at datetime
+}
+
+Table wallet_transactions {
+  _id objectid [pk]
+  wallet_id objectid [ref: > wallets._id, not null]
+  type varchar [not null, note: 'topup | payment | refund']
+  amount decimal [not null]
+  ref_type varchar [note: 'appointment | topup | refund']
+  ref_id varchar
+  provider varchar [note: 'payos | sepay | internal — gateway for top-ups']
+  order_code bigint [note: 'PayOS order code']
+  provider_order_id varchar [note: 'SePay / gateway reference']
+  status varchar [not null, note: 'pending | success | failed | cancelled']
+  created_at datetime
+
+  Note: 'Top-up flow uses PayOS or SePay external APIs; credited after webhook/IPN verified.'
+}
+
+Table payments {
+  _id objectid [pk]
+  appointment_id objectid [ref: - appointments._id, not null]
+  method varchar [not null, note: 'payos | sepay | wallet']
+  amount decimal [not null]
+  discount_applied decimal
+  gateway_txn_id varchar [note: 'PayOS payment link id or SePay order id']
+  status varchar [not null, note: 'pending | paid | failed | refunded']
+  paid_at datetime
+
+  Note: 'Booking checkout: patient pays via medical wallet, PayOS (UC-7.1), or SePay (UC-7.2).'
+}
+
+Table insurance_cards {
+  _id objectid [pk]
+  patient_id objectid [ref: > patients._id, not null]
+  provider varchar [not null]
+  card_number varchar [not null]
+  holder_name varchar
+  coverage_type varchar
+  valid_from date
+  valid_to date
+  is_primary boolean
+  is_active boolean [default: true]
+}
+
+// ─── 5. EMR & prescriptions ─────────────────────────────────────────────────
+
+TableGroup emr [color: #f0fdf4] {
+  encounters
+  diagnoses
+  medical_images
+  prescriptions
+  prescription_items
+  stock_movements
+}
+
+Table encounters {
+  _id objectid [pk]
+  appointment_id objectid [ref: - appointments._id, not null]
+  patient_id objectid [ref: > patients._id, not null]
+  doctor_id objectid [ref: > doctors._id, not null]
+  status varchar [note: 'in_progress | signed_off']
+  chief_complaint varchar
+  notes varchar
+  signed_off_at datetime
+}
+
+Table diagnoses {
+  _id objectid [pk]
+  encounter_id objectid [ref: > encounters._id, not null]
+  icd10_code varchar [ref: > icd10_catalog.code]
+  name varchar
+  is_primary boolean
+}
+
+Table medical_images {
+  _id objectid [pk]
+  encounter_id objectid [ref: > encounters._id, not null]
+  patient_id objectid [ref: > patients._id, not null]
+  uploaded_by objectid [ref: > users._id]
+  image_url varchar [not null]
+  caption varchar
+}
+
+Table prescriptions {
+  _id objectid [pk]
+  encounter_id objectid [ref: > encounters._id, not null]
+  doctor_id objectid [ref: > doctors._id, not null]
+  patient_id objectid [ref: > patients._id, not null]
+  status varchar
+  qr_code varchar
+  pdf_url varchar
+}
+
+Table prescription_items {
+  _id objectid [pk]
+  prescription_id objectid [ref: > prescriptions._id, not null]
+  medicine_id objectid [ref: > medicines._id, not null]
+  dosage varchar
+  frequency varchar
+  duration varchar
+  quantity int
+}
+
+Table stock_movements {
+  _id objectid [pk]
+  medicine_id objectid [ref: > medicines._id, not null]
+  performed_by objectid [ref: > users._id]
+  type varchar [note: 'inbound | outbound | adjust']
+  quantity int
+  note varchar
+}
+
+// ─── 6. Queue ───────────────────────────────────────────────────────────────
+
+TableGroup queue [color: #fef9c3] {
+  queue_sessions
+  queue_tickets
+}
+
+Table queue_sessions {
+  _id objectid [pk]
+  doctor_id objectid [ref: > doctors._id, not null]
+  room_id objectid [ref: > clinic_rooms._id]
+  date date [not null]
+  status varchar [note: 'open | paused | closed']
+}
+
+Table queue_tickets {
+  _id objectid [pk]
+  session_id objectid [ref: > queue_sessions._id, not null]
+  appointment_id objectid [ref: > appointments._id, not null]
+  patient_id objectid [ref: > patients._id, not null]
+  ticket_no int
+  status varchar [note: 'waiting | called | serving | done']
+}
+
+// ─── 7. Engagement & support ────────────────────────────────────────────────
+
+TableGroup engagement [color: #fce7f3] {
+  favorites
+  reviews
+  notifications
+  notification_preferences
+  complaints
+  complaint_replies
+}
+
+Table favorites {
+  _id objectid [pk]
+  patient_id objectid [ref: > patients._id, not null]
+  doctor_id objectid [ref: > doctors._id, not null]
+  created_at datetime
+
+  Indexes {
+    (patient_id, doctor_id) [unique]
+  }
+}
+
+Table reviews {
+  _id objectid [pk]
+  appointment_id objectid [ref: - appointments._id, unique, not null]
+  patient_id objectid [ref: > patients._id, not null]
+  doctor_id objectid [ref: > doctors._id, not null]
+  rating int
+  comment varchar
+  created_at datetime
+}
+
+Table notifications {
+  _id objectid [pk]
+  user_id objectid [ref: > users._id, not null]
+  type varchar [note: 'reminder | result_ready | booking_confirmed | ...']
+  title varchar
+  body varchar
+  is_read boolean [default: false]
+  created_at datetime
+}
+
+Table notification_preferences {
+  _id objectid [pk]
+  user_id objectid [ref: - users._id, unique, not null]
+  reminder_enabled boolean
+  result_ready_enabled boolean
+  booking_confirmed_enabled boolean
+}
+
+Table complaints {
+  _id objectid [pk]
+  patient_id objectid [ref: > patients._id, not null]
+  subject varchar [not null]
+  content varchar [not null]
+  status varchar [note: 'open | in_progress | resolved | closed']
+  created_at datetime
+}
+
+Table complaint_replies {
+  _id objectid [pk]
+  complaint_id objectid [ref: > complaints._id, not null]
+  replied_by objectid [ref: > users._id, not null]
+  content varchar [not null]
+  created_at datetime
+}

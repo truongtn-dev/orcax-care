@@ -1,0 +1,79 @@
+@startuml SQ_ManageSpecialties
+' Sequence Diagram – UC-26 Manage Specialties
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManageSpecialtiesPage as View
+participant SpecialtyApiClient as Api
+participant SpecialtyController as Ctrl
+participant SpecialtyService as Svc
+participant SpecialtyModel as SM
+participant DoctorModel as DM
+database MongoDB as DB
+
+== Delete specialty ==
+
+Admin -> View ++ : 1. Confirm delete specialty
+
+View -> Api ++ : 2. deleteSpecialty(specialtyId)
+
+Api -> Ctrl ++ : 3. DELETE /api/admin/specialties/:id
+
+Ctrl -> Svc ++ : 4. deleteOrDeactivate(specialtyId)
+
+Svc -> DM ++ : 5. countDocuments({ specialtyId })
+
+DM -> DB : 6. count doctors
+
+  DB --> DM -- : 7. reference count
+
+  DM --> Svc -- : 8. Number
+deactivate DM
+
+alt [1] Referenced by doctors\n(deactivate instead)
+
+  Svc -> SM ++ : 9. updateOne({ _id: specialtyId }, { isActive: false })
+
+  SM -> DB : 10. update specialties
+
+  DB --> SM -- : 11. ack
+
+  SM --> Svc -- : 12. void
+  deactivate SM
+
+  Svc --> Ctrl -- : 13. { action: "deactivated" }
+  Ctrl --> Api -- : 14. HTTP 200
+  Api --> View -- : 15. deactivated notice
+  View -> Admin : 16. refreshList()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Hard delete\n(no references)
+
+  Svc -> SM ++ : 17. deleteOne({ _id: specialtyId })
+
+  SM -> DB : 18. delete specialties
+
+  DB --> SM -- : 19. ack
+
+  SM --> Svc -- : 20. void
+  deactivate SM
+
+  Svc --> Ctrl -- : 21. void
+  Ctrl --> Api -- : 22. HTTP 204
+  Api --> View -- : 23. success
+  View -> Admin : 24. removeFromList()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

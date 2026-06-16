@@ -1,0 +1,112 @@
+@startuml SQ_ComplaintsPatient
+' Sequence Diagram – UC-12 Submit Complaint
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant ComplaintsPatientPage as View
+participant ComplaintApiClient as Api
+participant ComplaintController as Ctrl
+participant ComplaintService as Svc
+participant ComplaintModel as CM
+participant ComplaintReplyModel as CRM
+participant NotificationModel as NM
+database MongoDB as DB
+
+== Submit complaint ==
+
+Patient -> View ++ : 1. Enter category, subject,\ndescription, attachment
+
+View -> View : 2. validateForm()
+
+View -> Api ++ : 3. submitComplaint({ category, subject,\ndescription, attachmentUrl })
+
+Api -> Ctrl ++ : 4. POST /api/complaints\n{ category, subject, description, attachmentUrl }
+
+Ctrl -> Svc ++ : 5. submitComplaint(patientId, payload)
+
+Svc -> Svc : 6. validateInput(payload)
+
+Svc -> CM ++ : 7. create({ patientId, category, subject,\ndescription, attachmentUrl, status: "open" })
+
+CM -> DB : 8. insert complaints
+
+  DB --> CM -- : 9. ComplaintDocument
+
+  CM --> Svc -- : 10. ComplaintDocument
+deactivate CM
+
+Svc -> NM ++ : 11. create({ userId: staffId, type: "new-complaint",\ntitle, refId: complaintId })
+
+NM -> DB : 12. insert notifications
+
+  DB --> NM -- : 13. ack
+
+  NM --> Svc -- : 14. NotificationDocument
+deactivate NM
+
+alt [1] Validation error
+
+  Svc --> Ctrl -- : 15. HTTP 400\nvalidation error
+  Ctrl --> Api -- : 16. error response
+  Api --> View -- : 17. error response
+  View -> Patient : 18. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 19. ComplaintDocument
+  Ctrl --> Api -- : 20. HTTP 201\ncomplaint created
+  Api --> View -- : 21. success response
+  View -> Patient : 22. showSuccess()\nand refresh list
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== View complaint detail ==
+
+Patient -> View ++ : 23. Open complaint detail
+
+View -> Api ++ : 24. getComplaintDetail(complaintId)
+
+Api -> Ctrl ++ : 25. GET /api/complaints/:id
+
+Ctrl -> Svc ++ : 26. getComplaintDetail(id, patientId)
+
+Svc -> CM ++ : 27. findOne({ _id: id, patientId })
+
+CM -> DB : 28. query complaints
+
+  DB --> CM -- : 29. ComplaintDocument
+
+  CM --> Svc -- : 30. ComplaintDocument
+deactivate CM
+
+Svc -> CRM ++ : 31. find({ complaintId }).sort({ createdAt: 1 })
+
+CRM -> DB : 32. query complaint_replies
+
+  DB --> CRM -- : 33. reply list
+
+  CRM --> Svc -- : 34. Array
+deactivate CRM
+
+Svc --> Ctrl -- : 35. { complaint, replies }
+Ctrl --> Api -- : 36. HTTP 200
+Api --> View -- : 37. detail response
+View -> Patient : 38. renderThread()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

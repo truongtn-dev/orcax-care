@@ -121,6 +121,10 @@ export const AdminApiClient = {
     return api.post("/api/admin/work-shifts", payload);
   },
 
+  previewWorkShift(payload) {
+    return api.post("/api/admin/work-shifts/preview", payload);
+  },
+
   listWorkShifts(params) {
     return api.get("/api/admin/work-shifts", { params });
   },
@@ -129,12 +133,20 @@ export const AdminApiClient = {
     return api.get(`/api/admin/work-shifts/${id}`);
   },
 
+  getDeleteShiftImpact(id) {
+    return api.get(`/api/admin/work-shifts/${id}/delete-impact`);
+  },
+
   updateWorkShift(id, payload) {
     return api.put(`/api/admin/work-shifts/${id}`, payload);
   },
 
   deleteWorkShift(id) {
     return api.delete(`/api/admin/work-shifts/${id}`);
+  },
+
+  previewAppointmentSlots(payload) {
+    return api.post("/api/admin/appointment-slots/preview", payload);
   },
 
   generateAppointmentSlots(payload) {

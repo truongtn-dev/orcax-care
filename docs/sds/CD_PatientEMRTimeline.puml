@@ -1,0 +1,99 @@
+@startuml CD_PatientEMRTimeline
+' Class Diagram – UC-21 View Patient EMR Timeline
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class PatientEMRTimelinePage {
+  - patientId : ObjectId
+  - patientSummary : Object
+  - typeFilter : String
+  - timelineItems : Array
+  - selectedItemId : ObjectId
+  - errorMessage : String
+  --
+  + loadTimeline() : void
+  + applyTypeFilter(type : String) : void
+  + openDetail(itemId : ObjectId) : void
+}
+
+class EmrTimelineApiClient {
+  --
+  + getPatientTimeline(patientId : ObjectId, type : String) : Promise<TimelineResponse>
+  + getEncounterDetail(encounterId : ObjectId) : Promise<EncounterDetailResponse>
+}
+
+class EmrTimelineController {
+  - emrTimelineService : EmrTimelineService
+  --
+  + getPatientTimeline(req : Request, res : Response) : void
+  + getEncounterDetail(req : Request, res : Response) : void
+}
+
+class EmrTimelineService {
+  --
+  + getTimeline(doctorId : ObjectId, patientId : ObjectId, type : String) : TimelineResult
+  + verifyAccess(doctorId : ObjectId, patientId : ObjectId) : void
+  + getEncounterDetail(encounterId : ObjectId) : EncounterDetail
+}
+
+class EncounterModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - status : String
+  - startedAt : Date
+  - notes : String
+  --
+  + aggregate(pipeline : Array) : Array
+  + findOne(filter : Object) : EncounterDocument
+}
+
+class DiagnosisModel {
+  - encounterId : ObjectId
+  - icd10Code : String
+  - type : String
+  --
+  + find(filter : Object) : Array
+}
+
+class PrescriptionModel {
+  - encounterId : ObjectId
+  - patientId : ObjectId
+  - status : String
+  --
+  + find(filter : Object) : Array
+}
+
+class MedicalImageModel {
+  - encounterId : ObjectId
+  - url : String
+  - modality : String
+  --
+  + find(filter : Object) : Array
+}
+
+' Bố cục
+PatientEMRTimelinePage -[hidden]r- EmrTimelineApiClient
+EmrTimelineApiClient -[hidden]r- EmrTimelineController
+EmrTimelineController -[hidden]d- EmrTimelineService
+EmrTimelineService -[hidden]d- EncounterModel
+EncounterModel -[hidden]r- DiagnosisModel
+DiagnosisModel -[hidden]r- PrescriptionModel
+PrescriptionModel -[hidden]r- MedicalImageModel
+
+' Association
+PatientEMRTimelinePage "1" --> "1" EmrTimelineApiClient : uses
+EmrTimelineApiClient "1" --> "1" EmrTimelineController : calls
+EmrTimelineController "1" --> "1" EmrTimelineService : uses
+EmrTimelineService "1" --> "1" EncounterModel : uses
+EmrTimelineService "1" --> "1" DiagnosisModel : uses
+EmrTimelineService "1" --> "1" PrescriptionModel : uses
+EmrTimelineService "1" --> "1" MedicalImageModel : uses
+
+@enduml

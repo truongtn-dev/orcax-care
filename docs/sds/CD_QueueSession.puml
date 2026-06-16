@@ -1,0 +1,95 @@
+@startuml CD_QueueSession
+' Class Diagram – UC-18 Manage Queue Session
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class QueueSessionPage {
+  - sessionId : ObjectId
+  - roomCode : String
+  - currentNumber : Number
+  - waitingTickets : Array
+  - sessionStatus : String
+  - errorMessage : String
+  --
+  + loadSession() : void
+  + handleOpenSession() : void
+  + handleCallNext() : void
+  + handleRecall() : void
+  + handleMarkNoShow(ticketId : ObjectId) : void
+  + handleCloseSession() : void
+}
+
+class QueueSessionApiClient {
+  --
+  + openSession(roomId : ObjectId) : Promise<SessionResponse>
+  + getSession(sessionId : ObjectId) : Promise<SessionResponse>
+  + callNext(sessionId : ObjectId) : Promise<TicketResponse>
+  + recallTicket(sessionId : ObjectId, ticketId : ObjectId) : Promise<void>
+  + markNoShow(ticketId : ObjectId) : Promise<void>
+  + closeSession(sessionId : ObjectId) : Promise<void>
+}
+
+class QueueSessionController {
+  - queueSessionService : QueueSessionService
+  --
+  + openSession(req : Request, res : Response) : void
+  + getSession(req : Request, res : Response) : void
+  + callNext(req : Request, res : Response) : void
+  + recallTicket(req : Request, res : Response) : void
+  + markNoShow(req : Request, res : Response) : void
+  + closeSession(req : Request, res : Response) : void
+}
+
+class QueueSessionService {
+  --
+  + openSession(roomId : ObjectId, doctorId : ObjectId) : QueueSessionDocument
+  + callNextTicket(sessionId : ObjectId) : QueueTicketDocument
+  + recallTicket(sessionId : ObjectId, ticketId : ObjectId) : void
+  + markNoShow(ticketId : ObjectId) : void
+  + closeSession(sessionId : ObjectId) : void
+}
+
+class QueueSessionModel {
+  - roomId : ObjectId
+  - doctorId : ObjectId
+  - currentNumber : Number
+  - status : String
+  --
+  + updateOne(filter : Object, update : Object, options : Object) : QueueSessionDocument
+  + findOne(filter : Object) : QueueSessionDocument
+}
+
+class QueueTicketModel {
+  - sessionId : ObjectId
+  - patientId : ObjectId
+  - number : Number
+  - status : String
+  --
+  + findOneAndUpdate(filter : Object, update : Object, options : Object) : QueueTicketDocument
+  + find(filter : Object) : Array
+  + updateOne(filter : Object, update : Object) : void
+  + updateMany(filter : Object, update : Object) : void
+}
+
+' Bố cục
+QueueSessionPage -[hidden]r- QueueSessionApiClient
+QueueSessionApiClient -[hidden]r- QueueSessionController
+QueueSessionController -[hidden]d- QueueSessionService
+QueueSessionService -[hidden]d- QueueSessionModel
+QueueSessionModel -[hidden]r- QueueTicketModel
+
+' Association
+QueueSessionPage "1" --> "1" QueueSessionApiClient : uses
+QueueSessionApiClient "1" --> "1" QueueSessionController : calls
+QueueSessionController "1" --> "1" QueueSessionService : uses
+QueueSessionService "1" --> "1" QueueSessionModel : uses
+QueueSessionService "1" --> "1" QueueTicketModel : uses
+
+@enduml

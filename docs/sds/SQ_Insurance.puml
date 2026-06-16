@@ -1,0 +1,104 @@
+@startuml SQ_Insurance
+' Sequence Diagram – UC-14 Manage Insurance Cards
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant InsurancePage as View
+participant InsuranceApiClient as Api
+participant InsuranceController as Ctrl
+participant InsuranceService as Svc
+participant InsuranceCardModel as ICM
+participant InsuranceProviderModel as IPM
+database MongoDB as DB
+
+== Add insurance card ==
+
+Patient -> View ++ : 1. Scan card image or\nenter card details
+
+View -> Api ++ : 2. scanCardImage(file)
+
+Api -> Ctrl ++ : 3. POST /api/insurance/scan
+
+Ctrl -> Svc ++ : 4. scanCardImage(file)
+
+Svc --> Ctrl -- : 5. { provider, cardNumber,\nholderName, expiryDate }
+Ctrl --> Api -- : 6. HTTP 200 OCR result
+Api --> View -- : 7. auto-fill form
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+
+View -> View : 8. validateForm()
+
+View -> Api ++ : 9. addCard({ providerId, cardNumber,\nholderName, expiryDate, imageUrl })
+
+Api -> Ctrl ++ : 10. POST /api/insurance/cards
+
+Ctrl -> Svc ++ : 11. addCard(patientId, payload)
+
+Svc -> ICM ++ : 12. insertOne({ patientId, providerId,\ncardNumber, holderName, expiryDate, imageUrl })
+
+ICM -> DB : 13. insert insurance_cards
+
+  DB --> ICM -- : 14. InsuranceCardDocument
+
+  ICM --> Svc -- : 15. InsuranceCardDocument
+deactivate ICM
+
+alt [1] Invalid card format\nor expired date
+
+  Svc --> Ctrl -- : 16. HTTP 400\nvalidation error
+  Ctrl --> Api -- : 17. error response
+  Api --> View -- : 18. error response
+  View -> Patient : 19. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 20. InsuranceCardDocument
+  Ctrl --> Api -- : 21. HTTP 201
+  Api --> View -- : 22. success response
+  View -> Patient : 23. refreshCardList()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Delete insurance card ==
+
+Patient -> View ++ : 24. Confirm delete card
+
+View -> Api ++ : 25. deleteCard(cardId)
+
+Api -> Ctrl ++ : 26. DELETE /api/insurance/cards/:id
+
+Ctrl -> Svc ++ : 27. deleteCard(id, patientId)
+
+Svc -> ICM ++ : 28. deleteOne({ _id: id, patientId })
+
+ICM -> DB : 29. delete insurance_cards
+
+  DB --> ICM -- : 30. ack
+
+  ICM --> Svc -- : 31. void
+deactivate ICM
+
+Svc --> Ctrl -- : 32. void
+Ctrl --> Api -- : 33. HTTP 204
+Api --> View -- : 34. success
+View -> Patient : 35. removeCardFromList()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

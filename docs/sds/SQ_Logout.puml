@@ -1,0 +1,54 @@
+@startuml SQ_Logout
+' Sequence Diagram – UC-6 Logout
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor User
+participant AppHeader as Header
+participant AuthContext as Ctx
+participant AuthApiClient as Api
+participant AuthController as Ctrl
+participant AuthService as Svc
+participant AuthTokenModel as TM
+database MongoDB as DB
+
+== Logout ==
+
+User -> Header ++ : 1. Click Logout
+
+Header -> Ctx ++ : 2. logout()
+
+Ctx -> Api ++ : 3. logout()
+
+Api -> Ctrl ++ : 4. POST /api/auth/logout\nAuthorization: Bearer token
+
+Ctrl -> Svc ++ : 5. logout(accessToken)
+
+Svc -> TM ++ : 6. deleteOne({ tokenHash })
+
+TM -> DB : 7. delete auth_tokens
+
+DB --> TM -- : 8. ack
+
+TM --> Svc -- : 9. void
+deactivate TM
+
+Svc --> Ctrl -- : 10. HTTP 200
+deactivate Svc
+Ctrl --> Api -- : 11. success response
+deactivate Ctrl
+Api --> Ctx -- : 12. success response
+deactivate Api
+
+Ctx -> Ctx : 13. clearLocalSession()\nremoveToken(), clearAuthHeader()
+
+Ctx --> Header -- : 14. void
+deactivate Ctx
+
+Header -> User : 15. redirectToHome()
+deactivate Header
+
+@enduml

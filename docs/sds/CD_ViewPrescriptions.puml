@@ -1,0 +1,109 @@
+@startuml CD_ViewPrescriptions
+' Class Diagram – UC-10 View Prescriptions
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ViewPrescriptionsPage {
+  - prescriptions : Array
+  - selectedPrescription : Object
+  - qrCodeData : String
+  - errorMessage : String
+  --
+  + loadPrescriptions() : void
+  + viewDetail(prescriptionId : ObjectId) : void
+  + showQrCode(prescriptionId : ObjectId) : void
+  + exportPdf(prescriptionId : ObjectId) : void
+  + showError(message : String) : void
+}
+
+class PrescriptionApiClient {
+  --
+  + listPrescriptions(page : Number) : Promise<Array>
+  + getPrescriptionDetail(id : ObjectId) : Promise<PrescriptionResponse>
+  + getQrCode(id : ObjectId) : Promise<QrResponse>
+  + exportPdf(id : ObjectId) : Promise<Blob>
+}
+
+class PrescriptionController {
+  - prescriptionService : PrescriptionService
+  --
+  + listPrescriptions(req : Request, res : Response) : void
+  + getPrescriptionDetail(req : Request, res : Response) : void
+  + getQrCode(req : Request, res : Response) : void
+  + exportPdf(req : Request, res : Response) : void
+}
+
+class PrescriptionService {
+  --
+  + listPrescriptions(patientId : ObjectId) : Array
+  + getPrescriptionDetail(id : ObjectId, patientId : ObjectId) : PrescriptionResult
+  + generateQrCode(prescription : Object) : String
+  + exportPdf(prescription : Object) : Buffer
+}
+
+class PrescriptionModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - encounterId : ObjectId
+  - status : String
+  - qrCode : String
+  - issuedAt : Date
+  --
+  + find(filter : Object) : Array
+  + findById(id : ObjectId) : PrescriptionDocument
+}
+
+class PrescriptionItemModel {
+  - prescriptionId : ObjectId
+  - medicineId : ObjectId
+  - dosage : String
+  - frequency : String
+  - durationDays : Number
+  - quantity : Number
+  - instructions : String
+  --
+  + find(filter : Object) : Array
+  + aggregate(pipeline : Array) : Array
+}
+
+class MedicineModel {
+  - name : String
+  - code : String
+  - unit : String
+  --
+  + findById(id : ObjectId) : MedicineDocument
+}
+
+class DoctorModel {
+  - userId : ObjectId
+  - specialtyId : ObjectId
+  --
+  + findById(id : ObjectId) : DoctorDocument
+}
+
+' Bố cục
+ViewPrescriptionsPage -[hidden]r- PrescriptionApiClient
+PrescriptionApiClient -[hidden]r- PrescriptionController
+PrescriptionController -[hidden]d- PrescriptionService
+PrescriptionService -[hidden]d- PrescriptionModel
+PrescriptionModel -[hidden]r- PrescriptionItemModel
+PrescriptionItemModel -[hidden]r- MedicineModel
+MedicineModel -[hidden]r- DoctorModel
+
+' Association
+ViewPrescriptionsPage "1" --> "1" PrescriptionApiClient : uses
+PrescriptionApiClient "1" --> "1" PrescriptionController : calls
+PrescriptionController "1" --> "1" PrescriptionService : uses
+PrescriptionService "1" --> "1" PrescriptionModel : uses
+PrescriptionService "1" --> "1" PrescriptionItemModel : uses
+PrescriptionService "1" --> "1" MedicineModel : uses
+PrescriptionService "1" --> "1" DoctorModel : uses
+
+@enduml

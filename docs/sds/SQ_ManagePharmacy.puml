@@ -1,0 +1,107 @@
+@startuml SQ_ManagePharmacy
+' Sequence Diagram – UC-32 Manage Pharmacy
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Staff
+participant ManagePharmacyPage as View
+participant PharmacyApiClient as Api
+participant PharmacyController as Ctrl
+participant PharmacyService as Svc
+participant MedicineModel as MM
+participant StockMovementModel as SMM
+database MongoDB as DB
+
+== Stock inbound ==
+
+Staff -> View ++ : 1. Enter quantity, batch,\nexpiry, supplier
+
+View -> Api ++ : 2. recordInbound(medicineId, payload)
+
+Api -> Ctrl ++ : 3. POST /api/pharmacy/medicines/:id/inbound
+
+Ctrl -> Svc ++ : 4. recordInbound(medicineId, payload, staffId)
+
+Svc -> SMM ++ : 5. insertOne({ medicineId, type: "in", quantity,\nbatchNo, expiryDate, by: staffId })
+
+SMM -> DB : 6. insert stock_movements
+
+  DB --> SMM -- : 7. StockMovementDocument
+
+  SMM --> Svc -- : 8. StockMovementDocument
+deactivate SMM
+
+Svc -> MM ++ : 9. updateOne({ _id: medicineId }, { $inc: { stockQuantity: quantity } })
+
+MM -> DB : 10. update medicines
+
+  DB --> MM -- : 11. ack
+
+  MM --> Svc -- : 12. void
+deactivate MM
+
+Svc --> Ctrl -- : 13. void
+Ctrl --> Api -- : 14. HTTP 200
+Api --> View -- : 15. success
+View -> Staff : 16. refreshInventory()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Stock outbound ==
+
+Staff -> View ++ : 17. Enter outbound quantity and reason
+
+View -> Api ++ : 18. recordOutbound(medicineId, { quantity, reason })
+
+Api -> Ctrl ++ : 19. POST /api/pharmacy/medicines/:id/outbound
+
+Ctrl -> Svc ++ : 20. recordOutbound(medicineId, payload, staffId)
+
+Svc -> MM ++ : 21. updateOne({ _id: medicineId,\nstockQuantity: { $gte: quantity } },\n{ $inc: { stockQuantity: -quantity } })
+
+MM -> DB : 22. update medicines\n(atomic guard)
+
+  DB --> MM -- : 23. ack / no match
+
+  MM --> Svc -- : 24. result
+deactivate MM
+
+alt [1] Insufficient stock
+
+  Svc --> Ctrl -- : 25. HTTP 409\n"Insufficient stock."
+  Ctrl --> Api -- : 26. error response
+  Api --> View -- : 27. error response
+  View -> Staff : 28. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> SMM ++ : 29. insertOne({ medicineId, type: "out", quantity,\nreason, by: staffId })
+
+  SMM -> DB : 30. insert stock_movements
+
+  DB --> SMM -- : 31. ack
+
+  SMM --> Svc -- : 32. StockMovementDocument
+  deactivate SMM
+
+  Svc --> Ctrl -- : 33. void
+  Ctrl --> Api -- : 34. HTTP 200
+  Api --> View -- : 35. success
+  View -> Staff : 36. refreshInventory()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

@@ -1,0 +1,130 @@
+@startuml SQ_ViewPrescriptions
+' Sequence Diagram – UC-10 View Prescriptions
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant ViewPrescriptionsPage as View
+participant PrescriptionApiClient as Api
+participant PrescriptionController as Ctrl
+participant PrescriptionService as Svc
+participant PrescriptionModel as PM
+participant PrescriptionItemModel as PIM
+participant MedicineModel as MM
+participant DoctorModel as DM
+database MongoDB as DB
+
+== List prescriptions ==
+
+Patient -> View ++ : 1. Open Prescription History
+
+View -> Api ++ : 2. listPrescriptions(page)
+
+Api -> Ctrl ++ : 3. GET /api/prescriptions
+
+Ctrl -> Svc ++ : 4. listPrescriptions(patientId)
+
+Svc -> PM ++ : 5. find({ patientId, status: "issued" })
+
+PM -> DB : 6. query prescriptions collection\nsort by issuedAt
+
+  DB --> PM -- : 7. prescription list
+
+  PM --> Svc -- : 8. Array
+deactivate PM
+
+Svc --> Ctrl -- : 9. prescriptions
+Ctrl --> Api -- : 10. HTTP 200\nprescription list
+Api --> View -- : 11. success response
+View -> Patient : 12. render prescription cards
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== View detail ==
+
+Patient -> View ++ : 13. Click a prescription row
+
+View -> Api ++ : 14. getPrescriptionDetail(prescriptionId)
+
+Api -> Ctrl ++ : 15. GET /api/prescriptions/:id
+
+Ctrl -> Svc ++ : 16. getPrescriptionDetail(id, patientId)
+
+Svc -> PM ++ : 17. findById(prescriptionId)
+
+PM -> DB : 18. query prescriptions\n{ _id, patientId }
+
+  DB --> PM -- : 19. PrescriptionDocument / null
+
+  PM --> Svc -- : 20. PrescriptionDocument
+deactivate PM
+
+alt [1] Prescription not found\n(or not owned by patient)
+
+  Svc --> Ctrl -- : 21. HTTP 404\n"Prescription not found."
+  Ctrl --> Api -- : 22. error response
+  Api --> View -- : 23. error response
+  View -> Patient : 24. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Detail with medicine lines
+
+  Svc -> PIM ++ : 25. aggregate([ $match, $lookup medicines ])
+
+  PIM -> DB : 26. query prescription_items\n+ join medicines
+
+  DB --> PIM -- : 27. item lines
+
+  PIM --> Svc -- : 28. Array
+  deactivate PIM
+
+  Svc -> DM ++ : 29. findById(doctorId)
+
+  DM -> DB : 30. query doctors
+
+  DB --> DM -- : 31. DoctorDocument
+
+  DM --> Svc -- : 32. DoctorDocument
+  deactivate DM
+
+  Svc --> Ctrl -- : 33. { prescription, items, doctor }
+  Ctrl --> Api -- : 34. HTTP 200\ndetail data
+  Api --> View -- : 35. success response
+  View -> Patient : 36. render detail panel
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Export PDF ==
+
+Patient -> View ++ : 37. Click Export PDF
+
+View -> Api ++ : 38. exportPdf(prescriptionId)
+
+Api -> Ctrl ++ : 39. GET /api/prescriptions/:id/pdf
+
+Ctrl -> Svc ++ : 40. exportPdf(prescription)
+
+Svc -> Svc : 41. generatePdf(prescription, items)
+
+Svc --> Ctrl -- : 42. PDF buffer
+Ctrl --> Api -- : 43. HTTP 200\napplication/pdf
+Api --> View -- : 44. file blob
+View -> Patient : 45. download file
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

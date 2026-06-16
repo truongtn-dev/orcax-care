@@ -1,0 +1,88 @@
+@startuml CD_Wallet
+' Class Diagram – UC-13 View Wallet Balance
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class WalletPage {
+  - balance : Number
+  - topUpAmount : Number
+  - paymentGateway : String
+  - transactions : Array
+  - filterType : String
+  - filterDateFrom : Date
+  - filterDateTo : Date
+  - errorMessage : String
+  --
+  + loadWallet() : void
+  + loadTransactions() : void
+  + handleTopUp() : void
+  + applyFilter() : void
+  + showError(message : String) : void
+}
+
+class WalletApiClient {
+  --
+  + getWallet() : Promise<WalletResponse>
+  + initiateTopUp(amount : Number, gateway : String) : Promise<TopUpResponse>
+  + getTransactions(filters : Object) : Promise<Array>
+}
+
+class WalletController {
+  - walletService : WalletService
+  --
+  + getWallet(req : Request, res : Response) : void
+  + initiateTopUp(req : Request, res : Response) : void
+  + getTransactions(req : Request, res : Response) : void
+  + handleGatewayCallback(req : Request, res : Response) : void
+}
+
+class WalletService {
+  --
+  + getWallet(userId : ObjectId) : WalletDocument
+  + initiateTopUp(userId : ObjectId, amount : Number, gateway : String) : TopUpResult
+  + creditWallet(txId : ObjectId) : void
+  + listTransactions(userId : ObjectId, filters : Object) : Array
+}
+
+class WalletModel {
+  - userId : ObjectId
+  - balance : Number
+  --
+  + findOne(filter : Object) : WalletDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class TransactionModel {
+  - userId : ObjectId
+  - type : String
+  - method : String
+  - amount : Number
+  - status : String
+  --
+  + create(doc : Object) : TransactionDocument
+  + find(filter : Object) : Array
+  + updateOne(filter : Object, update : Object) : void
+}
+
+' Bố cục
+WalletPage -[hidden]r- WalletApiClient
+WalletApiClient -[hidden]r- WalletController
+WalletController -[hidden]d- WalletService
+WalletService -[hidden]d- WalletModel
+WalletModel -[hidden]r- TransactionModel
+
+' Association
+WalletPage "1" --> "1" WalletApiClient : uses
+WalletApiClient "1" --> "1" WalletController : calls
+WalletController "1" --> "1" WalletService : uses
+WalletService "1" --> "1" WalletModel : uses
+WalletService "1" --> "1" TransactionModel : uses
+
+@enduml

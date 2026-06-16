@@ -1,0 +1,90 @@
+@startuml CD_StaffDashboard
+' Class Diagram – UC-35 View Staff Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class StaffDashboardPage {
+  - todayCheckIns : Number
+  - waitingTickets : Number
+  - openComplaints : Number
+  - lowStockCount : Number
+  - recentCheckIns : Array
+  - lowStockMedicines : Array
+  - refreshInterval : Number
+  --
+  + loadDashboard() : void
+  + startAutoRefresh() : void
+  + navigateToCheckin() : void
+  + navigateToPharmacy() : void
+  + navigateToComplaints() : void
+}
+
+class StaffDashboardApiClient {
+  --
+  + getDashboard() : Promise<StaffDashboardResponse>
+}
+
+class StaffDashboardController {
+  - staffDashboardService : StaffDashboardService
+  --
+  + getDashboard(req : Request, res : Response) : void
+}
+
+class StaffDashboardService {
+  --
+  + getDashboardSummary() : StaffDashboardSummary
+  + countTodayCheckIns() : Number
+  + countWaitingTickets() : Number
+  + countOpenComplaints() : Number
+  + getLowStockTop5() : Array
+}
+
+class QueueTicketModel {
+  - sessionId : ObjectId
+  - patientId : ObjectId
+  - number : Number
+  - status : String
+  - issuedAt : Date
+  --
+  + countDocuments(filter : Object) : Number
+  + find(filter : Object) : Array
+}
+
+class ComplaintModel {
+  - status : String
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+class MedicineModel {
+  - name : String
+  - stockQuantity : Number
+  - reorderLevel : Number
+  --
+  + find(filter : Object) : Array
+}
+
+' Bố cục
+StaffDashboardPage -[hidden]r- StaffDashboardApiClient
+StaffDashboardApiClient -[hidden]r- StaffDashboardController
+StaffDashboardController -[hidden]d- StaffDashboardService
+StaffDashboardService -[hidden]d- QueueTicketModel
+QueueTicketModel -[hidden]r- ComplaintModel
+ComplaintModel -[hidden]r- MedicineModel
+
+' Association
+StaffDashboardPage "1" --> "1" StaffDashboardApiClient : uses
+StaffDashboardApiClient "1" --> "1" StaffDashboardController : calls
+StaffDashboardController "1" --> "1" StaffDashboardService : uses
+StaffDashboardService "1" --> "1" QueueTicketModel : uses
+StaffDashboardService "1" --> "1" ComplaintModel : uses
+StaffDashboardService "1" --> "1" MedicineModel : uses
+
+@enduml

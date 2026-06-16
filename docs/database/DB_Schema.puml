@@ -1,0 +1,430 @@
+@startuml DB_Schema
+title Database Schema - OrcaXCare (MongoDB collections)
+
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 45
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #2F5B7C
+  HeaderBackgroundColor #2F5B7C
+  HeaderFontColor #FFFFFF
+}
+hide circle
+hide methods
+
+package "Auth & Accounts" {
+  entity "users" as users {
+    *_id : ObjectId
+    --
+    email : String <<unique>>
+    passwordHash : String
+    role : Enum(patient,doctor,staff,admin)
+    fullName : String
+    phone : String
+    isActive : Boolean
+    isEmailVerified : Boolean
+    isLocked : Boolean
+    lastLoginAt : Date
+    createdAt / updatedAt : Date
+  }
+
+  entity "auth_tokens" as auth_tokens {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users>>
+    tokenHash : String
+    rememberMe : Boolean
+    expiresAt : Date
+    revokedAt : Date
+  }
+
+  entity "verification_tokens" as vtokens {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users>>
+    type : Enum(verify_email,reset_password)
+    tokenHash : String
+    expiresAt : Date
+    usedAt : Date
+  }
+}
+
+package "Profiles & Master Data" {
+  entity "patients" as patients {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users, unique>>
+    dateOfBirth : Date
+    gender : String
+    address : String
+    bloodType : String
+    allergies : String
+    emergencyContactName : String
+    emergencyContactPhone : String
+    avatarUrl : String
+    isActive : Boolean
+  }
+
+  entity "doctors" as doctors {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users, unique>>
+    specialtyId : ObjectId <<FK specialties>>
+    departmentId : ObjectId <<FK departments>>
+    licenseNo : String <<unique>>
+    title : String
+    yearsOfExperience : Number
+    bio : String
+    photoUrl : String
+    ratingAvg : Number
+    ratingCount : Number
+    isFeatured : Boolean
+    isActive : Boolean
+  }
+
+  entity "specialties" as specialties {
+    *_id : ObjectId
+    --
+    name : String <<unique>>
+    code : String
+    description : String
+    isDeleted : Boolean
+  }
+
+  entity "departments" as departments {
+    *_id : ObjectId
+    --
+    name : String
+    location : String
+    phone : String
+    isActive : Boolean
+  }
+
+  entity "clinic_rooms" as rooms {
+    *_id : ObjectId
+    --
+    departmentId : ObjectId <<FK departments>>
+    name : String
+    code : String
+    isActive : Boolean
+  }
+
+  entity "branches" as branches {
+    *_id : ObjectId
+    --
+    name : String
+    address : String
+    phone : String
+    lat : Number
+    lng : Number
+    workingHours : String
+    isActive : Boolean
+  }
+}
+
+package "Scheduling & Appointments" {
+  entity "work_shifts" as shifts {
+    *_id : ObjectId
+    --
+    doctorId : ObjectId <<FK doctors>>
+    roomId : ObjectId <<FK clinic_rooms>>
+    date : Date
+    startTime : String
+    endTime : String
+    slotDurationMin : Number
+  }
+
+  entity "appointment_slots" as slots {
+    *_id : ObjectId
+    --
+    doctorId : ObjectId <<FK doctors>>
+    workShiftId : ObjectId <<FK work_shifts>>
+    date : Date
+    startTime : String
+    endTime : String
+    status : Enum(available,booked,blocked)
+  }
+
+  entity "appointments" as appts {
+    *_id : ObjectId
+    --
+    patientId : ObjectId <<FK patients>>
+    doctorId : ObjectId <<FK doctors>>
+    slotId : ObjectId <<FK appointment_slots>>
+    roomId : ObjectId <<FK clinic_rooms>>
+    status : Enum(pending,confirmed,\ncompleted,cancelled)
+    reason : String
+    fee : Number
+    discountAmount : Number
+    cancelledAt / completedAt : Date
+  }
+}
+
+package "Wallet, Payment & Insurance" {
+  entity "wallets" as wallets {
+    *_id : ObjectId
+    --
+    patientId : ObjectId <<FK patients, unique>>
+    balance : Number
+  }
+
+  entity "wallet_transactions" as wtx {
+    *_id : ObjectId
+    --
+    walletId : ObjectId <<FK wallets>>
+    type : Enum(topup,payment,refund)
+    amount : Number
+    refType / refId : String
+    status : Enum(pending,success,failed)
+    createdAt : Date
+  }
+
+  entity "payments" as payments {
+    *_id : ObjectId
+    --
+    appointmentId : ObjectId <<FK appointments>>
+    method : Enum(payos,momo,wallet)
+    amount : Number
+    discountApplied : Number
+    gatewayTxnId : String
+    status : Enum(pending,paid,failed,refunded)
+    paidAt : Date
+  }
+
+  entity "insurance_cards" as inscards {
+    *_id : ObjectId
+    --
+    patientId : ObjectId <<FK patients>>
+    provider : String
+    cardNumber : String
+    holderName : String
+    validFrom / validTo : Date
+    discountRate : Number
+    imageUrl : String
+    status : Enum(active,expired,removed)
+  }
+}
+
+package "Clinical (EMR)" {
+  entity "encounters" as encounters {
+    *_id : ObjectId
+    --
+    appointmentId : ObjectId <<FK appointments>>
+    patientId : ObjectId <<FK patients>>
+    doctorId : ObjectId <<FK doctors>>
+    chiefComplaint : String
+    clinicalNotes : String
+    status : Enum(open,signed_off)
+    signedOffAt : Date
+  }
+
+  entity "diagnoses" as diagnoses {
+    *_id : ObjectId
+    --
+    encounterId : ObjectId <<FK encounters>>
+    icd10Code : String <<FK icd10_catalog>>
+    name : String
+    note : String
+  }
+
+  entity "icd10_catalog" as icd10 {
+    *_id : ObjectId
+    --
+    code : String <<unique>>
+    name : String
+  }
+
+  entity "medical_images" as medimages {
+    *_id : ObjectId
+    --
+    encounterId : ObjectId <<FK encounters>>
+    patientId : ObjectId <<FK patients>>
+    uploadedBy : ObjectId <<FK users>>
+    fileUrl : String
+    caption : String
+    createdAt : Date
+  }
+}
+
+package "Prescription & Pharmacy" {
+  entity "prescriptions" as rx {
+    *_id : ObjectId
+    --
+    encounterId : ObjectId <<FK encounters>>
+    doctorId : ObjectId <<FK doctors>>
+    patientId : ObjectId <<FK patients>>
+    status : Enum(draft,issued)
+    qrCode : String
+    issuedAt : Date
+  }
+
+  entity "prescription_items" as rxitems {
+    *_id : ObjectId
+    --
+    prescriptionId : ObjectId <<FK prescriptions>>
+    medicineId : ObjectId <<FK medicines>>
+    dosage : String
+    frequency : String
+    durationDays : Number
+    quantity : Number
+    instructions : String
+  }
+
+  entity "medicines" as medicines {
+    *_id : ObjectId
+    --
+    name : String
+    code : String <<unique>>
+    unit : String
+    price : Number
+    stockQty : Number
+    minStockLevel : Number
+    isActive : Boolean
+  }
+
+  entity "stock_movements" as stockmv {
+    *_id : ObjectId
+    --
+    medicineId : ObjectId <<FK medicines>>
+    type : Enum(inbound,outbound)
+    quantity : Number
+    batchNo : String
+    supplier : String
+    performedBy : ObjectId <<FK users>>
+    createdAt : Date
+  }
+}
+
+package "Queue" {
+  entity "queue_sessions" as qsessions {
+    *_id : ObjectId
+    --
+    doctorId : ObjectId <<FK doctors>>
+    roomId : ObjectId <<FK clinic_rooms>>
+    date : Date
+    status : Enum(open,closed)
+    currentNumber : Number
+  }
+
+  entity "queue_tickets" as qtickets {
+    *_id : ObjectId
+    --
+    sessionId : ObjectId <<FK queue_sessions>>
+    appointmentId : ObjectId <<FK appointments>>
+    patientId : ObjectId <<FK patients>>
+    number : Number
+    status : Enum(waiting,called,\nserving,done,skipped)
+    issuedBy : ObjectId <<FK users>>
+    calledAt : Date
+  }
+}
+
+package "Engagement & Communication" {
+  entity "favorites" as favorites {
+    *_id : ObjectId
+    --
+    patientId : ObjectId <<FK patients>>
+    doctorId : ObjectId <<FK doctors>>
+    createdAt : Date
+  }
+
+  entity "reviews" as reviews {
+    *_id : ObjectId
+    --
+    appointmentId : ObjectId <<FK appointments, unique>>
+    patientId : ObjectId <<FK patients>>
+    doctorId : ObjectId <<FK doctors>>
+    rating : Number (1..5)
+    comment : String
+    createdAt : Date
+  }
+
+  entity "notifications" as notis {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users>>
+    type : Enum(reminder,result_ready,\nbooking_confirm,system)
+    title : String
+    content : String
+    isRead : Boolean
+    createdAt : Date
+  }
+
+  entity "notification_preferences" as notiprefs {
+    *_id : ObjectId
+    --
+    userId : ObjectId <<FK users, unique>>
+    reminderEnabled : Boolean
+    resultReadyEnabled : Boolean
+    marketingEnabled : Boolean
+  }
+
+  entity "complaints" as complaints {
+    *_id : ObjectId
+    --
+    patientId : ObjectId <<FK patients>>
+    subject : String
+    content : String
+    status : Enum(open,in_progress,resolved)
+    createdAt : Date
+  }
+
+  entity "complaint_replies" as creplies {
+    *_id : ObjectId
+    --
+    complaintId : ObjectId <<FK complaints>>
+    repliedBy : ObjectId <<FK users>>
+    content : String
+    createdAt : Date
+  }
+}
+
+' ===== Relationships =====
+users ||--o| patients
+users ||--o| doctors
+users ||--o{ auth_tokens
+users ||--o{ vtokens
+users ||--o{ notis
+users ||--o| notiprefs
+
+specialties ||--o{ doctors
+departments ||--o{ doctors
+departments ||--o{ rooms
+
+doctors ||--o{ shifts
+rooms ||--o{ shifts
+shifts ||--o{ slots
+doctors ||--o{ slots
+slots ||--o| appts
+patients ||--o{ appts
+doctors ||--o{ appts
+
+patients ||--o| wallets
+wallets ||--o{ wtx
+appts ||--o| payments
+patients ||--o{ inscards
+
+appts ||--o| encounters
+encounters ||--o{ diagnoses
+icd10 ||--o{ diagnoses
+encounters ||--o{ medimages
+
+encounters ||--o| rx
+rx ||--o{ rxitems
+medicines ||--o{ rxitems
+medicines ||--o{ stockmv
+
+doctors ||--o{ qsessions
+qsessions ||--o{ qtickets
+appts ||--o| qtickets
+
+patients ||--o{ favorites
+doctors ||--o{ favorites
+appts ||--o| reviews
+
+patients ||--o{ complaints
+complaints ||--o{ creplies
+
+@enduml

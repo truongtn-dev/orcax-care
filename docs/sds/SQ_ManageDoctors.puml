@@ -1,0 +1,109 @@
+@startuml SQ_ManageDoctors
+' Sequence Diagram – UC-29 Manage Doctors
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManageDoctorsPage as View
+participant DoctorMgmtApiClient as Api
+participant DoctorMgmtController as Ctrl
+participant DoctorMgmtService as Svc
+participant UserModel as UM
+participant DoctorModel as DM
+participant WorkShiftModel as WSM
+participant AppointmentSlotModel as ASM
+database MongoDB as DB
+
+== Create doctor with account ==
+
+Admin -> View ++ : 1. Submit create doctor form
+
+View -> Api ++ : 2. createDoctor(payload)
+
+Api -> Ctrl ++ : 3. POST /api/admin/doctors
+
+Ctrl -> Svc ++ : 4. createDoctorWithAccount(payload)
+
+Svc -> UM ++ : 5. insertOne({ email, passwordHash, fullName,\nrole: "doctor", isActive: true })
+
+UM -> DB : 6. insert users
+
+  DB --> UM -- : 7. UserDocument
+
+  UM --> Svc -- : 8. UserDocument
+deactivate UM
+
+Svc -> DM ++ : 9. insertOne({ userId, specialtyId, departmentId,\ndegree, consultationFee, isActive: true })
+
+DM -> DB : 10. insert doctors
+
+  DB --> DM -- : 11. DoctorDocument
+
+  DM --> Svc -- : 12. DoctorDocument
+deactivate DM
+
+alt [1] Email already exists
+
+  Svc --> Ctrl -- : 13. HTTP 409\n"Email already registered."
+  Ctrl --> Api -- : 14. error response
+  Api --> View -- : 15. error response
+  View -> Admin : 16. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 17. DoctorDocument
+  Ctrl --> Api -- : 18. HTTP 201
+  Api --> View -- : 19. success
+  View -> Admin : 20. refreshDoctors()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Generate appointment slots ==
+
+Admin -> View ++ : 21. Create shift and generate slots
+
+View -> Api ++ : 22. createShift(doctorId, shiftPayload)
+
+Api -> Ctrl ++ : 23. POST /api/admin/doctors/:id/shifts
+
+Ctrl -> Svc ++ : 24. createShift(doctorId, payload)
+
+Svc -> WSM ++ : 25. insertOne({ doctorId, roomId, date, startTime, endTime })
+
+WSM -> DB : 26. insert work_shifts
+
+  DB --> WSM -- : 27. WorkShiftDocument
+
+  WSM --> Svc -- : 28. shift
+deactivate WSM
+
+Svc -> ASM ++ : 29. insertOne({ doctorId, shiftId, roomId,\ndate, startTime, endTime, status: "available" })
+
+ASM -> DB : 30. insert appointment_slots\n(for each slot in template)
+
+  DB --> ASM -- : 31. ack
+
+  ASM --> Svc -- : 32. void
+deactivate ASM
+
+Svc --> Ctrl -- : 33. { shift, slotsGenerated }
+Ctrl --> Api -- : 34. HTTP 201
+Api --> View -- : 35. success
+View -> Admin : 36. showSlotsCreated()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

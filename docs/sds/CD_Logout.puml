@@ -1,0 +1,63 @@
+@startuml CD_Logout
+' Class Diagram – UC-6 Logout
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 70
+skinparam ranksep 60
+hide circle
+
+class AppHeader {
+  --
+  + handleLogout() : void
+}
+
+class AuthContext {
+  --
+  + logout() : Promise<void>
+  + clearLocalSession() : void
+}
+
+class AuthApiClient {
+  --
+  + logout() : Promise<MessageResponse>
+  + removeToken() : void
+  + clearAuthHeader() : void
+}
+
+class AuthController {
+  - authService : AuthService
+  --
+  + logout(req : Request, res : Response) : void
+}
+
+class AuthService {
+  --
+  + logout(accessToken : String) : LogoutResult
+  + revokeAuthToken(token : String) : void
+}
+
+class AuthTokenModel {
+  - userId : ObjectId
+  - tokenHash : String
+  - expiresAt : Date
+  --
+  + deleteOne(filter : Object) : void
+}
+
+AppHeader -[hidden]r- AuthContext
+AuthContext -[hidden]r- AuthApiClient
+AuthApiClient -[hidden]r- AuthController
+AuthController -[hidden]d- AuthService
+AuthService -[hidden]d- AuthTokenModel
+
+AppHeader "1" --> "1" AuthContext : uses
+AuthContext "1" --> "1" AuthApiClient : calls
+AuthApiClient "1" --> "1" AuthController : calls
+AuthController "1" --> "1" AuthService : uses
+AuthService "1" --> "0..*" AuthTokenModel : uses
+
+@enduml

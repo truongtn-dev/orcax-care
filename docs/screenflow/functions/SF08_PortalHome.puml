@@ -1,0 +1,26 @@
+@startuml SF08_PortalHome
+title Screen Flow - Portal Home & Featured Doctors
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Portal Home\n(hero, services, news)" as Home
+rectangle "Doctor Public Profile\n(info + reviews tab)" as Profile
+rectangle "Search Doctors" as Search
+rectangle "Login" as Login
+rectangle "Register" as Register
+
+Home --> Profile : Click a doctor card in\n"Featured Doctors" section
+Home --> Search : Click "View All Doctors"
+Home --> Login : Click "Login" CTA
+Home --> Register : Click "Register" CTA
+Profile --> Login : Click "Book Appointment"\n(login required)
+
+@enduml

@@ -1,0 +1,99 @@
+@startuml CD_Insurance
+' Class Diagram – UC-14 Manage Insurance Cards
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class InsurancePage {
+  - cards : Array
+  - providerId : ObjectId
+  - cardNumber : String
+  - holderName : String
+  - expiryDate : Date
+  - imageUrl : String
+  - errorMessage : String
+  --
+  + loadCards() : void
+  + loadProviders() : void
+  + handleScanImage(file : File) : void
+  + validateForm() : boolean
+  + handleAddCard() : void
+  + handleUpdateCard(id : ObjectId) : void
+  + handleDeleteCard(id : ObjectId) : void
+  + showError(message : String) : void
+}
+
+class InsuranceApiClient {
+  --
+  + getCards() : Promise<Array>
+  + getProviders() : Promise<Array>
+  + scanCardImage(file : File) : Promise<OcrResponse>
+  + addCard(payload : Object) : Promise<CardResponse>
+  + updateCard(id : ObjectId, payload : Object) : Promise<CardResponse>
+  + deleteCard(id : ObjectId) : Promise<void>
+}
+
+class InsuranceController {
+  - insuranceService : InsuranceService
+  --
+  + getCards(req : Request, res : Response) : void
+  + getProviders(req : Request, res : Response) : void
+  + scanCard(req : Request, res : Response) : void
+  + addCard(req : Request, res : Response) : void
+  + updateCard(req : Request, res : Response) : void
+  + deleteCard(req : Request, res : Response) : void
+}
+
+class InsuranceService {
+  --
+  + listCards(patientId : ObjectId) : Array
+  + listProviders() : Array
+  + scanCardImage(file : Object) : OcrResult
+  + addCard(patientId : ObjectId, payload : Object) : InsuranceCardDocument
+  + updateCard(id : ObjectId, patientId : ObjectId, payload : Object) : InsuranceCardDocument
+  + deleteCard(id : ObjectId, patientId : ObjectId) : void
+}
+
+class InsuranceCardModel {
+  - patientId : ObjectId
+  - providerId : ObjectId
+  - cardNumber : String
+  - holderName : String
+  - expiryDate : Date
+  - imageUrl : String
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : InsuranceCardDocument
+  + updateOne(filter : Object, update : Object) : void
+  + deleteOne(filter : Object) : void
+}
+
+class InsuranceProviderModel {
+  - name : String
+  - logoUrl : String
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+}
+
+' Bố cục
+InsurancePage -[hidden]r- InsuranceApiClient
+InsuranceApiClient -[hidden]r- InsuranceController
+InsuranceController -[hidden]d- InsuranceService
+InsuranceService -[hidden]d- InsuranceCardModel
+InsuranceCardModel -[hidden]r- InsuranceProviderModel
+
+' Association
+InsurancePage "1" --> "1" InsuranceApiClient : uses
+InsuranceApiClient "1" --> "1" InsuranceController : calls
+InsuranceController "1" --> "1" InsuranceService : uses
+InsuranceService "1" --> "1" InsuranceCardModel : uses
+InsuranceService "1" --> "1" InsuranceProviderModel : uses
+
+@enduml

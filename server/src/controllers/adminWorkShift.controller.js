@@ -13,6 +13,24 @@ export async function createWorkShift(req, res) {
   }
 }
 
+export async function previewWorkShift(req, res) {
+  try {
+    return sendResult(res, await AdminWorkShiftService.previewWorkShift(req.body));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function getDeleteShiftImpact(req, res) {
+  try {
+    return sendResult(res, await AdminWorkShiftService.getDeleteShiftImpact(req.params.id));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function listWorkShifts(req, res) {
   try {
     const data = await AdminWorkShiftService.listWorkShifts(req.query);

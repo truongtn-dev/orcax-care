@@ -1,0 +1,80 @@
+@startuml SQ_DoctorDashboard
+' Sequence Diagram – UC-16 View Doctor Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant DoctorDashboardPage as View
+participant DoctorDashboardApiClient as Api
+participant DoctorDashboardController as Ctrl
+participant DoctorDashboardService as Svc
+participant AppointmentModel as AM
+participant QueueSessionModel as QSM
+participant EncounterModel as EM
+database MongoDB as DB
+
+== Load dashboard ==
+
+Doctor -> View ++ : 1. Open doctor dashboard
+
+View -> Api ++ : 2. getDashboard()
+
+Api -> Ctrl ++ : 3. GET /api/doctor/dashboard
+
+Ctrl -> Svc ++ : 4. getDashboardSummary(doctorId)
+
+Svc -> AM ++ : 5. find({ doctorId, startTime: { $gte: startOfToday,\n$lt: endOfToday } })
+
+AM -> DB : 6. query appointments
+
+  DB --> AM -- : 7. today appointments
+
+  AM --> Svc -- : 8. Array
+deactivate AM
+
+Svc -> QSM ++ : 9. findOne({ doctorId, status: "active" })
+
+QSM -> DB : 10. query queue_sessions
+
+  DB --> QSM -- : 11. session / null
+
+  QSM --> Svc -- : 12. QueueSessionDocument
+deactivate QSM
+
+Svc -> EM ++ : 13. countDocuments({ doctorId, status: "in-progress" })
+
+EM -> DB : 14. count encounters
+
+  DB --> EM -- : 15. pending count
+
+  EM --> Svc -- : 16. Number
+deactivate EM
+
+alt [1] No active queue session
+
+  Svc --> Ctrl -- : 17. { appointments, pendingSignOffs,\nqueueSession: null }
+  Ctrl --> Api -- : 18. HTTP 200
+  Api --> View -- : 19. dashboard data
+  View -> Doctor : 20. renderKPIs()\nqueue widget inactive
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Active queue session
+
+  Svc --> Ctrl -- : 21. { appointments, pendingSignOffs,\nqueueSession }
+  Ctrl --> Api -- : 22. HTTP 200
+  Api --> View -- : 23. dashboard data
+  View -> Doctor : 24. renderKPIs()\nand queue widget
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

@@ -1,0 +1,104 @@
+@startuml CD_ManageDepartments
+' Class Diagram – UC-27 Manage Departments
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageDepartmentsPage {
+  - departments : Array
+  - name : String
+  - description : String
+  - location : String
+  - headDoctorId : ObjectId
+  - selectedDeptId : ObjectId
+  - linkedRooms : Array
+  - linkedDoctors : Array
+  - errorMessage : String
+  --
+  + loadDepartments() : void
+  + openDetail(deptId : ObjectId) : void
+  + handleCreate() : void
+  + handleUpdate(deptId : ObjectId) : void
+  + handleDeactivate(deptId : ObjectId) : void
+}
+
+class DepartmentApiClient {
+  --
+  + getDepartments() : Promise<Array>
+  + getDepartmentDetail(id : ObjectId) : Promise<DepartmentDetailResponse>
+  + createDepartment(payload : Object) : Promise<DepartmentResponse>
+  + updateDepartment(id : ObjectId, payload : Object) : Promise<DepartmentResponse>
+  + deactivateDepartment(id : ObjectId) : Promise<void>
+}
+
+class DepartmentController {
+  - departmentService : DepartmentService
+  --
+  + getDepartments(req : Request, res : Response) : void
+  + getDepartmentDetail(req : Request, res : Response) : void
+  + createDepartment(req : Request, res : Response) : void
+  + updateDepartment(req : Request, res : Response) : void
+  + deactivateDepartment(req : Request, res : Response) : void
+}
+
+class DepartmentService {
+  --
+  + listDepartments() : Array
+  + getDepartmentDetail(id : ObjectId) : DepartmentDetail
+  + createDepartment(payload : Object) : DepartmentDocument
+  + updateDepartment(id : ObjectId, payload : Object) : DepartmentDocument
+  + deactivateDepartment(id : ObjectId) : void
+}
+
+class DepartmentModel {
+  - name : String
+  - description : String
+  - location : String
+  - headDoctorId : ObjectId
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + findOne(filter : Object) : DepartmentDocument
+  + insertOne(doc : Object) : DepartmentDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class ClinicRoomModel {
+  - departmentId : ObjectId
+  - code : String
+  - name : String
+  --
+  + find(filter : Object) : Array
+}
+
+class DoctorModel {
+  - departmentId : ObjectId
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + countDocuments(filter : Object) : Number
+}
+
+' Bố cục
+ManageDepartmentsPage -[hidden]r- DepartmentApiClient
+DepartmentApiClient -[hidden]r- DepartmentController
+DepartmentController -[hidden]d- DepartmentService
+DepartmentService -[hidden]d- DepartmentModel
+DepartmentModel -[hidden]r- ClinicRoomModel
+ClinicRoomModel -[hidden]r- DoctorModel
+
+' Association
+ManageDepartmentsPage "1" --> "1" DepartmentApiClient : uses
+DepartmentApiClient "1" --> "1" DepartmentController : calls
+DepartmentController "1" --> "1" DepartmentService : uses
+DepartmentService "1" --> "1" DepartmentModel : uses
+DepartmentService "1" --> "1" ClinicRoomModel : uses
+DepartmentService "1" --> "1" DoctorModel : uses
+
+@enduml

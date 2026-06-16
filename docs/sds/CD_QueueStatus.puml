@@ -1,0 +1,79 @@
+@startuml CD_QueueStatus
+' Class Diagram – UC-15 View Queue Status
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class QueueStatusPage {
+  - ticketNumber : String
+  - nowServing : Number
+  - peopleAhead : Number
+  - roomCode : String
+  - doctorName : String
+  - status : String
+  - refreshInterval : Number
+  --
+  + loadQueueStatus() : void
+  + startAutoRefresh() : void
+  + stopAutoRefresh() : void
+  + renderBanner() : void
+}
+
+class QueueApiClient {
+  --
+  + getMyQueueStatus() : Promise<QueueStatusResponse>
+}
+
+class QueueController {
+  - queueService : QueueService
+  --
+  + getMyQueueStatus(req : Request, res : Response) : void
+}
+
+class QueueService {
+  --
+  + getPatientQueueStatus(patientId : ObjectId) : QueueStatusResult
+  + countPeopleAhead(sessionId : ObjectId, ticketNumber : Number) : Number
+}
+
+class QueueTicketModel {
+  - sessionId : ObjectId
+  - patientId : ObjectId
+  - appointmentId : ObjectId
+  - number : Number
+  - status : String
+  --
+  + findOne(filter : Object) : QueueTicketDocument
+  + countDocuments(filter : Object) : Number
+}
+
+class QueueSessionModel {
+  - roomId : ObjectId
+  - doctorId : ObjectId
+  - currentNumber : Number
+  - status : String
+  --
+  + findOne(filter : Object) : QueueSessionDocument
+}
+
+' Bố cục
+QueueStatusPage -[hidden]r- QueueApiClient
+QueueApiClient -[hidden]r- QueueController
+QueueController -[hidden]d- QueueService
+QueueService -[hidden]d- QueueTicketModel
+QueueTicketModel -[hidden]r- QueueSessionModel
+
+' Association
+QueueStatusPage "1" --> "1" QueueApiClient : uses
+QueueApiClient "1" --> "1" QueueController : calls
+QueueController "1" --> "1" QueueService : uses
+QueueService "1" --> "1" QueueTicketModel : uses
+QueueService "1" --> "1" QueueSessionModel : uses
+
+@enduml

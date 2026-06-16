@@ -1,0 +1,123 @@
+@startuml SQ_QueueCheckin
+' Sequence Diagram – UC-33 Manage Queue Check-in
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Staff
+participant QueueCheckinPage as View
+participant QueueCheckinApiClient as Api
+participant QueueCheckinController as Ctrl
+participant QueueCheckinService as Svc
+participant AppointmentModel as AM
+participant QueueSessionModel as QSM
+participant QueueTicketModel as QTM
+database MongoDB as DB
+
+== Search appointment ==
+
+Staff -> View ++ : 1. Enter patient name, phone,\nor booking code
+
+View -> Api ++ : 2. searchAppointment(keyword)
+
+Api -> Ctrl ++ : 3. GET /api/staff/checkin/search?q
+
+Ctrl -> Svc ++ : 4. findTodayAppointment(keyword)
+
+Svc -> AM ++ : 5. findOne({ status: "confirmed", startTime: today,\n$or: [{ bookingCode }, { patientPhone }] })
+
+AM -> DB : 6. query appointments
+
+  DB --> AM -- : 7. AppointmentDocument / null
+
+  AM --> Svc -- : 8. appointment
+deactivate AM
+
+alt [1] Appointment not found
+
+  Svc --> Ctrl -- : 9. HTTP 404\n"No confirmed appointment today."
+  Ctrl --> Api -- : 10. error response
+  Api --> View -- : 11. error response
+  View -> Staff : 12. showNotFound()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Appointment found
+
+  Svc --> Ctrl -- : 13. AppointmentDocument
+  Ctrl --> Api -- : 14. HTTP 200
+  Api --> View -- : 15. appointment card
+  View -> Staff : 16. showAppointmentCard()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Check in and issue ticket ==
+
+Staff -> View ++ : 17. Click Check In & Issue Ticket
+
+View -> Api ++ : 18. checkInAndIssueTicket(appointmentId)
+
+Api -> Ctrl ++ : 19. POST /api/staff/checkin/:id/issue-ticket
+
+Ctrl -> Svc ++ : 20. checkInAndIssueTicket(appointmentId, staffId)
+
+Svc -> QSM ++ : 21. findOneAndUpdate({ roomId, status: "active" },\n{ $inc: { lastNumber: 1 } }, { returnDocument: "after" })
+
+QSM -> DB : 22. update queue_sessions
+
+  DB --> QSM -- : 23. session / null
+
+  QSM --> Svc -- : 24. session
+deactivate QSM
+
+alt [1] No active queue session\nfor room
+
+  Svc --> Ctrl -- : 25. HTTP 409\n"Queue session not active."
+  Ctrl --> Api -- : 26. error response
+  Api --> View -- : 27. error response
+  View -> Staff : 28. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> QTM ++ : 29. insertOne({ sessionId, appointmentId, patientId,\nnumber: session.lastNumber, status: "waiting" })
+
+  QTM -> DB : 30. insert queue_tickets
+
+  DB --> QTM -- : 31. QueueTicketDocument
+
+  QTM --> Svc -- : 32. ticket
+  deactivate QTM
+
+  Svc -> AM ++ : 33. updateOne({ _id: appointmentId }, { status: "checked-in" })
+
+  AM -> DB : 34. update appointments
+
+  DB --> AM -- : 35. ack
+
+  AM --> Svc -- : 36. void
+  deactivate AM
+
+  Svc --> Ctrl -- : 37. QueueTicketDocument
+  Ctrl --> Api -- : 38. HTTP 201
+  Api --> View -- : 39. ticket preview
+  View -> Staff : 40. showTicketPreview()\nand print option
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

@@ -1,0 +1,117 @@
+@startuml SQ_ManageComplaintsStaff
+' Sequence Diagram – UC-34 Manage Complaints
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Staff
+participant ManageComplaintsStaffPage as View
+participant StaffComplaintApiClient as Api
+participant StaffComplaintController as Ctrl
+participant StaffComplaintService as Svc
+participant ComplaintModel as CM
+participant ComplaintReplyModel as CRM
+participant NotificationModel as NM
+database MongoDB as DB
+
+== Reply to complaint ==
+
+Staff -> View ++ : 1. Enter reply message
+
+View -> Api ++ : 2. replyToComplaint(complaintId, message)
+
+Api -> Ctrl ++ : 3. POST /api/staff/complaints/:id/replies\n{ message }
+
+Ctrl -> Svc ++ : 4. replyToComplaint(id, staffId, message)
+
+Svc -> CRM ++ : 5. insertOne({ complaintId, staffId, message })
+
+CRM -> DB : 6. insert complaint_replies
+
+  DB --> CRM -- : 7. ComplaintReplyDocument
+
+  CRM --> Svc -- : 8. ComplaintReplyDocument
+deactivate CRM
+
+Svc -> CM ++ : 9. updateOne({ _id: complaintId }, { status: "in-progress" })
+
+CM -> DB : 10. update complaints
+
+  DB --> CM -- : 11. ack
+
+  CM --> Svc -- : 12. complaint
+deactivate CM
+
+Svc -> NM ++ : 13. insertOne({ userId: patientUserId, type: "complaint-reply",\ntitle: "New reply to your complaint", refId: complaintId })
+
+NM -> DB : 14. insert notifications
+
+  DB --> NM -- : 15. ack
+
+  NM --> Svc -- : 16. NotificationDocument
+deactivate NM
+
+alt [1] Complaint already resolved
+
+  Svc --> Ctrl -- : 17. HTTP 409\n"Complaint is already resolved."
+  Ctrl --> Api -- : 18. error response
+  Api --> View -- : 19. error response
+  View -> Staff : 20. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 21. void
+  Ctrl --> Api -- : 22. HTTP 201
+  Api --> View -- : 23. success
+  View -> Staff : 24. refreshThread()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Resolve complaint ==
+
+Staff -> View ++ : 25. Set status Resolved\nand enter resolution note
+
+View -> Api ++ : 26. updateStatus(complaintId, "resolved", resolutionNote)
+
+Api -> Ctrl ++ : 27. PATCH /api/staff/complaints/:id/status\n{ status, resolutionNote }
+
+Ctrl -> Svc ++ : 28. updateStatus(id, status, resolutionNote)
+
+Svc -> CM ++ : 29. updateOne({ _id: id, status: "in-progress" },\n{ status: "resolved", resolutionNote, resolvedAt })
+
+CM -> DB : 30. update complaints
+
+  DB --> CM -- : 31. ack
+
+  CM --> Svc -- : 32. void
+deactivate CM
+
+Svc -> NM ++ : 33. insertOne({ userId: patientUserId, type: "complaint-resolved",\ntitle: "Your complaint has been resolved", refId: id })
+
+NM -> DB : 34. insert notifications
+
+  DB --> NM -- : 35. ack
+
+  NM --> Svc -- : 36. NotificationDocument
+deactivate NM
+
+Svc --> Ctrl -- : 37. void
+Ctrl --> Api -- : 38. HTTP 200
+Api --> View -- : 39. success
+View -> Staff : 40. refreshList()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import ShiftPlanPreview from "../../components/ShiftPlanPreview.jsx";
 import TimePicker from "../../components/TimePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
@@ -21,6 +22,9 @@ export default function EditWorkShiftPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [deleteImpact, setDeleteImpact] = useState(null);
+  const [regenerateFutureSlots, setRegenerateFutureSlots] = useState(true);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -46,8 +50,12 @@ export default function EditWorkShiftPage() {
           maxPatients: String(shift.maxPatients),
           isActive: shift.isActive !== false,
           doctorName: shift.doctorName,
+          doctorId: shift.doctorId,
           dayLabel: shift.dayLabel,
         });
+        setPreview({ valid: true, plan: shift.slotPlan, dayLabel: shift.dayLabel });
+        const impactRes = await AdminApiClient.getDeleteShiftImpact(id);
+        setDeleteImpact(impactRes.data);
       } catch (err) {
         setError(getApiErrorMessage(err));
       } finally {
@@ -56,6 +64,29 @@ export default function EditWorkShiftPage() {
     }
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (!form?.doctorId) return undefined;
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const { data } = await AdminApiClient.previewWorkShift({
+          doctorId: form.doctorId,
+          roomId: form.roomId || undefined,
+          dayOfWeek: Number(form.dayOfWeek),
+          startTime: form.startTime,
+          endTime: form.endTime,
+          maxPatients: Number(form.maxPatients),
+          excludeShiftId: id,
+        });
+        setPreview(data);
+      } catch {
+        setPreview(null);
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [form, id]);
 
   const onChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -67,8 +98,11 @@ export default function EditWorkShiftPage() {
   };
 
   const onDelete = async () => {
+    const impactText = deleteImpact
+      ? `\nFuture booked: ${deleteImpact.futureBooked}\nSlots removed: ${deleteImpact.slotsRemovedIfDeleted}`
+      : "";
     const confirmed = window.confirm(
-      "Delete this shift template? This cannot be undone if there are no future bookings."
+      `Delete this shift template?${impactText}\n\nThis cannot be undone if there are no future bookings.`
     );
     if (!confirmed) return;
 
@@ -96,6 +130,7 @@ export default function EditWorkShiftPage() {
         endTime: form.endTime,
         maxPatients: Number(form.maxPatients),
         isActive: form.isActive,
+        regenerateFutureSlots,
       });
       navigate("/admin/work-shifts");
     } catch (err) {
@@ -190,7 +225,25 @@ export default function EditWorkShiftPage() {
                 <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />
                 Active shift template
               </label>
+
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={regenerateFutureSlots}
+                  onChange={(event) => setRegenerateFutureSlots(event.target.checked)}
+                />
+                Regenerate future slots (delta sync, preserve booked appointments)
+              </label>
             </fieldset>
+
+            <ShiftPlanPreview preview={preview} title="Updated shift validation" />
+
+            {deleteImpact && (
+              <div className="alert alert-info">
+                Delete impact: {deleteImpact.futureBooked} future booked,{" "}
+                {deleteImpact.futureAvailable + deleteImpact.futureBlocked} open/blocked slots would be removed.
+              </div>
+            )}
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving || deleting}>

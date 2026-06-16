@@ -1,0 +1,109 @@
+@startuml SQ_MedicalImaging
+' Sequence Diagram – UC-23 Manage Medical Images
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant MedicalImagingPage as View
+participant MedicalImagingApiClient as Api
+participant MedicalImagingController as Ctrl
+participant MedicalImagingService as Svc
+participant EncounterModel as EM
+participant MedicalImageModel as MIM
+database MongoDB as DB
+
+== Upload medical image ==
+
+Doctor -> View ++ : 1. Drop files and set\nmodality, description
+
+View -> Api ++ : 2. uploadImages(encounterId, files, metadata)
+
+Api -> Ctrl ++ : 3. POST /api/medical-images\n(multipart)
+
+Ctrl -> Svc ++ : 4. uploadImages(encounterId, doctorId, files, metadata)
+
+Svc -> EM ++ : 5. findOne({ _id: encounterId, status: "in-progress" })
+
+EM -> DB : 6. query encounters
+
+  DB --> EM -- : 7. EncounterDocument / null
+
+  EM --> Svc -- : 8. encounter
+deactivate EM
+
+alt [1] Encounter signed off\n(upload not allowed)
+
+  Svc --> Ctrl -- : 9. HTTP 403\n"Encounter is locked."
+  Ctrl --> Api -- : 10. error response
+  Api --> View -- : 11. error response
+  View -> Doctor : 12. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] File invalid\n(type or size > 20 MB)
+
+  Svc --> Ctrl -- : 13. HTTP 400\n"Invalid file."
+  Ctrl --> Api -- : 14. error response
+  Api --> View -- : 15. error response
+  View -> Doctor : 16. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [3] Upload successful
+
+  Svc -> MIM ++ : 17. insertOne({ encounterId, patientId, doctorId,\nurl, modality, description, sizeBytes })
+
+  MIM -> DB : 18. insert medical_images
+
+  DB --> MIM -- : 19. MedicalImageDocument
+
+  MIM --> Svc -- : 20. MedicalImageDocument
+  deactivate MIM
+
+  Svc --> Ctrl -- : 21. image metadata
+  Ctrl --> Api -- : 22. HTTP 201
+  Api --> View -- : 23. success
+  View -> Doctor : 24. refreshGallery()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Delete image ==
+
+Doctor -> View ++ : 25. Confirm delete image
+
+View -> Api ++ : 26. deleteImage(imageId)
+
+Api -> Ctrl ++ : 27. DELETE /api/medical-images/:id
+
+Ctrl -> Svc ++ : 28. deleteImage(imageId, doctorId)
+
+Svc -> MIM ++ : 29. deleteOne({ _id: imageId, encounterId: { $in: openEncounterIds } })
+
+MIM -> DB : 30. delete medical_images
+
+  DB --> MIM -- : 31. ack
+
+  MIM --> Svc -- : 32. void
+deactivate MIM
+
+Svc --> Ctrl -- : 33. void
+Ctrl --> Api -- : 34. HTTP 204
+Api --> View -- : 35. success
+View -> Doctor : 36. removeFromGallery()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

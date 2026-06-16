@@ -1,0 +1,98 @@
+@startuml CD_ManageClinicRooms
+' Class Diagram – UC-28 Manage Clinic Rooms
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageClinicRoomsPage {
+  - rooms : Array
+  - departmentFilter : ObjectId
+  - code : String
+  - name : String
+  - departmentId : ObjectId
+  - floor : Number
+  - errorMessage : String
+  --
+  + loadRooms() : void
+  + applyDepartmentFilter() : void
+  + handleCreate() : void
+  + handleUpdate(roomId : ObjectId) : void
+  + handleDeactivate(roomId : ObjectId) : void
+}
+
+class ClinicRoomApiClient {
+  --
+  + getRooms(departmentId : ObjectId) : Promise<Array>
+  + getDepartments() : Promise<Array>
+  + createRoom(payload : Object) : Promise<RoomResponse>
+  + updateRoom(id : ObjectId, payload : Object) : Promise<RoomResponse>
+  + deactivateRoom(id : ObjectId) : Promise<void>
+}
+
+class ClinicRoomController {
+  - clinicRoomService : ClinicRoomService
+  --
+  + getRooms(req : Request, res : Response) : void
+  + createRoom(req : Request, res : Response) : void
+  + updateRoom(req : Request, res : Response) : void
+  + deactivateRoom(req : Request, res : Response) : void
+}
+
+class ClinicRoomService {
+  --
+  + listRooms(departmentId : ObjectId) : Array
+  + createRoom(payload : Object) : ClinicRoomDocument
+  + updateRoom(id : ObjectId, payload : Object) : ClinicRoomDocument
+  + deactivateRoom(id : ObjectId) : void
+  + hasScheduledShifts(roomId : ObjectId) : boolean
+}
+
+class ClinicRoomModel {
+  - code : String
+  - name : String
+  - departmentId : ObjectId
+  - floor : Number
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : ClinicRoomDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class DepartmentModel {
+  - name : String
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+}
+
+class WorkShiftModel {
+  - roomId : ObjectId
+  - date : Date
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+' Bố cục
+ManageClinicRoomsPage -[hidden]r- ClinicRoomApiClient
+ClinicRoomApiClient -[hidden]r- ClinicRoomController
+ClinicRoomController -[hidden]d- ClinicRoomService
+ClinicRoomService -[hidden]d- ClinicRoomModel
+ClinicRoomModel -[hidden]r- DepartmentModel
+DepartmentModel -[hidden]r- WorkShiftModel
+
+' Association
+ManageClinicRoomsPage "1" --> "1" ClinicRoomApiClient : uses
+ClinicRoomApiClient "1" --> "1" ClinicRoomController : calls
+ClinicRoomController "1" --> "1" ClinicRoomService : uses
+ClinicRoomService "1" --> "1" ClinicRoomModel : uses
+ClinicRoomService "1" --> "1" DepartmentModel : uses
+ClinicRoomService "1" --> "1" WorkShiftModel : uses
+
+@enduml

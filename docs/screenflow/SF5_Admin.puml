@@ -1,0 +1,82 @@
+@startuml SF5_Admin
+title Screen Flow of Admin
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+skinparam nodesep 30
+skinparam ranksep 45
+
+rectangle "Login" as Login
+rectangle "Admin Dashboard" as Dash
+
+rectangle "Accounts List" as AccList
+rectangle "Account Detail\n(info + linked profile tab)" as AccDetail
+usecase "Create Staff\nAccount Popup" as AccCreate
+usecase "Change Role /\nDeactivate Confirm Popup" as AccRole
+
+rectangle "Specialties List" as SpecList
+usecase "Create / Update\nSpecialty Popup" as SpecForm
+usecase "Delete Confirm Popup" as SpecDelete
+
+rectangle "Departments List" as DeptList
+rectangle "Department Detail\n(info + rooms + doctors tab)" as DeptDetail
+usecase "Create / Update\nDepartment Popup" as DeptForm
+
+rectangle "Clinic Rooms List" as RoomList
+usecase "Create / Update\nRoom Popup" as RoomForm
+
+rectangle "Doctors List (Admin)" as DocList
+rectangle "Doctor Detail (Admin)" as DocDetail
+usecase "Create / Update\nDoctor Popup" as DocForm
+usecase "Import Excel Popup" as DocImport
+
+rectangle "Patients List (Admin)" as PatList
+rectangle "Patient Detail (Admin)" as PatDetail
+usecase "Create / Update\nPatient Popup" as PatForm
+usecase "Deactivate Confirm Popup" as PatDeact
+
+Login --> Dash : Login successfully\n(role = admin)
+
+Dash --> AccList : Click "Accounts"\nin sidebar
+AccList --> AccDetail : Click a row
+AccList --> AccCreate : Click "Create\nStaff" button
+AccDetail --> AccRole : Click "Change Role" /\n"Deactivate" button
+
+Dash --> SpecList : Click "Specialties"\nin sidebar
+SpecList --> SpecForm : Click "Add" /\n"Edit" button
+SpecList --> SpecDelete : Click "Delete"\nbutton
+
+Dash --> DeptList : Click "Departments"\nin sidebar
+DeptList --> DeptDetail : Click a row
+DeptList --> DeptForm : Click "Add" /\n"Edit" button
+
+Dash --> RoomList : Click "Clinic Rooms"\nin sidebar
+RoomList --> RoomForm : Click "Add" /\n"Edit" button
+
+Dash --> DocList : Click "Doctors"\nin sidebar
+DocList --> DocDetail : Click a row
+DocList --> DocForm : Click "Create"\nbutton
+DocDetail --> DocForm : Click "Edit"\nbutton
+DocList --> DocImport : Click "Import\nExcel" button
+DocList --> DocList : Click "Export Excel"\n(file download)
+
+Dash --> PatList : Click "Patients"\nin sidebar
+PatList --> PatDetail : Click a row
+PatList --> PatForm : Click "Create"\nbutton
+PatDetail --> PatForm : Click "Edit"\nbutton
+PatDetail --> PatDeact : Click "Deactivate"\nbutton
+
+legend left
+  **Note:**
+  * Screen: rectangle
+  * Popup: oval
+endlegend
+
+@enduml

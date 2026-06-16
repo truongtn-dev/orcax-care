@@ -1,0 +1,64 @@
+@startuml D4_Staff
+left to right direction
+skinparam linetype polyline
+skinparam nodesep 30
+skinparam ranksep 40
+skinparam Padding 8
+
+actor Staff
+
+rectangle OrcaXCare {
+
+  usecase "View Staff Dashboard\n[UC-25]" as UC25
+  note right of UC25
+    Profile Management
+    View / Update Own Profile
+    Change Password
+  end note
+
+  usecase "Manage Pharmacy\n[UC-26]" as UC26
+  note right of UC26
+    Register Medicine
+    View Medicine Inventory / Detail
+    Update Medicine
+    Record Stock Inbound / Outbound
+    View Low Stock Alerts
+  end note
+
+  usecase "Manage Queue Check-in\n[UC-27]" as UC27
+  note right of UC27
+    Issue Queue Ticket
+    (patient check-in, tie appointment)
+  end note
+
+  usecase "Manage Complaints\n[UC-28]" as UC28
+  note right of UC28
+    View Complaint List / Detail
+    Reply to Complaint
+    Update Complaint Status
+  end note
+
+  usecase "Log Out\n[UC-6]" as UC6
+
+  usecase "Log In\n[UC-5]" as UC5
+}
+
+Staff --> UC25
+Staff --> UC26
+Staff --> UC27
+Staff --> UC28
+Staff --> UC6
+
+UC25 ..> UC5 : <<include>>
+UC26 ..> UC5 : <<include>>
+UC27 ..> UC5 : <<include>>
+UC28 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+
+UC25 -[hidden]down-> UC26
+UC26 -[hidden]down-> UC27
+UC27 -[hidden]down-> UC28
+UC28 -[hidden]down-> UC6
+UC6 -[hidden]right-> UC5
+
+@enduml

@@ -1,0 +1,151 @@
+@startuml SQ_BookAppointment
+' Sequence Diagram – UC-7 Book Appointment
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant BookAppointmentPage as View
+participant AppointmentApiClient as Api
+participant AppointmentController as Ctrl
+participant AppointmentService as Svc
+participant DoctorModel as DM
+participant AppointmentSlotModel as SM
+participant InsuranceCardModel as ICM
+participant WalletModel as WM
+participant AppointmentModel as AM
+participant PaymentModel as PM
+participant NotificationModel as NM
+database MongoDB as DB
+
+Patient -> View ++ : 1. select doctor, date, slot,\nreason, insurance card,\npayment method
+
+View -> View : 2. validateForm()
+
+View -> Api ++ : 3. bookAppointment({ doctorId, slotId,\nreason, insuranceCardId, paymentMethod })
+
+Api -> Ctrl ++ : 4. POST /api/appointments/book\n{ payload }
+
+Ctrl -> Svc ++ : 5. confirmBooking(payload)
+
+Svc -> DM ++ : 6. findById(doctorId)
+
+DM -> DB : 7. query doctors collection
+
+  DB --> DM -- : 8. DoctorDocument / null
+
+  DM --> Svc -- : 9. DoctorDocument
+deactivate DM
+
+Svc -> ICM ++ : 10. find({ patientId, status: "active" })
+
+ICM -> DB : 11. query insurance_cards
+
+  DB --> ICM -- : 12. card list
+
+  ICM --> Svc -- : 13. Array
+deactivate ICM
+
+Svc -> Svc : 14. calculateFee(doctor, insuranceCard)
+
+Svc -> SM ++ : 15. updateOne({ _id: slotId, status: "available" },\n{ status: "held", heldBy, heldUntil })
+
+SM -> DB : 16. atomic update appointment_slots
+
+  DB --> SM -- : 17. ack / no match
+
+  SM --> Svc -- : 18. hold result
+deactivate SM
+
+alt [1] Slot unavailable\n(already booked or held)
+
+  Svc --> Ctrl -- : 19. HTTP 400\n"Slot no longer available"
+  Ctrl --> Api -- : 20. error response
+  Api --> View -- : 21. error response
+  View -> Patient : 22. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Pay via Wallet\n(insufficient balance)
+
+  Svc -> WM ++ : 23. findOne({ patientId })
+
+  WM -> DB : 24. query wallets
+
+    DB --> WM -- : 25. WalletDocument
+
+    WM --> Svc -- : 26. WalletDocument
+  deactivate WM
+
+  Svc --> Ctrl -- : 27. HTTP 402\n"Insufficient wallet balance"
+  Ctrl --> Api -- : 28. error response
+  Api --> View -- : 29. error response
+  View -> Patient : 30. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [3] Payment successful\n(Wallet / PayOS / SePay)
+
+  Svc -> WM ++ : 31. updateOne({ patientId },\n{ $inc: { balance: -finalFee } })
+
+  WM -> DB : 32. update wallets
+
+    DB --> WM -- : 33. ack
+
+    WM --> Svc -- : 34. void
+  deactivate WM
+
+  Svc -> AM ++ : 35. create({ patientId, doctorId, slotId,\nreason, fee, discount, status: "confirmed" })
+
+  AM -> DB : 36. insert appointments
+
+    DB --> AM -- : 37. AppointmentDocument
+
+    AM --> Svc -- : 38. AppointmentDocument
+  deactivate AM
+
+  Svc -> SM ++ : 39. updateOne({ _id: slotId }, { status: "booked" })
+
+  SM -> DB : 40. update appointment_slots
+
+    DB --> SM -- : 41. ack
+
+    SM --> Svc -- : 42. void
+  deactivate SM
+
+  Svc -> PM ++ : 43. create({ appointmentId, method, amount,\nstatus: "paid" })
+
+  PM -> DB : 44. insert payments
+
+    DB --> PM -- : 45. PaymentDocument
+
+    PM --> Svc -- : 46. PaymentDocument
+  deactivate PM
+
+  Svc -> NM ++ : 47. create({ userId, type: "booking_confirm",\ntitle, content })
+
+  NM -> DB : 48. insert notifications
+
+    DB --> NM -- : 49. ack
+
+    NM --> Svc -- : 50. NotificationDocument
+  deactivate NM
+
+  Svc --> Ctrl -- : 51. { appointment, payment }
+  Ctrl --> Api -- : 52. HTTP 201 booking confirmation
+  Api --> View -- : 53. success response
+  View -> Patient : 54. showConfirmation()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

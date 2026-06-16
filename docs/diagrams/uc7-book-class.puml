@@ -1,0 +1,148 @@
+@startuml CD_BookAppointment
+' Class Diagram – UC-7 Book Appointment
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 70
+skinparam ranksep 60
+hide circle
+
+class BookAppointmentPage {
+  - doctorId : ObjectId
+  - selectedDate : Date
+  - selectedSlotId : ObjectId
+  - reason : String
+  - insuranceCardId : ObjectId
+  - paymentMethod : String
+  - feeSummary : Object
+  - errorMessage : String
+  --
+  + loadDoctorInfo() : void
+  + loadAvailableSlots(date : Date) : void
+  + selectSlot(slotId : ObjectId) : void
+  + previewFee() : void
+  + validateForm() : boolean
+  + handleConfirmPay() : void
+  + showError(message : String) : void
+}
+
+class AppointmentApiClient {
+  --
+  + getDoctor(doctorId : ObjectId) : Promise<DoctorResponse>
+  + getAvailableSlots(doctorId : ObjectId, date : Date) : Promise<Array>
+  + getInsuranceCards() : Promise<Array>
+  + bookAppointment(payload : Object) : Promise<BookingResponse>
+}
+
+class AppointmentController {
+  - appointmentService : AppointmentService
+  --
+  + getAvailableSlots(req : Request, res : Response) : void
+  + bookAppointment(req : Request, res : Response) : void
+}
+
+class AppointmentService {
+  --
+  + getAvailableSlots(doctorId : ObjectId, date : Date) : Array
+  + calculateFee(doctorId : ObjectId, insuranceCardId : ObjectId) : FeeSummary
+  + holdSlot(slotId : ObjectId, patientId : ObjectId) : void
+  + confirmBooking(payload : Object) : BookingResult
+  + processPayment(method : String, amount : Number) : PaymentResult
+}
+
+class DoctorModel {
+  - userId : ObjectId
+  - specialtyId : ObjectId
+  - consultationFee : Number
+  --
+  + findById(id : ObjectId) : DoctorDocument
+}
+
+class AppointmentSlotModel {
+  - doctorId : ObjectId
+  - date : Date
+  - startTime : String
+  - endTime : String
+  - status : String
+  - heldBy : ObjectId
+  - heldUntil : Date
+  --
+  + find(filter : Object) : Array
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class AppointmentModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - slotId : ObjectId
+  - reason : String
+  - fee : Number
+  - discountAmount : Number
+  - status : String
+  --
+  + create(doc : Object) : AppointmentDocument
+}
+
+class InsuranceCardModel {
+  - patientId : ObjectId
+  - provider : String
+  - discountRate : Number
+  - status : String
+  --
+  + find(filter : Object) : Array
+}
+
+class WalletModel {
+  - patientId : ObjectId
+  - balance : Number
+  --
+  + findOne(filter : Object) : WalletDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class PaymentModel {
+  - appointmentId : ObjectId
+  - method : String
+  - amount : Number
+  - status : String
+  --
+  + create(doc : Object) : PaymentDocument
+}
+
+class NotificationModel {
+  - userId : ObjectId
+  - type : String
+  - title : String
+  - content : String
+  --
+  + create(doc : Object) : NotificationDocument
+}
+
+' Bố cục
+BookAppointmentPage -[hidden]r- AppointmentApiClient
+AppointmentApiClient -[hidden]r- AppointmentController
+AppointmentController -[hidden]d- AppointmentService
+AppointmentService -[hidden]d- DoctorModel
+DoctorModel -[hidden]r- AppointmentSlotModel
+AppointmentSlotModel -[hidden]r- AppointmentModel
+AppointmentModel -[hidden]d- InsuranceCardModel
+InsuranceCardModel -[hidden]r- WalletModel
+WalletModel -[hidden]r- PaymentModel
+PaymentModel -[hidden]r- NotificationModel
+
+' Association
+BookAppointmentPage "1" --> "1" AppointmentApiClient : uses
+AppointmentApiClient "1" --> "1" AppointmentController : calls
+AppointmentController "1" --> "1" AppointmentService : uses
+AppointmentService "1" --> "1" DoctorModel : uses
+AppointmentService "1" --> "0..*" AppointmentSlotModel : uses
+AppointmentService "1" --> "0..*" AppointmentModel : creates
+AppointmentService "1" --> "0..*" InsuranceCardModel : uses
+AppointmentService "1" --> "1" WalletModel : uses
+AppointmentService "1" --> "0..*" PaymentModel : creates
+AppointmentService "1" --> "0..*" NotificationModel : creates
+
+@enduml

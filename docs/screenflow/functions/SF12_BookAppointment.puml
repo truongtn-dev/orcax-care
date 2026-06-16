@@ -1,0 +1,27 @@
+@startuml SF12_BookAppointment
+title Screen Flow - Book Appointment
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Patient Dashboard" as Dash
+rectangle "Doctor Public Profile" as Profile
+rectangle "Book Appointment\n(doctor, date, slot)" as Book
+usecase "Payment Popup\n(PayOS / Momo / Wallet,\ninsurance discount applied)" as Pay
+rectangle "Booking Confirmation" as Confirm
+
+Dash --> Book : Click "Book Appointment"\nshortcut
+Profile --> Book : Click "Book Appointment"\non doctor profile
+Book --> Book : Slot unavailable\n(pick another)
+Book --> Pay : Click "Confirm"\nbutton
+Pay --> Confirm : Payment successful
+Pay --> Book : Payment failed /\ncancelled
+
+@enduml

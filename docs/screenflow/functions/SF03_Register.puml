@@ -1,0 +1,24 @@
+@startuml SF03_Register
+title Screen Flow - Register Account (Patient)
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Portal Home" as Home
+rectangle "Register" as Register
+rectangle "Check Your Email Notice" as Notice
+rectangle "Login" as Login
+
+Home --> Register : Click "Register"\nbutton in header
+Register --> Register : Validation error\n(email taken, weak password)
+Register --> Notice : Register successfully\n(verification email sent)
+Notice --> Login : Click "Back to Login"
+
+@enduml

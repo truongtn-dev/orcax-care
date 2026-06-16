@@ -1,0 +1,48 @@
+@startuml CodePackages
+title Code Package Diagram - OrcaXCare (MERN)
+
+skinparam monochrome true
+skinparam shadowing false
+skinparam nodesep 60
+skinparam ranksep 70
+skinparam packageStyle folder
+skinparam defaultFontSize 14
+
+package "orcaxcare.client.pages" as pages {
+}
+package "orcaxcare.client.components" as components {
+}
+package "orcaxcare.client.context" as context {
+}
+package "orcaxcare.client.api" as api {
+}
+
+package "orcaxcare.server.routes" as routes {
+}
+package "orcaxcare.server.middlewares" as middlewares {
+}
+package "orcaxcare.server.controllers" as controllers {
+}
+package "orcaxcare.server.services" as services {
+}
+package "orcaxcare.server.utils" as utils {
+}
+package "orcaxcare.server.models" as models {
+}
+package "orcaxcare.server.db" as db {
+}
+
+pages .down.> components : <<use>>
+pages .down.> context : <<use>>
+pages .down.> api : <<use>>
+
+api .down.> routes : <<use>> (HTTP /api/*)
+
+routes .left.> middlewares : <<use>>
+routes .down.> controllers : <<use>>
+controllers .down.> services : <<use>>
+services .down.> models : <<use>>
+services .left.> utils : <<use>>
+models .down.> db : <<use>>
+
+@enduml

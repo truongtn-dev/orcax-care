@@ -1,0 +1,94 @@
+@startuml CD_Notifications
+' Class Diagram – UC-11 Notifications
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class NotificationsPage {
+  - notifications : Array
+  - unreadCount : Number
+  - preferences : Object
+  - errorMessage : String
+  --
+  + loadInbox() : void
+  + markAllRead() : void
+  + markRead(notificationId : ObjectId) : void
+  + loadPreferences() : void
+  + savePreferences(prefs : Object) : void
+  + showError(message : String) : void
+}
+
+class NotificationApiClient {
+  --
+  + listNotifications(limit : Number) : Promise<InboxResponse>
+  + markAllRead() : Promise<void>
+  + markRead(id : ObjectId) : Promise<void>
+  + getPreferences() : Promise<PreferencesResponse>
+  + updatePreferences(prefs : Object) : Promise<PreferencesResponse>
+}
+
+class NotificationController {
+  - notificationService : NotificationService
+  --
+  + listNotifications(req : Request, res : Response) : void
+  + markAllRead(req : Request, res : Response) : void
+  + markRead(req : Request, res : Response) : void
+  + getPreferences(req : Request, res : Response) : void
+  + updatePreferences(req : Request, res : Response) : void
+}
+
+class NotificationService {
+  --
+  + listNotifications(userId : ObjectId) : InboxResult
+  + markAllRead(userId : ObjectId) : void
+  + markRead(userId : ObjectId, id : ObjectId) : void
+  + getPreferences(userId : ObjectId) : PreferencesResult
+  + updatePreferences(userId : ObjectId, prefs : Object) : PreferencesResult
+}
+
+class NotificationModel {
+  - userId : ObjectId
+  - type : String
+  - title : String
+  - content : String
+  - isRead : Boolean
+  - readAt : Date
+  - createdAt : Date
+  --
+  + find(filter : Object) : Array
+  + countDocuments(filter : Object) : Number
+  + updateMany(filter : Object, update : Object) : void
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class NotificationPreferenceModel {
+  - userId : ObjectId
+  - reminderEnabled : Boolean
+  - resultReadyEnabled : Boolean
+  - marketingEnabled : Boolean
+  --
+  + findOne(filter : Object) : PreferenceDocument
+  + updateOne(filter : Object, update : Object, options : Object) : void
+}
+
+' Bố cục
+NotificationsPage -[hidden]r- NotificationApiClient
+NotificationApiClient -[hidden]r- NotificationController
+NotificationController -[hidden]d- NotificationService
+NotificationService -[hidden]d- NotificationModel
+NotificationModel -[hidden]r- NotificationPreferenceModel
+
+' Association
+NotificationsPage "1" --> "1" NotificationApiClient : uses
+NotificationApiClient "1" --> "1" NotificationController : calls
+NotificationController "1" --> "1" NotificationService : uses
+NotificationService "1" --> "1" NotificationModel : uses
+NotificationService "1" --> "1" NotificationPreferenceModel : uses
+
+@enduml

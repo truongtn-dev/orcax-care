@@ -1,0 +1,127 @@
+@startuml CD_ConsultationEMR
+' Class Diagram – UC-17 Start Consultation
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ConsultationPage {
+  - todayAppointments : Array
+  - selectedEncounterId : ObjectId
+  - patientInfo : Object
+  - notes : String
+  - diagnoses : Array
+  - icd10Keyword : String
+  - errorMessage : String
+  --
+  + loadTodayAppointments() : void
+  + startConsultation(apptId : ObjectId) : void
+  + saveNotes() : void
+  + searchDiagnosis(keyword : String) : void
+  + addDiagnosis(code : String) : void
+  + removeDiagnosis(id : ObjectId) : void
+  + handleSignOff() : void
+}
+
+class ConsultationApiClient {
+  --
+  + getTodayAppointments() : Promise<Array>
+  + startEncounter(apptId : ObjectId) : Promise<EncounterResponse>
+  + updateNotes(encounterId : ObjectId, notes : String) : Promise<void>
+  + searchIcd10(keyword : String) : Promise<Array>
+  + addDiagnosis(encounterId : ObjectId, payload : Object) : Promise<void>
+  + signOffEncounter(encounterId : ObjectId) : Promise<void>
+}
+
+class ConsultationController {
+  - consultationService : ConsultationService
+  --
+  + getTodayAppointments(req : Request, res : Response) : void
+  + startEncounter(req : Request, res : Response) : void
+  + updateNotes(req : Request, res : Response) : void
+  + searchIcd10(req : Request, res : Response) : void
+  + addDiagnosis(req : Request, res : Response) : void
+  + signOffEncounter(req : Request, res : Response) : void
+}
+
+class ConsultationService {
+  --
+  + getTodayAppointments(doctorId : ObjectId) : Array
+  + startEncounter(apptId : ObjectId, doctorId : ObjectId) : EncounterDocument
+  + updateNotes(encounterId : ObjectId, notes : String) : void
+  + searchIcd10(keyword : String) : Array
+  + addDiagnosis(encounterId : ObjectId, payload : Object) : DiagnosisDocument
+  + signOffEncounter(encounterId : ObjectId, doctorId : ObjectId) : void
+}
+
+class AppointmentModel {
+  - doctorId : ObjectId
+  - patientId : ObjectId
+  - status : String
+  --
+  + find(filter : Object) : Array
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class EncounterModel {
+  - appointmentId : ObjectId
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - notes : String
+  - status : String
+  --
+  + updateOne(filter : Object, update : Object, options : Object) : EncounterDocument
+  + findOne(filter : Object) : EncounterDocument
+}
+
+class DiagnosisModel {
+  - encounterId : ObjectId
+  - icd10Code : String
+  - type : String
+  --
+  + create(doc : Object) : DiagnosisDocument
+  + find(filter : Object) : Array
+  + deleteOne(filter : Object) : void
+}
+
+class Icd10CatalogModel {
+  - code : String
+  - name : String
+  --
+  + find(filter : Object) : Array
+}
+
+class NotificationModel {
+  - userId : ObjectId
+  - type : String
+  - title : String
+  --
+  + create(doc : Object) : NotificationDocument
+}
+
+' Bố cục
+ConsultationPage -[hidden]r- ConsultationApiClient
+ConsultationApiClient -[hidden]r- ConsultationController
+ConsultationController -[hidden]d- ConsultationService
+ConsultationService -[hidden]d- AppointmentModel
+AppointmentModel -[hidden]r- EncounterModel
+EncounterModel -[hidden]r- DiagnosisModel
+DiagnosisModel -[hidden]r- Icd10CatalogModel
+Icd10CatalogModel -[hidden]r- NotificationModel
+
+' Association
+ConsultationPage "1" --> "1" ConsultationApiClient : uses
+ConsultationApiClient "1" --> "1" ConsultationController : calls
+ConsultationController "1" --> "1" ConsultationService : uses
+ConsultationService "1" --> "1" AppointmentModel : uses
+ConsultationService "1" --> "1" EncounterModel : uses
+ConsultationService "1" --> "1" DiagnosisModel : uses
+ConsultationService "1" --> "1" Icd10CatalogModel : uses
+ConsultationService "1" --> "1" NotificationModel : creates
+
+@enduml

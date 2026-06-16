@@ -1,0 +1,132 @@
+@startuml CD_ManageAppointments
+' Class Diagram – UC-9 Manage Appointments
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageAppointmentsPage {
+  - activeTab : String
+  - appointments : Array
+  - selectedAppointment : Object
+  - rating : Number
+  - comment : String
+  - errorMessage : String
+  --
+  + loadAppointments(tab : String) : void
+  + viewDetail(appointmentId : ObjectId) : void
+  + openReschedule(appointmentId : ObjectId) : void
+  + openCancel(appointmentId : ObjectId) : void
+  + openRateDoctor(appointmentId : ObjectId) : void
+  + handleReschedule(newSlotId : ObjectId) : void
+  + handleCancel() : void
+  + handleRate() : void
+  + showError(message : String) : void
+}
+
+class AppointmentApiClient {
+  --
+  + listAppointments(tab : String, page : Number) : Promise<Array>
+  + getAppointmentDetail(id : ObjectId) : Promise<AppointmentResponse>
+  + rescheduleAppointment(id : ObjectId, newSlotId : ObjectId) : Promise<AppointmentResponse>
+  + cancelAppointment(id : ObjectId) : Promise<CancelResponse>
+  + rateDoctor(id : ObjectId, payload : Object) : Promise<ReviewResponse>
+}
+
+class AppointmentController {
+  - appointmentService : AppointmentService
+  --
+  + listAppointments(req : Request, res : Response) : void
+  + getAppointmentDetail(req : Request, res : Response) : void
+  + rescheduleAppointment(req : Request, res : Response) : void
+  + cancelAppointment(req : Request, res : Response) : void
+  + rateDoctor(req : Request, res : Response) : void
+}
+
+class AppointmentService {
+  --
+  + listAppointments(patientId : ObjectId, tab : String) : Array
+  + getAppointmentDetail(id : ObjectId, patientId : ObjectId) : AppointmentResult
+  + rescheduleAppointment(id : ObjectId, newSlotId : ObjectId) : AppointmentResult
+  + cancelAppointment(id : ObjectId, patientId : ObjectId) : CancelResult
+  + rateDoctor(id : ObjectId, payload : Object) : ReviewResult
+  + validateReschedulePolicy(appointment : Object) : void
+  + validateCancelPolicy(appointment : Object) : void
+}
+
+class AppointmentModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - slotId : ObjectId
+  - status : String
+  - fee : Number
+  - cancelledAt : Date
+  --
+  + find(filter : Object) : Array
+  + findById(id : ObjectId) : AppointmentDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class AppointmentSlotModel {
+  - doctorId : ObjectId
+  - date : Date
+  - startTime : String
+  - status : String
+  --
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class WalletModel {
+  - patientId : ObjectId
+  - balance : Number
+  --
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class WalletTransactionModel {
+  - walletId : ObjectId
+  - type : String
+  - amount : Number
+  - refType : String
+  - refId : ObjectId
+  - status : String
+  --
+  + create(doc : Object) : WalletTransactionDocument
+}
+
+class ReviewModel {
+  - appointmentId : ObjectId
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - rating : Number
+  - comment : String
+  --
+  + create(doc : Object) : ReviewDocument
+}
+
+' Bố cục
+ManageAppointmentsPage -[hidden]r- AppointmentApiClient
+AppointmentApiClient -[hidden]r- AppointmentController
+AppointmentController -[hidden]d- AppointmentService
+AppointmentService -[hidden]d- AppointmentModel
+AppointmentModel -[hidden]r- AppointmentSlotModel
+AppointmentSlotModel -[hidden]r- WalletModel
+WalletModel -[hidden]r- WalletTransactionModel
+WalletTransactionModel -[hidden]r- ReviewModel
+
+' Association
+ManageAppointmentsPage "1" --> "1" AppointmentApiClient : uses
+AppointmentApiClient "1" --> "1" AppointmentController : calls
+AppointmentController "1" --> "1" AppointmentService : uses
+AppointmentService "1" --> "1" AppointmentModel : uses
+AppointmentService "1" --> "1" AppointmentSlotModel : uses
+AppointmentService "1" --> "1" WalletModel : uses
+AppointmentService "1" --> "1" WalletTransactionModel : creates
+AppointmentService "1" --> "1" ReviewModel : creates
+
+@enduml

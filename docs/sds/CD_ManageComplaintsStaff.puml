@@ -1,0 +1,102 @@
+@startuml CD_ManageComplaintsStaff
+' Class Diagram – UC-34 Manage Complaints
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageComplaintsStaffPage {
+  - complaints : Array
+  - statusFilter : String
+  - categoryFilter : String
+  - dateFrom : Date
+  - dateTo : Date
+  - selectedComplaintId : ObjectId
+  - replyMessage : String
+  - resolutionNote : String
+  - errorMessage : String
+  --
+  + loadComplaints() : void
+  + applyFilters() : void
+  + openDetail(complaintId : ObjectId) : void
+  + handleReply() : void
+  + handleStatusChange(status : String) : void
+}
+
+class StaffComplaintApiClient {
+  --
+  + getComplaints(filters : Object) : Promise<Array>
+  + getComplaintDetail(id : ObjectId) : Promise<ComplaintDetailResponse>
+  + replyToComplaint(id : ObjectId, message : String) : Promise<void>
+  + updateStatus(id : ObjectId, status : String, resolutionNote : String) : Promise<void>
+}
+
+class StaffComplaintController {
+  - staffComplaintService : StaffComplaintService
+  --
+  + getComplaints(req : Request, res : Response) : void
+  + getComplaintDetail(req : Request, res : Response) : void
+  + replyToComplaint(req : Request, res : Response) : void
+  + updateStatus(req : Request, res : Response) : void
+}
+
+class StaffComplaintService {
+  --
+  + listComplaints(filters : Object) : Array
+  + getComplaintDetail(id : ObjectId) : ComplaintDetail
+  + replyToComplaint(id : ObjectId, staffId : ObjectId, message : String) : void
+  + updateStatus(id : ObjectId, status : String, resolutionNote : String) : void
+}
+
+class ComplaintModel {
+  - patientId : ObjectId
+  - category : String
+  - subject : String
+  - status : String
+  - resolutionNote : String
+  --
+  + find(filter : Object) : Array
+  + findOne(filter : Object) : ComplaintDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class ComplaintReplyModel {
+  - complaintId : ObjectId
+  - staffId : ObjectId
+  - message : String
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : ComplaintReplyDocument
+}
+
+class NotificationModel {
+  - userId : ObjectId
+  - type : String
+  - title : String
+  - refId : ObjectId
+  --
+  + insertOne(doc : Object) : NotificationDocument
+}
+
+' Bố cục
+ManageComplaintsStaffPage -[hidden]r- StaffComplaintApiClient
+StaffComplaintApiClient -[hidden]r- StaffComplaintController
+StaffComplaintController -[hidden]d- StaffComplaintService
+StaffComplaintService -[hidden]d- ComplaintModel
+ComplaintModel -[hidden]r- ComplaintReplyModel
+ComplaintReplyModel -[hidden]r- NotificationModel
+
+' Association
+ManageComplaintsStaffPage "1" --> "1" StaffComplaintApiClient : uses
+StaffComplaintApiClient "1" --> "1" StaffComplaintController : calls
+StaffComplaintController "1" --> "1" StaffComplaintService : uses
+StaffComplaintService "1" --> "1" ComplaintModel : uses
+StaffComplaintService "1" --> "1" ComplaintReplyModel : uses
+StaffComplaintService "1" --> "1" NotificationModel : creates
+
+@enduml

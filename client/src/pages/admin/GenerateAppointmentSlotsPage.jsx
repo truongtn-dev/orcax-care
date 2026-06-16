@@ -46,6 +46,8 @@ export default function GenerateAppointmentSlotsPage() {
     scope: "all",
   });
   const [activePreset, setActivePreset] = useState("14d");
+  const [preview, setPreview] = useState(null);
+  const [previewing, setPreviewing] = useState(false);
   const [result, setResult] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
@@ -97,6 +99,32 @@ export default function GenerateAppointmentSlotsPage() {
     setResult(null);
   };
 
+  const buildPayload = () => ({
+    startDate: form.startDate,
+    endDate: form.endDate,
+    doctorId: form.scope === "one" ? form.doctorId : undefined,
+  });
+
+  const onPreview = async () => {
+    if (form.scope === "one" && !form.doctorId) {
+      setError("Please search and select a doctor, or choose all active doctors.");
+      return;
+    }
+
+    setPreviewing(true);
+    setError("");
+    setPreview(null);
+    setResult(null);
+    try {
+      const { data } = await AdminApiClient.previewAppointmentSlots(buildPayload());
+      setPreview(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     if (form.scope === "one" && !form.doctorId) {
@@ -108,12 +136,9 @@ export default function GenerateAppointmentSlotsPage() {
     setError("");
     setResult(null);
     try {
-      const { data } = await AdminApiClient.generateAppointmentSlots({
-        startDate: form.startDate,
-        endDate: form.endDate,
-        doctorId: form.scope === "one" ? form.doctorId : undefined,
-      });
+      const { data } = await AdminApiClient.generateAppointmentSlots(buildPayload());
       setResult(data);
+      setPreview(null);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -157,6 +182,33 @@ export default function GenerateAppointmentSlotsPage() {
 
             <form onSubmit={onSubmit} className="form slot-gen-form">
               {error && <div className="alert alert-error">{error}</div>}
+
+              {preview && (
+                <div className="slot-gen-result slot-gen-preview" aria-label="Generation preview">
+                  <p className="slot-gen-result-lead">
+                    Preview for <strong>{formatDateLabel(preview.range?.startDate)}</strong> to{" "}
+                    <strong>{formatDateLabel(preview.range?.endDate)}</strong> — no slots written yet.
+                  </p>
+                  <div className="slot-gen-result-grid">
+                    <div className="slot-gen-stat is-success">
+                      <strong>{preview.wouldCreate}</strong>
+                      <span>Would create</span>
+                    </div>
+                    <div className="slot-gen-stat is-muted">
+                      <strong>{preview.wouldSkipExisting}</strong>
+                      <span>Already exist</span>
+                    </div>
+                    <div className="slot-gen-stat">
+                      <strong>{preview.holidaysSkipped}</strong>
+                      <span>Holidays</span>
+                    </div>
+                    <div className="slot-gen-stat">
+                      <strong>{preview.workingDays}</strong>
+                      <span>Working days</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {result && (
                 <div className="slot-gen-result" aria-label="Generation summary">
@@ -281,6 +333,14 @@ export default function GenerateAppointmentSlotsPage() {
               </div>
 
               <div className="form-actions slot-gen-actions">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={onPreview}
+                  disabled={previewing || generating || (form.scope === "one" && !form.doctorId)}
+                >
+                  {previewing ? "Previewing…" : "Preview generation"}
+                </button>
                 <button
                   type="submit"
                   className="btn btn-primary"

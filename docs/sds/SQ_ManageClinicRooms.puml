@@ -1,0 +1,113 @@
+@startuml SQ_ManageClinicRooms
+' Sequence Diagram – UC-28 Manage Clinic Rooms
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManageClinicRoomsPage as View
+participant ClinicRoomApiClient as Api
+participant ClinicRoomController as Ctrl
+participant ClinicRoomService as Svc
+participant ClinicRoomModel as CRM
+participant WorkShiftModel as WSM
+database MongoDB as DB
+
+== Create clinic room ==
+
+Admin -> View ++ : 1. Enter room code, name,\ndepartment, floor
+
+View -> Api ++ : 2. createRoom({ code, name, departmentId, floor })
+
+Api -> Ctrl ++ : 3. POST /api/admin/rooms
+
+Ctrl -> Svc ++ : 4. createRoom(payload)
+
+Svc -> CRM ++ : 5. insertOne({ code, name, departmentId, floor, isActive: true })
+
+CRM -> DB : 6. insert clinic_rooms
+
+  DB --> CRM -- : 7. ClinicRoomDocument / duplicate key
+
+  CRM --> Svc -- : 8. result
+deactivate CRM
+
+alt [1] Duplicate room code
+
+  Svc --> Ctrl -- : 9. HTTP 409\n"Room code already exists."
+  Ctrl --> Api -- : 10. error response
+  Api --> View -- : 11. error response
+  View -> Admin : 12. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 13. ClinicRoomDocument
+  Ctrl --> Api -- : 14. HTTP 201
+  Api --> View -- : 15. success
+  View -> Admin : 16. refreshRooms()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Deactivate room ==
+
+Admin -> View ++ : 17. Confirm deactivate room
+
+View -> Api ++ : 18. deactivateRoom(roomId)
+
+Api -> Ctrl ++ : 19. PATCH /api/admin/rooms/:id/deactivate
+
+Ctrl -> Svc ++ : 20. deactivateRoom(roomId)
+
+Svc -> WSM ++ : 21. countDocuments({ roomId, date: { $gte: today } })
+
+WSM -> DB : 22. count work_shifts
+
+  DB --> WSM -- : 23. shift count
+
+  WSM --> Svc -- : 24. Number
+deactivate WSM
+
+alt [1] Scheduled shifts exist
+
+  Svc --> Ctrl -- : 25. HTTP 409\n"Room has scheduled shifts."
+  Ctrl --> Api -- : 26. error response
+  Api --> View -- : 27. error response
+  View -> Admin : 28. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> CRM ++ : 29. updateOne({ _id: roomId }, { isActive: false })
+
+  CRM -> DB : 30. update clinic_rooms
+
+  DB --> CRM -- : 31. ack
+
+  CRM --> Svc -- : 32. void
+  deactivate CRM
+
+  Svc --> Ctrl -- : 33. void
+  Ctrl --> Api -- : 34. HTTP 200
+  Api --> View -- : 35. success
+  View -> Admin : 36. refreshRooms()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

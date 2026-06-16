@@ -58,12 +58,18 @@ adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);
 adminRouter.post("/clinic-rooms", AdminClinicRoomController.createClinicRoom);
 adminRouter.put("/clinic-rooms/:roomId", AdminClinicRoomController.updateClinicRoom);
 
+adminRouter.post("/work-shifts/preview", AdminWorkShiftController.previewWorkShift);
 adminRouter.get("/work-shifts", AdminWorkShiftController.listWorkShifts);
 adminRouter.post("/work-shifts", AdminWorkShiftController.createWorkShift);
+adminRouter.get("/work-shifts/:id/delete-impact", AdminWorkShiftController.getDeleteShiftImpact);
 adminRouter.get("/work-shifts/:id", AdminWorkShiftController.getWorkShift);
 adminRouter.put("/work-shifts/:id", AdminWorkShiftController.updateWorkShift);
 adminRouter.delete("/work-shifts/:id", AdminWorkShiftController.deleteWorkShift);
 
+adminRouter.post(
+  "/appointment-slots/preview",
+  AdminAppointmentSlotController.previewAppointmentSlots
+);
 adminRouter.post(
   "/appointment-slots/generate",
   AdminAppointmentSlotController.generateAppointmentSlots

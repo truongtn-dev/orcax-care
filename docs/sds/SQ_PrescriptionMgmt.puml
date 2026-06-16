@@ -1,0 +1,121 @@
+@startuml SQ_PrescriptionMgmt
+' Sequence Diagram – UC-24 Create Prescription
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant PrescriptionMgmtPage as View
+participant PrescriptionApiClient as Api
+participant PrescriptionController as Ctrl
+participant PrescriptionService as Svc
+participant MedicineModel as MM
+participant PrescriptionModel as PM
+participant PrescriptionItemModel as PIM
+database MongoDB as DB
+
+== Add medicine line ==
+
+Doctor -> View ++ : 1. Search medicine and\nadd line item
+
+View -> Api ++ : 2. searchMedicines(keyword)
+
+Api -> Ctrl ++ : 3. GET /api/medicines/search?q
+
+Ctrl -> Svc ++ : 4. searchMedicines(keyword)
+
+Svc -> MM ++ : 5. find({ name: { $regex: keyword }, isActive: true })
+
+MM -> DB : 6. query medicines
+
+  DB --> MM -- : 7. medicine list
+
+  MM --> Svc -- : 8. Array
+deactivate MM
+
+Svc --> Ctrl -- : 9. Array
+Ctrl --> Api -- : 10. HTTP 200
+Api --> View -- : 11. search results
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+
+View -> Api ++ : 12. addLineItem(prescriptionId, payload)
+
+Api -> Ctrl ++ : 13. POST /api/prescriptions/:id/items
+
+Ctrl -> Svc ++ : 14. addLineItem(prescriptionId, payload)
+
+Svc -> PIM ++ : 15. insertOne({ prescriptionId, medicineId,\nquantity, dosage, frequency, duration, note })
+
+PIM -> DB : 16. insert prescription_items
+
+  DB --> PIM -- : 17. PrescriptionItemDocument
+
+  PIM --> Svc -- : 18. PrescriptionItemDocument
+deactivate PIM
+
+Svc --> Ctrl -- : 19. line item
+Ctrl --> Api -- : 20. HTTP 201
+Api --> View -- : 21. success
+View -> Doctor : 22. refreshLineItems()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Issue prescription ==
+
+Doctor -> View ++ : 23. Click Save & Issue
+
+View -> Api ++ : 24. issuePrescription(prescriptionId)
+
+Api -> Ctrl ++ : 25. POST /api/prescriptions/:id/issue
+
+Ctrl -> Svc ++ : 26. issuePrescription(prescriptionId, doctorId)
+
+Svc -> PIM ++ : 27. find({ prescriptionId })
+
+PIM -> DB : 28. query prescription_items
+
+  DB --> PIM -- : 29. line items
+
+  PIM --> Svc -- : 30. Array
+deactivate PIM
+
+alt [1] No line items
+
+  Svc --> Ctrl -- : 31. HTTP 400\n"Prescription must have at least one item."
+  Ctrl --> Api -- : 32. error response
+  Api --> View -- : 33. error response
+  View -> Doctor : 34. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> PM ++ : 35. updateOne({ _id: prescriptionId, status: "draft" },\n{ status: "issued", issuedAt })
+
+  PM -> DB : 36. update prescriptions
+
+  DB --> PM -- : 37. ack
+
+  PM --> Svc -- : 38. PrescriptionDocument
+  deactivate PM
+
+  Svc --> Ctrl -- : 39. PrescriptionDocument
+  Ctrl --> Api -- : 40. HTTP 200
+  Api --> View -- : 41. issued prescription
+  View -> Doctor : 42. showPdfAndQrActions()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

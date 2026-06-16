@@ -1,0 +1,117 @@
+@startuml SQ_ManageDepartments
+' Sequence Diagram – UC-27 Manage Departments
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManageDepartmentsPage as View
+participant DepartmentApiClient as Api
+participant DepartmentController as Ctrl
+participant DepartmentService as Svc
+participant DepartmentModel as DM
+participant ClinicRoomModel as CRM
+participant DoctorModel as DocM
+database MongoDB as DB
+
+== View department detail ==
+
+Admin -> View ++ : 1. Open department detail
+
+View -> Api ++ : 2. getDepartmentDetail(deptId)
+
+Api -> Ctrl ++ : 3. GET /api/admin/departments/:id
+
+Ctrl -> Svc ++ : 4. getDepartmentDetail(deptId)
+
+Svc -> DM ++ : 5. findOne({ _id: deptId })
+
+DM -> DB : 6. query departments
+
+  DB --> DM -- : 7. DepartmentDocument
+
+  DM --> Svc -- : 8. department
+deactivate DM
+
+Svc -> CRM ++ : 9. find({ departmentId: deptId })
+
+CRM -> DB : 10. query clinic_rooms
+
+  DB --> CRM -- : 11. room list
+
+  CRM --> Svc -- : 12. Array
+deactivate CRM
+
+Svc -> DocM ++ : 13. find({ departmentId: deptId, isActive: true })
+
+DocM -> DB : 14. query doctors
+
+  DB --> DocM -- : 15. doctor list
+
+  DocM --> Svc -- : 16. Array
+deactivate DocM
+
+Svc --> Ctrl -- : 17. { department, rooms, doctors }
+Ctrl --> Api -- : 18. HTTP 200
+Api --> View -- : 19. detail response
+View -> Admin : 20. renderDetailPanel()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Deactivate department ==
+
+Admin -> View ++ : 21. Confirm deactivate
+
+View -> Api ++ : 22. deactivateDepartment(deptId)
+
+Api -> Ctrl ++ : 23. PATCH /api/admin/departments/:id/deactivate
+
+Ctrl -> Svc ++ : 24. deactivateDepartment(deptId)
+
+Svc -> DocM ++ : 25. countDocuments({ departmentId: deptId, isActive: true })
+
+DocM -> DB : 26. count doctors
+
+  DB --> DocM -- : 27. active doctor count
+
+  DocM --> Svc -- : 28. Number
+deactivate DocM
+
+alt [1] Active doctors still assigned
+
+  Svc --> Ctrl -- : 29. HTTP 409\n"Reassign doctors first."
+  Ctrl --> Api -- : 30. error response
+  Api --> View -- : 31. error response
+  View -> Admin : 32. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> DM ++ : 33. updateOne({ _id: deptId }, { isActive: false })
+
+  DM -> DB : 34. update departments
+
+  DB --> DM -- : 35. ack
+
+  DM --> Svc -- : 36. void
+  deactivate DM
+
+  Svc --> Ctrl -- : 37. void
+  Ctrl --> Api -- : 38. HTTP 200
+  Api --> View -- : 39. success
+  View -> Admin : 40. refreshList()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

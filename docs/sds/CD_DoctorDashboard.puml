@@ -1,0 +1,102 @@
+@startuml CD_DoctorDashboard
+' Class Diagram – UC-16 View Doctor Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class DoctorDashboardPage {
+  - todayAppointments : Array
+  - appointmentCount : Number
+  - patientsSeen : Number
+  - waitingTickets : Number
+  - pendingSignOffs : Number
+  - queueSession : Object
+  - errorMessage : String
+  --
+  + loadDashboard() : void
+  + openTodayAppointments() : void
+  + openQueueSession() : void
+  + openProfile() : void
+}
+
+class DoctorDashboardApiClient {
+  --
+  + getDashboard() : Promise<DashboardResponse>
+  + getTodayAppointments() : Promise<Array>
+}
+
+class DoctorDashboardController {
+  - doctorDashboardService : DoctorDashboardService
+  --
+  + getDashboard(req : Request, res : Response) : void
+  + getTodayAppointments(req : Request, res : Response) : void
+}
+
+class DoctorDashboardService {
+  --
+  + getDashboardSummary(doctorId : ObjectId) : DashboardSummary
+  + getTodayAppointments(doctorId : ObjectId) : Array
+  + countPendingSignOffs(doctorId : ObjectId) : Number
+}
+
+class AppointmentModel {
+  - doctorId : ObjectId
+  - patientId : ObjectId
+  - startTime : Date
+  - status : String
+  --
+  + find(filter : Object) : Array
+}
+
+class QueueSessionModel {
+  - doctorId : ObjectId
+  - roomId : ObjectId
+  - currentNumber : Number
+  - status : String
+  --
+  + findOne(filter : Object) : QueueSessionDocument
+}
+
+class EncounterModel {
+  - doctorId : ObjectId
+  - patientId : ObjectId
+  - status : String
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+class DoctorModel {
+  - userId : ObjectId
+  - specialtyId : ObjectId
+  - degree : String
+  - bio : String
+  --
+  + findOne(filter : Object) : DoctorDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+' Bố cục
+DoctorDashboardPage -[hidden]r- DoctorDashboardApiClient
+DoctorDashboardApiClient -[hidden]r- DoctorDashboardController
+DoctorDashboardController -[hidden]d- DoctorDashboardService
+DoctorDashboardService -[hidden]d- AppointmentModel
+AppointmentModel -[hidden]r- QueueSessionModel
+QueueSessionModel -[hidden]r- EncounterModel
+EncounterModel -[hidden]r- DoctorModel
+
+' Association
+DoctorDashboardPage "1" --> "1" DoctorDashboardApiClient : uses
+DoctorDashboardApiClient "1" --> "1" DoctorDashboardController : calls
+DoctorDashboardController "1" --> "1" DoctorDashboardService : uses
+DoctorDashboardService "1" --> "1" AppointmentModel : uses
+DoctorDashboardService "1" --> "1" QueueSessionModel : uses
+DoctorDashboardService "1" --> "1" EncounterModel : uses
+DoctorDashboardService "1" --> "1" DoctorModel : uses
+
+@enduml

@@ -1,0 +1,98 @@
+@startuml CD_ManageProfile
+' Class Diagram – UC-7 Manage Profile
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageProfilePage {
+  - fullName : String
+  - email : String
+  - phone : String
+  - dateOfBirth : Date
+  - gender : String
+  - address : String
+  - emergencyContactName : String
+  - emergencyContactPhone : String
+  - avatarUrl : String
+  - errorMessage : String
+  - successMessage : String
+  --
+  + loadProfile() : void
+  + handleChange(event : Event) : void
+  + validateForm() : boolean
+  + handleSubmit() : void
+  + uploadAvatar(file : File) : void
+  + openChangePassword() : void
+  + showError(message : String) : void
+  + showSuccess(message : String) : void
+}
+
+class ProfileApiClient {
+  --
+  + getProfile() : Promise<ProfileResponse>
+  + updateProfile(payload : Object) : Promise<ProfileResponse>
+  + uploadAvatar(file : File) : Promise<AvatarResponse>
+}
+
+class ProfileController {
+  - profileService : ProfileService
+  --
+  + getProfile(req : Request, res : Response) : void
+  + updateProfile(req : Request, res : Response) : void
+  + uploadAvatar(req : Request, res : Response) : void
+}
+
+class ProfileService {
+  --
+  + getProfile(userId : ObjectId, role : String) : ProfileResult
+  + updateProfile(userId : ObjectId, role : String, payload : Object) : ProfileResult
+  + uploadAvatar(userId : ObjectId, file : Object) : AvatarResult
+  + validateProfileInput(payload : Object) : void
+}
+
+class UserModel {
+  - email : String
+  - fullName : String
+  - phone : String
+  - role : String
+  - passwordHash : String
+  --
+  + findById(id : ObjectId) : UserDocument
+  + save() : void
+}
+
+class PatientModel {
+  - userId : ObjectId
+  - dateOfBirth : Date
+  - gender : String
+  - address : String
+  - emergencyContactName : String
+  - emergencyContactPhone : String
+  - avatarUrl : String
+  --
+  + findOne(filter : Object) : PatientDocument
+  + create(doc : Object) : PatientDocument
+  + save() : void
+}
+
+' Bố cục
+ManageProfilePage -[hidden]r- ProfileApiClient
+ProfileApiClient -[hidden]r- ProfileController
+ProfileController -[hidden]d- ProfileService
+ProfileService -[hidden]d- UserModel
+UserModel -[hidden]r- PatientModel
+
+' Association
+ManageProfilePage "1" --> "1" ProfileApiClient : uses
+ProfileApiClient "1" --> "1" ProfileController : calls
+ProfileController "1" --> "1" ProfileService : uses
+ProfileService "1" --> "1" UserModel : uses
+ProfileService "1" --> "1" PatientModel : uses
+
+@enduml

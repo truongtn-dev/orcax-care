@@ -1,0 +1,24 @@
+@startuml SF09_SearchDoctors
+title Screen Flow - Search Doctors
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Portal Home" as Home
+rectangle "Search Doctors\n(filters + pagination)" as Search
+rectangle "Doctor Public Profile\n(info + reviews tab)" as Profile
+rectangle "Book Appointment" as Book
+
+Home --> Search : Click "Search Doctors"\nin header / search bar
+Search --> Search : Apply filter by name /\nspecialty / department
+Search --> Profile : Click "View Profile"\non a result card
+Profile --> Book : Click "Book Appointment"\n(patient logged in)
+
+@enduml

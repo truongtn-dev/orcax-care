@@ -1,0 +1,102 @@
+@startuml CD_ManageAccounts
+' Class Diagram – UC-25 Manage Accounts
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageAccountsPage {
+  - accounts : Array
+  - searchKeyword : String
+  - roleFilter : String
+  - statusFilter : String
+  - selectedUserId : ObjectId
+  - errorMessage : String
+  --
+  + loadAccounts() : void
+  + applyFilters() : void
+  + openCreateModal() : void
+  + handleCreateAccount(payload : Object) : void
+  + handleUpdateAccount(userId : ObjectId, payload : Object) : void
+  + handleChangeRole(userId : ObjectId, role : String) : void
+  + handleToggleStatus(userId : ObjectId) : void
+}
+
+class AccountApiClient {
+  --
+  + getAccounts(filters : Object) : Promise<Array>
+  + createAccount(payload : Object) : Promise<UserResponse>
+  + updateAccount(userId : ObjectId, payload : Object) : Promise<UserResponse>
+  + changeRole(userId : ObjectId, role : String) : Promise<void>
+  + toggleStatus(userId : ObjectId) : Promise<void>
+}
+
+class AccountController {
+  - accountService : AccountService
+  --
+  + getAccounts(req : Request, res : Response) : void
+  + createAccount(req : Request, res : Response) : void
+  + updateAccount(req : Request, res : Response) : void
+  + changeRole(req : Request, res : Response) : void
+  + toggleStatus(req : Request, res : Response) : void
+}
+
+class AccountService {
+  --
+  + listAccounts(filters : Object) : Array
+  + createStaffAccount(payload : Object) : UserDocument
+  + updateAccount(userId : ObjectId, payload : Object) : UserDocument
+  + changeRole(userId : ObjectId, newRole : String, adminId : ObjectId) : void
+  + deactivateAccount(userId : ObjectId, adminId : ObjectId) : void
+}
+
+class UserModel {
+  - email : String
+  - fullName : String
+  - role : String
+  - isActive : boolean
+  - lastLoginAt : Date
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : UserDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class SessionModel {
+  - userId : ObjectId
+  - refreshToken : String
+  --
+  + deleteMany(filter : Object) : void
+}
+
+class AuditLogModel {
+  - actorId : ObjectId
+  - action : String
+  - targetId : ObjectId
+  - detail : Object
+  --
+  + insertOne(doc : Object) : AuditLogDocument
+}
+
+' Bố cục
+ManageAccountsPage -[hidden]r- AccountApiClient
+AccountApiClient -[hidden]r- AccountController
+AccountController -[hidden]d- AccountService
+AccountService -[hidden]d- UserModel
+UserModel -[hidden]r- SessionModel
+SessionModel -[hidden]r- AuditLogModel
+
+' Association
+ManageAccountsPage "1" --> "1" AccountApiClient : uses
+AccountApiClient "1" --> "1" AccountController : calls
+AccountController "1" --> "1" AccountService : uses
+AccountService "1" --> "1" UserModel : uses
+AccountService "1" --> "1" SessionModel : uses
+AccountService "1" --> "1" AuditLogModel : creates
+
+@enduml

@@ -1,0 +1,165 @@
+﻿count 229
+2.2 Register Patient Account -> ['RegisterPage', 'AuthApiClient', 'AuthController', 'AuthService', 'UserModel (Mongoose)', 'PatientModel (Mongoose)', 'EmailVerificationTokenModel (Mongoose)', 'MailService']
+2.3 Login -> ['LoginPage', 'AuthApiClient', 'AuthController', 'AuthService', 'UserModel (Mongoose)', 'AuthTokenModel (Mongoose)']
+2.4 Reset Forgotten Password -> ['ForgotPasswordPage', 'ResetPasswordPage', 'AuthApiClient', 'AuthController', 'AuthService', 'UserModel (Mongoose)', 'PasswordResetTokenModel (Mongoose)', 'MailService']
+2.5 Logout -> ['AppHeader', 'AuthContext', 'AuthApiClient', 'AuthController', 'AuthService', 'AuthTokenModel (Mongoose)']
+2.6 Profile Management -> ['ManageProfilePage', 'ProfileApiClient', 'ProfileController', 'ProfileService', 'UserModel (Mongoose)', 'PatientModel (Mongoose)']
+2.7 Book Appointment -> ['BookAppointmentPage', 'AppointmentApiClient', 'AppointmentController', 'AppointmentService', 'DoctorModel (Mongoose)', 'AppointmentSlotModel (Mongoose)', 'AppointmentModel (Mongoose)', 'InsuranceCardModel (Mongoose)', 'WalletModel (Mongoose)', 'PaymentModel (Mongoose)', 'NotificationModel (Mongoose)']
+2.8 Manage Appointments -> ['ManageAppointmentsPage', 'AppointmentApiClient', 'AppointmentController', 'AppointmentService', 'AppointmentModel (Mongoose)', 'AppointmentSlotModel (Mongoose)', 'WalletModel (Mongoose)', 'WalletTransactionModel (Mongoose)', 'ReviewModel (Mongoose)']
+2.9 View Prescription History -> ['ViewPrescriptionsPage', 'PrescriptionApiClient', 'PrescriptionController', 'PrescriptionService', 'PrescriptionModel (Mongoose)', 'PrescriptionItemModel (Mongoose)', 'MedicineModel (Mongoose)', 'DoctorModel (Mongoose)']
+...
+2.31 Manage Queue Check-in -> ['QueueCheckinPage', 'QueueCheckinApiClient', 'QueueCheckinController', 'QueueCheckinService', 'AppointmentModel (Mongoose)', 'QueueSessionModel (Mongoose)', 'QueueTicketModel (Mongoose)']
+2.32 Manage Complaints -> ['ManageComplaintsStaffPage', 'StaffComplaintApiClient', 'StaffComplaintController', 'StaffComplaintService', 'ComplaintModel (Mongoose)', 'ComplaintReplyModel (Mongoose)', 'NotificationModel (Mongoose)']
+2.33 View Staff Dashboard -> ['StaffDashboardPage', 'StaffDashboardApiClient', 'StaffDashboardController', 'StaffDashboardService', 'QueueTicketModel (Mongoose)', 'ComplaintModel (Mongoose)', 'MedicineModel (Mongoose)']
+unique classes 151
+AccountApiClient
+AccountController
+AccountService
+AdminDashboardApiClient
+AdminDashboardController
+AdminDashboardPage
+AdminDashboardService
+AppHeader
+AppointmentApiClient
+AppointmentCalendarPage
+AppointmentController
+AppointmentModel (Mongoose)
+AppointmentService
+AppointmentSlotModel (Mongoose)
+AuditLogModel (Mongoose)
+AuthApiClient
+AuthContext
+AuthController
+AuthService
+AuthTokenModel (Mongoose)
+BookAppointmentPage
+CalendarApiClient
+CalendarController
+CalendarService
+ClinicRoomApiClient
+ClinicRoomController
+ClinicRoomModel (Mongoose)
+ClinicRoomService
+ComplaintApiClient
+ComplaintController
+ComplaintModel (Mongoose)
+ComplaintReplyModel (Mongoose)
+ComplaintService
+ComplaintsPatientPage
+ConsultationApiClient
+ConsultationController
+ConsultationPage
+ConsultationService
+DepartmentApiClient
+DepartmentController
+DepartmentModel (Mongoose)
+DepartmentService
+DiagnosisModel (Mongoose)
+DoctorDashboardApiClient
+DoctorDashboardController
+DoctorDashboardPage
+DoctorDashboardService
+DoctorMgmtApiClient
+DoctorMgmtController
+DoctorMgmtService
+DoctorModel (Mongoose)
+EmailVerificationTokenModel (Mongoose)
+EmrTimelineApiClient
+EmrTimelineController
+EmrTimelineService
+EncounterModel (Mongoose)
+ForgotPasswordPage
+Icd10CatalogModel (Mongoose)
+InsuranceApiClient
+InsuranceCardModel (Mongoose)
+InsuranceController
+InsurancePage
+InsuranceProviderModel (Mongoose)
+InsuranceService
+LoginPage
+MailService
+ManageAccountsPage
+ManageAppointmentsPage
+ManageClinicRoomsPage
+ManageComplaintsStaffPage
+ManageDepartmentsPage
+ManageDoctorsPage
+ManagePatientsPage
+ManagePharmacyPage
+ManageProfilePage
+ManageSpecialtiesPage
+MedicalImageModel (Mongoose)
+MedicalImagingApiClient
+MedicalImagingController
+MedicalImagingPage
+MedicalImagingService
+MedicineModel (Mongoose)
+NotificationApiClient
+NotificationController
+NotificationModel (Mongoose)
+NotificationPreferenceModel (Mongoose)
+NotificationService
+NotificationsPage
+PasswordResetTokenModel (Mongoose)
+PatientEMRTimelinePage
+PatientMgmtApiClient
+PatientMgmtController
+PatientMgmtService
+PatientModel (Mongoose)
+PaymentModel (Mongoose)
+PharmacyApiClient
+PharmacyController
+PharmacyService
+PrescriptionApiClient
+PrescriptionController
+PrescriptionItemModel (Mongoose)
+PrescriptionMgmtPage
+PrescriptionModel (Mongoose)
+PrescriptionService
+ProfileApiClient
+ProfileController
+ProfileService
+QueueApiClient
+QueueCheckinApiClient
+QueueCheckinController
+QueueCheckinPage
+QueueCheckinService
+QueueController
+QueueService
+QueueSessionApiClient
+QueueSessionController
+QueueSessionModel (Mongoose)
+QueueSessionPage
+QueueSessionService
+QueueStatusPage
+QueueTicketModel (Mongoose)
+RegisterPage
+ResetPasswordPage
+ReviewModel (Mongoose)
+SessionModel (Mongoose)
+SpecialtyApiClient
+SpecialtyController
+SpecialtyModel (Mongoose)
+SpecialtyService
+StaffComplaintApiClient
+StaffComplaintController
+StaffComplaintService
+StaffDashboardApiClient
+StaffDashboardController
+StaffDashboardPage
+StaffDashboardService
+StockMovementModel (Mongoose)
+TransactionModel (Mongoose)
+UserModel (Mongoose)
+ViewPrescriptionsPage
+WalletApiClient
+WalletController
+WalletModel (Mongoose)
+WalletPage
+WalletService
+WalletTransactionModel (Mongoose)
+WorkShiftApiClient
+WorkShiftController
+WorkShiftModel (Mongoose)
+WorkShiftPage
+WorkShiftService

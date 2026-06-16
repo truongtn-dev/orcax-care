@@ -1,0 +1,81 @@
+@startuml SQ_QueueStatus
+' Sequence Diagram – UC-15 View Queue Status
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant QueueStatusPage as View
+participant QueueApiClient as Api
+participant QueueController as Ctrl
+participant QueueService as Svc
+participant QueueTicketModel as QTM
+participant QueueSessionModel as QSM
+database MongoDB as DB
+
+== View queue status ==
+
+Patient -> View ++ : 1. Open queue status screen
+
+View -> View : 2. startAutoRefresh()
+
+View -> Api ++ : 3. getMyQueueStatus()
+
+Api -> Ctrl ++ : 4. GET /api/queue/my-status
+
+Ctrl -> Svc ++ : 5. getPatientQueueStatus(patientId)
+
+Svc -> QTM ++ : 6. findOne({ patientId, status: { $in: ["waiting","called"] },\ncreatedAt: { $gte: startOfToday } })
+
+QTM -> DB : 7. query queue_tickets
+
+  DB --> QTM -- : 8. QueueTicketDocument / null
+
+  QTM --> Svc -- : 9. ticket
+deactivate QTM
+
+alt [1] No active ticket today
+
+  Svc --> Ctrl -- : 10. HTTP 404\n"No active queue ticket."
+  Ctrl --> Api -- : 11. error response
+  Api --> View -- : 12. empty state
+  View -> Patient : 13. showNoTicket()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Active ticket found
+
+  Svc -> QSM ++ : 14. findOne({ _id: ticket.sessionId })
+
+  QSM -> DB : 15. query queue_sessions
+
+  DB --> QSM -- : 16. QueueSessionDocument
+
+  QSM --> Svc -- : 17. session
+  deactivate QSM
+
+  Svc -> QTM ++ : 18. countDocuments({ sessionId, status: "waiting",\nnumber: { $lt: ticket.number } })
+
+  QTM -> DB : 19. count queue_tickets
+
+  DB --> QTM -- : 20. peopleAhead count
+
+  QTM --> Svc -- : 21. Number
+  deactivate QTM
+
+  Svc --> Ctrl -- : 22. { ticket, session, peopleAhead }
+  Ctrl --> Api -- : 23. HTTP 200
+  Api --> View -- : 24. status response
+  View -> Patient : 25. renderStatus()\n(highlight if called)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

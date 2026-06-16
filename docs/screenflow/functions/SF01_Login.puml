@@ -1,0 +1,28 @@
+@startuml SF01_Login
+title Screen Flow - Login
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Portal Home" as Home
+rectangle "Login" as Login
+rectangle "Patient Dashboard" as PDash
+rectangle "Doctor Dashboard" as DDash
+rectangle "Staff Dashboard" as SDash
+rectangle "Admin Dashboard" as ADash
+
+Home --> Login : Click "Login"\nbutton in header
+Login --> Login : Invalid credentials\n(show error)
+Login --> PDash : Login successfully\n(role = patient)
+Login --> DDash : Login successfully\n(role = doctor)
+Login --> SDash : Login successfully\n(role = staff)
+Login --> ADash : Login successfully\n(role = admin)
+
+@enduml

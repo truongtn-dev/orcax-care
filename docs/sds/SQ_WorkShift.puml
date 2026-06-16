@@ -1,0 +1,108 @@
+@startuml SQ_WorkShift
+' Sequence Diagram – UC-19 View Work Shift Schedule
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant WorkShiftPage as View
+participant WorkShiftApiClient as Api
+participant WorkShiftController as Ctrl
+participant WorkShiftService as Svc
+participant WorkShiftModel as WSM
+participant ClinicRoomModel as CRM
+participant AppointmentSlotModel as ASM
+database MongoDB as DB
+
+== View weekly shifts ==
+
+Doctor -> View ++ : 1. Open work shift calendar\n(week view)
+
+View -> Api ++ : 2. getShifts(weekStart, weekEnd)
+
+Api -> Ctrl ++ : 3. GET /api/doctor/shifts?from&to
+
+Ctrl -> Svc ++ : 4. listDoctorShifts(doctorId, from, to)
+
+Svc -> WSM ++ : 5. find({ doctorId, date: { $gte: from, $lte: to } })
+
+WSM -> DB : 6. query work_shifts
+
+  DB --> WSM -- : 7. shift list
+
+  WSM --> Svc -- : 8. Array
+deactivate WSM
+
+Svc --> Ctrl -- : 9. Array
+Ctrl --> Api -- : 10. HTTP 200
+Api --> View -- : 11. shifts data
+View -> Doctor : 12. renderCalendar()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Shift detail popup ==
+
+Doctor -> View ++ : 13. Click shift block
+
+View -> Api ++ : 14. getShiftDetail(shiftId)
+
+Api -> Ctrl ++ : 15. GET /api/doctor/shifts/:id
+
+Ctrl -> Svc ++ : 16. getShiftDetail(shiftId)
+
+Svc -> WSM ++ : 17. findOne({ _id: shiftId })
+
+WSM -> DB : 18. query work_shifts
+
+  DB --> WSM -- : 19. WorkShiftDocument
+
+  WSM --> Svc -- : 20. shift
+deactivate WSM
+
+Svc -> CRM ++ : 21. findOne({ _id: shift.roomId })
+
+CRM -> DB : 22. query clinic_rooms
+
+  DB --> CRM -- : 23. room code
+
+  CRM --> Svc -- : 24. ClinicRoomDocument
+deactivate CRM
+
+Svc -> ASM ++ : 25. countDocuments({ shiftId })
+
+ASM -> DB : 26. count appointment_slots
+
+  DB --> ASM -- : 27. slot count
+
+  ASM --> Svc -- : 28. Number
+deactivate ASM
+
+alt [1] Shift not found
+
+  Svc --> Ctrl -- : 29. HTTP 404
+  Ctrl --> Api -- : 30. error response
+  Api --> View -- : 31. error
+  View -> Doctor : 32. showError()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 33. { shift, room, slotCount }
+  Ctrl --> Api -- : 34. HTTP 200
+  Api --> View -- : 35. detail response
+  View -> Doctor : 36. showShiftPopup()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

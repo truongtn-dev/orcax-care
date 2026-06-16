@@ -1,0 +1,104 @@
+@startuml CD_Register
+' Class Diagram – UC-2 Register
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 55
+skinparam ranksep 55
+hide circle
+
+class RegisterPage {
+  - email : String
+  - password : String
+  - confirmPassword : String
+  - fullName : String
+  - phone : String
+  - terms : boolean
+  - errorMessage : String
+  - successMessage : String
+  --
+  + handleChange(event : Event) : void
+  + validateForm() : boolean
+  + handleSubmit() : void
+  + showError(message : String) : void
+  + showSuccess(message : String) : void
+}
+
+class AuthApiClient {
+  --
+  + register(payload : Object) : Promise<RegisterResponse>
+}
+
+class AuthController {
+  - authService : AuthService
+  --
+  + register(req : Request, res : Response, next : NextFunction) : void
+}
+
+class AuthService {
+  --
+  + registerPatient(payload : Object) : RegisterResult
+  + validateRegisterInput(payload : Object) : void
+  + hashPassword(password : String) : String
+}
+
+class UserModel {
+  - email : String
+  - passwordHash : String
+  - fullName : String
+  - phone : String
+  - role : String
+  - isActive : boolean
+  - isEmailVerified : boolean
+  - lastVerificationSentAt : Date
+  --
+  + findOne(filter : Object) : UserDocument
+  + create(doc : Object) : UserDocument
+  + save() : void
+}
+
+class PatientModel {
+  - userId : ObjectId
+  - dateOfBirth : Date
+  - gender : String
+  - address : String
+  --
+  + create(doc : Object) : PatientDocument
+}
+
+class EmailVerificationTokenModel {
+  - userId : ObjectId
+  - token : String
+  - expiresAt : Date
+  - usedAt : Date
+  --
+  + create(doc : Object) : EmailVerificationTokenDocument
+}
+
+class MailService {
+  --
+  + sendVerificationEmail(user : UserDocument, token : String) : void
+}
+
+' Bố cục
+RegisterPage -[hidden]r- AuthApiClient
+AuthApiClient -[hidden]r- AuthController
+AuthController -[hidden]d- AuthService
+AuthService -[hidden]d- UserModel
+UserModel -[hidden]r- PatientModel
+PatientModel -[hidden]r- EmailVerificationTokenModel
+EmailVerificationTokenModel -[hidden]r- MailService
+
+' Association
+RegisterPage "1" --> "1" AuthApiClient : uses
+AuthApiClient "1" --> "1" AuthController : calls
+AuthController "1" --> "1" AuthService : uses
+AuthService "1" --> "1" UserModel : uses
+AuthService "1" --> "1" PatientModel : creates
+AuthService "1" --> "0..*" EmailVerificationTokenModel : creates
+AuthService "1" --> "1" MailService : uses
+
+@enduml

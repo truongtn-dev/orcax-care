@@ -1,0 +1,90 @@
+@startuml SQ_AdminDashboard
+' Sequence Diagram – UC-31 View Admin Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant AdminDashboardPage as View
+participant AdminDashboardApiClient as Api
+participant AdminDashboardController as Ctrl
+participant AdminDashboardService as Svc
+participant TransactionModel as TM
+participant AppointmentModel as AM
+participant UserModel as UM
+participant ComplaintModel as CM
+database MongoDB as DB
+
+== Load dashboard KPIs ==
+
+Admin -> View ++ : 1. Open admin dashboard
+
+View -> Api ++ : 2. getDashboard({ from, to, doctorId })
+
+Api -> Ctrl ++ : 3. GET /api/admin/dashboard?from&to&doctorId
+
+Ctrl -> Svc ++ : 4. getDashboardSummary(filters)
+
+Svc -> TM ++ : 5. aggregate([{ $match: { type: "payment", status: "success" } },\n{ $group: { _id: day, revenue: { $sum: "$amount" } } }])
+
+TM -> DB : 6. aggregate transactions
+
+  DB --> TM -- : 7. revenue data
+
+  TM --> Svc -- : 8. Array
+deactivate TM
+
+Svc -> AM ++ : 9. countDocuments({ createdAt: { $gte: from, $lte: to } })
+
+AM -> DB : 10. count appointments
+
+  DB --> AM -- : 11. count
+
+  AM --> Svc -- : 12. Number
+deactivate AM
+
+Svc -> UM ++ : 13. countDocuments({ role: "patient", createdAt: { $gte: from } })
+
+UM -> DB : 14. count users
+
+  DB --> UM -- : 15. new patient count
+
+  UM --> Svc -- : 16. Number
+deactivate UM
+
+Svc -> CM ++ : 17. countDocuments({ status: "open" })
+
+CM -> DB : 18. count complaints
+
+  DB --> CM -- : 19. open complaints count
+
+  CM --> Svc -- : 20. Number
+deactivate CM
+
+alt [1] No data in period
+
+  Svc --> Ctrl -- : 21. { kpis: zeros, chart: [] }
+  Ctrl --> Api -- : 22. HTTP 200
+  Api --> View -- : 23. empty dashboard
+  View -> Admin : 24. renderEmptyState()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 25. { kpis, revenueChart }
+  Ctrl --> Api -- : 26. HTTP 200
+  Api --> View -- : 27. dashboard data
+  View -> Admin : 28. renderKPIsAndChart()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

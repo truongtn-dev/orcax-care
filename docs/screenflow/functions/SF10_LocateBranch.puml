@@ -1,0 +1,22 @@
+@startuml SF10_LocateBranch
+title Screen Flow - Locate Branch
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Portal Home" as Home
+rectangle "Branch List\n(list + map tab)" as List
+rectangle "Branch Detail\n(address, phone, hours)" as Detail
+
+Home --> List : Click "Branches"\nin header
+List --> List : Switch List / Map tab
+List --> Detail : Click a branch item /\nmap marker
+
+@enduml

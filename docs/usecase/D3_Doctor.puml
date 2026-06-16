@@ -1,0 +1,127 @@
+@startuml D3_Doctor
+left to right direction
+skinparam linetype polyline
+skinparam nodesep 20
+skinparam ranksep 28
+
+actor Guest
+actor Patient
+actor Doctor
+Guest <|-- Patient
+Patient <|-- Doctor
+
+rectangle OrcaXCare {
+
+  usecase "View Doctor Dashboard\n[UC-16]" as UC16
+  usecase "Profile Management\n[UC-16.1]" as UC161
+  usecase "View Own Profile\n[UC-16.1.1]" as UC1611
+  usecase "Update Own Profile\n[UC-16.1.2]" as UC1612
+  usecase "Change Password\n[UC-16.1.3]" as UC1613
+
+  usecase "View Today Appointments\n[UC-17]" as UC17
+  usecase "Start Consultation\n[UC-17.1]" as UC171
+
+  usecase "Open Queue Session\n[UC-18]" as UC18
+  usecase "Call Next Patient\n[UC-18.1]" as UC181
+  usecase "Recall Queue Ticket\n[UC-18.2]" as UC182
+  usecase "Close Queue Session\n[UC-18.3]" as UC183
+
+  usecase "View Work Shift Schedule\n[UC-19]" as UC19
+  usecase "View Appointment Calendar\n[UC-20]" as UC20
+  usecase "Block Appointment Slot\n[UC-20.1]" as UC201
+  usecase "Unblock Appointment Slot\n[UC-20.2]" as UC202
+
+  usecase "View Patient EMR Timeline\n[UC-21]" as UC21
+  usecase "Create Encounter Record\n[UC-22]" as UC22
+  usecase "View Encounter Detail\n[UC-22.1]" as UC221
+  usecase "Update Encounter Notes\n[UC-22.1.1]" as UC2211
+  usecase "Sign Off Encounter\n[UC-22.1.2]" as UC2212
+  usecase "Record Diagnosis\n[UC-22.2]" as UC222
+  usecase "Update Diagnosis\n[UC-22.2.1]" as UC2221
+  usecase "Remove Diagnosis\n[UC-22.2.2]" as UC2222
+  usecase "Search ICD-10 Catalog\n[UC-22.2.3]" as UC2223
+
+  usecase "Upload Medical Image\n[UC-23]" as UC23
+  usecase "View Medical Imaging Gallery\n[UC-23.1]" as UC231
+  usecase "View Image Fullscreen\n[UC-23.1.1]" as UC2311
+  usecase "Delete Medical Image\n[UC-23.1.2]" as UC2312
+
+  usecase "Create Prescription\n[UC-24]" as UC24
+  usecase "Add Prescription Line Item\n[UC-24.1]" as UC241
+  usecase "Update Prescription Line Item\n[UC-24.2]" as UC242
+  usecase "Remove Prescription Line Item\n[UC-24.3]" as UC243
+  usecase "Save Prescription\n[UC-24.4]" as UC244
+  usecase "View Prescription Detail\n[UC-24.5]" as UC245
+  usecase "Export Prescription PDF\n[UC-24.5.1]" as UC2451
+  usecase "View Prescription QR Code\n[UC-24.5.2]" as UC2452
+
+  usecase "Log In\n[UC-5]" as UC5
+  usecase "Log Out\n[UC-6]" as UC6
+}
+
+note as Ninherit
+  **Kế thừa Patient:**
+  UC-1 ~ UC-6, UC-7 ~ UC-15
+end note
+Doctor .. Ninherit
+
+Doctor --> UC16
+Doctor --> UC17
+Doctor --> UC18
+Doctor --> UC19
+Doctor --> UC20
+Doctor --> UC21
+Doctor --> UC23
+Doctor --> UC24
+Doctor --> UC6
+
+UC16 ..> UC5 : <<include>>
+UC17 ..> UC5 : <<include>>
+UC18 ..> UC5 : <<include>>
+UC19 ..> UC5 : <<include>>
+UC20 ..> UC5 : <<include>>
+UC21 ..> UC5 : <<include>>
+UC23 ..> UC5 : <<include>>
+UC24 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+
+UC161 ..> UC16 : <<extend>>
+UC1611 ..> UC161 : <<include>>
+UC1612 ..> UC161 : <<extend>>
+UC1613 ..> UC161 : <<extend>>
+
+UC171 ..> UC17 : <<extend>>
+UC171 ..> UC22 : <<include>>
+
+UC181 ..> UC18 : <<include>>
+UC182 ..> UC18 : <<extend>>
+UC183 ..> UC18 : <<include>>
+
+UC201 ..> UC20 : <<extend>>
+UC202 ..> UC20 : <<extend>>
+
+UC221 ..> UC22 : <<extend>>
+UC2211 ..> UC221 : <<extend>>
+UC2212 ..> UC221 : <<extend>>
+UC222 ..> UC22 : <<extend>>
+UC2221 ..> UC222 : <<extend>>
+UC2222 ..> UC222 : <<extend>>
+UC2223 ..> UC222 : <<include>>
+
+UC231 ..> UC23 : <<extend>>
+UC2311 ..> UC231 : <<extend>>
+UC2312 ..> UC231 : <<extend>>
+
+UC241 ..> UC24 : <<extend>>
+UC242 ..> UC24 : <<extend>>
+UC243 ..> UC24 : <<extend>>
+UC244 ..> UC24 : <<include>>
+UC245 ..> UC24 : <<extend>>
+UC2451 ..> UC245 : <<extend>>
+UC2452 ..> UC245 : <<extend>>
+
+note bottom of UC2212
+  Results ready notification (stub)
+end note
+
+@enduml

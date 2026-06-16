@@ -1,0 +1,82 @@
+@startuml CD_Login
+' Class Diagram – UC-5 Login
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 70
+skinparam ranksep 60
+hide circle
+
+class LoginPage {
+  - email : String
+  - password : String
+  - rememberMe : boolean
+  - errorMessage : String
+  --
+  + handleChange(event : Event) : void
+  + validateForm() : boolean
+  + handleSubmit() : void
+  + showError(message : String) : void
+}
+
+class AuthApiClient {
+  --
+  + login(email : String, password : String, rememberMe : boolean) : Promise<AuthResponse>
+  + storeToken(token : String) : void
+}
+
+class AuthController {
+  - authService : AuthService
+  --
+  + login(req : Request, res : Response, next : NextFunction) : void
+}
+
+class AuthService {
+  --
+  + authenticate(email : String, password : String) : UserDocument
+  + checkAccountStatus(user : UserDocument) : void
+  + issueToken(user : UserDocument, rememberMe : boolean) : String
+}
+
+class UserModel {
+  - email : String
+  - passwordHash : String
+  - role : String
+  - isActive : boolean
+  - isEmailVerified : boolean
+  - isLocked : boolean
+  - lastLoginAt : Date
+  --
+  + findOne(filter : Object) : UserDocument
+  + updateOne(filter : Object, update : Object) : void
+  + comparePassword(plain : String) : boolean
+}
+
+class AuthTokenModel {
+  - userId : ObjectId
+  - tokenHash : String
+  - rememberMe : boolean
+  - expiresAt : Date
+  --
+  + create(doc : Object) : AuthTokenDocument
+  + deleteMany(filter : Object) : void
+}
+
+' Bố cục
+LoginPage -[hidden]r- AuthApiClient
+AuthApiClient -[hidden]r- AuthController
+AuthController -[hidden]d- AuthService
+AuthService -[hidden]d- UserModel
+UserModel -[hidden]r- AuthTokenModel
+
+' Association — 1 nhãn ngắn, 1 multiplicity mỗi đầu
+LoginPage "1" --> "1" AuthApiClient : uses
+AuthApiClient "1" --> "1" AuthController : calls
+AuthController "1" --> "1" AuthService : uses
+AuthService "1" --> "1" UserModel : uses
+AuthService "1" --> "0..*" AuthTokenModel : creates
+
+@enduml

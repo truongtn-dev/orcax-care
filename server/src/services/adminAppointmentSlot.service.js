@@ -1,24 +1,49 @@
 import mongoose from "mongoose";
 import { AppointmentSlot } from "../models/AppointmentSlot.js";
-import { Holiday } from "../models/Holiday.js";
 import { WorkShift } from "../models/WorkShift.js";
 import { buildSlotTimes, eachDateInclusive, parseDateOnly } from "../utils/shiftTime.js";
+import {
+  loadHolidayDateSet,
+  normalizeDay,
+  simulateSlotGeneration,
+} from "../utils/schedulingEngine.js";
 
-function normalizeDay(date) {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-  return day;
+function buildShiftFilter({ doctorId = "", workShiftId = "" } = {}) {
+  const shiftFilter = { isActive: true };
+  if (doctorId) {
+    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
+      return { error: "Invalid doctor" };
+    }
+    shiftFilter.doctorId = new mongoose.Types.ObjectId(doctorId);
+  }
+  if (workShiftId) {
+    if (!mongoose.Types.ObjectId.isValid(workShiftId)) {
+      return { error: "Invalid work shift" };
+    }
+    shiftFilter._id = new mongoose.Types.ObjectId(workShiftId);
+  }
+  return { shiftFilter };
 }
 
-async function loadHolidayDates(startDate, endDate) {
-  const holidays = await Holiday.find({
-    isActive: true,
-    date: { $gte: startDate, $lte: endDate },
-  })
-    .select("date")
-    .lean();
+export async function previewAppointmentSlots(payload = {}) {
+  const simulation = await simulateSlotGeneration(payload);
+  if (simulation.error) return simulation.error;
 
-  return new Set(holidays.map((item) => normalizeDay(item.date).getTime()));
+  return {
+    status: 200,
+    body: {
+      preview: true,
+      ...simulation,
+      range: {
+        startDate: String(payload.startDate || "").trim(),
+        endDate: String(payload.endDate || "").trim(),
+      },
+      filters: {
+        doctorId: payload.doctorId || null,
+        workShiftId: payload.workShiftId || null,
+      },
+    },
+  };
 }
 
 export async function generateAppointmentSlots(payload = {}) {
@@ -33,26 +58,17 @@ export async function generateAppointmentSlots(payload = {}) {
     return { status: 400, body: { message: "End date must be on or after start date" } };
   }
 
-  const shiftFilter = { isActive: true };
-  if (doctorId) {
-    if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-      return { status: 400, body: { message: "Invalid doctor" } };
-    }
-    shiftFilter.doctorId = new mongoose.Types.ObjectId(doctorId);
-  }
-  if (workShiftId) {
-    if (!mongoose.Types.ObjectId.isValid(workShiftId)) {
-      return { status: 400, body: { message: "Invalid work shift" } };
-    }
-    shiftFilter._id = new mongoose.Types.ObjectId(workShiftId);
+  const built = buildShiftFilter({ doctorId, workShiftId });
+  if (built.error) {
+    return { status: 400, body: { message: built.error } };
   }
 
-  const shifts = await WorkShift.find(shiftFilter).lean();
+  const shifts = await WorkShift.find(built.shiftFilter).lean();
   if (!shifts.length) {
     return { status: 404, body: { message: "No matching work shift found to generate slots" } };
   }
 
-  const holidayDates = await loadHolidayDates(rangeStart, rangeEnd);
+  const holidayDates = await loadHolidayDateSet(rangeStart, rangeEnd);
   const calendarDays = eachDateInclusive(rangeStart, rangeEnd);
 
   let created = 0;

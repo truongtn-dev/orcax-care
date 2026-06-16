@@ -1,0 +1,72 @@
+@startuml SQ_PortalHome
+' Sequence Diagram – UC-1 View Portal Home
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Guest
+participant HomePage as View
+participant PublicApiClient as Api
+participant PublicController as Ctrl
+participant DoctorSearchService as Svc
+participant DoctorModel as DM
+participant SpecialtyModel as SM
+participant DepartmentModel as DeptM
+database MongoDB as DB
+
+== Load portal home ==
+
+Guest -> View ++ : 1. Access portal URL
+
+View -> View : 2. loadPageData()
+
+View -> Api ++ : 3. getFeaturedDoctors(8)
+
+Api -> Ctrl ++ : 4. GET /api/public/doctors/featured?limit=8
+
+Ctrl -> Svc ++ : 5. getFeaturedDoctors(limit)
+
+Svc -> DM ++ : 6. aggregate(featured pipeline)
+
+DM -> DB : 7. query doctors + users\n+ specialties + departments
+
+DB --> DM -- : 8. doctor list
+
+DM --> Svc -- : 9. Array
+deactivate DM
+
+Svc --> Ctrl -- : 10. items
+deactivate Svc
+Ctrl --> Api -- : 11. HTTP 200 { items }
+deactivate Ctrl
+Api --> View -- : 12. featured doctors
+deactivate Api
+
+View -> Api ++ : 13. getSpecialties()
+
+Api -> Ctrl ++ : 14. GET /api/public/specialties
+
+Ctrl -> Svc ++ : 15. listSpecialties()
+
+Svc -> SM ++ : 16. find({ isActive: true })
+
+SM -> DB : 17. query specialties
+
+DB --> SM -- : 18. documents
+
+SM --> Svc -- : 19. Array
+deactivate SM
+
+Svc --> Ctrl -- : 20. items
+deactivate Svc
+Ctrl --> Api -- : 21. HTTP 200
+deactivate Ctrl
+Api --> View -- : 22. specialties
+deactivate Api
+
+View -> Guest : 23. renderHero()\nrenderFeaturedDoctors()
+deactivate View
+
+@enduml

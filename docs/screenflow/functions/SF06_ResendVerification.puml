@@ -1,0 +1,22 @@
+@startuml SF06_ResendVerification
+title Screen Flow - Resend Verification Email
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Login" as Login
+usecase "Resend Verification Popup" as Resend
+rectangle "Check Your Email Notice" as Notice
+
+Login --> Resend : Click "Resend verification\nemail" link (unverified account)
+Resend --> Notice : Click "Resend"\n(new email with new token)
+Resend --> Login : Click "Cancel"
+
+@enduml

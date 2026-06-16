@@ -1,0 +1,87 @@
+@startuml CD_ManageSpecialties
+' Class Diagram – UC-26 Manage Specialties
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManageSpecialtiesPage {
+  - specialties : Array
+  - searchKeyword : String
+  - name : String
+  - description : String
+  - icon : String
+  - errorMessage : String
+  --
+  + loadSpecialties() : void
+  + handleSearch() : void
+  + handleCreate() : void
+  + handleUpdate(id : ObjectId) : void
+  + handleDelete(id : ObjectId) : void
+}
+
+class SpecialtyApiClient {
+  --
+  + getSpecialties(search : String) : Promise<Array>
+  + createSpecialty(payload : Object) : Promise<SpecialtyResponse>
+  + updateSpecialty(id : ObjectId, payload : Object) : Promise<SpecialtyResponse>
+  + deleteSpecialty(id : ObjectId) : Promise<void>
+}
+
+class SpecialtyController {
+  - specialtyService : SpecialtyService
+  --
+  + getSpecialties(req : Request, res : Response) : void
+  + createSpecialty(req : Request, res : Response) : void
+  + updateSpecialty(req : Request, res : Response) : void
+  + deleteSpecialty(req : Request, res : Response) : void
+}
+
+class SpecialtyService {
+  --
+  + listSpecialties(search : String) : Array
+  + createSpecialty(payload : Object) : SpecialtyDocument
+  + updateSpecialty(id : ObjectId, payload : Object) : SpecialtyDocument
+  + deleteOrDeactivate(id : ObjectId) : void
+  + countDoctorReferences(id : ObjectId) : Number
+}
+
+class SpecialtyModel {
+  - name : String
+  - description : String
+  - icon : String
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : SpecialtyDocument
+  + updateOne(filter : Object, update : Object) : void
+  + deleteOne(filter : Object) : void
+}
+
+class DoctorModel {
+  - specialtyId : ObjectId
+  - isActive : boolean
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+' Bố cục
+ManageSpecialtiesPage -[hidden]r- SpecialtyApiClient
+SpecialtyApiClient -[hidden]r- SpecialtyController
+SpecialtyController -[hidden]d- SpecialtyService
+SpecialtyService -[hidden]d- SpecialtyModel
+SpecialtyModel -[hidden]r- DoctorModel
+
+' Association
+ManageSpecialtiesPage "1" --> "1" SpecialtyApiClient : uses
+SpecialtyApiClient "1" --> "1" SpecialtyController : calls
+SpecialtyController "1" --> "1" SpecialtyService : uses
+SpecialtyService "1" --> "1" SpecialtyModel : uses
+SpecialtyService "1" --> "1" DoctorModel : uses
+
+@enduml

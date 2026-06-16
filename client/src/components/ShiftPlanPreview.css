@@ -1,0 +1,48 @@
+.shift-plan-preview {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.shift-plan-preview h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.shift-plan-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.shift-plan-preview-grid dt {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-bottom: 0.15rem;
+}
+
+.shift-plan-preview-grid dd {
+  margin: 0;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.shift-plan-preview-issues {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+  color: #b91c1c;
+}
+
+.shift-plan-preview-times,
+.shift-plan-preview-ok {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.shift-plan-preview-ok {
+  color: #047857;
+}

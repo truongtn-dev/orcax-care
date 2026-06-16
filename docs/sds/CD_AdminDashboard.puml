@@ -1,0 +1,105 @@
+@startuml CD_AdminDashboard
+' Class Diagram – UC-31 View Admin Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class AdminDashboardPage {
+  - totalRevenue : Number
+  - appointmentCount : Number
+  - newPatientCount : Number
+  - openComplaints : Number
+  - revenueChart : Array
+  - dateFrom : Date
+  - dateTo : Date
+  - doctorFilter : ObjectId
+  - errorMessage : String
+  --
+  + loadDashboard() : void
+  + applyFilters() : void
+  + handleExportExcel() : void
+  + navigateToModule(module : String) : void
+}
+
+class AdminDashboardApiClient {
+  --
+  + getDashboard(filters : Object) : Promise<DashboardResponse>
+  + getRevenueChart(filters : Object) : Promise<Array>
+  + exportRevenueReport(filters : Object) : Promise<Blob>
+}
+
+class AdminDashboardController {
+  - adminDashboardService : AdminDashboardService
+  --
+  + getDashboard(req : Request, res : Response) : void
+  + getRevenueChart(req : Request, res : Response) : void
+  + exportRevenueReport(req : Request, res : Response) : void
+}
+
+class AdminDashboardService {
+  --
+  + getDashboardSummary(filters : Object) : DashboardSummary
+  + getRevenueByDay(from : Date, to : Date, doctorId : ObjectId) : Array
+  + getRevenueByDoctor(from : Date, to : Date) : Array
+  + exportRevenueExcel(filters : Object) : Buffer
+}
+
+class TransactionModel {
+  - userId : ObjectId
+  - type : String
+  - amount : Number
+  - status : String
+  - refType : String
+  - refId : ObjectId
+  - createdAt : Date
+  --
+  + aggregate(pipeline : Array) : Array
+}
+
+class AppointmentModel {
+  - doctorId : ObjectId
+  - patientId : ObjectId
+  - status : String
+  - createdAt : Date
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+class UserModel {
+  - role : String
+  - createdAt : Date
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+class ComplaintModel {
+  - status : String
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+' Bố cục
+AdminDashboardPage -[hidden]r- AdminDashboardApiClient
+AdminDashboardApiClient -[hidden]r- AdminDashboardController
+AdminDashboardController -[hidden]d- AdminDashboardService
+AdminDashboardService -[hidden]d- TransactionModel
+TransactionModel -[hidden]r- AppointmentModel
+AppointmentModel -[hidden]r- UserModel
+UserModel -[hidden]r- ComplaintModel
+
+' Association
+AdminDashboardPage "1" --> "1" AdminDashboardApiClient : uses
+AdminDashboardApiClient "1" --> "1" AdminDashboardController : calls
+AdminDashboardController "1" --> "1" AdminDashboardService : uses
+AdminDashboardService "1" --> "1" TransactionModel : uses
+AdminDashboardService "1" --> "1" AppointmentModel : uses
+AdminDashboardService "1" --> "1" UserModel : uses
+AdminDashboardService "1" --> "1" ComplaintModel : uses
+
+@enduml

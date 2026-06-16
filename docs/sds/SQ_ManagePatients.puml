@@ -1,0 +1,100 @@
+@startuml SQ_ManagePatients
+' Sequence Diagram – UC-30 Manage Patients
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManagePatientsPage as View
+participant PatientMgmtApiClient as Api
+participant PatientMgmtController as Ctrl
+participant PatientMgmtService as Svc
+participant UserModel as UM
+participant PatientModel as PM
+participant AppointmentModel as AM
+participant WalletModel as WM
+database MongoDB as DB
+
+== Search patients ==
+
+Admin -> View ++ : 1. Enter search keyword
+
+View -> Api ++ : 2. getPatients(keyword)
+
+Api -> Ctrl ++ : 3. GET /api/admin/patients?search
+
+Ctrl -> Svc ++ : 4. searchPatients(keyword)
+
+Svc -> UM ++ : 5. aggregate([{ $match: { role: "patient", $or: [...] } },\n{ $lookup: { from: "patients", ... } }])
+
+UM -> DB : 6. aggregate users + patients
+
+  DB --> UM -- : 7. patient list
+
+  UM --> Svc -- : 8. Array
+deactivate UM
+
+Svc --> Ctrl -- : 9. Array
+Ctrl --> Api -- : 10. HTTP 200
+Api --> View -- : 11. patient list
+View -> Admin : 12. renderTable()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Deactivate patient ==
+
+Admin -> View ++ : 13. Confirm deactivate patient
+
+View -> Api ++ : 14. togglePatientStatus(patientId)
+
+Api -> Ctrl ++ : 15. PATCH /api/admin/patients/:id/deactivate
+
+Ctrl -> Svc ++ : 16. deactivatePatient(patientId)
+
+Svc -> AM ++ : 17. find({ patientId, status: "confirmed",\nstartTime: { $gt: now } })
+
+AM -> DB : 18. query appointments
+
+  DB --> AM -- : 19. future appointments
+
+  AM --> Svc -- : 20. Array
+deactivate AM
+
+alt [1] Future appointments exist
+
+  Svc --> Ctrl -- : 21. HTTP 409\n"Patient has future appointments."
+  Ctrl --> Api -- : 22. error response
+  Api --> View -- : 23. error + appointment list
+  View -> Admin : 24. showWarning(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> UM ++ : 25. updateOne({ _id: userId }, { isActive: false })
+
+  UM -> DB : 26. update users
+
+  DB --> UM -- : 27. ack
+
+  UM --> Svc -- : 28. void
+  deactivate UM
+
+  Svc --> Ctrl -- : 29. void
+  Ctrl --> Api -- : 30. HTTP 200
+  Api --> View -- : 31. success
+  View -> Admin : 32. refreshPatients()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

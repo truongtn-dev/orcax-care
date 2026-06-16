@@ -1,0 +1,57 @@
+@startuml SF4_Staff
+title Screen Flow of Staff
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+skinparam nodesep 40
+skinparam ranksep 50
+
+rectangle "Login" as Login
+rectangle "Staff Dashboard" as Dash
+
+rectangle "Medicines Inventory" as Inventory
+rectangle "Medicine Detail\n(info + stock history tab)" as MedDetail
+usecase "Create / Update\nMedicine Popup" as MedForm
+usecase "Stock Inbound Popup" as StockIn
+usecase "Stock Outbound Popup" as StockOut
+rectangle "Low Stock Alerts" as LowStock
+
+usecase "Issue Queue Ticket Popup\n(patient check-in)" as CheckIn
+
+rectangle "Complaints List" as CompList
+rectangle "Complaint Detail" as CompDetail
+usecase "Reply Popup" as CompReply
+usecase "Update Status Popup" as CompStatus
+
+Login --> Dash : Login successfully\n(role = staff)
+
+Dash --> Inventory : Click "Pharmacy"\nmenu
+Inventory --> MedDetail : Click a row
+Inventory --> MedForm : Click "Add\nMedicine" button
+MedDetail --> MedForm : Click "Edit"\nbutton
+Inventory --> StockIn : Click "Stock In"\nbutton
+Inventory --> StockOut : Click "Stock Out"\nbutton
+Dash --> LowStock : Click "Low Stock"\nalert widget
+LowStock --> MedDetail : Click an item
+
+Dash --> CheckIn : Click "Check-in\nPatient" button
+
+Dash --> CompList : Click "Complaints"\nmenu
+CompList --> CompDetail : Click a row
+CompDetail --> CompReply : Click "Reply"\nbutton
+CompDetail --> CompStatus : Click "Update\nStatus" button
+
+legend left
+  **Note:**
+  * Screen: rectangle
+  * Popup: oval
+endlegend
+
+@enduml

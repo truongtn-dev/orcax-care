@@ -4,6 +4,7 @@ import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
 import SearchableSelect from "../../components/SearchableSelect.jsx";
+import ShiftPlanPreview from "../../components/ShiftPlanPreview.jsx";
 import TimePicker from "../../components/TimePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
@@ -31,6 +32,8 @@ export default function CreateWorkShiftPage() {
   const [form, setForm] = useState(emptyForm);
   const [rooms, setRooms] = useState([]);
   const [created, setCreated] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -49,6 +52,34 @@ export default function CreateWorkShiftPage() {
     }
     loadOptions();
   }, []);
+
+  useEffect(() => {
+    if (!form.doctorId) {
+      setPreview(null);
+      return undefined;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const { data } = await AdminApiClient.previewWorkShift({
+          doctorId: form.doctorId,
+          roomId: form.roomId || undefined,
+          dayOfWeek: Number(form.dayOfWeek),
+          startTime: form.startTime,
+          endTime: form.endTime,
+          maxPatients: Number(form.maxPatients),
+        });
+        setPreview(data);
+      } catch {
+        setPreview(null);
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [form]);
 
   const onChange = (event) => {
     const { name, value } = event.target;
@@ -185,6 +216,9 @@ export default function CreateWorkShiftPage() {
                 />
               </label>
             </fieldset>
+
+            {previewLoading && <p className="text-muted">Calculating slot plan…</p>}
+            <ShiftPlanPreview preview={preview} />
 
             <div className="form-actions">
               <button type="submit" className="btn btn-primary" disabled={saving || !form.doctorId}>

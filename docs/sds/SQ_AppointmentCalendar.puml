@@ -1,0 +1,89 @@
+@startuml SQ_AppointmentCalendar
+' Sequence Diagram – UC-20 View Appointment Calendar
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant AppointmentCalendarPage as View
+participant CalendarApiClient as Api
+participant CalendarController as Ctrl
+participant CalendarService as Svc
+participant AppointmentSlotModel as SM
+participant AppointmentModel as AM
+database MongoDB as DB
+
+== Block slot ==
+
+Doctor -> View ++ : 1. Select available slot\nand enter block reason
+
+View -> Api ++ : 2. blockSlot(slotId, reason)
+
+Api -> Ctrl ++ : 3. PATCH /api/doctor/slots/:id/block\n{ reason }
+
+Ctrl -> Svc ++ : 4. blockSlot(slotId, doctorId, reason)
+
+Svc -> SM ++ : 5. updateOne({ _id: slotId, doctorId, status: "available" },\n{ status: "blocked", blockReason: reason })
+
+SM -> DB : 6. update appointment_slots\n(atomic guard)
+
+  DB --> SM -- : 7. ack / no match
+
+  SM --> Svc -- : 8. result
+deactivate SM
+
+alt [1] Slot not available\n(booked or already blocked)
+
+  Svc --> Ctrl -- : 9. HTTP 409\n"Slot cannot be blocked."
+  Ctrl --> Api -- : 10. error response
+  Api --> View -- : 11. error response
+  View -> Doctor : 12. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 13. void
+  Ctrl --> Api -- : 14. HTTP 200
+  Api --> View -- : 15. success
+  View -> Doctor : 16. refreshCalendar()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Unblock slot ==
+
+Doctor -> View ++ : 17. Click Unblock on blocked slot
+
+View -> Api ++ : 18. unblockSlot(slotId)
+
+Api -> Ctrl ++ : 19. PATCH /api/doctor/slots/:id/unblock
+
+Ctrl -> Svc ++ : 20. unblockSlot(slotId, doctorId)
+
+Svc -> SM ++ : 21. updateOne({ _id: slotId, status: "blocked" },\n{ status: "available", $unset: { blockReason: "" } })
+
+SM -> DB : 22. update appointment_slots
+
+  DB --> SM -- : 23. ack
+
+  SM --> Svc -- : 24. void
+deactivate SM
+
+Svc --> Ctrl -- : 25. void
+Ctrl --> Api -- : 26. HTTP 200
+Api --> View -- : 27. success
+View -> Doctor : 28. refreshCalendar()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

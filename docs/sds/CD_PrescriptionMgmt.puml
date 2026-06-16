@@ -1,0 +1,121 @@
+@startuml CD_PrescriptionMgmt
+' Class Diagram – UC-24 Create Prescription
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class PrescriptionMgmtPage {
+  - encounterId : ObjectId
+  - prescriptionId : ObjectId
+  - lineItems : Array
+  - medicineKeyword : String
+  - status : String
+  - errorMessage : String
+  --
+  + loadPrescription() : void
+  + searchMedicine(keyword : String) : void
+  + addLineItem(medicineId : ObjectId) : void
+  + updateLineItem(itemId : ObjectId, payload : Object) : void
+  + removeLineItem(itemId : ObjectId) : void
+  + handleSaveAndIssue() : void
+  + exportPdf() : void
+  + showQrCode() : void
+}
+
+class PrescriptionApiClient {
+  --
+  + getPrescription(encounterId : ObjectId) : Promise<PrescriptionResponse>
+  + searchMedicines(keyword : String) : Promise<Array>
+  + addLineItem(prescriptionId : ObjectId, payload : Object) : Promise<void>
+  + updateLineItem(itemId : ObjectId, payload : Object) : Promise<void>
+  + removeLineItem(itemId : ObjectId) : Promise<void>
+  + issuePrescription(prescriptionId : ObjectId) : Promise<PrescriptionResponse>
+}
+
+class PrescriptionController {
+  - prescriptionService : PrescriptionService
+  --
+  + getPrescription(req : Request, res : Response) : void
+  + searchMedicines(req : Request, res : Response) : void
+  + addLineItem(req : Request, res : Response) : void
+  + updateLineItem(req : Request, res : Response) : void
+  + removeLineItem(req : Request, res : Response) : void
+  + issuePrescription(req : Request, res : Response) : void
+}
+
+class PrescriptionService {
+  --
+  + getOrCreateDraft(encounterId : ObjectId, doctorId : ObjectId) : PrescriptionDocument
+  + searchMedicines(keyword : String) : Array
+  + addLineItem(prescriptionId : ObjectId, payload : Object) : PrescriptionItemDocument
+  + updateLineItem(itemId : ObjectId, payload : Object) : void
+  + removeLineItem(itemId : ObjectId) : void
+  + issuePrescription(prescriptionId : ObjectId, doctorId : ObjectId) : PrescriptionDocument
+}
+
+class MedicineModel {
+  - name : String
+  - unit : String
+  - price : Number
+  - stockQuantity : Number
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+}
+
+class PrescriptionModel {
+  - encounterId : ObjectId
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - status : String
+  --
+  + findOne(filter : Object) : PrescriptionDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class PrescriptionItemModel {
+  - prescriptionId : ObjectId
+  - medicineId : ObjectId
+  - quantity : Number
+  - dosage : String
+  - frequency : String
+  - duration : String
+  - note : String
+  --
+  + insertOne(doc : Object) : PrescriptionItemDocument
+  + updateOne(filter : Object, update : Object) : void
+  + deleteOne(filter : Object) : void
+}
+
+class EncounterModel {
+  - patientId : ObjectId
+  - status : String
+  --
+  + findOne(filter : Object) : EncounterDocument
+}
+
+' Bố cục
+PrescriptionMgmtPage -[hidden]r- PrescriptionApiClient
+PrescriptionApiClient -[hidden]r- PrescriptionController
+PrescriptionController -[hidden]d- PrescriptionService
+PrescriptionService -[hidden]d- MedicineModel
+MedicineModel -[hidden]r- PrescriptionModel
+PrescriptionModel -[hidden]r- PrescriptionItemModel
+PrescriptionItemModel -[hidden]r- EncounterModel
+
+' Association
+PrescriptionMgmtPage "1" --> "1" PrescriptionApiClient : uses
+PrescriptionApiClient "1" --> "1" PrescriptionController : calls
+PrescriptionController "1" --> "1" PrescriptionService : uses
+PrescriptionService "1" --> "1" MedicineModel : uses
+PrescriptionService "1" --> "1" PrescriptionModel : uses
+PrescriptionService "1" --> "1" PrescriptionItemModel : uses
+PrescriptionService "1" --> "1" EncounterModel : uses
+
+@enduml

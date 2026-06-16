@@ -1,0 +1,115 @@
+@startuml CD_ManagePatients
+' Class Diagram – UC-30 Manage Patients
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManagePatientsPage {
+  - patients : Array
+  - searchKeyword : String
+  - selectedPatientId : ObjectId
+  - profileTab : String
+  - appointmentHistory : Array
+  - walletSummary : Object
+  - errorMessage : String
+  --
+  + loadPatients() : void
+  + handleSearch() : void
+  + openDetail(patientId : ObjectId) : void
+  + handleCreateWalkIn(payload : Object) : void
+  + handleUpdate(patientId : ObjectId, payload : Object) : void
+  + handleToggleStatus(patientId : ObjectId) : void
+}
+
+class PatientMgmtApiClient {
+  --
+  + getPatients(search : String) : Promise<Array>
+  + getPatientDetail(id : ObjectId) : Promise<PatientDetailResponse>
+  + createWalkInPatient(payload : Object) : Promise<PatientResponse>
+  + updatePatient(id : ObjectId, payload : Object) : Promise<PatientResponse>
+  + togglePatientStatus(id : ObjectId) : Promise<void>
+}
+
+class PatientMgmtController {
+  - patientMgmtService : PatientMgmtService
+  --
+  + getPatients(req : Request, res : Response) : void
+  + getPatientDetail(req : Request, res : Response) : void
+  + createWalkInPatient(req : Request, res : Response) : void
+  + updatePatient(req : Request, res : Response) : void
+  + togglePatientStatus(req : Request, res : Response) : void
+}
+
+class PatientMgmtService {
+  --
+  + searchPatients(keyword : String) : Array
+  + getPatientDetail(patientId : ObjectId) : PatientDetail
+  + createWalkInPatient(payload : Object) : PatientDocument
+  + updatePatient(patientId : ObjectId, payload : Object) : PatientDocument
+  + deactivatePatient(patientId : ObjectId) : void
+  + getFutureAppointments(patientId : ObjectId) : Array
+}
+
+class PatientModel {
+  - userId : ObjectId
+  - dateOfBirth : Date
+  - gender : String
+  - address : String
+  --
+  + findOne(filter : Object) : PatientDocument
+  + insertOne(doc : Object) : PatientDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class UserModel {
+  - email : String
+  - fullName : String
+  - phone : String
+  - role : String
+  - isActive : boolean
+  --
+  + aggregate(pipeline : Array) : Array
+  + insertOne(doc : Object) : UserDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class AppointmentModel {
+  - patientId : ObjectId
+  - startTime : Date
+  - status : String
+  --
+  + find(filter : Object) : Array
+}
+
+class WalletModel {
+  - userId : ObjectId
+  - balance : Number
+  --
+  + findOne(filter : Object) : WalletDocument
+}
+
+' Bố cục
+ManagePatientsPage -[hidden]r- PatientMgmtApiClient
+PatientMgmtApiClient -[hidden]r- PatientMgmtController
+PatientMgmtController -[hidden]d- PatientMgmtService
+PatientMgmtService -[hidden]d- PatientModel
+PatientModel -[hidden]r- UserModel
+UserModel -[hidden]r- AppointmentModel
+AppointmentModel -[hidden]r- WalletModel
+
+' Association
+ManagePatientsPage "1" --> "1" PatientMgmtApiClient : uses
+PatientMgmtApiClient "1" --> "1" PatientMgmtController : calls
+PatientMgmtController "1" --> "1" PatientMgmtService : uses
+PatientMgmtService "1" --> "1" PatientModel : uses
+PatientMgmtService "1" --> "1" UserModel : uses
+PatientMgmtService "1" --> "1" AppointmentModel : uses
+PatientMgmtService "1" --> "1" WalletModel : uses
+
+@enduml

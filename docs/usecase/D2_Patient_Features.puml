@@ -1,0 +1,130 @@
+@startuml D2_Patient_Features
+left to right direction
+skinparam linetype polyline
+skinparam nodesep 24
+skinparam ranksep 32
+skinparam Padding 8
+
+actor Patient
+
+actor PayOS
+actor Momo
+
+rectangle OrcaXCare {
+
+  usecase "View Patient Dashboard\n[UC-3]" as UC3
+
+  usecase "Book Appointment\n[UC-7]" as UC7
+  usecase "Pay via PayOS\n[UC-7.1]" as UC71
+  usecase "Pay via Momo\n[UC-7.2]" as UC72
+  usecase "Apply Insurance Discount\n[UC-7.3]" as UC73
+
+  usecase "View Appointment List\n[UC-8]" as UC8
+  usecase "View Appointment Detail\n[UC-8.1]" as UC81
+  usecase "Reschedule Appointment\n[UC-8.1.1]" as UC811
+  usecase "Cancel Appointment\n[UC-8.1.2]" as UC812
+  usecase "Rate Doctor\n[UC-8.1.3]" as UC813
+
+  usecase "View Wallet Balance\n[UC-9]" as UC9
+  usecase "Top Up Wallet via PayOS\n[UC-9.1]" as UC91
+  usecase "View Wallet Transaction History\n[UC-9.2]" as UC92
+
+  usecase "View Insurance Card List\n[UC-10]" as UC10
+  usecase "Add Insurance Card\n[UC-10.1]" as UC101
+  usecase "Scan Insurance Card (OCR)\n[UC-10.1.1]" as UC1011
+  usecase "Update Insurance Card\n[UC-10.2]" as UC102
+  usecase "Delete Insurance Card\n[UC-10.3]" as UC103
+
+  usecase "View Queue Status\n[UC-11]" as UC11
+
+  usecase "View Prescription History\n[UC-12]" as UC12
+  usecase "View Prescription Detail\n[UC-12.1]" as UC121
+  usecase "Export Prescription PDF\n[UC-12.1.1]" as UC1211
+  usecase "View Prescription QR Code\n[UC-12.1.2]" as UC1212
+
+  usecase "View Favorite Doctors\n[UC-13]" as UC13
+  usecase "Add Doctor to Favorites\n[UC-13.1]" as UC131
+  usecase "Remove Doctor from Favorites\n[UC-13.2]" as UC132
+
+  usecase "View Notification Inbox\n[UC-14]" as UC14
+  usecase "Configure Notification Preferences\n[UC-14.1]" as UC141
+  usecase "Mark Notification as Read\n[UC-14.2]" as UC142
+
+  usecase "Submit Complaint\n[UC-15]" as UC15
+  usecase "View Own Complaint List\n[UC-15.1]" as UC151
+  usecase "View Own Complaint Detail\n[UC-15.1.1]" as UC1511
+
+  usecase "Log In\n[UC-5]" as UC5
+  usecase "Log Out\n[UC-6]" as UC6
+}
+
+note top of UC3
+  **Precondition:** Log In [UC-5] (Diagram D1)
+end note
+
+UC3 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+
+Patient --> UC3
+Patient --> UC6
+Patient --> UC7
+Patient --> UC8
+Patient --> UC9
+Patient --> UC10
+Patient --> UC11
+Patient --> UC12
+Patient --> UC13
+Patient --> UC14
+Patient --> UC15
+
+UC7 ..> UC3 : <<extend>>
+UC8 ..> UC3 : <<extend>>
+UC9 ..> UC3 : <<extend>>
+UC10 ..> UC3 : <<extend>>
+UC11 ..> UC3 : <<extend>>
+UC12 ..> UC3 : <<extend>>
+UC13 ..> UC3 : <<extend>>
+UC14 ..> UC3 : <<extend>>
+UC15 ..> UC3 : <<extend>>
+
+UC73 ..> UC7 : <<include>>
+UC71 ..> UC7 : <<extend>>
+UC72 ..> UC7 : <<extend>>
+
+UC81 ..> UC8 : <<extend>>
+UC811 ..> UC81 : <<extend>>
+UC812 ..> UC81 : <<extend>>
+UC813 ..> UC81 : <<extend>>
+
+UC91 ..> UC9 : <<extend>>
+UC92 ..> UC9 : <<extend>>
+
+UC101 ..> UC10 : <<extend>>
+UC102 ..> UC10 : <<extend>>
+UC103 ..> UC10 : <<extend>>
+UC1011 ..> UC101 : <<extend>>
+
+UC121 ..> UC12 : <<extend>>
+UC1211 ..> UC121 : <<extend>>
+UC1212 ..> UC121 : <<extend>>
+
+UC131 ..> UC13 : <<extend>>
+UC132 ..> UC13 : <<extend>>
+
+UC141 ..> UC14 : <<extend>>
+UC142 ..> UC14 : <<extend>>
+
+UC151 ..> UC15 : <<extend>>
+UC1511 ..> UC151 : <<extend>>
+
+UC71 ..> PayOS
+UC91 ..> PayOS
+UC72 ..> Momo
+
+note bottom of UC7
+  Wallet deduct at confirm
+  Booking confirmation (stub)
+  Appointment reminder (stub)
+end note
+
+@enduml

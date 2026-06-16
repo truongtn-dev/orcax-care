@@ -1,0 +1,140 @@
+@startuml D5_Admin
+left to right direction
+skinparam linetype polyline
+skinparam nodesep 18
+skinparam ranksep 26
+
+actor Admin
+
+rectangle OrcaXCare {
+
+  usecase "View Admin Dashboard\n[UC-29]" as UC29
+
+  usecase "View Account List\n[UC-30]" as UC30
+  usecase "View Account Detail\n[UC-30.1]" as UC301
+  usecase "Create Staff Account\n[UC-30.2]" as UC302
+  usecase "Update Account\n[UC-30.3]" as UC303
+  usecase "Change User Role\n[UC-30.4]" as UC304
+  usecase "Deactivate Account\n[UC-30.5]" as UC305
+  usecase "Restore Account\n[UC-30.6]" as UC306
+
+  usecase "View Specialty List\n[UC-31]" as UC31
+  usecase "Create Specialty\n[UC-31.1]" as UC311
+  usecase "View Specialty Detail\n[UC-31.2]" as UC312
+  usecase "Update Specialty\n[UC-31.3]" as UC313
+  usecase "Delete Specialty\n[UC-31.4]" as UC314
+
+  usecase "View Department List\n[UC-32]" as UC32
+  usecase "Create Department\n[UC-32.1]" as UC321
+  usecase "View Department Detail\n[UC-32.2]" as UC322
+  usecase "Update Department\n[UC-32.3]" as UC323
+  usecase "Deactivate Department\n[UC-32.4]" as UC324
+
+  usecase "View Clinic Room List\n[UC-33]" as UC33
+  usecase "Create Clinic Room\n[UC-33.1]" as UC331
+  usecase "Update Clinic Room\n[UC-33.2]" as UC332
+
+  usecase "View Doctor List (Admin)\n[UC-34]" as UC34
+  usecase "Register Doctor Profile\n[UC-34.1]" as UC341
+  usecase "View Doctor Detail (Admin)\n[UC-34.2]" as UC342
+  usecase "Update Doctor Profile\n[UC-34.3]" as UC343
+  usecase "Deactivate Doctor\n[UC-34.4]" as UC344
+  usecase "Import Doctors from Excel\n[UC-34.5]" as UC345
+  usecase "Export Doctors to Excel\n[UC-34.6]" as UC346
+
+  usecase "View Patient List\n[UC-35]" as UC35
+  usecase "Create Patient Record\n[UC-35.1]" as UC351
+  usecase "View Patient Detail\n[UC-35.2]" as UC352
+  usecase "Update Patient Profile\n[UC-35.3]" as UC353
+  usecase "Deactivate Patient\n[UC-35.4]" as UC354
+
+  usecase "View Work Shift List\n[UC-36]" as UC36
+  usecase "Create Work Shift\n[UC-36.1]" as UC361
+  usecase "Update Work Shift\n[UC-36.2]" as UC362
+  usecase "Delete Work Shift\n[UC-36.3]" as UC363
+  usecase "Generate Appointment Slots\n[UC-36.4]" as UC364
+
+  usecase "View Complaint List (Admin)\n[UC-37]" as UC37
+  usecase "View Complaint Detail (Admin)\n[UC-37.1]" as UC371
+  usecase "Reply to Complaint (Admin)\n[UC-37.2]" as UC372
+  usecase "Update Complaint Status (Admin)\n[UC-37.3]" as UC373
+
+  usecase "View Revenue Dashboard\n[UC-38]" as UC38
+  usecase "Filter Revenue by Date\n[UC-38.1]" as UC381
+  usecase "Filter Revenue by Doctor\n[UC-38.2]" as UC382
+  usecase "Export Revenue Report\n[UC-38.3]" as UC383
+
+  usecase "Log In\n[UC-5]" as UC5
+  usecase "Log Out\n[UC-6]" as UC6
+}
+
+Admin --> UC29
+Admin --> UC30
+Admin --> UC31
+Admin --> UC32
+Admin --> UC33
+Admin --> UC34
+Admin --> UC35
+Admin --> UC36
+Admin --> UC37
+Admin --> UC38
+Admin --> UC6
+
+UC29 ..> UC5 : <<include>>
+UC30 ..> UC5 : <<include>>
+UC31 ..> UC5 : <<include>>
+UC32 ..> UC5 : <<include>>
+UC33 ..> UC5 : <<include>>
+UC34 ..> UC5 : <<include>>
+UC35 ..> UC5 : <<include>>
+UC36 ..> UC5 : <<include>>
+UC37 ..> UC5 : <<include>>
+UC38 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+
+UC301 ..> UC30 : <<extend>>
+UC302 ..> UC30 : <<extend>>
+UC303 ..> UC301 : <<extend>>
+UC304 ..> UC301 : <<extend>>
+UC305 ..> UC301 : <<extend>>
+UC306 ..> UC301 : <<extend>>
+
+UC311 ..> UC31 : <<extend>>
+UC312 ..> UC31 : <<extend>>
+UC313 ..> UC312 : <<extend>>
+UC314 ..> UC312 : <<extend>>
+
+UC321 ..> UC32 : <<extend>>
+UC322 ..> UC32 : <<extend>>
+UC323 ..> UC322 : <<extend>>
+UC324 ..> UC322 : <<extend>>
+
+UC331 ..> UC33 : <<extend>>
+UC332 ..> UC33 : <<extend>>
+
+UC341 ..> UC34 : <<extend>>
+UC342 ..> UC34 : <<extend>>
+UC343 ..> UC342 : <<extend>>
+UC344 ..> UC342 : <<extend>>
+UC345 ..> UC34 : <<extend>>
+UC346 ..> UC34 : <<extend>>
+
+UC351 ..> UC35 : <<extend>>
+UC352 ..> UC35 : <<extend>>
+UC353 ..> UC352 : <<extend>>
+UC354 ..> UC352 : <<extend>>
+
+UC361 ..> UC36 : <<extend>>
+UC362 ..> UC36 : <<extend>>
+UC363 ..> UC36 : <<extend>>
+UC364 ..> UC36 : <<extend>>
+
+UC371 ..> UC37 : <<extend>>
+UC372 ..> UC371 : <<extend>>
+UC373 ..> UC371 : <<extend>>
+
+UC381 ..> UC38 : <<extend>>
+UC382 ..> UC38 : <<extend>>
+UC383 ..> UC38 : <<extend>>
+
+@enduml

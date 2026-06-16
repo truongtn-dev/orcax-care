@@ -1,0 +1,30 @@
+@startuml SF13_ManageAppointments
+title Screen Flow - Manage Appointments (Patient)
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Patient Dashboard" as Dash
+rectangle "My Appointments\n(upcoming + past tab)" as List
+rectangle "Appointment Detail\n(info + payment tab)" as Detail
+usecase "Reschedule Popup\n(pick new slot)" as Resched
+usecase "Cancel Confirm Popup" as Cancel
+usecase "Rate Doctor Popup\n(stars + comment)" as Rate
+
+Dash --> List : Click "Appointments"\nmenu
+List --> Detail : Click a row
+Detail --> Resched : Click "Reschedule"\nbutton
+Resched --> Detail : New slot confirmed
+Detail --> Cancel : Click "Cancel"\nbutton
+Cancel --> List : Confirm cancel\n(status updated)
+Detail --> Rate : Click "Rate Doctor"\n(completed visit)
+Rate --> Detail : Review submitted
+
+@enduml

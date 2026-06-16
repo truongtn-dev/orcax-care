@@ -1,0 +1,22 @@
+@startuml SF05_VerifyEmail
+title Screen Flow - Verify Email
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Email Client\n(verification link)" as Email
+rectangle "Verify Email Landing" as Verify
+rectangle "Login" as Login
+
+Email --> Verify : Open verification\nlink from email
+Verify --> Verify : Token invalid / expired\n(show error + resend option)
+Verify --> Login : Account activated\nClick "Login"
+
+@enduml

@@ -1,0 +1,87 @@
+@startuml SF2_Patient
+title Screen Flow of Patient
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+skinparam nodesep 30
+skinparam ranksep 45
+
+rectangle "Login" as Login
+rectangle "Patient Dashboard" as Dash
+
+rectangle "Book Appointment\n(doctor, date, slot)" as Book
+usecase "Payment Popup\n(PayOS / Momo / Wallet)" as Pay
+rectangle "Booking Confirmation" as Confirm
+
+rectangle "My Appointments" as ApptList
+rectangle "Appointment Detail\n(info + payment tab)" as ApptDetail
+usecase "Reschedule Popup" as Resched
+usecase "Cancel Confirm Popup" as Cancel
+usecase "Rate Doctor Popup" as Rate
+
+rectangle "Prescription History" as RxList
+rectangle "Prescription Detail\n(lines + QR tab)" as RxDetail
+
+rectangle "Wallet Dashboard" as Wallet
+rectangle "Transaction History" as WalletTx
+
+rectangle "Insurance Card List" as InsList
+usecase "Add / Update Card Popup\n(OCR scan)" as InsForm
+
+rectangle "Queue Status" as Queue
+rectangle "Favorite Doctors" as Fav
+rectangle "Notification Inbox" as Noti
+rectangle "My Complaints" as CompList
+rectangle "Complaint Detail" as CompDetail
+usecase "Submit Complaint Popup" as CompForm
+
+rectangle "My Profile\n(personal + medical tab)" as MyProfile
+usecase "Change Password Popup" as ChangePw
+
+Login --> Dash : Login successfully\n(role = patient)
+
+Dash --> Book : Click "Book Appointment"\nshortcut
+Book --> Pay : Click "Confirm"\nbutton
+Pay --> Confirm : Payment\nsuccessful
+
+Dash --> ApptList : Click "Appointments"\nmenu
+ApptList --> ApptDetail : Click a row
+ApptDetail --> Resched : Click "Reschedule"\nbutton
+ApptDetail --> Cancel : Click "Cancel"\nbutton
+ApptDetail --> Rate : Click "Rate Doctor"\nafter visit
+
+Dash --> RxList : Click "Prescriptions"\nmenu
+RxList --> RxDetail : Click a row\n(QR / Export PDF)
+
+Dash --> Wallet : Click "Wallet" menu
+Wallet --> WalletTx : Click "History" tab
+
+Dash --> InsList : Click "Insurance" menu
+InsList --> InsForm : Click "Add Card" /\n"Edit" button
+
+Dash --> Queue : Click "Queue Status"\non visit day
+Dash --> Fav : Click "Favorites" menu
+Fav --> Book : Click "Book" on\nfavorite doctor
+
+Dash --> Noti : Click bell icon
+Dash --> CompForm : Click "Submit\nComplaint" button
+Dash --> CompList : Click "My Complaints"\nmenu
+CompList --> CompDetail : Click a row
+
+Dash --> MyProfile : Click avatar >\n"My Profile"
+MyProfile --> ChangePw : Click "Change\nPassword" button
+
+legend left
+  **Note:**
+  * Screen: rectangle
+  * Popup: oval
+endlegend
+
+@enduml

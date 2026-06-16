@@ -1,0 +1,108 @@
+@startuml SQ_ManageAccounts
+' Sequence Diagram – UC-25 Manage Accounts
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Admin
+participant ManageAccountsPage as View
+participant AccountApiClient as Api
+participant AccountController as Ctrl
+participant AccountService as Svc
+participant UserModel as UM
+participant SessionModel as SM
+participant AuditLogModel as ALM
+database MongoDB as DB
+
+== Deactivate account ==
+
+Admin -> View ++ : 1. Confirm deactivate account
+
+View -> Api ++ : 2. toggleStatus(userId)
+
+Api -> Ctrl ++ : 3. PATCH /api/admin/accounts/:id/deactivate
+
+Ctrl -> Svc ++ : 4. deactivateAccount(userId, adminId)
+
+alt [1] Self-deactivation blocked
+
+  Svc --> Ctrl -- : 5. HTTP 403\n"Cannot deactivate own account."
+  Ctrl --> Api -- : 6. error response
+  Api --> View -- : 7. error response
+  View -> Admin : 8. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> UM ++ : 9. updateOne({ _id: userId, _id: { $ne: adminId } },\n{ isActive: false, deactivatedAt })
+
+  UM -> DB : 10. update users
+
+  DB --> UM -- : 11. ack
+
+  UM --> Svc -- : 12. void
+  deactivate UM
+
+  Svc -> SM ++ : 13. deleteMany({ userId })
+
+  SM -> DB : 14. delete sessions
+
+  DB --> SM -- : 15. ack
+
+  SM --> Svc -- : 16. void
+  deactivate SM
+
+  Svc --> Ctrl -- : 17. void
+  Ctrl --> Api -- : 18. HTTP 200
+  Api --> View -- : 19. success
+  View -> Admin : 20. refreshAccounts()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Change role ==
+
+Admin -> View ++ : 21. Confirm role change
+
+View -> Api ++ : 22. changeRole(userId, newRole)
+
+Api -> Ctrl ++ : 23. PATCH /api/admin/accounts/:id/role\n{ role }
+
+Ctrl -> Svc ++ : 24. changeRole(userId, newRole, adminId)
+
+Svc -> UM ++ : 25. updateOne({ _id: userId }, { role: newRole })
+
+UM -> DB : 26. update users
+
+  DB --> UM -- : 27. ack
+
+  UM --> Svc -- : 28. void
+deactivate UM
+
+Svc -> ALM ++ : 29. insertOne({ actorId: adminId, action: "change-role",\ntargetId: userId, detail: { from, to } })
+
+ALM -> DB : 30. insert audit_logs
+
+  DB --> ALM -- : 31. ack
+
+  ALM --> Svc -- : 32. AuditLogDocument
+deactivate ALM
+
+Svc --> Ctrl -- : 33. void
+Ctrl --> Api -- : 34. HTTP 200
+Api --> View -- : 35. success
+View -> Admin : 36. refreshAccounts()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

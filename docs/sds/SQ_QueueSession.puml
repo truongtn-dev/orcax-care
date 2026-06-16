@@ -1,0 +1,107 @@
+@startuml SQ_QueueSession
+' Sequence Diagram – UC-18 Manage Queue Session
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant QueueSessionPage as View
+participant QueueSessionApiClient as Api
+participant QueueSessionController as Ctrl
+participant QueueSessionService as Svc
+participant QueueSessionModel as QSM
+participant QueueTicketModel as QTM
+database MongoDB as DB
+
+== Call next ticket ==
+
+Doctor -> View ++ : 1. Click Call Next
+
+View -> Api ++ : 2. callNext(sessionId)
+
+Api -> Ctrl ++ : 3. POST /api/queue/sessions/:id/call-next
+
+Ctrl -> Svc ++ : 4. callNextTicket(sessionId)
+
+Svc -> QTM ++ : 5. findOneAndUpdate({ sessionId, status: "waiting" },\n{ status: "called", calledAt }, { sort: { number: 1 } })
+
+QTM -> DB : 6. update queue_tickets\n(atomic)
+
+  DB --> QTM -- : 7. QueueTicketDocument / null
+
+  QTM --> Svc -- : 8. ticket
+deactivate QTM
+
+alt [1] Queue empty\n(no waiting tickets)
+
+  Svc --> Ctrl -- : 9. HTTP 404\n"No waiting tickets."
+  Ctrl --> Api -- : 10. error response
+  Api --> View -- : 11. error response
+  View -> Doctor : 12. showEmptyQueue()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Ticket called
+
+  Svc -> QSM ++ : 13. updateOne({ _id: sessionId },\n{ currentNumber: ticket.number })
+
+  QSM -> DB : 14. update queue_sessions
+
+  DB --> QSM -- : 15. ack
+
+  QSM --> Svc -- : 16. void
+  deactivate QSM
+
+  Svc --> Ctrl -- : 17. QueueTicketDocument
+  Ctrl --> Api -- : 18. HTTP 200
+  Api --> View -- : 19. called ticket
+  View -> Doctor : 20. updateNowServing()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Close session ==
+
+Doctor -> View ++ : 21. Confirm Close Session
+
+View -> Api ++ : 22. closeSession(sessionId)
+
+Api -> Ctrl ++ : 23. POST /api/queue/sessions/:id/close
+
+Ctrl -> Svc ++ : 24. closeSession(sessionId)
+
+Svc -> QSM ++ : 25. updateOne({ _id: sessionId },\n{ status: "closed", closedAt })
+
+QSM -> DB : 26. update queue_sessions
+
+  DB --> QSM -- : 27. ack
+
+  QSM --> Svc -- : 28. void
+deactivate QSM
+
+Svc -> QTM ++ : 29. updateMany({ sessionId, status: "waiting" },\n{ status: "no-show" })
+
+QTM -> DB : 30. update queue_tickets
+
+  DB --> QTM -- : 31. ack
+
+  QTM --> Svc -- : 32. void
+deactivate QTM
+
+Svc --> Ctrl -- : 33. void
+Ctrl --> Api -- : 34. HTTP 200
+Api --> View -- : 35. success
+View -> Doctor : 36. showSessionClosed()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

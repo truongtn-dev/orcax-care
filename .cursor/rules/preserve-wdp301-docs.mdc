@@ -1,0 +1,23 @@
+---
+description: Protect WDP301 diagram assets from deletion or cleanup
+alwaysApply: true
+---
+
+# Preserve WDP301 documentation assets
+
+These folders are **required deliverables** for the OrcaXCare WDP301 report. Do **not** delete, move, or "clean up" them during refactors.
+
+## Protected paths
+
+- `docs/sds/` — PlantUML class/sequence diagrams (`.puml`) and `docs/sds/export/*.png`
+- `docs/ui-design/` — UI mockup PNGs (Figure 13–46)
+- `docs/database/` — ERD / code package PlantUML and `export/`
+- `docs/usecase/`, `docs/screenflow/` — RDS diagrams
+- `scripts/recover_from_transcript.py`, `render_sds_diagrams.py`, `build_sds_document.py`, `extract_ui_from_word.py`, `build_design_specs.py`, `sds_functions_data.py`
+
+## Agent rules
+
+- Never delete or empty these directories to "streamline the repo".
+- Regenerate PNGs with `python scripts/render_sds_diagrams.py`; do not remove `.puml` sources.
+- If files are missing, run `python scripts/recover_from_transcript.py` before recreating from scratch.
+- Do not commit unless the user explicitly asks; local preservation is enough.

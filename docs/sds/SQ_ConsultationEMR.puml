@@ -1,0 +1,119 @@
+@startuml SQ_ConsultationEMR
+' Sequence Diagram – UC-17 Start Consultation
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant ConsultationPage as View
+participant ConsultationApiClient as Api
+participant ConsultationController as Ctrl
+participant ConsultationService as Svc
+participant AppointmentModel as AM
+participant EncounterModel as EM
+participant DiagnosisModel as DM
+participant Icd10CatalogModel as ICD
+participant NotificationModel as NM
+database MongoDB as DB
+
+== Start consultation ==
+
+Doctor -> View ++ : 1. Click "Start Consultation"\non checked-in appointment
+
+View -> Api ++ : 2. startEncounter(apptId)
+
+Api -> Ctrl ++ : 3. POST /api/consultations/start\n{ appointmentId }
+
+Ctrl -> Svc ++ : 4. startEncounter(apptId, doctorId)
+
+Svc -> EM ++ : 5. updateOne({ appointmentId },\n{ $setOnInsert: { patientId, doctorId,\nstatus: "in-progress", notes: "" } }, { upsert: true })
+
+EM -> DB : 6. upsert encounters
+
+  DB --> EM -- : 7. EncounterDocument
+
+  EM --> Svc -- : 8. EncounterDocument
+deactivate EM
+
+Svc --> Ctrl -- : 9. EncounterDocument
+Ctrl --> Api -- : 10. HTTP 201
+Api --> View -- : 11. encounter data
+View -> Doctor : 12. openWorkspace()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Sign off encounter ==
+
+Doctor -> View ++ : 13. Click Sign Off
+
+View -> Api ++ : 14. signOffEncounter(encounterId)
+
+Api -> Ctrl ++ : 15. POST /api/consultations/:id/sign-off
+
+Ctrl -> Svc ++ : 16. signOffEncounter(encounterId, doctorId)
+
+Svc -> DM ++ : 17. find({ encounterId })
+
+DM -> DB : 18. query diagnoses
+
+  DB --> DM -- : 19. diagnosis list
+
+  DM --> Svc -- : 20. Array
+deactivate DM
+
+alt [1] No diagnosis recorded
+
+  Svc --> Ctrl -- : 21. HTTP 400\n"At least one diagnosis required."
+  Ctrl --> Api -- : 22. error response
+  Api --> View -- : 23. error response
+  View -> Doctor : 24. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Valid sign-off
+
+  Svc -> EM ++ : 25. updateOne({ _id: encounterId, status: "in-progress" },\n{ status: "signed-off", signedOffAt })
+
+  EM -> DB : 26. update encounters
+
+  DB --> EM -- : 27. ack
+
+  EM --> Svc -- : 28. EncounterDocument
+  deactivate EM
+
+  Svc -> AM ++ : 29. updateOne({ _id: appointmentId }, { status: "completed" })
+
+  AM -> DB : 30. update appointments
+
+  DB --> AM -- : 31. ack
+
+  AM --> Svc -- : 32. void
+  deactivate AM
+
+  Svc -> NM ++ : 33. create({ userId: patientUserId, type: "results-ready",\ntitle: "Consultation results ready" })
+
+  NM -> DB : 34. insert notifications
+
+  DB --> NM -- : 35. ack
+
+  NM --> Svc -- : 36. NotificationDocument
+  deactivate NM
+
+  Svc --> Ctrl -- : 37. void
+  Ctrl --> Api -- : 38. HTTP 200
+  Api --> View -- : 39. success
+  View -> Doctor : 40. showSignedOff()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

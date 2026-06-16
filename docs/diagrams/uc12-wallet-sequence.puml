@@ -1,0 +1,118 @@
+@startuml SQ_Wallet
+' Sequence Diagram – UC-12 View Wallet Balance
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant WalletPage as View
+participant WalletApiClient as Api
+participant WalletController as Ctrl
+participant WalletService as Svc
+participant WalletModel as WM
+participant TransactionModel as TM
+database MongoDB as DB
+
+== Top-up wallet ==
+
+Patient -> View ++ : 1. Enter amount and\nselect gateway (PayOS / SePay)
+
+View -> Api ++ : 2. initiateTopUp(amount, gateway)
+
+Api -> Ctrl ++ : 3. POST /api/wallet/topup\n{ amount, gateway }
+
+Ctrl -> Svc ++ : 4. initiateTopUp(userId, amount, gateway)
+
+Svc -> TM ++ : 5. create({ userId, type:"topup",\nmethod: gateway, status:"pending" })
+
+TM -> DB : 6. db.transactions.insertOne(...)
+
+  DB --> TM -- : 7. TransactionDocument
+
+  TM --> Svc -- : 8. TransactionDocument
+deactivate TM
+
+alt [1] Amount below minimum\n(< 50,000 VND)
+
+  Svc --> Ctrl -- : 9. HTTP 400\n"Minimum top-up is 50,000 VND"
+  Ctrl --> Api -- : 10. HTTP 400
+  Api --> View -- : 11. error response
+  View -> Patient : 12. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Gateway payment pending
+
+  Svc --> Ctrl -- : 13. { paymentUrl, txId }
+  Ctrl --> Api -- : 14. TopUpResponse
+  Api --> View -- : 15. { paymentUrl, txId }
+  View -> Patient : 16. redirectToGateway()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [3] Gateway callback verified
+
+  Ctrl -> Svc ++ : 17. creditWallet(txId)
+
+  Svc -> TM ++ : 18. updateOne({ _id: txId },\n{ status: "success" })
+
+  TM -> DB : 19. db.transactions.updateOne(...)
+
+    DB --> TM -- : 20. ack
+
+    TM --> Svc -- : 21. void
+  deactivate TM
+
+  Svc -> WM ++ : 22. updateOne({ userId },\n{ $inc: { balance: amount } })
+
+  WM -> DB : 23. db.wallets.updateOne(...)
+
+    DB --> WM -- : 24. ack
+
+    WM --> Svc -- : 25. void
+  deactivate WM
+
+  Svc --> Ctrl -- : 26. success
+  Ctrl --> Api -- : 27. HTTP 200
+  Api --> View -- : 28. updated balance
+  View -> Patient : 29. refresh balance display
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+Patient -> View ++ : 30. apply type / date filter
+
+View -> Api ++ : 31. getTransactions(filters)
+
+Api -> Ctrl ++ : 32. GET /api/wallet/transactions?...
+
+Ctrl -> Svc ++ : 33. listTransactions(userId, filters)
+
+Svc -> TM ++ : 34. find({ userId, type,\ncreatedAt: { $gte, $lte } })
+
+TM -> DB : 35. db.transactions.find(...)
+
+  DB --> TM -- : 36. transaction list
+
+  TM --> Svc -- : 37. transaction list
+deactivate TM
+
+Svc --> Ctrl -- : 38. transaction list
+Ctrl --> Api -- : 39. transaction list
+Api --> View -- : 40. transaction list
+View -> Patient : 41. render transaction table
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

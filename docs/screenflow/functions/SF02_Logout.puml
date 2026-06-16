@@ -1,0 +1,22 @@
+@startuml SF02_Logout
+title Screen Flow - Logout
+
+skinparam rectangle {
+  BackgroundColor #DAE8FC
+  BorderColor #333333
+}
+skinparam usecase {
+  BackgroundColor #FFF2CC
+  BorderColor #333333
+}
+skinparam ArrowColor #444444
+
+rectangle "Any Protected Screen\n(Dashboard, etc.)" as Any
+usecase "Logout Confirm Popup" as Confirm
+rectangle "Login" as Login
+
+Any --> Confirm : Click avatar >\n"Log Out"
+Confirm --> Login : Confirm logout\n(session cleared,\nback navigation blocked)
+Confirm --> Any : Click "Cancel"
+
+@enduml

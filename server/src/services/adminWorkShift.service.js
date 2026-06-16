@@ -5,11 +5,16 @@ import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { WorkShift } from "../models/WorkShift.js";
 import {
   DAY_OF_WEEK_LABELS,
-  computeSlotDurationMin,
-  doTimeRangesOverlap,
   isValidTimeString,
   timeToMinutes,
 } from "../utils/shiftTime.js";
+import {
+  analyzeDeleteShiftImpact,
+  planShiftSlots,
+  regenerateFutureSlotsForShift,
+  startOfToday,
+  validateShiftTemplate,
+} from "../utils/schedulingEngine.js";
 
 function serializeWorkShift(shift) {
   const doctor = shift.doctorId;
@@ -39,117 +44,141 @@ function shiftQuery() {
     .populate("roomId", "name roomNumber roomCode");
 }
 
-async function findOverlappingShift({ doctorId, dayOfWeek, startTime, endTime, excludeId }) {
-  const filter = {
-    doctorId,
-    dayOfWeek,
-    isActive: true,
-  };
-  if (excludeId) {
-    filter._id = { $ne: excludeId };
-  }
-
-  const existing = await WorkShift.find(filter).lean();
-  return existing.find((shift) => doTimeRangesOverlap(startTime, endTime, shift.startTime, shift.endTime));
-}
-
-export async function createWorkShift(payload) {
-  const {
-    doctorId,
-    roomId,
-    dayOfWeek,
-    startTime,
-    endTime,
-    maxPatients,
-    slotDurationMin,
-    isActive = true,
-  } = payload;
-
+async function loadDoctorAndRoom(doctorId, roomId) {
   if (!doctorId || !mongoose.Types.ObjectId.isValid(doctorId)) {
-    return { status: 400, body: { message: "Invalid doctor" } };
-  }
-
-  const day = Number(dayOfWeek);
-  if (!Number.isInteger(day) || day < 0 || day > 6) {
-    return { status: 400, body: { message: "Day of week must be from 0 (Sun) to 6 (Sat)" } };
-  }
-
-  const start = (startTime || "").trim();
-  const end = (endTime || "").trim();
-  if (!isValidTimeString(start) || !isValidTimeString(end)) {
-    return { status: 400, body: { message: "Start/end time must use HH:mm format" } };
-  }
-  if (timeToMinutes(end) <= timeToMinutes(start)) {
-    return { status: 400, body: { message: "End time must be after start time" } };
-  }
-
-  const capacity = parseInt(maxPatients, 10);
-  if (!capacity || capacity < 1) {
-    return { status: 400, body: { message: "Maximum patients must be >= 1" } };
+    return { error: { status: 400, body: { message: "Invalid doctor" } } };
   }
 
   const doctor = await Doctor.findById(doctorId).populate("userId", "fullName isActive");
   if (!doctor || !doctor.isActive) {
-    return { status: 404, body: { message: "Active doctor not found" } };
+    return { error: { status: 404, body: { message: "Active doctor not found" } } };
   }
   if (!doctor.userId?.isActive) {
-    return { status: 400, body: { message: "Doctor account is not activated" } };
+    return { error: { status: 400, body: { message: "Doctor account is not activated" } } };
   }
 
   let roomObjectId = null;
   if (roomId) {
     if (!mongoose.Types.ObjectId.isValid(roomId)) {
-      return { status: 400, body: { message: "Invalid clinic room" } };
+      return { error: { status: 400, body: { message: "Invalid clinic room" } } };
     }
     const room = await ClinicRoom.findById(roomId);
     if (!room || !room.isActive) {
-      return { status: 404, body: { message: "Active clinic room not found" } };
+      return { error: { status: 404, body: { message: "Active clinic room not found" } } };
     }
     roomObjectId = room._id;
   }
 
-  const overlap = await findOverlappingShift({
-    doctorId: doctor._id,
-    dayOfWeek: day,
-    startTime: start,
-    endTime: end,
+  return { doctor, roomObjectId };
+}
+
+function parseShiftTiming(payload, fallback = {}) {
+  const day =
+    payload.dayOfWeek !== undefined && payload.dayOfWeek !== null && payload.dayOfWeek !== ""
+      ? Number(payload.dayOfWeek)
+      : fallback.dayOfWeek;
+  if (!Number.isInteger(day) || day < 0 || day > 6) {
+    return { error: { status: 400, body: { message: "Day of week must be from 0 (Sun) to 6 (Sat)" } } };
+  }
+
+  const start =
+    payload.startTime !== undefined ? String(payload.startTime).trim() : fallback.startTime;
+  const end = payload.endTime !== undefined ? String(payload.endTime).trim() : fallback.endTime;
+  if (!isValidTimeString(start) || !isValidTimeString(end)) {
+    return { error: { status: 400, body: { message: "Start/end time must use HH:mm format" } } };
+  }
+  if (timeToMinutes(end) <= timeToMinutes(start)) {
+    return { error: { status: 400, body: { message: "End time must be after start time" } } };
+  }
+
+  const capacity =
+    payload.maxPatients !== undefined && payload.maxPatients !== null && payload.maxPatients !== ""
+      ? parseInt(payload.maxPatients, 10)
+      : fallback.maxPatients;
+  if (!capacity || capacity < 1) {
+    return { error: { status: 400, body: { message: "Maximum patients must be >= 1" } } };
+  }
+
+  return { day, start, end, capacity };
+}
+
+export async function previewWorkShift(payload) {
+  const timing = parseShiftTiming(payload);
+  if (timing.error) return timing.error;
+
+  const loaded = await loadDoctorAndRoom(payload.doctorId, payload.roomId || null);
+  if (loaded.error) return loaded.error;
+
+  const validation = await validateShiftTemplate({
+    doctorId: loaded.doctor._id,
+    roomId: loaded.roomObjectId,
+    dayOfWeek: timing.day,
+    startTime: timing.start,
+    endTime: timing.end,
+    maxPatients: timing.capacity,
+    slotDurationMin: payload.slotDurationMin,
+    excludeShiftId: payload.excludeShiftId || null,
   });
-  if (overlap) {
+
+  return {
+    status: 200,
+    body: {
+      valid: validation.valid,
+      issues: validation.issues,
+      plan: validation.plan,
+      dayLabel: DAY_OF_WEEK_LABELS[timing.day] || "",
+    },
+  };
+}
+
+export async function createWorkShift(payload) {
+  const timing = parseShiftTiming(payload);
+  if (timing.error) return timing.error;
+
+  const loaded = await loadDoctorAndRoom(payload.doctorId, payload.roomId || null);
+  if (loaded.error) return loaded.error;
+
+  const validation = await validateShiftTemplate({
+    doctorId: loaded.doctor._id,
+    roomId: loaded.roomObjectId,
+    dayOfWeek: timing.day,
+    startTime: timing.start,
+    endTime: timing.end,
+    maxPatients: timing.capacity,
+    slotDurationMin: payload.slotDurationMin,
+  });
+
+  if (!validation.valid) {
+    const primary = validation.issues[0];
     return {
-      status: 409,
+      status: primary.code === "DOCTOR_OVERLAP" || primary.code === "ROOM_CONFLICT" ? 409 : 400,
       body: {
-        message: "Shift overlaps with an existing shift for this doctor on the same day",
-        conflict: {
-          shiftId: overlap._id.toString(),
-          startTime: overlap.startTime,
-          endTime: overlap.endTime,
-        },
+        message: primary.message,
+        issues: validation.issues,
+        conflict: primary.conflict || undefined,
       },
     };
   }
 
-  const duration =
-    slotDurationMin != null && slotDurationMin !== ""
-      ? parseInt(slotDurationMin, 10)
-      : computeSlotDurationMin(start, end, capacity);
-
-  if (!duration || duration < 15) {
-    return { status: 400, body: { message: "Each slot duration must be >= 15 minutes" } };
-  }
-
   const shift = await WorkShift.create({
-    doctorId: doctor._id,
-    roomId: roomObjectId,
-    dayOfWeek: day,
-    startTime: start,
-    endTime: end,
-    maxPatients: capacity,
-    slotDurationMin: duration,
-    isActive: isActive !== false,
+    doctorId: loaded.doctor._id,
+    roomId: loaded.roomObjectId,
+    dayOfWeek: timing.day,
+    startTime: timing.start,
+    endTime: timing.end,
+    maxPatients: timing.capacity,
+    slotDurationMin: validation.plan.slotDurationMin,
+    isActive: payload.isActive !== false,
   });
 
   const populated = await shiftQuery().findById(shift._id).lean();
-  return { status: 201, body: serializeWorkShift(populated) };
+  return {
+    status: 201,
+    body: {
+      ...serializeWorkShift(populated),
+      slotPlan: validation.plan,
+    },
+  };
 }
 
 export function buildWeeklyPattern(shifts) {
@@ -157,12 +186,16 @@ export function buildWeeklyPattern(shifts) {
     dayOfWeek,
     dayLabel: DAY_OF_WEEK_LABELS[dayOfWeek] || "",
     shifts: [],
+    totalCapacity: 0,
+    activeCount: 0,
   }));
 
   for (const shift of shifts) {
     const day = shift.dayOfWeek;
     if (day >= 0 && day <= 6) {
       buckets[day].shifts.push(shift);
+      buckets[day].totalCapacity += shift.maxPatients || 0;
+      if (shift.isActive !== false) buckets[day].activeCount += 1;
     }
   }
 
@@ -229,6 +262,7 @@ export async function listWorkShifts({
       return {
         items: [],
         weeklyPattern: buildWeeklyPattern([]),
+        summary: { totalShifts: 0, totalWeeklyCapacity: 0, activeDoctors: 0 },
         page: pageNum,
         limit: limitNum,
         total: 0,
@@ -257,10 +291,16 @@ export async function listWorkShifts({
 
   const items = rows.map(serializeWorkShift);
   const weeklyPattern = buildWeeklyPattern(items);
+  const summary = {
+    totalShifts: items.length,
+    totalWeeklyCapacity: items.reduce((sum, item) => sum + (item.maxPatients || 0), 0),
+    activeDoctors: new Set(items.map((item) => item.doctorId)).size,
+  };
 
   return {
     items,
     weeklyPattern,
+    summary,
     page: pageNum,
     limit: limitNum,
     total,
@@ -285,7 +325,14 @@ export async function getWorkShiftById(shiftId) {
     return { status: 404, body: { message: "Work shift not found" } };
   }
 
-  return { status: 200, body: serializeWorkShift(shift) };
+  const serialized = serializeWorkShift(shift);
+  return {
+    status: 200,
+    body: {
+      ...serialized,
+      slotPlan: planShiftSlots(serialized),
+    },
+  };
 }
 
 export async function updateWorkShift(shiftId, payload) {
@@ -298,50 +345,18 @@ export async function updateWorkShift(shiftId, payload) {
     return { status: 404, body: { message: "Work shift not found" } };
   }
 
-  const {
-    roomId,
-    dayOfWeek,
-    startTime,
-    endTime,
-    maxPatients,
-    slotDurationMin,
-    isActive,
-  } = payload;
-
-  const day =
-    dayOfWeek !== undefined && dayOfWeek !== null && dayOfWeek !== ""
-      ? Number(dayOfWeek)
-      : existing.dayOfWeek;
-  if (!Number.isInteger(day) || day < 0 || day > 6) {
-    return { status: 400, body: { message: "Day of week must be from 0 (Sun) to 6 (Sat)" } };
-  }
-
-  const start = startTime !== undefined ? String(startTime).trim() : existing.startTime;
-  const end = endTime !== undefined ? String(endTime).trim() : existing.endTime;
-  if (!isValidTimeString(start) || !isValidTimeString(end)) {
-    return { status: 400, body: { message: "Start/end time must use HH:mm format" } };
-  }
-  if (timeToMinutes(end) <= timeToMinutes(start)) {
-    return { status: 400, body: { message: "End time must be after start time" } };
-  }
-
-  const capacity =
-    maxPatients !== undefined && maxPatients !== null && maxPatients !== ""
-      ? parseInt(maxPatients, 10)
-      : existing.maxPatients;
-  if (!capacity || capacity < 1) {
-    return { status: 400, body: { message: "Maximum patients must be >= 1" } };
-  }
+  const timing = parseShiftTiming(payload, existing);
+  if (timing.error) return timing.error;
 
   let roomObjectId = existing.roomId;
-  if (roomId !== undefined) {
-    if (roomId === null || roomId === "") {
+  if (payload.roomId !== undefined) {
+    if (payload.roomId === null || payload.roomId === "") {
       roomObjectId = null;
     } else {
-      if (!mongoose.Types.ObjectId.isValid(roomId)) {
+      if (!mongoose.Types.ObjectId.isValid(payload.roomId)) {
         return { status: 400, body: { message: "Invalid clinic room" } };
       }
-      const room = await ClinicRoom.findById(roomId);
+      const room = await ClinicRoom.findById(payload.roomId);
       if (!room || !room.isActive) {
         return { status: 404, body: { message: "Active clinic room not found" } };
       }
@@ -349,63 +364,73 @@ export async function updateWorkShift(shiftId, payload) {
     }
   }
 
-  const nextIsActive = isActive !== undefined ? isActive !== false : existing.isActive;
+  const nextIsActive = payload.isActive !== undefined ? payload.isActive !== false : existing.isActive;
 
-  if (nextIsActive) {
-    const overlap = await findOverlappingShift({
-      doctorId: existing.doctorId,
-      dayOfWeek: day,
-      startTime: start,
-      endTime: end,
-      excludeId: existing._id,
-    });
-    if (overlap) {
-      return {
-        status: 409,
-        body: {
-          message: "Shift overlaps with an existing shift for this doctor on the same day",
-          conflict: {
-            shiftId: overlap._id.toString(),
-            startTime: overlap.startTime,
-            endTime: overlap.endTime,
-          },
-        },
-      };
-    }
+  const validation = await validateShiftTemplate({
+    doctorId: existing.doctorId,
+    roomId: roomObjectId,
+    dayOfWeek: timing.day,
+    startTime: timing.start,
+    endTime: timing.end,
+    maxPatients: timing.capacity,
+    slotDurationMin: payload.slotDurationMin,
+    excludeShiftId: existing._id,
+  });
+
+  if (nextIsActive && !validation.valid) {
+    const primary = validation.issues[0];
+    return {
+      status: primary.code === "DOCTOR_OVERLAP" || primary.code === "ROOM_CONFLICT" ? 409 : 400,
+      body: {
+        message: primary.message,
+        issues: validation.issues,
+        conflict: primary.conflict || undefined,
+      },
+    };
   }
 
-  const duration =
-    slotDurationMin != null && slotDurationMin !== ""
-      ? parseInt(slotDurationMin, 10)
-      : computeSlotDurationMin(start, end, capacity);
-
-  if (!duration || duration < 15) {
-    return { status: 400, body: { message: "Each slot duration must be >= 15 minutes" } };
-  }
-
-  existing.dayOfWeek = day;
-  existing.startTime = start;
-  existing.endTime = end;
-  existing.maxPatients = capacity;
-  existing.slotDurationMin = duration;
+  existing.dayOfWeek = timing.day;
+  existing.startTime = timing.start;
+  existing.endTime = timing.end;
+  existing.maxPatients = timing.capacity;
+  existing.slotDurationMin = validation.plan.slotDurationMin;
   existing.roomId = roomObjectId;
   existing.isActive = nextIsActive;
   await existing.save();
 
+  let regeneration = null;
+  if (payload.regenerateFutureSlots === true && nextIsActive) {
+    regeneration = await regenerateFutureSlotsForShift(existing);
+  }
+
   const populated = await shiftQuery().findById(existing._id).lean();
+  const note = regeneration
+    ? `Regenerated future slots: ${regeneration.created} created, ${regeneration.removed} removed, ${regeneration.preservedBooked} booked preserved.`
+    : "Future appointment slots may need regeneration after this change.";
+
   return {
     status: 200,
     body: {
       ...serializeWorkShift(populated),
-      note: "Future appointment slots may need regeneration after this change.",
+      slotPlan: validation.plan,
+      note,
+      regeneration,
     },
   };
 }
 
-function startOfToday() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return today;
+export async function getDeleteShiftImpact(shiftId) {
+  if (!shiftId || !mongoose.Types.ObjectId.isValid(shiftId)) {
+    return { status: 400, body: { message: "Invalid work shift" } };
+  }
+
+  const existing = await WorkShift.findById(shiftId);
+  if (!existing) {
+    return { status: 404, body: { message: "Work shift not found" } };
+  }
+
+  const impact = await analyzeDeleteShiftImpact(existing._id);
+  return { status: 200, body: impact };
 }
 
 export async function deleteWorkShift(shiftId) {
@@ -418,18 +443,14 @@ export async function deleteWorkShift(shiftId) {
     return { status: 404, body: { message: "Work shift not found" } };
   }
 
-  const futureBookedCount = await AppointmentSlot.countDocuments({
-    workShiftId: existing._id,
-    status: "booked",
-    date: { $gte: startOfToday() },
-  });
-
-  if (futureBookedCount > 0) {
+  const impact = await analyzeDeleteShiftImpact(existing._id);
+  if (!impact.canDelete) {
     return {
       status: 409,
       body: {
         message: "Cannot delete work shift because future appointments are booked",
-        futureBookings: futureBookedCount,
+        futureBookings: impact.futureBooked,
+        ...impact,
       },
     };
   }
@@ -447,6 +468,7 @@ export async function deleteWorkShift(shiftId) {
     body: {
       message: "Work shift deleted",
       deletedShiftId: shiftId,
+      ...impact,
     },
   };
 }

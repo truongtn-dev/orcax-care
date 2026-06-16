@@ -1,0 +1,91 @@
+@startuml SQ_Login
+' Sequence Diagram – UC-5 Login
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor User
+participant LoginPage as View
+participant AuthApiClient as Api
+participant AuthController as Ctrl
+participant AuthService as Svc
+participant UserModel as UM
+participant AuthTokenModel as TM
+database MongoDB as DB
+
+== Login request ==
+
+User -> View ++ : 1. Enter email, password\nand select Remember me
+
+View -> View : 2. validateForm()
+
+View -> Api ++ : 3. login(email, password, rememberMe)
+
+Api -> Ctrl ++ : 4. POST /api/auth/login\n{ email, password, rememberMe }
+
+Ctrl -> Svc ++ : 5. authenticate(email, password)
+
+Svc -> UM ++ : 6. findOne({ email })
+
+UM -> DB : 7. query users collection\n{ email: email.toLowerCase() }
+
+DB --> UM : 8. user document / null
+
+UM --> Svc : 9. UserDocument
+deactivate UM
+
+alt [1] Invalid credentials\n(user not found OR wrong password)
+
+  Svc --> Ctrl -- : 10. throw AuthError
+  Ctrl --> Api -- : 11. HTTP 401\n"Invalid email or password."
+  Api --> View -- : 12. error response
+  View -> User : 13. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Account not available\n(locked / deactivated / email not verified)
+
+  Svc -> Svc : 14. checkAccountStatus(user)
+  Svc --> Ctrl -- : 15. throw AccountError
+  Ctrl --> Api -- : 16. HTTP 403\n"Your account is not available."
+  Api --> View -- : 17. error response\n+ resend verify link
+  View -> User : 18. showError(message)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [3] Valid credentials
+
+  Svc -> Svc : 19. checkAccountStatus(user)
+  Svc -> Svc : 20. issueToken(user, rememberMe)
+
+  Svc -> UM ++ : 21. updateOne({ _id }, { lastLoginAt })
+  UM -> DB : 22. update users
+  DB --> UM -- : 23. ack
+  UM --> Svc -- : 24. void
+  deactivate UM
+
+  Svc -> TM ++ : 25. create({ userId, tokenHash, ... })
+  TM -> DB : 26. insert auth_tokens
+  DB --> TM -- : 27. ack
+  TM --> Svc -- : 28. AuthTokenDocument
+  deactivate TM
+
+  Svc --> Ctrl -- : 29. { token, user, role }
+  Ctrl --> Api -- : 30. HTTP 200\n{ token, role }
+  Api -> Api : 31. storeToken(token)
+  Api --> View -- : 32. success
+  View -> User : 33. redirectToDashboard(role)
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

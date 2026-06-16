@@ -1,0 +1,100 @@
+@startuml SQ_StaffDashboard
+' Sequence Diagram – UC-35 View Staff Dashboard
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Staff
+participant StaffDashboardPage as View
+participant StaffDashboardApiClient as Api
+participant StaffDashboardController as Ctrl
+participant StaffDashboardService as Svc
+participant QueueTicketModel as QTM
+participant ComplaintModel as CM
+participant MedicineModel as MM
+database MongoDB as DB
+
+== Load staff dashboard ==
+
+Staff -> View ++ : 1. Open staff dashboard
+
+View -> View : 2. startAutoRefresh(60s)
+
+View -> Api ++ : 3. getDashboard()
+
+Api -> Ctrl ++ : 4. GET /api/staff/dashboard
+
+Ctrl -> Svc ++ : 5. getDashboardSummary()
+
+Svc -> QTM ++ : 6. countDocuments({ issuedAt: { $gte: startOfToday } })
+
+QTM -> DB : 7. count queue_tickets (today)
+
+  DB --> QTM -- : 8. check-in count
+
+  QTM --> Svc -- : 9. Number
+deactivate QTM
+
+Svc -> QTM ++ : 10. countDocuments({ status: "waiting" })
+
+QTM -> DB : 11. count waiting tickets
+
+  DB --> QTM -- : 12. waiting count
+
+  QTM --> Svc -- : 13. Number
+deactivate QTM
+
+Svc -> CM ++ : 14. countDocuments({ status: "open" })
+
+CM -> DB : 15. count complaints
+
+  DB --> CM -- : 16. open complaints count
+
+  CM --> Svc -- : 17. Number
+deactivate CM
+
+Svc -> MM ++ : 18. find({ $expr: { $lt: ["$stockQuantity", "$reorderLevel"] } })
+
+MM -> DB : 19. query medicines (low stock)
+
+  DB --> MM -- : 20. low stock list
+
+  MM --> Svc -- : 21. Array
+deactivate MM
+
+alt [1] All counters zero\n(no activity today)
+
+  Svc --> Ctrl -- : 22. { kpis: zeros, recentCheckIns: [],\nlowStock: [] }
+  Ctrl --> Api -- : 23. HTTP 200
+  Api --> View -- : 24. empty dashboard
+  View -> Staff : 25. renderEmptyState()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc -> QTM ++ : 26. find({ issuedAt: { $gte: startOfToday } })
+
+  QTM -> DB : 27. query recent check-ins
+
+  DB --> QTM -- : 28. recent tickets
+
+  QTM --> Svc -- : 29. Array
+  deactivate QTM
+
+  Svc --> Ctrl -- : 30. { kpis, recentCheckIns, lowStock }
+  Ctrl --> Api -- : 31. HTTP 200
+  Api --> View -- : 32. dashboard data
+  View -> Staff : 33. renderWidgets()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+@enduml

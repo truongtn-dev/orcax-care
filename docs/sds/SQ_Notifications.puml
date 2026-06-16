@@ -1,0 +1,111 @@
+@startuml SQ_Notifications
+' Sequence Diagram – UC-11 Notifications
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Patient
+participant NotificationsPage as View
+participant NotificationApiClient as Api
+participant NotificationController as Ctrl
+participant NotificationService as Svc
+participant NotificationModel as NM
+participant NotificationPreferenceModel as NPM
+database MongoDB as DB
+
+== Load inbox ==
+
+Patient -> View ++ : 1. Open notification inbox\n(bell icon)
+
+View -> Api ++ : 2. listNotifications(limit)
+
+Api -> Ctrl ++ : 3. GET /api/notifications
+
+Ctrl -> Svc ++ : 4. listNotifications(userId)
+
+Svc -> NM ++ : 5. find({ userId })
+
+NM -> DB : 6. query notifications collection\nsort by createdAt
+
+  DB --> NM -- : 7. notification list
+
+  NM --> Svc -- : 8. Array
+deactivate NM
+
+Svc -> NM ++ : 9. countDocuments({ userId, isRead: false })
+
+NM -> DB : 10. count unread notifications
+
+  DB --> NM -- : 11. unread count
+
+  NM --> Svc -- : 12. Number
+deactivate NM
+
+Svc --> Ctrl -- : 13. { notifications, unreadCount }
+Ctrl --> Api -- : 14. HTTP 200\ninbox data
+Api --> View -- : 15. success response
+View -> Patient : 16. render inbox + badge
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Mark all as read ==
+
+Patient -> View ++ : 17. Click Mark all as read
+
+View -> Api ++ : 18. markAllRead()
+
+Api -> Ctrl ++ : 19. PUT /api/notifications/read-all
+
+Ctrl -> Svc ++ : 20. markAllRead(userId)
+
+Svc -> NM ++ : 21. updateMany({ userId, isRead: false },\n{ isRead: true, readAt })
+
+NM -> DB : 22. update notifications
+
+  DB --> NM -- : 23. ack
+
+  NM --> Svc -- : 24. void
+deactivate NM
+
+Svc --> Ctrl -- : 25. void
+Ctrl --> Api -- : 26. HTTP 200\nsuccess
+Api --> View -- : 27. success response
+View -> Patient : 28. clear unread badge
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+== Update preferences ==
+
+Patient -> View ++ : 29. Toggle notification types\nand save
+
+View -> Api ++ : 30. updatePreferences(prefs)
+
+Api -> Ctrl ++ : 31. PUT /api/notifications/preferences\n{ reminderEnabled, resultReadyEnabled, ... }
+
+Ctrl -> Svc ++ : 32. updatePreferences(userId, prefs)
+
+Svc -> NPM ++ : 33. updateOne({ userId }, { $set: prefs },\n{ upsert: true })
+
+NPM -> DB : 34. update notification_preferences
+
+  DB --> NPM -- : 35. ack
+
+  NPM --> Svc -- : 36. PreferenceDocument
+deactivate NPM
+
+Svc --> Ctrl -- : 37. preferences
+Ctrl --> Api -- : 38. HTTP 200\npreferences saved
+Api --> View -- : 39. success response
+View -> Patient : 40. show saved state
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

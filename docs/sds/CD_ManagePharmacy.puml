@@ -1,0 +1,106 @@
+@startuml CD_ManagePharmacy
+' Class Diagram – UC-32 Manage Pharmacy
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class ManagePharmacyPage {
+  - medicines : Array
+  - name : String
+  - unit : String
+  - price : Number
+  - reorderLevel : Number
+  - inboundQuantity : Number
+  - batchNo : String
+  - expiryDate : Date
+  - outboundQuantity : Number
+  - outboundReason : String
+  - lowStockAlerts : Array
+  - errorMessage : String
+  --
+  + loadInventory() : void
+  + handleCreateMedicine() : void
+  + handleUpdateMedicine(id : ObjectId) : void
+  + handleStockInbound(medicineId : ObjectId) : void
+  + handleStockOutbound(medicineId : ObjectId) : void
+  + loadLowStockAlerts() : void
+}
+
+class PharmacyApiClient {
+  --
+  + getMedicines() : Promise<Array>
+  + createMedicine(payload : Object) : Promise<MedicineResponse>
+  + updateMedicine(id : ObjectId, payload : Object) : Promise<MedicineResponse>
+  + recordInbound(medicineId : ObjectId, payload : Object) : Promise<void>
+  + recordOutbound(medicineId : ObjectId, payload : Object) : Promise<void>
+  + getLowStockAlerts() : Promise<Array>
+}
+
+class PharmacyController {
+  - pharmacyService : PharmacyService
+  --
+  + getMedicines(req : Request, res : Response) : void
+  + createMedicine(req : Request, res : Response) : void
+  + updateMedicine(req : Request, res : Response) : void
+  + recordInbound(req : Request, res : Response) : void
+  + recordOutbound(req : Request, res : Response) : void
+  + getLowStockAlerts(req : Request, res : Response) : void
+}
+
+class PharmacyService {
+  --
+  + listMedicines() : Array
+  + createMedicine(payload : Object) : MedicineDocument
+  + updateMedicine(id : ObjectId, payload : Object) : MedicineDocument
+  + recordInbound(medicineId : ObjectId, payload : Object, staffId : ObjectId) : void
+  + recordOutbound(medicineId : ObjectId, payload : Object, staffId : ObjectId) : void
+  + getLowStockMedicines() : Array
+}
+
+class MedicineModel {
+  - name : String
+  - unit : String
+  - price : Number
+  - stockQuantity : Number
+  - reorderLevel : Number
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+  + insertOne(doc : Object) : MedicineDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class StockMovementModel {
+  - medicineId : ObjectId
+  - type : String
+  - quantity : Number
+  - batchNo : String
+  - expiryDate : Date
+  - reason : String
+  - by : ObjectId
+  --
+  + insertOne(doc : Object) : StockMovementDocument
+  + find(filter : Object) : Array
+}
+
+' Bố cục
+ManagePharmacyPage -[hidden]r- PharmacyApiClient
+PharmacyApiClient -[hidden]r- PharmacyController
+PharmacyController -[hidden]d- PharmacyService
+PharmacyService -[hidden]d- MedicineModel
+MedicineModel -[hidden]r- StockMovementModel
+
+' Association
+ManagePharmacyPage "1" --> "1" PharmacyApiClient : uses
+PharmacyApiClient "1" --> "1" PharmacyController : calls
+PharmacyController "1" --> "1" PharmacyService : uses
+PharmacyService "1" --> "1" MedicineModel : uses
+PharmacyService "1" --> "1" StockMovementModel : creates
+
+@enduml

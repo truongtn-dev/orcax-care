@@ -1,0 +1,120 @@
+@startuml SQ_PatientEMRTimeline
+' Sequence Diagram – UC-21 View Patient EMR Timeline
+skinparam monochrome true
+skinparam shadowing false
+skinparam defaultFontName "CMU Sans Serif"
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor Doctor
+participant PatientEMRTimelinePage as View
+participant EmrTimelineApiClient as Api
+participant EmrTimelineController as Ctrl
+participant EmrTimelineService as Svc
+participant EncounterModel as EM
+participant DiagnosisModel as DM
+participant PrescriptionModel as PM
+participant MedicalImageModel as MIM
+database MongoDB as DB
+
+== Load EMR timeline ==
+
+Doctor -> View ++ : 1. Open patient EMR timeline
+
+View -> Api ++ : 2. getPatientTimeline(patientId, typeFilter)
+
+Api -> Ctrl ++ : 3. GET /api/emr/patients/:id/timeline?type
+
+Ctrl -> Svc ++ : 4. getTimeline(doctorId, patientId, type)
+
+Svc -> Svc : 5. verifyAccess(doctorId, patientId)
+
+Svc -> EM ++ : 6. aggregate([{ $match: { patientId, status: "signed-off" } },\n{ $lookup: diagnoses }, { $lookup: prescriptions },\n{ $lookup: medicalImages }])
+
+EM -> DB : 7. aggregate encounters
+
+  DB --> EM -- : 8. timeline items
+
+  EM --> Svc -- : 9. Array
+deactivate EM
+
+alt [1] Access denied\n(no prior encounter with doctor)
+
+  Svc --> Ctrl -- : 10. HTTP 403\n"Access denied."
+  Ctrl --> Api -- : 11. error response
+  Api --> View -- : 12. error response
+  View -> Doctor : 13. showAccessDenied()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+else [2] Success
+
+  Svc --> Ctrl -- : 14. timeline items
+  Ctrl --> Api -- : 15. HTTP 200
+  Api --> View -- : 16. timeline response
+  View -> Doctor : 17. renderTimeline()
+  deactivate Svc
+  deactivate Ctrl
+  deactivate Api
+  deactivate View
+
+end
+
+== Open encounter detail ==
+
+Doctor -> View ++ : 18. Click timeline item
+
+View -> Api ++ : 19. getEncounterDetail(encounterId)
+
+Api -> Ctrl ++ : 20. GET /api/emr/encounters/:id
+
+Ctrl -> Svc ++ : 21. getEncounterDetail(encounterId)
+
+Svc -> EM ++ : 22. findOne({ _id: encounterId })
+
+EM -> DB : 23. query encounters
+
+  DB --> EM -- : 24. EncounterDocument
+
+  EM --> Svc -- : 25. encounter
+deactivate EM
+
+Svc -> DM ++ : 26. find({ encounterId })
+
+DM -> DB : 27. query diagnoses
+
+  DB --> DM -- : 28. diagnosis list
+
+  DM --> Svc -- : 29. Array
+deactivate DM
+
+Svc -> PM ++ : 30. find({ encounterId })
+
+PM -> DB : 31. query prescriptions
+
+  DB --> PM -- : 32. prescription list
+
+  PM --> Svc -- : 33. Array
+deactivate PM
+
+Svc -> MIM ++ : 34. find({ encounterId })
+
+MIM -> DB : 35. query medical_images
+
+  DB --> MIM -- : 36. image list
+
+  MIM --> Svc -- : 37. Array
+deactivate MIM
+
+Svc --> Ctrl -- : 38. encounter detail
+Ctrl --> Api -- : 39. HTTP 200
+Api --> View -- : 40. detail response
+View -> Doctor : 41. openDetailDrawer()
+deactivate Svc
+deactivate Ctrl
+deactivate Api
+deactivate View
+
+@enduml

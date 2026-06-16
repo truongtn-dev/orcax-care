@@ -1,0 +1,87 @@
+@startuml CD_MedicalImaging
+' Class Diagram – UC-23 Manage Medical Images
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class MedicalImagingPage {
+  - encounterId : ObjectId
+  - images : Array
+  - selectedImageId : ObjectId
+  - modality : String
+  - description : String
+  - uploadFiles : Array
+  - errorMessage : String
+  --
+  + loadGallery() : void
+  + handleUpload(files : Array) : void
+  + openFullscreen(imageId : ObjectId) : void
+  + handleDelete(imageId : ObjectId) : void
+}
+
+class MedicalImagingApiClient {
+  --
+  + getGallery(encounterId : ObjectId, page : Number) : Promise<Array>
+  + uploadImages(encounterId : ObjectId, files : Array, metadata : Object) : Promise<Array>
+  + deleteImage(imageId : ObjectId) : Promise<void>
+}
+
+class MedicalImagingController {
+  - medicalImagingService : MedicalImagingService
+  --
+  + getGallery(req : Request, res : Response) : void
+  + uploadImages(req : Request, res : Response) : void
+  + deleteImage(req : Request, res : Response) : void
+}
+
+class MedicalImagingService {
+  --
+  + getGallery(encounterId : ObjectId, page : Number) : Array
+  + uploadImages(encounterId : ObjectId, doctorId : ObjectId, files : Array, metadata : Object) : Array
+  + deleteImage(imageId : ObjectId, doctorId : ObjectId) : void
+  + verifyEncounterOpen(encounterId : ObjectId) : EncounterDocument
+}
+
+class MedicalImageModel {
+  - encounterId : ObjectId
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - url : String
+  - modality : String
+  - description : String
+  - sizeBytes : Number
+  --
+  + insertOne(doc : Object) : MedicalImageDocument
+  + find(filter : Object) : Array
+  + deleteOne(filter : Object) : void
+}
+
+class EncounterModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - status : String
+  --
+  + findOne(filter : Object) : EncounterDocument
+}
+
+' Bố cục
+MedicalImagingPage -[hidden]r- MedicalImagingApiClient
+MedicalImagingApiClient -[hidden]r- MedicalImagingController
+MedicalImagingController -[hidden]d- MedicalImagingService
+MedicalImagingService -[hidden]d- MedicalImageModel
+MedicalImageModel -[hidden]r- EncounterModel
+
+' Association
+MedicalImagingPage "1" --> "1" MedicalImagingApiClient : uses
+MedicalImagingApiClient "1" --> "1" MedicalImagingController : calls
+MedicalImagingController "1" --> "1" MedicalImagingService : uses
+MedicalImagingService "1" --> "1" MedicalImageModel : uses
+MedicalImagingService "1" --> "1" EncounterModel : uses
+
+@enduml

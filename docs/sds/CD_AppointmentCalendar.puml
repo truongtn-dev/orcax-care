@@ -1,0 +1,84 @@
+@startuml CD_AppointmentCalendar
+' Class Diagram – UC-20 View Appointment Calendar
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class AppointmentCalendarPage {
+  - selectedDate : Date
+  - viewMode : String
+  - slots : Array
+  - selectedSlotId : ObjectId
+  - blockReason : String
+  - errorMessage : String
+  --
+  + loadSlots(date : Date) : void
+  + openSlotPopup(slotId : ObjectId) : void
+  + handleBlockSlot() : void
+  + handleUnblockSlot() : void
+}
+
+class CalendarApiClient {
+  --
+  + getSlots(date : Date) : Promise<Array>
+  + blockSlot(slotId : ObjectId, reason : String) : Promise<void>
+  + unblockSlot(slotId : ObjectId) : Promise<void>
+}
+
+class CalendarController {
+  - calendarService : CalendarService
+  --
+  + getSlots(req : Request, res : Response) : void
+  + blockSlot(req : Request, res : Response) : void
+  + unblockSlot(req : Request, res : Response) : void
+}
+
+class CalendarService {
+  --
+  + getDoctorSlots(doctorId : ObjectId, date : Date) : Array
+  + blockSlot(slotId : ObjectId, doctorId : ObjectId, reason : String) : void
+  + unblockSlot(slotId : ObjectId, doctorId : ObjectId) : void
+}
+
+class AppointmentSlotModel {
+  - doctorId : ObjectId
+  - date : Date
+  - startTime : String
+  - endTime : String
+  - status : String
+  - blockReason : String
+  --
+  + find(filter : Object) : Array
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class AppointmentModel {
+  - slotId : ObjectId
+  - patientId : ObjectId
+  - reason : String
+  - status : String
+  --
+  + findOne(filter : Object) : AppointmentDocument
+}
+
+' Bố cục
+AppointmentCalendarPage -[hidden]r- CalendarApiClient
+CalendarApiClient -[hidden]r- CalendarController
+CalendarController -[hidden]d- CalendarService
+CalendarService -[hidden]d- AppointmentSlotModel
+AppointmentSlotModel -[hidden]r- AppointmentModel
+
+' Association
+AppointmentCalendarPage "1" --> "1" CalendarApiClient : uses
+CalendarApiClient "1" --> "1" CalendarController : calls
+CalendarController "1" --> "1" CalendarService : uses
+CalendarService "1" --> "1" AppointmentSlotModel : uses
+CalendarService "1" --> "1" AppointmentModel : uses
+
+@enduml

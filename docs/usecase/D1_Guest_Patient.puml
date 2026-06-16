@@ -1,0 +1,219 @@
+@startuml D1_Guest_Patient
+top to bottom direction
+
+skinparam linetype ortho
+skinparam nodesep 35
+skinparam ranksep 45
+skinparam Padding 10
+skinparam packageStyle rectangle
+skinparam ArrowColor #444444
+
+actor Guest
+actor Patient
+Guest <|-- Patient
+
+actor PayOS
+actor Momo
+
+rectangle "OrcaXCare" as sys {
+
+  ' ── A. Guest: Portal & Register ──
+  together {
+    usecase "View Portal Home\n[UC-1]" as UC1
+    usecase "Search Doctors\n[UC-1.1]" as UC11
+    usecase "View Doctor Public Profile\n[UC-1.1.1]" as UC111
+    usecase "View Doctor Reviews\n[UC-1.1.2]" as UC112
+    usecase "View Featured Doctors\n[UC-1.2]" as UC12
+    usecase "Locate Branch\n[UC-1.3]" as UC13
+  }
+
+  together {
+    usecase "Register Patient Account\n[UC-2]" as UC2
+    usecase "Verify Email Address\n[UC-2.1]" as UC21
+    usecase "Resend Verification Email\n[UC-2.2]" as UC22
+  }
+
+  ' ── B. Auth hub (chỉ UC-5 nối tập trung tại đây) ──
+  together {
+    usecase "Log In\n[UC-5]" as UC5
+    usecase "Reset Forgotten Password\n[UC-4]" as UC4
+    usecase "Log Out\n[UC-6]" as UC6
+    usecase "View Patient Dashboard\n[UC-3]" as UC3
+  }
+
+  ' ── C. Profile (extend dashboard) ──
+  together {
+    usecase "Profile Management\n[UC-3.1]" as UC31
+    usecase "View Own Profile\n[UC-3.1.1]" as UC311
+    usecase "Update Own Profile\n[UC-3.1.2]" as UC312
+    usecase "Upload Profile Avatar\n[UC-3.1.3]" as UC313
+    usecase "Change Password\n[UC-3.1.4]" as UC314
+  }
+
+  ' ── D. Appointments ──
+  together {
+    usecase "Book Appointment\n[UC-7]" as UC7
+    usecase "Apply Insurance Discount\n[UC-21]" as UC21
+    usecase "View Appointment List\n[UC-8]" as UC8
+    usecase "View Appointment Detail\n[UC-9]" as UC9
+    usecase "Cancel Appointment\n[UC-10]" as UC10
+    usecase "Reschedule Appointment\n[UC-11]" as UC11
+    usecase "Rate Doctor\n[UC-30]" as UC30
+  }
+
+  ' ── E. Wallet ──
+  together {
+    usecase "View Wallet Balance\n[UC-12]" as UC12
+    usecase "Top Up Wallet via PayOS\n[UC-13]" as UC13
+    usecase "Pay via Momo\n[UC-14]" as UC14
+    usecase "View Wallet Transaction History\n[UC-15]" as UC15
+  }
+
+  ' ── F. Insurance ──
+  together {
+    usecase "View Insurance Card List\n[UC-16]" as UC16
+    usecase "Add Insurance Card\n[UC-17]" as UC17
+    usecase "Update Insurance Card\n[UC-18]" as UC18
+    usecase "Delete Insurance Card\n[UC-19]" as UC19
+    usecase "Scan Insurance Card (OCR)\n[UC-20]" as UC20
+  }
+
+  ' ── G. Queue & Prescriptions ──
+  together {
+    usecase "View Queue Status\n[UC-22]" as UC22
+    usecase "View Prescription History\n[UC-23]" as UC23
+    usecase "View Prescription Detail\n[UC-24]" as UC24
+    usecase "Export Prescription PDF\n[UC-25]" as UC25
+    usecase "View Prescription QR Code\n[UC-26]" as UC26
+  }
+
+  ' ── H. Engagement & Support ──
+  together {
+    usecase "View Favorite Doctors\n[UC-28]" as UC28
+    usecase "Add Doctor to Favorites\n[UC-27]" as UC27
+    usecase "Remove Doctor from Favorites\n[UC-29]" as UC29
+    usecase "Configure Notification Preferences\n[UC-31]" as UC31
+    usecase "View Notification Inbox\n[UC-32]" as UC32
+    usecase "Mark Notification as Read\n[UC-33]" as UC33
+    usecase "Submit Complaint\n[UC-34]" as UC34
+    usecase "View Own Complaint List\n[UC-35]" as UC35
+    usecase "View Own Complaint Detail\n[UC-36]" as UC36
+  }
+}
+
+' ═══ ACTOR → use case (ít line nhất có thể) ═══
+Guest --> UC1
+Guest --> UC2
+Guest --> UC5
+
+Patient --> UC3
+Patient --> UC6
+Patient --> UC7
+Patient --> UC8
+Patient --> UC12
+Patient --> UC16
+Patient --> UC22
+Patient --> UC23
+Patient --> UC28
+Patient --> UC32
+Patient --> UC34
+
+' ═══ Auth hub — CHỈ 4 quan hệ tới UC-5 ═══
+UC3 ..> UC5 : <<include>>
+UC6 ..> UC5 : <<include>>
+UC4 ..> UC5 : <<extend>>
+UC22 ..> UC5 : <<extend>>
+
+' ═══ Portal ═══
+UC11 ..> UC1 : <<extend>>
+UC111 ..> UC11 : <<extend>>
+UC112 ..> UC111 : <<extend>>
+UC12 ..> UC1 : <<extend>>
+UC13 ..> UC1 : <<extend>>
+
+' ═══ Register ═══
+UC21 ..> UC2 : <<include>>
+UC22 ..> UC2 : <<extend>>
+
+' ═══ Profile ═══
+UC31 ..> UC3 : <<extend>>
+UC311 ..> UC31 : <<include>>
+UC312 ..> UC31 : <<extend>>
+UC313 ..> UC31 : <<extend>>
+UC314 ..> UC31 : <<extend>>
+
+' ═══ Appointments ═══
+UC21 ..> UC7 : <<include>>
+UC8 ..> UC3 : <<extend>>
+UC7 ..> UC3 : <<extend>>
+UC9 ..> UC8 : <<extend>>
+UC10 ..> UC9 : <<extend>>
+UC11 ..> UC9 : <<extend>>
+UC30 ..> UC9 : <<extend>>
+UC14 ..> UC7 : <<extend>>
+
+' ═══ Wallet ═══
+UC12 ..> UC3 : <<extend>>
+UC15 ..> UC12 : <<extend>>
+UC13 ..> UC12 : <<extend>>
+
+' ═══ Insurance ═══
+UC16 ..> UC3 : <<extend>>
+UC17 ..> UC16 : <<extend>>
+UC18 ..> UC16 : <<extend>>
+UC19 ..> UC16 : <<extend>>
+UC20 ..> UC17 : <<extend>>
+
+' ═══ Queue & Prescriptions ═══
+UC22 ..> UC3 : <<extend>>
+UC23 ..> UC3 : <<extend>>
+UC24 ..> UC23 : <<extend>>
+UC25 ..> UC24 : <<extend>>
+UC26 ..> UC24 : <<extend>>
+
+' ═══ Engagement & Support ═══
+UC28 ..> UC3 : <<extend>>
+UC27 ..> UC28 : <<extend>>
+UC29 ..> UC28 : <<extend>>
+UC32 ..> UC3 : <<extend>>
+UC31 ..> UC32 : <<extend>>
+UC33 ..> UC32 : <<extend>>
+UC34 ..> UC3 : <<extend>>
+UC35 ..> UC34 : <<extend>>
+UC36 ..> UC35 : <<extend>>
+
+' ═══ Payment gateways ═══
+UC13 ..> PayOS
+UC14 ..> Momo
+
+note right of UC5
+  **Precondition UC-7 ~ UC-36:**
+  Patient đã Log In [UC-5]
+  (không vẽ include từng UC)
+end note
+
+note bottom of UC7
+  Wallet deduct · Booking confirm (stub)
+  · Appointment reminder (stub)
+end note
+
+' ═══ Layout: xếp cột dọc, tránh chéo ═══
+Guest -[hidden]right-> Patient
+UC1 -[hidden]down-> UC2
+UC2 -[hidden]down-> UC5
+UC5 -[hidden]down-> UC3
+UC3 -[hidden]down-> UC7
+UC7 -[hidden]down-> UC12
+UC12 -[hidden]down-> UC16
+UC16 -[hidden]down-> UC22
+UC22 -[hidden]down-> UC28
+
+UC11 -[hidden]right-> UC111
+UC111 -[hidden]right-> UC112
+UC8 -[hidden]right-> UC9
+UC9 -[hidden]right-> UC10
+
+PayOS -[hidden]right-> Momo
+UC13 -[hidden]down-> PayOS
+
+@enduml

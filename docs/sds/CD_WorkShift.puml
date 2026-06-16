@@ -1,0 +1,91 @@
+@startuml CD_WorkShift
+' Class Diagram – UC-19 View Work Shift Schedule
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class WorkShiftPage {
+  - viewMode : String
+  - periodStart : Date
+  - periodEnd : Date
+  - shifts : Array
+  - selectedShiftId : ObjectId
+  - errorMessage : String
+  --
+  + loadShifts() : void
+  + switchView(mode : String) : void
+  + navigatePeriod(direction : String) : void
+  + openShiftDetail(shiftId : ObjectId) : void
+}
+
+class WorkShiftApiClient {
+  --
+  + getShifts(from : Date, to : Date) : Promise<Array>
+  + getShiftDetail(shiftId : ObjectId) : Promise<ShiftDetailResponse>
+}
+
+class WorkShiftController {
+  - workShiftService : WorkShiftService
+  --
+  + getShifts(req : Request, res : Response) : void
+  + getShiftDetail(req : Request, res : Response) : void
+}
+
+class WorkShiftService {
+  --
+  + listDoctorShifts(doctorId : ObjectId, from : Date, to : Date) : Array
+  + getShiftDetail(shiftId : ObjectId) : ShiftDetail
+  + countGeneratedSlots(shiftId : ObjectId) : Number
+}
+
+class WorkShiftModel {
+  - doctorId : ObjectId
+  - roomId : ObjectId
+  - date : Date
+  - startTime : String
+  - endTime : String
+  - shiftType : String
+  --
+  + find(filter : Object) : Array
+  + findOne(filter : Object) : WorkShiftDocument
+}
+
+class ClinicRoomModel {
+  - code : String
+  - name : String
+  - departmentId : ObjectId
+  --
+  + findOne(filter : Object) : ClinicRoomDocument
+}
+
+class AppointmentSlotModel {
+  - shiftId : ObjectId
+  - doctorId : ObjectId
+  - status : String
+  --
+  + countDocuments(filter : Object) : Number
+}
+
+' Bố cục
+WorkShiftPage -[hidden]r- WorkShiftApiClient
+WorkShiftApiClient -[hidden]r- WorkShiftController
+WorkShiftController -[hidden]d- WorkShiftService
+WorkShiftService -[hidden]d- WorkShiftModel
+WorkShiftModel -[hidden]r- ClinicRoomModel
+ClinicRoomModel -[hidden]r- AppointmentSlotModel
+
+' Association
+WorkShiftPage "1" --> "1" WorkShiftApiClient : uses
+WorkShiftApiClient "1" --> "1" WorkShiftController : calls
+WorkShiftController "1" --> "1" WorkShiftService : uses
+WorkShiftService "1" --> "1" WorkShiftModel : uses
+WorkShiftService "1" --> "1" ClinicRoomModel : uses
+WorkShiftService "1" --> "1" AppointmentSlotModel : uses
+
+@enduml

@@ -1,0 +1,89 @@
+@startuml CD_PortalHome
+' Class Diagram – UC-1 View Portal Home
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 55
+skinparam ranksep 55
+hide circle
+
+class HomePage {
+  - featuredDoctors : Array
+  - specialties : Array
+  - departments : Array
+  - errorMessage : String
+  --
+  + loadPageData() : void
+  + renderHero() : void
+  + renderFeaturedDoctors() : void
+  + navigateToSearch() : void
+}
+
+class PublicApiClient {
+  --
+  + getFeaturedDoctors(limit : Number) : Promise<Array>
+  + getSpecialties() : Promise<Array>
+  + getDepartments() : Promise<Array>
+  + searchDoctors(params : Object) : Promise<SearchResult>
+}
+
+class PublicController {
+  - doctorSearchService : DoctorSearchService
+  --
+  + listFeaturedDoctors(req : Request, res : Response) : void
+  + listSpecialties(req : Request, res : Response) : void
+  + listDepartments(req : Request, res : Response) : void
+  + searchDoctors(req : Request, res : Response) : void
+}
+
+class DoctorSearchService {
+  --
+  + getFeaturedDoctors(limit : Number) : Array
+  + listSpecialties() : Array
+  + listDepartments() : Array
+  + searchDoctors(filters : Object) : SearchResult
+}
+
+class DoctorModel {
+  - userId : ObjectId
+  - specialtyId : ObjectId
+  - departmentId : ObjectId
+  - isActive : boolean
+  - reviewRating : Number
+  --
+  + aggregate(pipeline : Array) : Array
+}
+
+class SpecialtyModel {
+  - name : String
+  - code : String
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+}
+
+class DepartmentModel {
+  - name : String
+  - isActive : boolean
+  --
+  + find(filter : Object) : Array
+}
+
+HomePage -[hidden]r- PublicApiClient
+PublicApiClient -[hidden]r- PublicController
+PublicController -[hidden]d- DoctorSearchService
+DoctorSearchService -[hidden]d- DoctorModel
+DoctorModel -[hidden]r- SpecialtyModel
+SpecialtyModel -[hidden]r- DepartmentModel
+
+HomePage "1" --> "1" PublicApiClient : uses
+PublicApiClient "1" --> "1" PublicController : calls
+PublicController "1" --> "1" DoctorSearchService : uses
+DoctorSearchService "1" --> "1" DoctorModel : uses
+DoctorSearchService "1" --> "1" SpecialtyModel : uses
+DoctorSearchService "1" --> "1" DepartmentModel : uses
+
+@enduml

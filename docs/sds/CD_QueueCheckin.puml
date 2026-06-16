@@ -1,0 +1,95 @@
+@startuml CD_QueueCheckin
+' Class Diagram – UC-33 Manage Queue Check-in
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "CMU Sans Serif"
+skinparam classFontSize 11
+skinparam classFontStyle normal
+skinparam nodesep 60
+skinparam ranksep 55
+hide circle
+
+class QueueCheckinPage {
+  - searchKeyword : String
+  - appointment : Object
+  - todayCheckIns : Array
+  - ticketPreview : Object
+  - errorMessage : String
+  --
+  + handleSearch() : void
+  + handleCheckIn() : void
+  + loadTodayCheckIns() : void
+  + printTicket() : void
+}
+
+class QueueCheckinApiClient {
+  --
+  + searchAppointment(keyword : String) : Promise<AppointmentResponse>
+  + checkInAndIssueTicket(appointmentId : ObjectId) : Promise<TicketResponse>
+  + getTodayCheckIns() : Promise<Array>
+}
+
+class QueueCheckinController {
+  - queueCheckinService : QueueCheckinService
+  --
+  + searchAppointment(req : Request, res : Response) : void
+  + checkInAndIssueTicket(req : Request, res : Response) : void
+  + getTodayCheckIns(req : Request, res : Response) : void
+}
+
+class QueueCheckinService {
+  --
+  + findTodayAppointment(keyword : String) : AppointmentDocument
+  + checkInAndIssueTicket(appointmentId : ObjectId, staffId : ObjectId) : QueueTicketDocument
+  + listTodayCheckIns() : Array
+}
+
+class AppointmentModel {
+  - patientId : ObjectId
+  - doctorId : ObjectId
+  - roomId : ObjectId
+  - bookingCode : String
+  - startTime : Date
+  - status : String
+  --
+  + findOne(filter : Object) : AppointmentDocument
+  + updateOne(filter : Object, update : Object) : void
+}
+
+class QueueSessionModel {
+  - roomId : ObjectId
+  - lastNumber : Number
+  - status : String
+  --
+  + findOneAndUpdate(filter : Object, update : Object, options : Object) : QueueSessionDocument
+}
+
+class QueueTicketModel {
+  - sessionId : ObjectId
+  - appointmentId : ObjectId
+  - patientId : ObjectId
+  - number : Number
+  - status : String
+  --
+  + insertOne(doc : Object) : QueueTicketDocument
+  + find(filter : Object) : Array
+}
+
+' Bố cục
+QueueCheckinPage -[hidden]r- QueueCheckinApiClient
+QueueCheckinApiClient -[hidden]r- QueueCheckinController
+QueueCheckinController -[hidden]d- QueueCheckinService
+QueueCheckinService -[hidden]d- AppointmentModel
+AppointmentModel -[hidden]r- QueueSessionModel
+QueueSessionModel -[hidden]r- QueueTicketModel
+
+' Association
+QueueCheckinPage "1" --> "1" QueueCheckinApiClient : uses
+QueueCheckinApiClient "1" --> "1" QueueCheckinController : calls
+QueueCheckinController "1" --> "1" QueueCheckinService : uses
+QueueCheckinService "1" --> "1" AppointmentModel : uses
+QueueCheckinService "1" --> "1" QueueSessionModel : uses
+QueueCheckinService "1" --> "1" QueueTicketModel : creates
+
+@enduml
