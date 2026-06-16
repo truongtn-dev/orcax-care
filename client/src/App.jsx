@@ -38,6 +38,7 @@ import EditWorkShiftPage from "./pages/admin/EditWorkShiftPage.jsx";
 import GenerateAppointmentSlotsPage from "./pages/admin/GenerateAppointmentSlotsPage.jsx";
 import WorkShiftsListPage from "./pages/admin/WorkShiftsListPage.jsx";
 import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
+import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
@@ -350,6 +351,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["doctor"]}>
                 <DoctorDashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/today-appointments"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorTodayAppointmentsPage />
               </ProtectedRoute>
             }
           />

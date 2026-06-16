@@ -9,6 +9,14 @@ export const DoctorApiClient = {
     return api.get("/api/doctor/schedule", { params });
   },
 
+  listTodayAppointments(params) {
+    return api.get("/api/doctor/appointments/today", { params });
+  },
+
+  getAppointment(id) {
+    return api.get(`/api/doctor/appointments/${id}`);
+  },
+
   getAppointmentSlot(id) {
     return api.get(`/api/doctor/appointment-slots/${id}`);
   },
