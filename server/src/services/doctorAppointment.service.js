@@ -3,7 +3,7 @@ import { Appointment } from "../models/Appointment.js";
 import { Doctor } from "../models/Doctor.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
-const VALID_STATUSES = new Set(["scheduled", "checked_in", "completed", "cancelled"]);
+const VALID_STATUSES = new Set(["confirmed", "completed", "cancelled"]);
 
 async function resolveDoctorForUser(userId) {
   const doctor = await Doctor.findOne({ userId, isActive: true })
@@ -42,9 +42,9 @@ function serializeAppointment(appointment) {
 
   return {
     _id: appointment._id.toString(),
-    referenceCode: appointment.referenceCode,
     status: appointment.status,
     reason: appointment.reason || "",
+    fee: appointment.fee,
     patientName: patient?.fullName || "",
     patientEmail: patient?.email || "",
     slot: slot

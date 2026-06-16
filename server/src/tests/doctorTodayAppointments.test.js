@@ -95,14 +95,14 @@ async function createSlot({ doctorId, roomId, date, startTime, endTime }) {
   });
 }
 
-async function createAppointment({ patientUserId, doctorId, slotId, status, referenceCode }) {
+async function createAppointment({ patientUserId, doctorId, slotId, status, reason = "Today visit" }) {
   return Appointment.create({
     patientUserId,
     doctorId,
     slotId,
     status,
-    reason: "Today visit",
-    referenceCode,
+    reason,
+    fee: 200000,
   });
 }
 
@@ -214,36 +214,31 @@ describe("UC-17 View Today Appointments", () => {
       patientUserId: patientA._id,
       doctorId: doctor._id,
       slotId: morningSlot._id,
-      status: "scheduled",
-      referenceCode: "APT-TODAY-0800",
+      status: "confirmed",
     });
     afternoonAppointment = await createAppointment({
       patientUserId: patientB._id,
       doctorId: doctor._id,
       slotId: afternoonSlot._id,
-      status: "checked_in",
-      referenceCode: "APT-TODAY-1500",
+      status: "completed",
     });
     otherDoctorAppointment = await createAppointment({
       patientUserId: patientC._id,
       doctorId: otherDoctor._id,
       slotId: otherDoctorSlot._id,
-      status: "scheduled",
-      referenceCode: "APT-OTHER-0900",
+      status: "confirmed",
     });
     await createAppointment({
       patientUserId: patientA._id,
       doctorId: doctor._id,
       slotId: yesterdaySlot._id,
-      status: "scheduled",
-      referenceCode: "APT-YESTERDAY",
+      status: "confirmed",
     });
     await createAppointment({
       patientUserId: patientB._id,
       doctorId: doctor._id,
       slotId: tomorrowSlot._id,
-      status: "scheduled",
-      referenceCode: "APT-TOMORROW",
+      status: "confirmed",
     });
   });
 
@@ -261,21 +256,22 @@ describe("UC-17 View Today Appointments", () => {
     const body = await res.json();
     assert.equal(body.date, formatDateOnly(startOfToday()));
     assert.equal(body.total, 2);
-    assert.equal(body.items[0].referenceCode, "APT-TODAY-0800");
     assert.equal(body.items[0].patientName, "Patient A");
-    assert.equal(body.items[1].referenceCode, "APT-TODAY-1500");
+    assert.equal(body.items[0].slot.startTime, "08:00");
+    assert.equal(body.items[1].patientName, "Patient B");
+    assert.equal(body.items[1].slot.startTime, "15:00");
   });
 
   test("filters today's appointments by status", async () => {
-    const res = await fetch(`${baseUrl}/api/doctor/appointments/today?status=checked_in`, {
+    const res = await fetch(`${baseUrl}/api/doctor/appointments/today?status=completed`, {
       headers: { Authorization: await authHeaderFor(doctorUser) },
     });
 
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.total, 1);
-    assert.equal(body.items[0].referenceCode, "APT-TODAY-1500");
-    assert.equal(body.items[0].status, "checked_in");
+    assert.equal(body.items[0].patientName, "Patient B");
+    assert.equal(body.items[0].status, "completed");
   });
 
   test("sorts today's appointments by time descending", async () => {
@@ -285,8 +281,8 @@ describe("UC-17 View Today Appointments", () => {
 
     assert.equal(res.status, 200);
     const body = await res.json();
-    assert.equal(body.items[0].referenceCode, afternoonAppointment.referenceCode);
-    assert.equal(body.items[1].referenceCode, morningAppointment.referenceCode);
+    assert.equal(body.items[0]._id, afternoonAppointment._id.toString());
+    assert.equal(body.items[1]._id, morningAppointment._id.toString());
   });
 
   test("does not open another doctor's appointment detail", async () => {
