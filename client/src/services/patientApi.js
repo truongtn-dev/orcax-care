@@ -68,4 +68,8 @@ export const PatientApiClient = {
   createAppointment(payload) {
     return api.post("/api/patient/appointments", payload);
   },
+
+  extractInsuranceCardOcr(payload) {
+    return api.post("/api/patient/insurance-cards/ocr", payload);
+  },
 };

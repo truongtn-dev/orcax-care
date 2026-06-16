@@ -36,6 +36,10 @@ patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopu
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
+patientRouter.post(
+  "/insurance-cards/ocr",
+  PatientInsuranceCardController.extractInsuranceCardOcr
+);
 
 patientRouter.get("/favorites", PatientFavoriteDoctorController.listFavoriteDoctors);
 patientRouter.post("/favorites/:doctorId", PatientFavoriteDoctorController.addFavoriteDoctor);

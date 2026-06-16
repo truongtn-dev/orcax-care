@@ -22,3 +22,13 @@ export async function createInsuranceCard(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function extractInsuranceCardOcr(req, res) {
+  try {
+    const result = await PatientInsuranceCardService.extractInsuranceCardOcr(req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}

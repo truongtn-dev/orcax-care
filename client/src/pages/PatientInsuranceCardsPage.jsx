@@ -22,6 +22,9 @@ export default function PatientInsuranceCardsPage() {
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocrMessage, setOcrMessage] = useState("");
+  const [ocrFileName, setOcrFileName] = useState("");
   const [error, setError] = useState("");
 
   const loadCards = useCallback(async () => {
@@ -48,7 +51,33 @@ export default function PatientInsuranceCardsPage() {
       ...current,
       [name]: type === "checkbox" ? checked : value,
     }));
+    setOcrMessage("");
     setError("");
+  };
+
+  const onOcrImageChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setOcrBusy(true);
+    setOcrFileName(file.name);
+    setOcrMessage("");
+    setError("");
+
+    try {
+      const { data } = await PatientApiClient.extractInsuranceCardOcr({
+        fileName: file.name,
+      });
+      setForm((current) => ({
+        ...current,
+        policyNumber: data.policyNumber || current.policyNumber,
+      }));
+      setOcrMessage("Policy number filled from OCR stub. You can edit it before saving.");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setOcrBusy(false);
+    }
   };
 
   const onSubmit = async (event) => {
@@ -66,6 +95,8 @@ export default function PatientInsuranceCardsPage() {
         isPrimary: form.isPrimary,
       });
       setForm(emptyForm);
+      setOcrFileName("");
+      setOcrMessage("");
       setShowForm(false);
       await loadCards();
     } catch (err) {
@@ -144,6 +175,22 @@ export default function PatientInsuranceCardsPage() {
                           required
                         />
                       </label>
+                      <label>
+                        Upload card image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={onOcrImageChange}
+                          disabled={ocrBusy || saving}
+                        />
+                        <span className="hint">
+                          {ocrBusy
+                            ? "Reading image..."
+                            : "OCR is a demo stub. It suggests a policy number from the file name."}
+                        </span>
+                        {ocrFileName && <span className="hint">Selected file: {ocrFileName}</span>}
+                      </label>
+                      {ocrMessage && <div className="alert alert-success">{ocrMessage}</div>}
                       <label>
                         Policy number
                         <input
