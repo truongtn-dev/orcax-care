@@ -49,7 +49,7 @@ export default function SearchableSelect({
   const [pinnedLabel, setPinnedLabel] = useState("");
 
   const selected = options.find((o) => o.value === value) || staticOptions.find((o) => o.value === value);
-  const displayLabel = selected?.label ?? (value ? pinnedLabel : "") || placeholder;
+  const displayLabel = selected?.label ?? ((value ? pinnedLabel : "") || placeholder);
 
   useEffect(() => {
     if (!value) {
