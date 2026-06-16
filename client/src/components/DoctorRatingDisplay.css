@@ -1,0 +1,131 @@
+.doctor-rating {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.doctor-rating--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.doctor-rating--empty {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.doctor-rating--light.doctor-rating--empty {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.doctor-rating-stars {
+  display: inline-flex;
+  gap: 0.1rem;
+  line-height: 1;
+}
+
+.doctor-rating-star {
+  font-size: 1rem;
+  color: #cbd5e1;
+}
+
+.doctor-rating-star.is-filled {
+  color: #f59e0b;
+}
+
+.doctor-rating--light .doctor-rating-star {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.doctor-rating--light .doctor-rating-star.is-filled {
+  color: #fde68a;
+}
+
+.doctor-rating-meta {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.45rem;
+  line-height: 1.2;
+}
+
+.doctor-rating-score {
+  font-size: 1.125rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-navy);
+}
+
+.doctor-rating--light .doctor-rating-score {
+  color: #fff;
+}
+
+.doctor-rating-out-of {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.doctor-rating--light .doctor-rating-out-of {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.doctor-rating-count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.doctor-rating--light .doctor-rating-count {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.doctor-rating--compact .doctor-rating-stars {
+  font-size: 0.95rem;
+}
+
+.doctor-rating--compact .doctor-rating-score {
+  font-size: 1rem;
+}
+
+.doctor-rating--compact .doctor-rating-count::before {
+  content: "·";
+  margin-right: 0.45rem;
+  color: inherit;
+  opacity: 0.65;
+}
+
+.doctor-rating--compact .doctor-rating-meta {
+  gap: 0.15rem 0.35rem;
+}
+
+.doctor-rating--panel {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.doctor-rating--panel .doctor-rating-star {
+  font-size: 1.05rem;
+}
+
+.doctor-rating--panel .doctor-rating-score {
+  font-size: 1.125rem;
+}
+
+.doctor-rating--panel .doctor-rating-meta {
+  gap: 0.35rem;
+}
+
+.doctor-rating--panel .doctor-rating-count::before {
+  content: "·";
+  margin-right: 0.35rem;
+  opacity: 0.55;
+}

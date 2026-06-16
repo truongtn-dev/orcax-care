@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
@@ -16,7 +16,44 @@ const emptyForm = {
   isPrimary: false,
 };
 
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+    <path d="M19 12H5" />
+    <path d="m12 19-7-7 7-7" />
+  </svg>
+);
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read the selected image"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function formatValidity(from, to) {
+  if (!from && !to) return "—";
+  return `${from || "—"} → ${to || "—"}`;
+}
+
 export default function PatientInsuranceCardsPage() {
+  const uploadInputId = useId();
   const [cards, setCards] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -26,6 +63,8 @@ export default function PatientInsuranceCardsPage() {
   const [ocrMessage, setOcrMessage] = useState("");
   const [ocrFileName, setOcrFileName] = useState("");
   const [error, setError] = useState("");
+
+  const primaryCount = cards.filter((card) => card.isPrimary).length;
 
   const loadCards = useCallback(async () => {
     setLoading(true);
@@ -59,22 +98,58 @@ export default function PatientInsuranceCardsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      setError("Please choose a JPEG, PNG, or WebP image of your insurance card.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be 5 MB or smaller.");
+      return;
+    }
+
     setOcrBusy(true);
     setOcrFileName(file.name);
     setOcrMessage("");
     setError("");
 
     try {
+      const image = await readFileAsDataUrl(file);
       const { data } = await PatientApiClient.extractInsuranceCardOcr({
         fileName: file.name,
+        image,
       });
+
       setForm((current) => ({
         ...current,
         policyNumber: data.policyNumber || current.policyNumber,
+        holderName: data.holderName || current.holderName,
+        providerName: data.providerName || current.providerName,
+        validFrom: data.validFrom || current.validFrom,
+        validTo: data.validTo || current.validTo,
       }));
-      setOcrMessage("Policy number filled from OCR stub. You can edit it before saving.");
+
+      const confidence =
+        typeof data.confidence === "number" && data.confidence > 0
+          ? ` (${data.confidence}% confidence)`
+          : "";
+      setOcrMessage(
+        data.source === "tesseract"
+          ? `Policy details read from your card${confidence}. Review and edit before saving.`
+          : "Policy number suggested. You can edit all fields before saving."
+      );
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      const apiMessage = getApiErrorMessage(err);
+      setError(apiMessage);
+      if (err?.response?.status === 422) {
+        const partial = err.response.data || {};
+        setForm((current) => ({
+          ...current,
+          holderName: partial.holderName || current.holderName,
+          providerName: partial.providerName || current.providerName,
+          validFrom: partial.validFrom || current.validFrom,
+          validTo: partial.validTo || current.validTo,
+        }));
+      }
     } finally {
       setOcrBusy(false);
     }
@@ -108,170 +183,235 @@ export default function PatientInsuranceCardsPage() {
 
   return (
     <PageLayout>
-      <div className="patient-insurance-page">
-        <div className="page-header">
-          <div className="page-header-row">
-            <div>
-              <h1>Insurance cards</h1>
-              <p>View saved health insurance policies linked to your account.</p>
+      <div className="patient-insurance-fullpage">
+      <div className="patient-insurance-toolbar">
+        <Link to="/patient" className="patient-insurance-back">
+          <BackIcon />
+          Back to dashboard
+        </Link>
+        {!loading && cards.length > 0 && (
+          <button
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowForm((current) => !current)}
+          >
+            {showForm ? "Hide form" : "Add insurance card"}
+          </button>
+        )}
+      </div>
+
+      <section className="patient-insurance-hero">
+        <span className="patient-insurance-hero-orb patient-insurance-hero-orb--1" aria-hidden="true" />
+        <span className="patient-insurance-hero-orb patient-insurance-hero-orb--2" aria-hidden="true" />
+
+        <div className="patient-insurance-hero-inner">
+          <div className="patient-insurance-hero-main">
+            <div className="patient-insurance-hero-icon" aria-hidden="true">
+              <ShieldIcon />
             </div>
-            <Link to="/patient" className="btn btn-secondary">
-              Back to dashboard
-            </Link>
+            <div>
+              <p className="patient-insurance-eyebrow">Health insurance</p>
+              <h1>Insurance cards</h1>
+              <p className="patient-insurance-hero-lead">
+                Saved policies for faster check-in and booking discounts.
+              </p>
+            </div>
+          </div>
+
+          <div className="patient-insurance-hero-stats">
+            <div className="patient-insurance-hero-stat">
+              <strong>{loading ? "…" : cards.length}</strong>
+              <span>Saved</span>
+            </div>
+            <div className="patient-insurance-hero-stat patient-insurance-hero-stat--highlight">
+              <strong>{loading ? "…" : primaryCount}</strong>
+              <span>Primary</span>
+            </div>
           </div>
         </div>
+      </section>
 
+      <div className="patient-insurance-page-body">
         {error && <div className="alert alert-error">{error}</div>}
 
         {loading ? (
-          <p className="patient-insurance-loading">Loading insurance cards…</p>
+          <div className="patient-insurance-panel patient-insurance-loading">
+            <div className="loading-spinner" />
+            <p>Loading insurance cards…</p>
+          </div>
         ) : cards.length === 0 && !showForm ? (
-          <div className="patient-panel">
-            <div className="patient-panel-head">
-              <div className="patient-panel-head-main">
-                <h2>No insurance cards yet</h2>
-                <p className="patient-panel-lead">
-                  Add a policy to use insurance benefits when booking appointments.
-                </p>
-              </div>
+          <div className="patient-insurance-panel patient-insurance-empty">
+            <div className="patient-insurance-empty-icon" aria-hidden="true">
+              <ShieldIcon />
             </div>
-            <div className="patient-panel-body">
-              <button type="button" className="btn btn-primary" onClick={() => setShowForm(true)}>
-                Add insurance card
-              </button>
-            </div>
+            <h2>No insurance cards yet</h2>
+            <p>Add a policy to use insurance benefits when booking appointments.</p>
+            <button type="button" className="btn btn-primary" onClick={() => setShowForm(true)}>
+              Add insurance card
+            </button>
           </div>
         ) : (
           <>
-            <div className="patient-insurance-toolbar">
-              <p className="text-muted">{cards.length} saved polic{cards.length === 1 ? "y" : "ies"}</p>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setShowForm((current) => !current)}
-              >
-                {showForm ? "Hide form" : "Add insurance card"}
-              </button>
-            </div>
-
             {showForm && (
-              <div className="patient-panel" style={{ marginBottom: "1.25rem" }}>
-                <div className="patient-panel-head">
-                  <div className="patient-panel-head-main">
+              <div className="patient-insurance-panel patient-insurance-form-panel">
+                <div className="patient-insurance-form-head">
+                  <div>
                     <h2>Add insurance card</h2>
-                    <p className="patient-panel-lead">Enter your policy details below.</p>
+                    <p>Upload a card photo for OCR, then review the fields below.</p>
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={() => setShowForm(false)}
+                  >
+                    Close
+                  </button>
                 </div>
-                <div className="patient-panel-body">
-                  <form onSubmit={onSubmit} className="form">
-                    <p className="patient-section-label">Policy details</p>
-                    <fieldset className="form-section" style={{ padding: 0, background: "none", border: "none" }}>
-                      <label>
-                        Provider
-                        <input
-                          name="providerName"
-                          value={form.providerName}
-                          onChange={onChange}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Upload card image
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={onOcrImageChange}
-                          disabled={ocrBusy || saving}
-                        />
-                        <span className="hint">
-                          {ocrBusy
-                            ? "Reading image..."
-                            : "OCR is a demo stub. It suggests a policy number from the file name."}
+
+                <form onSubmit={onSubmit} className="patient-insurance-form">
+                  <div className="patient-insurance-form-layout">
+                    <div className="patient-insurance-form-ocr">
+                      <span className="patient-insurance-field-label">Scan card image (OCR)</span>
+                      <input
+                        id={uploadInputId}
+                        type="file"
+                        accept="image/*"
+                        className="patient-insurance-upload-input"
+                        onChange={onOcrImageChange}
+                        disabled={ocrBusy || saving}
+                      />
+                      <label
+                        htmlFor={uploadInputId}
+                        className={`patient-insurance-upload-box${ocrBusy ? " is-busy" : ""}`}
+                      >
+                        <span className="patient-insurance-upload-icon" aria-hidden="true">
+                          <UploadIcon />
                         </span>
-                        {ocrFileName && <span className="hint">Selected file: {ocrFileName}</span>}
+                        <p className="patient-insurance-upload-title">
+                          {ocrBusy ? "Reading card image…" : "Upload insurance card photo"}
+                        </p>
+                        <p className="patient-insurance-upload-hint">
+                          JPEG, PNG or WebP · max 5 MB
+                        </p>
+                        {ocrFileName && (
+                          <span className="patient-insurance-upload-file">{ocrFileName}</span>
+                        )}
                       </label>
-                      {ocrMessage && <div className="alert alert-success">{ocrMessage}</div>}
-                      <label>
-                        Policy number
-                        <input
-                          name="policyNumber"
-                          value={form.policyNumber}
-                          onChange={onChange}
-                          required
-                        />
-                      </label>
-                      <label>
-                        Policy holder
-                        <input name="holderName" value={form.holderName} onChange={onChange} required />
-                      </label>
-                      <label>
-                        Coverage type
-                        <input name="coverageType" value={form.coverageType} onChange={onChange} />
-                      </label>
-                      <div className="form-row">
+                      {ocrMessage && <p className="patient-insurance-ocr-success">{ocrMessage}</p>}
+                    </div>
+
+                    <div className="patient-insurance-form-fields">
+                      <p className="patient-insurance-field-label patient-insurance-field-label--section">
+                        Policy details
+                      </p>
+                      <div className="patient-insurance-form-grid">
                         <label>
-                          Valid from
+                          <span className="patient-insurance-field-label">Provider</span>
+                          <input
+                            name="providerName"
+                            value={form.providerName}
+                            onChange={onChange}
+                            placeholder="e.g. Bảo Việt, BHYT"
+                            required
+                          />
+                        </label>
+                        <label>
+                          <span className="patient-insurance-field-label">Policy number</span>
+                          <input
+                            name="policyNumber"
+                            value={form.policyNumber}
+                            onChange={onChange}
+                            placeholder="e.g. BV-2026-889944"
+                            required
+                          />
+                        </label>
+                        <label>
+                          <span className="patient-insurance-field-label">Policy holder</span>
+                          <input
+                            name="holderName"
+                            value={form.holderName}
+                            onChange={onChange}
+                            placeholder="Full name on the card"
+                            required
+                          />
+                        </label>
+                        <label>
+                          <span className="patient-insurance-field-label">Coverage type</span>
+                          <input
+                            name="coverageType"
+                            value={form.coverageType}
+                            onChange={onChange}
+                            placeholder="e.g. Student, Family"
+                          />
+                        </label>
+                        <label>
+                          <span className="patient-insurance-field-label">Valid from</span>
                           <input type="date" name="validFrom" value={form.validFrom} onChange={onChange} />
                         </label>
                         <label>
-                          Valid to
+                          <span className="patient-insurance-field-label">Valid to</span>
                           <input type="date" name="validTo" value={form.validTo} onChange={onChange} />
                         </label>
+                        <label className="patient-insurance-checkbox field-span-2">
+                          <input
+                            type="checkbox"
+                            name="isPrimary"
+                            checked={form.isPrimary}
+                            onChange={onChange}
+                          />
+                          Set as primary policy
+                        </label>
                       </div>
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          name="isPrimary"
-                          checked={form.isPrimary}
-                          onChange={onChange}
-                        />
-                        Set as primary policy
-                      </label>
-                    </fieldset>
-                    <div className="form-actions">
-                      <button type="submit" className="btn btn-primary" disabled={saving}>
-                        {saving ? "Saving…" : "Save insurance card"}
-                      </button>
+
+                      <div className="patient-insurance-form-actions">
+                        <button type="submit" className="btn btn-primary" disabled={saving || ocrBusy}>
+                          {saving ? "Saving…" : "Save insurance card"}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-outline"
+                          disabled={saving}
+                          onClick={() => setShowForm(false)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                  </form>
-                </div>
+                  </div>
+                </form>
               </div>
             )}
 
-            <div className="patient-insurance-grid">
+            <div className="patient-insurance-list">
               {cards.map((card) => (
-                <article key={card._id} className="patient-panel">
-                  <div className="patient-panel-head patient-insurance-card-head">
-                    <div className="patient-panel-head-main">
-                      <h2>{card.providerName}</h2>
-                    </div>
-                    {card.isPrimary && <span className="insurance-primary-badge">Primary</span>}
+                <article
+                  key={card._id}
+                  className={`patient-insurance-card-item${card.isPrimary ? " is-primary" : ""}`}
+                >
+                  <div className="patient-insurance-card-strip" aria-hidden="true">
+                    <ShieldIcon />
                   </div>
-                  <div className="patient-panel-body">
-                    <p className="patient-section-label">Policy details</p>
-                    <dl className="patient-fact-list">
-                      <div className="patient-fact-row">
-                        <dt>Policy number</dt>
-                        <dd>{card.policyNumber}</dd>
+                  <div className="patient-insurance-card-content">
+                    <div className="patient-insurance-card-top">
+                      <div>
+                        <p className="patient-insurance-card-provider">{card.providerName}</p>
+                        <p className="patient-insurance-card-number">{card.policyNumber}</p>
                       </div>
-                      <div className="patient-fact-row">
+                      {card.isPrimary && <span className="insurance-primary-badge">Primary</span>}
+                    </div>
+                    <dl className="patient-insurance-card-meta">
+                      <div>
                         <dt>Holder</dt>
                         <dd>{card.holderName}</dd>
                       </div>
-                      {card.coverageType && (
-                        <div className="patient-fact-row">
-                          <dt>Coverage</dt>
-                          <dd>{card.coverageType}</dd>
-                        </div>
-                      )}
-                      {(card.validFrom || card.validTo) && (
-                        <div className="patient-fact-row">
-                          <dt>Validity</dt>
-                          <dd>
-                            {card.validFrom || "—"} to {card.validTo || "—"}
-                          </dd>
-                        </div>
-                      )}
+                      <div>
+                        <dt>Coverage</dt>
+                        <dd>{card.coverageType || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Validity</dt>
+                        <dd>{formatValidity(card.validFrom, card.validTo)}</dd>
+                      </div>
                     </dl>
                   </div>
                 </article>
@@ -279,6 +419,7 @@ export default function PatientInsuranceCardsPage() {
             </div>
           </>
         )}
+      </div>
       </div>
     </PageLayout>
   );

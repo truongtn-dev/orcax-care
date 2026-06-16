@@ -149,6 +149,27 @@
   background: var(--color-primary-light);
 }
 
+.nav-link-notifications {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nav-notification-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.35rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .nav-mobile-actions {
   display: none;
 }
@@ -783,6 +804,38 @@
   border-color: var(--color-success-border);
   background: var(--color-success-bg);
   color: var(--color-success);
+}
+
+.status-completed {
+  border-color: var(--color-info-border);
+  background: var(--color-info-bg);
+  color: var(--color-info-deep);
+}
+
+.status-cancelled {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #b91c1c;
+}
+
+.doctor-appt-ref {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.06);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-navy);
+}
+
+.data-table tbody tr.is-selected-row {
+  background: rgba(8, 145, 178, 0.06);
+}
+
+.data-table tbody tr.is-selected-row td {
+  border-color: rgba(8, 145, 178, 0.15);
 }
 
 .empty-cell {
@@ -3790,8 +3843,8 @@
 }
 
 .schedule-legend-booked {
-  background: rgba(59, 130, 246, 0.15);
-  color: #1d4ed8;
+  background: var(--color-info-bg);
+  color: var(--color-info-deep);
 }
 
 .schedule-legend-blocked {
@@ -3870,8 +3923,8 @@
 }
 
 .schedule-slot-booked {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1e3a8a;
+  background: var(--color-info-bg);
+  color: var(--color-info-deep);
 }
 
 .schedule-slot-blocked {
@@ -4014,8 +4067,8 @@
 .insurance-primary-badge {
   font-size: 0.78rem;
   font-weight: 700;
-  color: #1d4ed8;
-  background: rgba(59, 130, 246, 0.12);
+  color: var(--color-info-hover);
+  background: var(--color-info-bg);
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
 }

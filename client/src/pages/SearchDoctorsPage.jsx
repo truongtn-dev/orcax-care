@@ -57,6 +57,7 @@ export default function SearchDoctorsPage() {
   const [specialties, setSpecialties] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [queryInput, setQueryInput] = useState("");
   const [result, setResult] = useState(EMPTY_RESULT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -102,6 +103,7 @@ export default function SearchDoctorsPage() {
 
   const clearFilters = useCallback(() => {
     const next = { ...INITIAL_FILTERS };
+    setQueryInput("");
     setFilters(next);
     search(next);
   }, [search]);
@@ -151,7 +153,7 @@ export default function SearchDoctorsPage() {
               className="search-hero-form"
               onSubmit={(event) => {
                 event.preventDefault();
-                applySearch({ q: filters.q });
+                applySearch({ q: queryInput.trim() });
               }}
             >
               <label className="search-input-wrap" htmlFor="doctor-search-q">
@@ -162,8 +164,8 @@ export default function SearchDoctorsPage() {
                   id="doctor-search-q"
                   type="search"
                   placeholder="Doctor name, specialty, or department…"
-                  value={filters.q}
-                  onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
+                  value={queryInput}
+                  onChange={(event) => setQueryInput(event.target.value)}
                   autoComplete="off"
                 />
               </label>
@@ -187,7 +189,7 @@ export default function SearchDoctorsPage() {
               className="card search-staff-bar"
               onSubmit={(event) => {
                 event.preventDefault();
-                applySearch({ q: filters.q });
+                applySearch({ q: queryInput.trim() });
               }}
             >
               <label className="search-input-wrap" htmlFor="doctor-search-q-staff">
@@ -198,8 +200,8 @@ export default function SearchDoctorsPage() {
                   id="doctor-search-q-staff"
                   type="search"
                   placeholder="Doctor name, specialty, or department…"
-                  value={filters.q}
-                  onChange={(event) => setFilters((current) => ({ ...current, q: event.target.value }))}
+                  value={queryInput}
+                  onChange={(event) => setQueryInput(event.target.value)}
                   autoComplete="off"
                 />
               </label>
@@ -269,7 +271,10 @@ export default function SearchDoctorsPage() {
                     key={pill.key}
                     type="button"
                     className="search-filter-pill"
-                    onClick={() => applySearch({ [pill.key]: "" })}
+                    onClick={() => {
+                      if (pill.key === "q") setQueryInput("");
+                      applySearch({ [pill.key]: "" });
+                    }}
                   >
                     {pill.label}
                     <span className="search-filter-pill-x" aria-hidden="true">

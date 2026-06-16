@@ -35,8 +35,11 @@ describe("UC-13.2.1 Scan Insurance Card OCR", () => {
   let server;
   let baseUrl;
   let patientUser;
+  let previousStub;
 
   before(async () => {
+    previousStub = process.env.INSURANCE_OCR_STUB;
+    process.env.INSURANCE_OCR_STUB = "true";
     process.env.MONGODB_URI = "memory";
     await connectDatabase();
     server = await listen(createApp());
@@ -61,11 +64,16 @@ describe("UC-13.2.1 Scan Insurance Card OCR", () => {
   });
 
   after(async () => {
+    if (previousStub === undefined) {
+      delete process.env.INSURANCE_OCR_STUB;
+    } else {
+      process.env.INSURANCE_OCR_STUB = previousStub;
+    }
     if (server) await close(server);
     await disconnectDatabase();
   });
 
-  test("returns OCR stub policy suggestion from uploaded file name", async () => {
+  test("returns OCR stub policy suggestion when stub mode is enabled", async () => {
     const res = await fetch(`${baseUrl}/api/patient/insurance-cards/ocr`, {
       method: "POST",
       headers: {
@@ -82,7 +90,7 @@ describe("UC-13.2.1 Scan Insurance Card OCR", () => {
     assert.equal(body.manualOverrideAllowed, true);
   });
 
-  test("rejects OCR request without image file name", async () => {
+  test("rejects OCR request without image", async () => {
     const res = await fetch(`${baseUrl}/api/patient/insurance-cards/ocr`, {
       method: "POST",
       headers: {
@@ -94,6 +102,6 @@ describe("UC-13.2.1 Scan Insurance Card OCR", () => {
 
     assert.equal(res.status, 400);
     const body = await res.json();
-    assert.equal(body.message, "Insurance card image file name is required");
+    assert.equal(body.message, "Insurance card image is required");
   });
 });

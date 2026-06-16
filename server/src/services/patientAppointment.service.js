@@ -9,6 +9,11 @@ import { getConsultationFee } from "./doctorAvailability.service.js";
 import { deductWalletBalance, getOrCreateWallet, refundWalletBalance } from "./wallet.service.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import { formatDateOnly, isSlotDatetimePast } from "../utils/shiftTime.js";
+import {
+  buildAppointmentVisitLabel,
+  formatWalletAmount,
+  notifyPatientSafe,
+} from "./notification.service.js";
 
 function serializeAppointment(doc) {
   const doctor = doc.doctorId;
@@ -153,6 +158,13 @@ export async function createAppointment(userId, payload = {}) {
       })
       .lean();
 
+    notifyPatientSafe(userId, {
+      title: "Appointment confirmed",
+      message: `Your visit with ${doctor.userId.fullName} is booked for ${buildAppointmentVisitLabel(populated.slotId)}.`,
+      type: "appointment",
+      link: "/patient/appointments",
+    });
+
     return {
       status: 201,
       body: {
@@ -178,16 +190,84 @@ export async function createAppointment(userId, payload = {}) {
   }
 }
 
+const APPOINTMENT_LIST_CAP = 500;
+const APPOINTMENT_TABS = new Set(["all", "upcoming", "past", "reviews", "cancelled"]);
+
+function isSlotVisitPast(slot) {
+  if (!slot?.date) return false;
+  const visitEnd = slot.endTime || slot.startTime;
+  if (!visitEnd) return false;
+  return isSlotDatetimePast(slot.date, visitEnd);
+}
+
+function canRateDoc(doc) {
+  return doc.rating == null && doc.status !== "cancelled" && isSlotVisitPast(doc.slotId);
+}
+
+function matchesAppointmentTab(doc, tab) {
+  if (tab === "all") return true;
+  if (tab === "cancelled") return doc.status === "cancelled";
+  if (tab === "reviews") return canRateDoc(doc);
+  if (tab === "upcoming") return doc.status !== "cancelled" && !isSlotVisitPast(doc.slotId);
+  if (tab === "past") return doc.status !== "cancelled" && isSlotVisitPast(doc.slotId);
+  return true;
+}
+
+function slotSortKeyDoc(doc) {
+  const slot = doc.slotId;
+  if (!slot?.date) return 0;
+  const time = slot.startTime || "00:00";
+  return new Date(`${formatDateOnly(slot.date)}T${time}:00`).getTime();
+}
+
+function sortAppointmentDocs(docs) {
+  return [...docs].sort((a, b) => {
+    const aPast = isSlotVisitPast(a.slotId);
+    const bPast = isSlotVisitPast(b.slotId);
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    const diff = slotSortKeyDoc(a) - slotSortKeyDoc(b);
+    return aPast ? -diff : diff;
+  });
+}
+
+function computeAppointmentTabCounts(docs) {
+  let upcoming = 0;
+  let past = 0;
+  let cancelled = 0;
+  let pendingReviews = 0;
+
+  for (const doc of docs) {
+    if (doc.status === "cancelled") {
+      cancelled += 1;
+      continue;
+    }
+    if (isSlotVisitPast(doc.slotId)) {
+      past += 1;
+      if (canRateDoc(doc)) pendingReviews += 1;
+    } else {
+      upcoming += 1;
+    }
+  }
+
+  return {
+    all: docs.length,
+    upcoming,
+    past,
+    reviews: pendingReviews,
+    cancelled,
+  };
+}
+
 export async function listAppointments(userId, query = {}) {
-  const limit = Math.min(50, Math.max(1, parseInt(query.limit, 10) || 20));
-  const status = query.status === "cancelled" ? "cancelled" : query.status === "confirmed" ? "confirmed" : null;
+  const limit = Math.min(50, Math.max(1, parseInt(query.limit, 10) || 10));
+  const page = Math.max(1, parseInt(query.page, 10) || 1);
+  const tab = APPOINTMENT_TABS.has(String(query.tab || "").toLowerCase())
+    ? String(query.tab).toLowerCase()
+    : "all";
 
-  const filter = { patientUserId: userId };
-  if (status) filter.status = status;
-
-  const rows = await Appointment.find(filter)
+  const rows = await Appointment.find({ patientUserId: userId })
     .sort({ createdAt: -1 })
-    .limit(limit)
+    .limit(APPOINTMENT_LIST_CAP)
     .populate({
       path: "doctorId",
       populate: [
@@ -201,10 +281,30 @@ export async function listAppointments(userId, query = {}) {
     })
     .lean();
 
+  const sorted = sortAppointmentDocs(rows);
+  const tabCounts = computeAppointmentTabCounts(sorted);
+  const filtered =
+    tab === "all" ? sorted : sorted.filter((doc) => matchesAppointmentTab(doc, tab));
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = Math.min(page, totalPages);
+  const paged = filtered.slice((safePage - 1) * limit, safePage * limit);
+
   return {
     status: 200,
     body: {
-      items: rows.map(serializeAppointment),
+      items: paged.map(serializeAppointment),
+      total,
+      page: safePage,
+      limit,
+      totalPages,
+      tabCounts,
+      stats: {
+        upcoming: tabCounts.upcoming,
+        past: tabCounts.past,
+        pendingReviews: tabCounts.reviews,
+        cancelled: tabCounts.cancelled,
+      },
     },
   };
 }
@@ -304,6 +404,13 @@ export async function rescheduleAppointment(userId, appointmentId, payload = {})
     })
     .lean();
 
+  notifyPatientSafe(userId, {
+    title: "Appointment rescheduled",
+    message: `Your visit is now scheduled for ${buildAppointmentVisitLabel(populated.slotId)}.`,
+    type: "appointment",
+    link: "/patient/appointments",
+  });
+
   return { status: 200, body: serializeAppointment(populated) };
 }
 
@@ -380,6 +487,18 @@ export async function cancelAppointment(userId, appointmentId, payload = {}) {
     })
     .lean();
 
+  const refundNote =
+    refundAmount > 0
+      ? ` A refund of ${formatWalletAmount(refundAmount)} was returned to your wallet.`
+      : "";
+
+  notifyPatientSafe(userId, {
+    title: "Appointment cancelled",
+    message: `Your appointment was cancelled.${refundNote}`.trim(),
+    type: "appointment",
+    link: "/patient/appointments",
+  });
+
   return { status: 200, body: serializeAppointment(populated) };
 }
 
@@ -418,10 +537,11 @@ export async function rateAppointment(userId, appointmentId, payload = {}) {
     return { status: 404, body: { message: "Appointment slot data is missing" } };
   }
 
-  if (!isSlotDatetimePast(slot.date, slot.startTime)) {
+  const visitEndTime = slot.endTime || slot.startTime;
+  if (!isSlotDatetimePast(slot.date, visitEndTime)) {
     return {
       status: 400,
-      body: { message: "Cannot rate an appointment before its scheduled start time" },
+      body: { message: "Cannot rate an appointment before the visit has ended" },
     };
   }
 

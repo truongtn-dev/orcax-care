@@ -13,6 +13,7 @@ import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { Specialty } from "../models/Specialty.js";
 import { User } from "../models/User.js";
+import { Notification } from "../models/Notification.js";
 import { Wallet } from "../models/Wallet.js";
 import { WorkShift } from "../models/WorkShift.js";
 import { issueAuthToken } from "../services/token.service.js";
@@ -56,6 +57,7 @@ describe("Patient booking — availability & appointments", () => {
 
   beforeEach(async () => {
     await AuthToken.deleteMany({});
+    await Notification.deleteMany({});
     await Appointment.deleteMany({});
     await AppointmentSlot.deleteMany({});
     await WorkShift.deleteMany({});
@@ -168,6 +170,11 @@ describe("Patient booking — availability & appointments", () => {
 
     const appointments = await Appointment.find({ patientUserId: patientUser._id }).lean();
     assert.equal(appointments.length, 1);
+
+    const notice = await Notification.findOne({ userId: patientUser._id }).lean();
+    assert.ok(notice);
+    assert.equal(notice.type, "appointment");
+    assert.match(notice.title, /confirmed/i);
   });
 
   test("POST /api/patient/appointments rejects unavailable slot", async () => {

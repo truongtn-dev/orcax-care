@@ -175,11 +175,13 @@ export async function searchDoctors({ q, name, specialtyId, departmentId, page =
 
   if (searchText) {
     doctors = rankDoctors(doctors, searchText, catalog).filter(
-      (d) => d._searchScore >= MIN_RELEVANCE || !rawQuery
+      (d) => d._searchScore >= MIN_RELEVANCE,
     );
 
-    if (rawQuery && doctors.every((d) => d._searchScore < MIN_RELEVANCE)) {
-      doctors = rankDoctors(await fetchDoctorRecords({ isActive: true }), searchText, catalog);
+    if (rawQuery && doctors.length === 0) {
+      doctors = rankDoctors(await fetchDoctorRecords({ isActive: true }), searchText, catalog).filter(
+        (d) => d._searchScore >= MIN_RELEVANCE,
+      );
     }
   }
 

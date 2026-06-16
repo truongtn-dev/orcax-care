@@ -258,6 +258,8 @@ describe("UC-17 View Today Appointments", () => {
     assert.equal(body.total, 2);
     assert.equal(body.items[0].patientName, "Patient A");
     assert.equal(body.items[0].slot.startTime, "08:00");
+    assert.match(body.items[0].referenceCode, /^APT-[A-F0-9]{6}$/);
+    assert.equal(body.items[0].referenceCode, `APT-${morningAppointment._id.toString().slice(-6).toUpperCase()}`);
     assert.equal(body.items[1].patientName, "Patient B");
     assert.equal(body.items[1].slot.startTime, "15:00");
   });

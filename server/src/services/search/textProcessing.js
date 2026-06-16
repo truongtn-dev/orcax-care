@@ -1,6 +1,5 @@
 const STOP_WORDS = new Set([
   "a", "an", "the", "and", "or", "for", "to", "of", "in", "on", "at", "by",
-  "la", "va", "cua", "cho", "mot", "cac",
 ]);
 
 export function normalizeText(text) {

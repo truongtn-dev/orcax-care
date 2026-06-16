@@ -1,8 +1,5 @@
 import { PushSubscription } from "../models/PushSubscription.js";
-
-function getVapidPublicKey() {
-  return process.env.VAPID_PUBLIC_KEY || "";
-}
+import { getVapidPublicKey } from "./notification.service.js";
 
 function serializeSubscription(subscription) {
   if (!subscription) return null;

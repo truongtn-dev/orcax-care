@@ -59,12 +59,12 @@ function emissionLogProb(token, state, dicts) {
 
   if (state === "NAME") {
     if (nameTokens.has(token)) return log(0.88);
-    if (/^(dr|bs|doctor|bacsi)$/.test(token)) return log(0.7);
+    if (/^(dr|doctor)$/.test(token)) return log(0.7);
     if (token.length >= 2 && !specialtyDict.has(token) && !departmentDict.has(token)) return log(0.45);
     return log(0.05);
   }
 
-  if (/^(dr|bs|doctor|bacsi|tim|mat|da)$/.test(token)) return log(0.4);
+  if (/^(dr|doctor)$/.test(token)) return log(0.4);
   if (specialtyDict.has(token) || departmentDict.has(token)) return log(0.08);
   return log(0.35);
 }
@@ -188,7 +188,7 @@ export function extractQueryEntities(query, { specialties = [], departments = []
 
   let nameText = spans.nameText;
   if (!nameText && !specialtyMatch && !departmentMatch) {
-    nameText = tokens.filter((t) => !/^(dr|bs|doctor|bacsi)$/.test(t)).join(" ");
+    nameText = tokens.filter((t) => !/^(dr|doctor)$/.test(t)).join(" ");
   }
 
   return {

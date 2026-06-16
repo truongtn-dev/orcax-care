@@ -1,17 +1,35 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import AppPagination from "../components/AppPagination.jsx";
+import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
 import "../styles/patient.shared.css";
 import "./PatientAppointmentsPage.css";
 
+const PAGE_SIZE = 10;
+
+const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const TABS = [
+  { id: "all", label: "All" },
+  { id: "upcoming", label: "Upcoming" },
+  { id: "past", label: "Past" },
+  { id: "reviews", label: "To review" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
+const EMPTY_TAB_COUNTS = { all: 0, upcoming: 0, past: 0, reviews: 0, cancelled: 0 };
+
 function isAppointmentPast(item) {
   const slot = item.slot;
   if (!slot?.date) return false;
-  const slotDate = new Date(`${slot.date}T${slot.startTime || "00:00"}:00`);
-  return slotDate <= new Date();
+  const timePart = slot.endTime || slot.startTime || "00:00";
+  const slotEnd = new Date(`${slot.date}T${timePart}:00`);
+  return slotEnd <= new Date();
 }
 
 function canRateAppointment(item) {
@@ -27,11 +45,49 @@ function getRefundEstimate(fee, slot) {
   return 0;
 }
 
+function formatAppointmentDate(dateKey) {
+  if (!dateKey) return "—";
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return `${DAY_LABELS[date.getDay()]}, ${MONTH_LABELS[month - 1]} ${day}, ${year}`;
+}
+
+function formatVisitCompact(item) {
+  const slot = item.slot;
+  if (!slot?.date) return "Time not assigned";
+  const [year, month, day] = slot.date.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const dayLabel = DAY_LABELS[date.getDay()];
+  const monthLabel = MONTH_LABELS[month - 1];
+  const time = slot.startTime && slot.endTime ? `${slot.startTime}–${slot.endTime}` : slot.startTime || "";
+  return `${dayLabel}, ${monthLabel} ${day}${time ? ` · ${time}` : ""}`;
+}
+
+function statusTone(status) {
+  if (status === "cancelled") return "cancelled";
+  if (status === "completed") return "completed";
+  return "confirmed";
+}
+
+function formatRefundCell(item) {
+  if (item.status !== "cancelled") return "—";
+  const amount = item.refundAmount || 0;
+  if (amount <= 0) return "No refund";
+  return formatWalletCurrency(amount);
+}
+
 export default function PatientAppointmentsPage() {
   const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
-  const [slotInputs, setSlotInputs] = useState({});
+  const [rescheduleSlots, setRescheduleSlots] = useState({});
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("all");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [tabCounts, setTabCounts] = useState(EMPTY_TAB_COUNTS);
+  const [stats, setStats] = useState({ upcoming: 0, past: 0, pendingReviews: 0 });
+  const [expandedId, setExpandedId] = useState("");
   const [reschedulingId, setReschedulingId] = useState("");
   const [rateModalOpen, setRateModalOpen] = useState(false);
   const [selectedAppointmentForRate, setSelectedAppointmentForRate] = useState(null);
@@ -47,34 +103,77 @@ export default function PatientAppointmentsPage() {
   const [error, setError] = useState("");
   const bookedNotice = searchParams.get("booked");
 
-  const loadAppointments = useCallback(async () => {
+  const hasAnyAppointments = tabCounts.all > 0;
+
+  const loadAppointments = useCallback(async (tab, nextPage) => {
     setLoading(true);
     setError("");
     try {
-      const { data } = await PatientApiClient.listAppointments();
+      const { data } = await PatientApiClient.listAppointments({
+        tab,
+        page: nextPage,
+        limit: PAGE_SIZE,
+      });
       setItems(data.items || []);
+      setTotal(data.total ?? 0);
+      setTotalPages(data.totalPages ?? 1);
+      setPage(data.page ?? nextPage);
+      setTabCounts(data.tabCounts || EMPTY_TAB_COUNTS);
+      setStats(
+        data.stats || {
+          upcoming: data.tabCounts?.upcoming ?? 0,
+          past: data.tabCounts?.past ?? 0,
+          pendingReviews: data.tabCounts?.reviews ?? 0,
+        }
+      );
     } catch (err) {
       setError(getApiErrorMessage(err));
       setItems([]);
+      setTotal(0);
+      setTotalPages(1);
+      setTabCounts(EMPTY_TAB_COUNTS);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadAppointments();
-  }, [loadAppointments]);
+    loadAppointments(activeTab, page);
+  }, [activeTab, page, loadAppointments]);
 
-  const updateSlotInput = (appointmentId, value) => {
-    setSlotInputs((current) => ({ ...current, [appointmentId]: value }));
+  const reloadCurrentView = () => loadAppointments(activeTab, page);
+
+  const handleTabChange = (tabId) => {
+    setExpandedId("");
+    setActiveTab(tabId);
+    setPage(1);
+  };
+
+  const toggleReschedule = (item) => {
+    setExpandedId((current) => {
+      if (current === item._id) return "";
+      setRescheduleSlots((slots) => ({ ...slots, [item._id]: null }));
+      return item._id;
+    });
+    setMessage("");
+    setError("");
+  };
+
+  const selectRescheduleSlot = (appointmentId, slot) => {
+    setRescheduleSlots((current) => ({ ...current, [appointmentId]: slot }));
     setMessage("");
     setError("");
   };
 
   const handleReschedule = async (item) => {
-    const slotId = String(slotInputs[item._id] || "").trim();
-    if (!slotId) {
-      setError("Enter a replacement slot ID before rescheduling.");
+    const slot = rescheduleSlots[item._id];
+    if (!slot?._id) {
+      setError("Select a new time slot before rescheduling.");
+      return;
+    }
+
+    if (slot._id === item.slot?._id) {
+      setError("Pick a different slot from your current appointment.");
       return;
     }
 
@@ -83,10 +182,11 @@ export default function PatientAppointmentsPage() {
     setError("");
 
     try {
-      await PatientApiClient.rescheduleAppointment(item._id, { slotId });
-      setSlotInputs((current) => ({ ...current, [item._id]: "" }));
+      await PatientApiClient.rescheduleAppointment(item._id, { slotId: slot._id });
+      setRescheduleSlots((current) => ({ ...current, [item._id]: null }));
+      setExpandedId("");
       setMessage("Appointment rescheduled successfully.");
-      await loadAppointments();
+      await reloadCurrentView();
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -122,7 +222,7 @@ export default function PatientAppointmentsPage() {
       });
       setCancelModalOpen(false);
       setMessage("Appointment cancelled successfully.");
-      await loadAppointments();
+      await reloadCurrentView();
     } catch (err) {
       setModalError(getApiErrorMessage(err));
     } finally {
@@ -143,7 +243,7 @@ export default function PatientAppointmentsPage() {
       });
       setRateModalOpen(false);
       setMessage("Thank you for rating your doctor.");
-      await loadAppointments();
+      await reloadCurrentView();
     } catch (err) {
       setModalError(getApiErrorMessage(err));
     } finally {
@@ -151,167 +251,296 @@ export default function PatientAppointmentsPage() {
     }
   };
 
+  const canManage = (item) => item.status === "confirmed" && !isAppointmentPast(item);
+
   return (
-    <PageLayout dashboard>
-      <div className="patient-appointments-page">
-        <div className="page-header">
-          <h1>My appointments</h1>
-          <p>Upcoming and past bookings made through OrcaXCare.</p>
-        </div>
-
-        {bookedNotice && (
-          <div className="alert alert-success">Your appointment has been confirmed.</div>
-        )}
-
-        {message && <div className="alert alert-success">{message}</div>}
-
-        {error && <div className="alert alert-error">{error}</div>}
-
+    <PageLayout>
+      <div className="patient-appointments-fullpage">
         <div className="patient-appointments-toolbar">
+          <Link to="/patient" className="patient-appointments-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
+            </svg>
+            My dashboard
+          </Link>
           <Link to="/search-doctors" className="btn btn-primary btn-sm">
-            Book another appointment
+            Book appointment
           </Link>
         </div>
 
-        {loading ? (
-          <div className="patient-panel patient-appointments-loading">
-            <div className="patient-panel-body">
-              <div className="loading-spinner" />
-              <p>Loading appointments…</p>
-            </div>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="patient-panel">
-            <div className="patient-panel-head">
-              <div className="patient-panel-head-main">
-                <h2>No appointments yet</h2>
-                <p className="patient-panel-lead">
-                  Find a doctor, pick an available slot, and book using your wallet balance.
+        <section className="patient-appointments-hero">
+          <span className="patient-appointments-hero-orb patient-appointments-hero-orb--1" aria-hidden="true" />
+          <span className="patient-appointments-hero-orb patient-appointments-hero-orb--2" aria-hidden="true" />
+
+          <div className="patient-appointments-hero-inner">
+            <div className="patient-appointments-hero-main">
+              <div className="patient-appointments-hero-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M8 2v4" />
+                  <path d="M16 2v4" />
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M8 12h8" />
+                  <path d="M8 16h5" />
+                </svg>
+              </div>
+              <div>
+                <p className="patient-appointments-eyebrow">Care</p>
+                <h1>My appointments</h1>
+                <p className="patient-appointments-hero-lead">
+                  Upcoming and past bookings made through OrcaXCare.
                 </p>
               </div>
             </div>
-            <div className="patient-panel-body">
+
+            <div className="patient-appointments-hero-stats">
+              <div className="patient-appointments-hero-stat">
+                <strong>{loading ? "…" : stats.upcoming}</strong>
+                <span>Upcoming</span>
+              </div>
+              <div className="patient-appointments-hero-stat">
+                <strong>{loading ? "…" : stats.past}</strong>
+                <span>Past</span>
+              </div>
+              <div className="patient-appointments-hero-stat patient-appointments-hero-stat--highlight">
+                <strong>{loading ? "…" : stats.pendingReviews}</strong>
+                <span>To review</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="patient-appointments-page-body">
+          {bookedNotice && (
+            <div className="alert alert-success">Your appointment has been confirmed.</div>
+          )}
+
+          {message && <div className="alert alert-success">{message}</div>}
+
+          {error && <div className="alert alert-error">{error}</div>}
+
+          {loading ? (
+            <div className="patient-appt-panel patient-appointments-loading">
+              <div className="loading-spinner" />
+              <p>Loading appointments…</p>
+            </div>
+          ) : !hasAnyAppointments ? (
+            <div className="patient-appt-panel patient-appointments-empty">
+              <h2>No appointments yet</h2>
+              <p>Find a doctor, pick an available slot, and book using your wallet balance.</p>
               <div className="form-actions">
                 <Link to="/search-doctors" className="btn btn-primary">
                   Find a doctor
                 </Link>
+                <Link to="/patient/wallet" className="btn btn-secondary">
+                  Open wallet
+                </Link>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="patient-appointments-list">
-            {items.map((item) => (
-              <article key={item._id} className="patient-panel patient-appointment-card">
-                <div className="patient-panel-head">
-                  <div className="patient-panel-head-main">
-                    <p className="patient-appointment-status">{item.status}</p>
-                    <h2>{item.doctor.fullName}</h2>
-                    <p className="patient-panel-lead">{item.doctor.specialty}</p>
-                  </div>
-                  <strong className="patient-appointment-fee">{formatWalletCurrency(item.fee)}</strong>
+          ) : (
+            <div className="patient-appt-panel">
+              <div className="patient-appt-tabs" role="tablist" aria-label="Filter appointments">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === tab.id}
+                    className={`patient-appt-tab ${activeTab === tab.id ? "is-active" : ""} ${
+                      tab.id === "reviews" && tabCounts.reviews > 0 ? "has-badge" : ""
+                    }`}
+                    onClick={() => handleTabChange(tab.id)}
+                  >
+                    {tab.label}
+                    <span className="patient-appt-tab-count">{tabCounts[tab.id]}</span>
+                  </button>
+                ))}
+              </div>
+
+              {items.length === 0 ? (
+                <div className="patient-appt-empty-tab">
+                  <p>No appointments in this tab.</p>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleTabChange("all")}>
+                    Show all
+                  </button>
                 </div>
-
-                <div className="patient-panel-body">
-                  <p className="patient-section-label">Appointment details</p>
-                  <dl className="patient-fact-list">
-                    <div className="patient-fact-row">
-                      <dt>Date</dt>
-                      <dd>{item.slot?.date || "—"}</dd>
+              ) : (
+                <>
+                  <div className="patient-appt-table-wrap">
+                    <div className="patient-appt-table-head" aria-hidden="true">
+                      <span>Doctor</span>
+                      <span>Visit</span>
+                      <span>Status</span>
+                      <span>Fee</span>
+                      <span>Refund</span>
+                      <span>Actions</span>
                     </div>
-                    <div className="patient-fact-row">
-                      <dt>Time</dt>
-                      <dd>
-                        {item.slot
-                          ? `${item.slot.startTime} – ${item.slot.endTime}`
-                          : "—"}
-                      </dd>
-                    </div>
-                    <div className="patient-fact-row">
-                      <dt>Room</dt>
-                      <dd>{item.slot?.roomName || "Not assigned"}</dd>
-                    </div>
-                  </dl>
 
-                  {item.reason && (
-                    <>
-                      <p className="patient-section-label">Reason for visit</p>
-                      <p className="patient-appointment-reason">{item.reason}</p>
-                    </>
-                  )}
+                    <ul className="patient-appt-table-body">
+                      {items.map((item) => (
+                        <li
+                          key={item._id}
+                          className={`patient-appt-item patient-appt-item--${statusTone(item.status)} ${
+                            expandedId === item._id ? "is-expanded" : ""
+                          }`}
+                        >
+                          <div className="patient-appt-row">
+                            <div className="patient-appt-cell patient-appt-cell--doctor">
+                              <strong>{item.doctor.fullName}</strong>
+                              <span>{item.doctor.specialty}</span>
+                            </div>
 
-                  <div className="patient-appointment-actions">
-                    <Link to={`/doctor/${item.doctor._id}`} className="btn btn-secondary btn-sm">
-                      View doctor
-                    </Link>
-                    {canRateAppointment(item) && (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        onClick={() => openRateModal(item)}
-                      >
-                        Rate doctor
-                      </button>
-                    )}
-                    {item.status === "confirmed" && !isAppointmentPast(item) && (
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-sm btn-danger-outline"
-                        onClick={() => openCancelModal(item)}
-                      >
-                        Cancel appointment
-                      </button>
-                    )}
-                    {item.status === "cancelled" && (
-                      <span className="patient-appointment-cancelled-tag">
-                        Cancelled · Refunded {formatWalletCurrency(item.refundAmount || 0)}
-                      </span>
-                    )}
-                    {item.rating != null && (
-                      <div className="patient-appointment-review-display">
-                        <div className="stars-row">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <span
-                              key={star}
-                              className={`star-icon ${star <= item.rating ? "star-active" : ""}`}
+                            <div className="patient-appt-cell patient-appt-cell--visit">
+                              <strong>{formatVisitCompact(item)}</strong>
+                              {item.slot?.roomName && (
+                                <span className="patient-appt-room">{item.slot.roomName}</span>
+                              )}
+                            </div>
+
+                            <div className="patient-appt-cell patient-appt-cell--status">
+                              <span className={`patient-appointment-status patient-appointment-status--${statusTone(item.status)}`}>
+                                {item.status}
+                              </span>
+                              {item.rating != null && (
+                                <span className="patient-appt-rating-inline" title={`${item.rating}/5`}>
+                                  {"★".repeat(item.rating)}
+                                  <span className="sr-only">{item.rating} out of 5 stars</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="patient-appt-cell patient-appt-cell--fee">
+                              {formatWalletCurrency(item.fee)}
+                            </div>
+
+                            <div
+                              className={`patient-appt-cell patient-appt-cell--refund ${
+                                item.status === "cancelled" && (item.refundAmount || 0) > 0
+                                  ? "patient-appt-cell--refund-yes"
+                                  : ""
+                              }`}
                             >
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                        {item.reviewComment && <p>{item.reviewComment}</p>}
-                      </div>
-                    )}
+                              {formatRefundCell(item)}
+                            </div>
+
+                            <div className="patient-appt-cell patient-appt-cell--actions">
+                              <Link to={`/doctor/${item.doctor._id}`} className="patient-appt-action-link">
+                                View
+                              </Link>
+                              {canRateAppointment(item) && (
+                                <button
+                                  type="button"
+                                  className="patient-appt-action-btn patient-appt-action-btn--primary"
+                                  onClick={() => openRateModal(item)}
+                                >
+                                  Rate
+                                </button>
+                              )}
+                              {canManage(item) && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="patient-appt-action-btn"
+                                    onClick={() => openCancelModal(item)}
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`patient-appt-action-btn ${expandedId === item._id ? "is-active" : ""}`}
+                                    onClick={() => toggleReschedule(item)}
+                                    aria-expanded={expandedId === item._id}
+                                  >
+                                    Reschedule
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {expandedId === item._id && canManage(item) && (
+                            <div className="patient-appt-expand patient-appt-expand--reschedule">
+                              <div className="patient-appt-reschedule-context">
+                                <p className="patient-section-label">Current appointment</p>
+                                <div className="patient-appt-reschedule-current">
+                                  <strong>{item.doctor.fullName}</strong>
+                                  <span>{formatVisitCompact(item)}</span>
+                                  {item.slot?.roomName && (
+                                    <span className="patient-appt-room">{item.slot.roomName}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <p className="patient-section-label">Pick a new slot</p>
+                              <DoctorAvailabilityPanel
+                                doctorId={item.doctor._id}
+                                consultationFee={item.fee}
+                                variant="reschedule"
+                                embedded
+                                showBookLink={false}
+                                isAuthenticated
+                                selectedSlotId={rescheduleSlots[item._id]?._id || ""}
+                                onSelectSlot={(slot) => selectRescheduleSlot(item._id, slot)}
+                              />
+
+                              {rescheduleSlots[item._id] && (
+                                <div className="patient-appt-reschedule-selected">
+                                  <span>New time</span>
+                                  <strong>
+                                    {formatAppointmentDate(rescheduleSlots[item._id].date)} ·{" "}
+                                    {rescheduleSlots[item._id].startTime} – {rescheduleSlots[item._id].endTime}
+                                  </strong>
+                                </div>
+                              )}
+
+                              <div className="patient-appt-reschedule-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn-outline btn-sm"
+                                  disabled={reschedulingId === item._id}
+                                  onClick={() => setExpandedId("")}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary btn-sm"
+                                  disabled={reschedulingId === item._id || !rescheduleSlots[item._id]}
+                                  onClick={() => handleReschedule(item)}
+                                >
+                                  {reschedulingId === item._id ? "Rescheduling…" : "Confirm reschedule"}
+                                </button>
+                              </div>
+                              <p className="patient-appt-expand-hint">
+                                Your current slot is released only after the new slot is confirmed.
+                              </p>
+                            </div>
+                          )}
+
+                          {item.reviewComment && (
+                            <p className="patient-appt-review-comment">&ldquo;{item.reviewComment}&rdquo;</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
-                  {item.status === "confirmed" && !isAppointmentPast(item) && (
-                    <div className="patient-appointment-reschedule">
-                      <p className="patient-section-label">Reschedule</p>
-                      <label>
-                        Replacement slot ID
-                        <input
-                          value={slotInputs[item._id] || ""}
-                          onChange={(event) => updateSlotInput(item._id, event.target.value)}
-                          placeholder="Paste an available slot ID"
-                        />
-                        <span className="hint">
-                          The old slot is released only after the new slot is confirmed.
-                        </span>
-                      </label>
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-sm"
-                        disabled={reschedulingId === item._id}
-                        onClick={() => handleReschedule(item)}
-                      >
-                        {reschedulingId === item._id ? "Rescheduling…" : "Reschedule"}
-                      </button>
+                  {total > 0 && (
+                    <div className="patient-appt-pagination">
+                      <AppPagination
+                        page={page}
+                        totalPages={totalPages}
+                        total={total}
+                        onPageChange={setPage}
+                        ariaLabel="Appointment pages"
+                      />
                     </div>
                   )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {cancelModalOpen && selectedAppointmentForCancel && (
@@ -378,7 +607,8 @@ export default function PatientAppointmentsPage() {
           <div className="patient-modal-card">
             <h3>Rate doctor</h3>
             <p className="patient-modal-desc">
-              Rate your visit with <strong>{selectedAppointmentForRate.doctor.fullName}</strong>.
+              Rate your visit with <strong>{selectedAppointmentForRate.doctor.fullName}</strong> on{" "}
+              {formatAppointmentDate(selectedAppointmentForRate.slot?.date)}.
             </p>
 
             <div className="patient-modal-rating-picker">

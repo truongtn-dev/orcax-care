@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
-import WalletShell, {
+import {
   WalletAlert,
   WalletCard,
-  WalletHero,
   WalletLoading,
-  WalletPageBody,
 } from "../components/wallet/WalletShell.jsx";
 import WalletPaymentMethodPicker from "../components/wallet/WalletPaymentMethodPicker.jsx";
 import WalletTransactionList from "../components/wallet/WalletTransactionList.jsx";
@@ -16,10 +14,32 @@ import {
   WALLET_AMOUNT_PRESETS,
   WALLET_LIMITS,
   WALLET_PAYMENT_METHODS,
+  computeWalletStats,
   formatWalletCurrency,
   getWalletErrorMessage,
   resolveCheckoutPath,
 } from "../utils/walletUtils.js";
+import "../styles/patient.shared.css";
+import "../styles/wallet.shared.css";
+import "./PatientWalletPage.css";
+
+function RefreshIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <path d="M21 3v6h-6" />
+    </svg>
+  );
+}
+
+function WalletIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1" />
+      <path d="M14 10h6v6h-6a3 3 0 0 1 0-6z" />
+    </svg>
+  );
+}
 
 export default function PatientWalletPage() {
   const navigate = useNavigate();
@@ -36,6 +56,18 @@ export default function PatientWalletPage() {
 
   const minTopup = wallet?.limits?.minTopup ?? WALLET_LIMITS.minTopup;
   const maxTopup = wallet?.limits?.maxTopup ?? WALLET_LIMITS.maxTopup;
+
+  const stats = useMemo(
+    () => computeWalletStats(wallet?.transactions || []),
+    [wallet?.transactions],
+  );
+
+  const walletStatus = useMemo(() => {
+    if (loading) return { label: "Loading…", tone: "pending" };
+    if (loadError) return { label: "Unavailable", tone: "error" };
+    if (stats.pendingTopups > 0) return { label: "Pending top-up", tone: "pending" };
+    return { label: "Ready to pay", tone: "active" };
+  }, [loading, loadError, stats.pendingTopups]);
 
   const loadWallet = useCallback(async () => {
     setLoading(true);
@@ -91,6 +123,10 @@ export default function PatientWalletPage() {
     setSearchParams({}, { replace: true });
   }, [loadWallet, searchParams, setSearchParams]);
 
+  const scrollToTopup = () => {
+    document.getElementById("wallet-topup")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const onTopup = async (event) => {
     event.preventDefault();
     setSubmitting(true);
@@ -133,27 +169,65 @@ export default function PatientWalletPage() {
 
   return (
     <PageLayout>
-      <WalletShell>
-        <WalletHero
-          eyebrow="Patient wallet"
-          title="OrcaXCare Wallet"
-          lead="Top up securely via PayOS VietQR or SePay. Balance is used when you confirm an appointment."
-          balance={formatWalletCurrency(wallet?.balance)}
-          balanceLoading={loading}
-          actions={
-            <div className="wallet-hero-actions">
-              <Link
-                to="/patient"
-                className="btn btn-outline btn-sm"
-                style={{ color: "#fff", borderColor: "rgba(255,255,255,0.45)" }}
-              >
-                Back to dashboard
-              </Link>
-            </div>
-          }
-        />
+      <div className="patient-wallet-fullpage">
+        <div className="patient-wallet-toolbar">
+          <Link to="/patient" className="patient-wallet-back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M19 12H5" />
+              <path d="m12 19-7-7 7-7" />
+            </svg>
+            My dashboard
+          </Link>
+          <button
+            type="button"
+            className={`patient-wallet-refresh${loading ? " is-spinning" : ""}`}
+            onClick={loadWallet}
+            disabled={loading}
+            aria-label="Refresh wallet"
+          >
+            <RefreshIcon />
+          </button>
+        </div>
 
-        <WalletPageBody>
+        <section className="patient-wallet-hero" aria-label="Wallet overview">
+          <span className="patient-wallet-hero-orb patient-wallet-hero-orb--1" aria-hidden="true" />
+          <span className="patient-wallet-hero-orb patient-wallet-hero-orb--2" aria-hidden="true" />
+
+          <div className="patient-wallet-hero-inner">
+            <div className="patient-wallet-hero-main">
+              <div className="patient-wallet-hero-icon" aria-hidden="true">
+                <WalletIcon />
+              </div>
+              <div>
+                <p className="patient-wallet-eyebrow">Payments & insurance</p>
+                <h1>Wallet</h1>
+                <p className="patient-wallet-hero-lead">
+                  Manage your balance, top up via PayOS or SePay, and review transactions.
+                </p>
+                <span className={`patient-wallet-status patient-wallet-status--${walletStatus.tone}`}>
+                  <span className="patient-wallet-status-dot" aria-hidden="true" />
+                  {walletStatus.label}
+                </span>
+              </div>
+            </div>
+
+            <div className="patient-wallet-hero-balance">
+              <span className="patient-wallet-hero-balance-label">Current balance</span>
+              <strong className={loading ? "is-loading" : ""}>
+                {loading ? "…" : formatWalletCurrency(wallet?.balance ?? 0)}
+              </strong>
+              <button type="button" className="patient-wallet-topup-btn" onClick={scrollToTopup}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                Top up
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div className="patient-wallet-page-body">
         {loadError && (
           <WalletAlert type="error" title="Could not load wallet" onRetry={loadWallet}>
             {loadError}
@@ -163,6 +237,93 @@ export default function PatientWalletPage() {
           <WalletAlert type="error" title="Payment unsuccessful">{formError}</WalletAlert>
         )}
         {notice && <WalletAlert type="success" title="Success">{notice}</WalletAlert>}
+
+        <div className="patient-wallet-stats">
+          <div className="patient-wallet-stat">
+            <span className="patient-wallet-stat-icon patient-wallet-stat-icon--up" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="m18 15-6-6-6 6" />
+              </svg>
+            </span>
+            <div>
+              <span className="patient-wallet-stat-value">
+                {loading ? "…" : formatWalletCurrency(stats.totalTopup)}
+              </span>
+              <span className="patient-wallet-stat-label">Total topped up</span>
+            </div>
+          </div>
+          <div className="patient-wallet-stat">
+            <span className="patient-wallet-stat-icon patient-wallet-stat-icon--down" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
+            <div>
+              <span className="patient-wallet-stat-value">
+                {loading ? "…" : formatWalletCurrency(stats.totalSpent)}
+              </span>
+              <span className="patient-wallet-stat-label">Total spent</span>
+            </div>
+          </div>
+          <div className="patient-wallet-stat">
+            <span className="patient-wallet-stat-icon patient-wallet-stat-icon--pending" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 6v6l4 2" />
+              </svg>
+            </span>
+            <div>
+              <span className="patient-wallet-stat-value">{loading ? "…" : stats.pendingTopups}</span>
+              <span className="patient-wallet-stat-label">Pending top-ups</span>
+            </div>
+          </div>
+        </div>
+
+        <section aria-label="Quick actions">
+          <h2 className="patient-wallet-section-title">Quick actions</h2>
+          <div className="patient-wallet-quick-grid">
+            <button type="button" className="patient-wallet-quick patient-wallet-quick--emerald patient-wallet-quick--button" onClick={scrollToTopup}>
+              <span className="patient-wallet-quick-icon patient-wallet-quick-icon--emerald" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v8" />
+                  <path d="M8 12h8" />
+                </svg>
+              </span>
+              <h3>Top up wallet</h3>
+              <p>Add funds via PayOS or SePay</p>
+              <span className="patient-wallet-quick-arrow">Go to top-up →</span>
+            </button>
+            <Link to="/patient/book" className="patient-wallet-quick patient-wallet-quick--cyan">
+              <span className="patient-wallet-quick-icon patient-wallet-quick-icon--cyan" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M8 2v4" />
+                  <path d="M16 2v4" />
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M12 14v4" />
+                  <path d="M10 16h4" />
+                </svg>
+              </span>
+              <h3>Book appointment</h3>
+              <p>Pay for a consultation slot</p>
+              <span className="patient-wallet-quick-arrow">Start booking →</span>
+            </Link>
+            <Link to="/patient/appointments" className="patient-wallet-quick patient-wallet-quick--violet">
+              <span className="patient-wallet-quick-icon patient-wallet-quick-icon--violet" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M8 2v4" />
+                  <path d="M16 2v4" />
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <path d="M8 12h8" />
+                  <path d="M8 16h5" />
+                </svg>
+              </span>
+              <h3>My appointments</h3>
+              <p>View and manage your bookings</p>
+              <span className="patient-wallet-quick-arrow">View visits →</span>
+            </Link>
+          </div>
+        </section>
 
         {receipt && (
           <div className="wallet-receipt">
@@ -196,12 +357,13 @@ export default function PatientWalletPage() {
         )}
 
         {loading ? (
-          <WalletLoading label="Loading wallet…" />
+          <WalletLoading label="Loading wallet details…" />
         ) : (
-          <div className="wallet-layout">
+          <div className="patient-wallet-panels">
+            <div id="wallet-topup">
             <WalletCard
               title="Top up wallet"
-              lead="Choose a payment gateway and amount. PayOS shows a VietQR code on the checkout page to scan."
+              lead="Choose a payment gateway and amount. PayOS shows a VietQR code on checkout."
               icon={<IconWalletTopup />}
               elevated
             >
@@ -260,6 +422,7 @@ export default function PatientWalletPage() {
                 </div>
               </form>
             </WalletCard>
+            </div>
 
             <WalletCard
               title="Recent transactions"
@@ -275,8 +438,8 @@ export default function PatientWalletPage() {
             </WalletCard>
           </div>
         )}
-        </WalletPageBody>
-      </WalletShell>
+        </div>
+      </div>
     </PageLayout>
   );
 }

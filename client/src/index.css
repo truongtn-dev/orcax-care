@@ -31,6 +31,13 @@
   --color-error-border: rgba(255, 59, 48, 0.28);
   --color-warning: #bf4800;
 
+  /* Brand-aligned info (use instead of generic blue) */
+  --color-info: var(--color-primary);
+  --color-info-hover: var(--color-primary-hover);
+  --color-info-deep: var(--color-primary-deep);
+  --color-info-bg: var(--color-primary-light);
+  --color-info-border: var(--color-primary-muted);
+
   /* Gradients */
   --gradient-hero: linear-gradient(135deg, #0e7490 0%, #0891b2 48%, #06b6d4 100%);
   --gradient-page-bg: linear-gradient(180deg, var(--color-brand-surface) 0%, #f1f5f9 28%, #f8fafc 100%);

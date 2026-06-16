@@ -14,17 +14,13 @@ import { PatientApiClient } from "../services/patientApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import DoctorRatingDisplay from "../components/DoctorRatingDisplay.jsx";
 
 function getInitials(name) {
   if (!name) return "D";
   const parts = name.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
-function formatRating(value, reviewCount) {
-  if (value == null || reviewCount === 0) return "No ratings yet";
-  return `${value.toFixed(1)} / 5 · ${reviewCount} reviews`;
 }
 
 export default function DoctorPublicProfilePage() {
@@ -205,11 +201,14 @@ export default function DoctorPublicProfilePage() {
                       <span className="doctor-profile-stat-label">Languages</span>
                       <span className="doctor-profile-stat-value">{languages.join(", ")}</span>
                     </div>
-                    <div className="doctor-profile-stat">
+                    <div className="doctor-profile-stat doctor-profile-stat--rating">
                       <span className="doctor-profile-stat-label">Rating</span>
-                      <span className="doctor-profile-stat-value">
-                        {formatRating(doctor.reviewRating, doctor.reviewCount)}
-                      </span>
+                      <DoctorRatingDisplay
+                        rating={doctor.reviewRating}
+                        reviewCount={doctor.reviewCount}
+                        variant="light"
+                        compact
+                      />
                     </div>
                   </div>
                 </div>
@@ -274,9 +273,15 @@ export default function DoctorPublicProfilePage() {
                         <dt>Languages</dt>
                         <dd>{languages.join(", ")}</dd>
                       </div>
-                      <div className="doctor-profile-fact">
+                      <div className="doctor-profile-fact doctor-profile-fact--rating">
                         <dt>Patient rating</dt>
-                        <dd>{formatRating(doctor.reviewRating, doctor.reviewCount)}</dd>
+                        <dd>
+                          <DoctorRatingDisplay
+                            rating={doctor.reviewRating}
+                            reviewCount={doctor.reviewCount}
+                            variant="panel"
+                          />
+                        </dd>
                       </div>
                     </dl>
                   </section>

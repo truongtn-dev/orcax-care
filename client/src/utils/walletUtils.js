@@ -71,6 +71,24 @@ export function getTransactionCheckoutPath(txn) {
   return null;
 }
 
+export function computeWalletStats(transactions = []) {
+  let totalTopup = 0;
+  let totalSpent = 0;
+  let pendingTopups = 0;
+
+  for (const txn of transactions) {
+    if (txn.type === "topup") {
+      if (txn.status === "success") totalTopup += txn.amount;
+      if (txn.status === "pending") pendingTopups += 1;
+    }
+    if (txn.type === "deduct" && txn.status === "success") {
+      totalSpent += txn.amount;
+    }
+  }
+
+  return { totalTopup, totalSpent, pendingTopups };
+}
+
 export function getWalletErrorMessage(err) {
   const status = err?.response?.status;
   const serverMessage = err?.response?.data?.message;

@@ -38,6 +38,7 @@ export default function DoctorAvailabilityPanel({
   isAuthenticated = true,
   loginPath = "/login",
   variant = "default",
+  embedded = false,
 }) {
   const [availability, setAvailability] = useState(null);
   const [activeDate, setActiveDate] = useState("");
@@ -45,7 +46,8 @@ export default function DoctorAvailabilityPanel({
   const [error, setError] = useState("");
   const isProfile = variant === "profile";
   const isBooking = variant === "booking";
-  const showSectionLabels = isProfile || isBooking;
+  const isReschedule = variant === "reschedule" || embedded;
+  const showSectionLabels = isProfile || isBooking || isReschedule;
 
   const loadAvailability = useCallback(async () => {
     if (!doctorId) return;
@@ -129,8 +131,9 @@ export default function DoctorAvailabilityPanel({
 
   return (
     <div
-      className={`doctor-availability${isProfile ? " doctor-availability--profile" : ""}${isBooking ? " doctor-availability--booking" : ""}`}
+      className={`doctor-availability${isProfile ? " doctor-availability--profile" : ""}${isBooking ? " doctor-availability--booking" : ""}${isReschedule ? " doctor-availability--embedded" : ""}`}
     >
+      {!isReschedule && (
       <div className="doctor-availability-toolbar">
         <div className="doctor-availability-meta">
           <span className="doctor-availability-badge">
@@ -144,6 +147,7 @@ export default function DoctorAvailabilityPanel({
           </Link>
         )}
       </div>
+      )}
 
       {showSectionLabels && <p className="doctor-availability-section-label">Select a date</p>}
 

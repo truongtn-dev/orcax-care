@@ -1,5 +1,6 @@
 import { Wallet } from "../models/Wallet.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
+import { formatWalletAmount, notifyPatientSafe } from "./notification.service.js";
 
 export async function getOrCreateWallet(userId) {
   let wallet = await Wallet.findOne({ userId });
@@ -139,6 +140,13 @@ export async function completeTopupTransaction(ref, { providerReferenceId = "" }
     txn.providerReferenceId = String(providerReferenceId);
   }
   await txn.save();
+
+  notifyPatientSafe(txn.userId, {
+    title: "Wallet topped up",
+    message: `${formatWalletAmount(txn.amount)} was added to your OrcaXCare wallet.`,
+    type: "payment",
+    link: "/patient/wallet",
+  });
 
   return {
     status: 200,

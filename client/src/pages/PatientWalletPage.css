@@ -1,0 +1,473 @@
+/* Patient wallet — full-page layout aligned with book & doctor profile */
+
+.patient-wallet-fullpage {
+  margin: -2rem calc(-1 * var(--page-gutter)) -3rem;
+  width: calc(100% + 2 * var(--page-gutter));
+  min-height: calc(100vh - var(--header-height));
+  background: var(--gradient-page-bg);
+}
+
+.patient-wallet-toolbar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.85rem clamp(1rem, 3vw, 2rem) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.patient-wallet-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.patient-wallet-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-wallet-back:hover {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}
+
+.patient-wallet-refresh {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition), color var(--transition), box-shadow var(--transition);
+}
+
+.patient-wallet-refresh svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-wallet-refresh:hover:not(:disabled) {
+  border-color: rgba(8, 145, 178, 0.35);
+  color: var(--color-primary-hover);
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.1);
+}
+
+.patient-wallet-refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.patient-wallet-refresh.is-spinning svg {
+  animation: patient-wallet-spin 0.8s linear infinite;
+}
+
+@keyframes patient-wallet-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hero */
+.patient-wallet-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.75rem;
+  padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 3vw, 2rem);
+  background: var(--gradient-hero);
+  color: #fff;
+  box-shadow: var(--shadow-hero);
+}
+
+.patient-wallet-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.patient-wallet-hero-orb--1 {
+  width: 240px;
+  height: 240px;
+  top: -90px;
+  right: -50px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.patient-wallet-hero-orb--2 {
+  width: 130px;
+  height: 130px;
+  bottom: -55px;
+  left: 20%;
+  background: rgba(204, 251, 241, 0.14);
+}
+
+.patient-wallet-hero-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.patient-wallet-hero-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.15rem;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.patient-wallet-hero-icon {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(204, 251, 241, 0.85));
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
+  color: var(--color-primary-hover);
+}
+
+.patient-wallet-hero-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.patient-wallet-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.patient-wallet-hero-main h1 {
+  margin: 0 0 0.35rem;
+  color: #fff;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  line-height: 1.2;
+}
+
+.patient-wallet-hero-lead {
+  margin: 0 0 0.75rem;
+  max-width: 46ch;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.patient-wallet-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.patient-wallet-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+}
+
+.patient-wallet-status--pending .patient-wallet-status-dot {
+  background: #fbbf24;
+  animation: patient-wallet-pulse 1.4s ease-in-out infinite;
+}
+
+.patient-wallet-status--error .patient-wallet-status-dot {
+  background: #f87171;
+}
+
+@keyframes patient-wallet-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.patient-wallet-hero-balance {
+  flex-shrink: 0;
+  min-width: 220px;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.patient-wallet-hero-balance-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.patient-wallet-hero-balance strong {
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.patient-wallet-hero-balance strong.is-loading {
+  opacity: 0.65;
+}
+
+.patient-wallet-topup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-primary-hover);
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  transition: transform var(--transition), background var(--transition);
+}
+
+.patient-wallet-topup-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.patient-wallet-topup-btn:hover {
+  background: #f0fdfa;
+  transform: translateY(-1px);
+}
+
+/* Body */
+.patient-wallet-page-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem) 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Stats */
+.patient-wallet-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.patient-wallet-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.patient-wallet-stat-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-wallet-stat-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.patient-wallet-stat-icon--up {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  color: #059669;
+}
+
+.patient-wallet-stat-icon--down {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  color: #dc2626;
+}
+
+.patient-wallet-stat-icon--pending {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  color: #d97706;
+}
+
+.patient-wallet-stat-value {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.patient-wallet-stat-label {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* Quick actions */
+.patient-wallet-section-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.patient-wallet-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.patient-wallet-quick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.15rem 1.2rem;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.patient-wallet-quick::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.patient-wallet-quick--emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
+.patient-wallet-quick--cyan::before { background: linear-gradient(90deg, var(--color-accent), var(--color-primary)); }
+.patient-wallet-quick--violet::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+.patient-wallet-quick:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  text-decoration: none;
+}
+
+.patient-wallet-quick-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-wallet-quick-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.patient-wallet-quick-icon--emerald { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #059669; }
+.patient-wallet-quick-icon--cyan { background: linear-gradient(135deg, var(--color-brand-surface), var(--color-brand-surface-2)); color: var(--color-primary); }
+.patient-wallet-quick-icon--violet { background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #7c3aed; }
+
+.patient-wallet-quick h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.patient-wallet-quick p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.patient-wallet-quick-arrow {
+  margin-top: auto;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary-hover);
+}
+
+.patient-wallet-quick--button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Panels */
+.patient-wallet-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .patient-wallet-hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patient-wallet-hero-balance {
+    width: 100%;
+  }
+
+  .patient-wallet-stats,
+  .patient-wallet-quick-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-wallet-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-wallet-hero-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

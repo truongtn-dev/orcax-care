@@ -668,7 +668,7 @@
 
 .wallet-txn-icon--topup { background: #ecfdf5; color: #059669; }
 .wallet-txn-icon--deduct { background: #fef2f2; color: #dc2626; }
-.wallet-txn-icon--refund { background: #eff6ff; color: #2563eb; }
+.wallet-txn-icon--refund { background: var(--color-brand-surface); color: var(--color-info-hover); }
 
 .wallet-txn-main {
   flex: 1;

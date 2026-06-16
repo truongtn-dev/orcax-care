@@ -1,5 +1,6 @@
 import { InsuranceCard } from "../models/InsuranceCard.js";
 import { parseDateOnly, formatDateOnly } from "../utils/shiftTime.js";
+import { runInsuranceCardOcr } from "./insuranceCardOcr.service.js";
 
 function serializeInsuranceCard(card) {
   return {
@@ -84,24 +85,5 @@ export async function createInsuranceCard(userId, payload = {}) {
 }
 
 export async function extractInsuranceCardOcr(payload = {}) {
-  const fileName = String(payload.fileName || "").trim();
-  if (!fileName) {
-    return { status: 400, body: { message: "Insurance card image file name is required" } };
-  }
-
-  const base = fileName
-    .replace(/\.[^.]+$/, "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 24);
-
-  return {
-    status: 200,
-    body: {
-      policyNumber: `OCR-${base || "INSURANCE-CARD"}`,
-      source: "stub",
-      manualOverrideAllowed: true,
-    },
-  };
+  return runInsuranceCardOcr(payload);
 }

@@ -35,13 +35,21 @@ function populateAppointment(query) {
     });
 }
 
+function formatReferenceCode(appointmentId) {
+  const value = appointmentId?.toString() || "";
+  if (!value) return "";
+  return `APT-${value.slice(-6).toUpperCase()}`;
+}
+
 function serializeAppointment(appointment) {
   const patient = appointment.patientUserId;
   const slot = appointment.slotId;
   const room = slot?.roomId;
+  const id = appointment._id.toString();
 
   return {
-    _id: appointment._id.toString(),
+    _id: id,
+    referenceCode: formatReferenceCode(id),
     status: appointment.status,
     reason: appointment.reason || "",
     fee: appointment.fee,

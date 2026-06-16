@@ -247,6 +247,39 @@
   box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.25);
 }
 
+/* Embedded / reschedule — compact inline slot picker */
+.doctor-availability--embedded {
+  gap: 0.65rem;
+}
+
+.doctor-availability--embedded .doctor-availability-section-label {
+  font-size: 0.625rem;
+}
+
+.doctor-availability--embedded .doctor-availability-days {
+  gap: 0.35rem;
+}
+
+.doctor-availability--embedded .doctor-availability-day {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.doctor-availability--embedded .doctor-availability-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 0.4rem;
+}
+
+.doctor-availability--embedded .doctor-availability-slot {
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.55rem 0.65rem;
+}
+
 @media (max-width: 640px) {
   .doctor-availability-toolbar {
     align-items: stretch;

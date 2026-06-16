@@ -70,25 +70,25 @@ describe("search engine", () => {
     assert.ok(score >= 0.33, `expected typo N-gram score, got ${score}`);
   });
 
-  test("query expansion maps nhi khoa to pediatrics terms", () => {
-    const expanded = expandQuery("nhi khoa", { specialties, departments });
+  test("query expansion maps children to pediatrics terms", () => {
+    const expanded = expandQuery("children", { specialties, departments });
     assert.match(expanded, /pediatrics/);
   });
 
   test("unrelated query does not expand to pediatrics", () => {
-    const expanded = expandQuery("do choi cho be", { specialties, departments });
+    const expanded = expandQuery("office supplies", { specialties, departments });
     assert.doesNotMatch(expanded, /pediatrics/);
   });
 
-  test("catalog matcher maps nhi khoa to Pediatrics", () => {
-    const match = matchSpecialty("nhi khoa", specialties);
+  test("catalog matcher maps children to Pediatrics", () => {
+    const match = matchSpecialty("children", specialties);
     assert.ok(match, "expected a specialty match");
     assert.equal(match.name, "Pediatrics");
     assert.ok(match.matchPercent >= 70, `expected >= 70%, got ${match.matchPercent}%`);
   });
 
-  test("catalog matcher does not map do choi cho be to any specialty", () => {
-    const match = matchSpecialty("do choi cho be", specialties);
+  test("catalog matcher does not map unrelated text to any specialty", () => {
+    const match = matchSpecialty("office supplies", specialties);
     assert.equal(match, null);
   });
 
@@ -131,13 +131,13 @@ describe("search engine", () => {
     assert.ok(cardScore > pedScore);
   });
 
-  test("extractQueryEntities maps nhi khoa to Pediatrics", () => {
-    const extracted = extractQueryEntities("nhi khoa", { specialties, departments, doctorNames: [] });
+  test("extractQueryEntities maps children to Pediatrics", () => {
+    const extracted = extractQueryEntities("children", { specialties, departments, doctorNames: [] });
     assert.equal(extracted.specialtyName, "Pediatrics");
     assert.ok(extracted.specialtyMatchPercent >= 70);
   });
 
-  test("rankDoctors orders pediatrics doctor for nhi khoa", () => {
+  test("rankDoctors orders pediatrics doctor for children query", () => {
     const doctors = [
       {
         _id: "1",
@@ -155,7 +155,7 @@ describe("search engine", () => {
       },
     ];
 
-    const ranked = rankDoctors(doctors, "nhi khoa", { specialties, departments });
+    const ranked = rankDoctors(doctors, "children", { specialties, departments });
     assert.equal(ranked[0].fullName, "Dr. Le Minh Cuong");
     assert.ok(ranked[0]._matchPercent > ranked[1]._matchPercent);
   });

@@ -1,19 +1,19 @@
 import { normalizeText } from "./textProcessing.js";
 
 export const SPECIALTY_EXPANSION_BY_CODE = {
-  PED: ["nhi khoa", "tre em", "thieu nhi", "em be", "con nho", "suc khoe tre", "nhi", "pediatric", "children"],
-  CARD: ["tim mach", "tim", "heart", "cardio", "cardiology"],
-  DERM: ["da lieu", "da", "skin", "dermatology"],
-  NEUR: ["than kinh", "nao", "neurology", "brain"],
-  ORTH: ["co xuong", "xuong khop", "orthopedic", "orthopedics", "joint"],
-  PHAR: ["duoc", "thuoc", "pharmacy", "phamarcy", "nha thuoc"],
+  PED: ["pediatric", "pediatrics", "children", "child", "kids", "infant"],
+  CARD: ["heart", "cardio", "cardiovascular", "cardiology", "cardiac"],
+  DERM: ["skin", "dermatology", "dermatologist", "dermatologic"],
+  NEUR: ["brain", "neurology", "neurological", "nervous system", "nerve"],
+  ORTH: ["bone", "bones", "joint", "joints", "orthopedic", "orthopedics", "musculoskeletal"],
+  PHAR: ["pharmacy", "pharmaceutical", "phamarcy", "drug", "dispensing"],
 };
 
 export const DEPARTMENT_EXPANSION_BY_NAME = {
-  "Internal Medicine": ["noi khoa", "internal medical", "internal medicine", "noi"],
-  Surgery: ["ngoai khoa", "phau thuat", "surgery", "surgical"],
-  "Pediatrics Ward": ["khoa nhi", "nhi", "pediatrics ward", "pediatric ward"],
-  Pharmacy: ["nha thuoc", "duoc", "pharmacy", "phamarcy"],
+  "Internal Medicine": ["internal medical", "internal medicine", "internist", "general medicine"],
+  Surgery: ["surgery", "surgical", "surgeon", "operating"],
+  "Pediatrics Ward": ["pediatrics ward", "pediatric ward", "children ward"],
+  Pharmacy: ["pharmacy", "phamarcy", "drugstore", "dispensary"],
 };
 
 export function expansionTermsForSpecialty(specialty) {

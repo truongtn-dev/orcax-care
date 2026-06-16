@@ -395,6 +395,22 @@
   line-height: 1.4;
 }
 
+.doctor-profile-fact--rating {
+  align-items: center;
+}
+
+.doctor-profile-fact--rating dd {
+  display: flex;
+  justify-content: flex-end;
+  font-weight: 400;
+}
+
+.doctor-profile-stat--rating {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .doctor-profile-review {
   /* stays in sidebar stack */
 }

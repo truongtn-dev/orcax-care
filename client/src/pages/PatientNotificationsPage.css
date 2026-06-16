@@ -1,198 +1,395 @@
-.patient-notifications-page {
+/* Notifications — compact patient inbox */
+
+.patient-notifications-fullpage {
+  margin: -2rem calc(-1 * var(--page-gutter)) -3rem;
+  width: calc(100% + 2 * var(--page-gutter));
+  min-height: calc(100vh - var(--header-height));
+  background: var(--gradient-page-bg);
+}
+
+.patient-notifications-toolbar {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0.85rem clamp(1rem, 3vw, 2rem) 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.patient-notifications-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.patient-notifications-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-notifications-back:hover {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}
+
+.patient-notifications-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.patient-notifications-refresh svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-notifications-refresh:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+  border-color: var(--color-info-border);
+  background: var(--color-brand-tint);
+}
+
+.patient-notifications-refresh:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.patient-notifications-refresh.is-spinning svg {
+  animation: patient-notifications-spin 0.8s linear infinite;
+}
+
+@keyframes patient-notifications-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Compact hero */
+.patient-notifications-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.65rem;
+  padding: clamp(1rem, 2vw, 1.35rem) clamp(1rem, 3vw, 2rem);
+  background: var(--gradient-hero);
+  color: #fff;
+  box-shadow: var(--shadow-hero);
+}
+
+.patient-notifications-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.patient-notifications-hero-orb--1 {
+  width: 180px;
+  height: 180px;
+  top: -70px;
+  right: -30px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.patient-notifications-hero-orb--2 {
+  width: 100px;
+  height: 100px;
+  bottom: -45px;
+  left: 18%;
+  background: var(--color-accent-light);
+}
+
+.patient-notifications-hero-inner {
+  position: relative;
+  max-width: var(--container);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
-.patient-notifications-header {
+.patient-notifications-hero-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #fff;
+}
+
+.patient-notifications-hero-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.patient-notifications-hero-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-notifications-hero-copy h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.2vw, 1.65rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.patient-notifications-hero-lead {
+  margin: 0.3rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.patient-notifications-unread-badge {
+  flex-shrink: 0;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.patient-notifications-unread-badge strong {
+  font-size: 1.05rem;
+  margin-right: 0.25rem;
+}
+
+/* Main card */
+.patient-notifications-page-body {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 1rem clamp(1rem, 3vw, 2rem) 2.5rem;
+}
+
+.patient-notifications-panel {
+  border-radius: var(--radius-xl);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* Pop-up alerts strip */
+.patient-notifications-alert-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.35rem 1.45rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: var(--radius-lg);
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: linear-gradient(90deg, var(--color-brand-tint) 0%, #fff 55%);
 }
 
-.patient-notifications-title {
+.patient-notifications-alert-strip.is-on {
+  background: linear-gradient(90deg, rgba(36, 138, 61, 0.08) 0%, #fff 55%);
+}
+
+.patient-notifications-alert-main {
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   min-width: 0;
 }
 
-.patient-notifications-icon {
-  width: 46px;
-  height: 46px;
+.patient-notifications-alert-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  background: #ecfeff;
+  background: var(--color-info-bg);
   color: var(--color-primary-hover);
 }
 
-.patient-notifications-icon svg {
-  width: 23px;
-  height: 23px;
+.patient-notifications-alert-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
-.patient-notifications-eyebrow {
-  margin: 0 0 0.2rem;
-  color: var(--color-primary-hover);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.patient-notifications-alert-strip.is-on .patient-notifications-alert-icon {
+  background: var(--color-success-bg);
+  color: var(--color-success);
 }
 
-.patient-notifications-header h1 {
+.patient-notifications-alert-copy h2 {
   margin: 0;
-  color: var(--color-navy);
-  font-size: 1.55rem;
-  line-height: 1.2;
-}
-
-.patient-notifications-summary {
-  min-width: 92px;
-  padding: 0.65rem 0.8rem;
-  border-radius: var(--radius-md);
-  background: var(--color-brand-surface);
-  text-align: center;
-}
-
-.patient-notifications-summary strong,
-.patient-notifications-summary span {
-  display: block;
-}
-
-.patient-notifications-summary strong {
-  color: var(--color-primary-hover);
-  font-size: 1.35rem;
-  line-height: 1;
-}
-
-.patient-notifications-summary span {
-  margin-top: 0.18rem;
-  color: var(--color-text-secondary);
-  font-size: 0.76rem;
+  font-size: 0.9375rem;
   font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.35;
 }
 
-.patient-notifications-toolbar {
+.patient-notifications-alert-copy p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.patient-notifications-alert-strip .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* List header */
+.patient-notifications-list-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
   flex-wrap: wrap;
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
 }
 
-.patient-push-panel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.1rem;
-  border: 1px solid rgba(15, 118, 110, 0.12);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, #f0fdfa, #ffffff);
-}
-
-.patient-push-eyebrow {
-  margin: 0 0 0.18rem;
-  color: var(--color-primary-hover);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.patient-push-panel h2 {
-  margin: 0;
-  color: var(--color-navy);
-  font-size: 1.08rem;
-  line-height: 1.25;
-}
-
-.patient-notifications-segmented {
+.patient-notifications-tabs {
   display: inline-flex;
-  padding: 0.25rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: var(--radius-md);
-  background: #fff;
+  gap: 0.35rem;
 }
 
-.patient-notifications-segmented button {
-  min-width: 82px;
+.patient-notifications-tabs button {
   border: 0;
-  border-radius: calc(var(--radius-md) - 3px);
-  padding: 0.48rem 0.85rem;
+  border-radius: var(--radius-full);
+  padding: 0.42rem 0.9rem;
   background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
   font: inherit;
-  font-size: 0.84rem;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition);
 }
 
-.patient-notifications-segmented button.is-active {
+.patient-notifications-tabs button.is-active {
   background: var(--color-primary);
   color: #fff;
 }
 
-.patient-notifications-count {
-  color: var(--color-text-muted);
-  font-size: 0.84rem;
-  font-weight: 700;
+.patient-notifications-tabs button:not(.is-active):hover {
+  background: var(--color-brand-tint);
+  color: var(--color-primary-hover);
 }
 
-.patient-notifications-alert {
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba(220, 38, 38, 0.18);
-  border-radius: var(--radius-md);
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 0.9rem;
-  font-weight: 700;
+.patient-notifications-sync {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.patient-notifications-panel .alert {
+  margin: 0 1.15rem;
 }
 
 .patient-notifications-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
+  padding: 1rem 1.15rem 1.15rem;
 }
 
-.patient-notifications-state {
-  padding: 2.25rem 1rem;
-  border: 1px dashed rgba(15, 23, 42, 0.18);
-  border-radius: var(--radius-lg);
-  background: #fff;
-  color: var(--color-text-secondary);
+/* Empty & loading */
+.patient-notifications-empty,
+.patient-notifications-loading {
+  padding: clamp(2.5rem, 6vw, 3.5rem) 1.5rem;
   text-align: center;
-  font-weight: 700;
 }
 
+.patient-notifications-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand-tint);
+  color: var(--color-primary-hover);
+}
+
+.patient-notifications-empty-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.patient-notifications-empty h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.patient-notifications-empty p,
+.patient-notifications-loading p {
+  margin: 0.5rem auto 0;
+  max-width: 26rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.patient-notifications-loading p {
+  margin-top: 0;
+}
+
+.patient-notifications-empty-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+}
+
+.patient-notifications-loading .loading-spinner {
+  margin: 0 auto 1rem;
+}
+
+/* Notification items */
 .patient-notification-item {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem 1.05rem;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.07);
   border-radius: var(--radius-lg);
   background: #fff;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.patient-notification-item:hover {
+  border-color: var(--color-info-border);
+  box-shadow: var(--shadow-xs);
 }
 
 .patient-notification-item.is-unread {
-  border-left: 4px solid var(--color-primary);
+  border-left: 3px solid var(--color-primary);
+  background: linear-gradient(90deg, var(--color-brand-tint) 0%, #fff 18%);
 }
 
 .patient-notification-item.is-read {
-  opacity: 0.78;
+  opacity: 0.88;
 }
 
 .patient-notification-main {
@@ -203,46 +400,47 @@
 .patient-notification-meta {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
 }
 
 .patient-notification-type {
-  padding: 0.16rem 0.5rem;
+  padding: 0.14rem 0.48rem;
   border-radius: var(--radius-full);
-  background: var(--color-brand-surface);
-  color: var(--color-primary-hover);
-  font-size: 0.68rem;
-  font-weight: 800;
+  background: var(--color-info-bg);
+  color: var(--color-info-hover);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .patient-notification-meta time {
   color: var(--color-text-muted);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .patient-notification-item h2 {
   margin: 0;
   color: var(--color-navy);
-  font-size: 1rem;
-  line-height: 1.3;
+  font-size: 0.975rem;
+  line-height: 1.35;
 }
 
 .patient-notification-item p {
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.55;
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .patient-notification-link {
   display: inline-flex;
-  margin-top: 0.5rem;
+  margin-top: 0.45rem;
   color: var(--color-primary-hover);
-  font-size: 0.84rem;
-  font-weight: 800;
+  font-size: 0.8125rem;
+  font-weight: 700;
   text-decoration: none;
 }
 
@@ -254,22 +452,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.38rem;
-  min-width: 112px;
-  min-height: 38px;
-  border: 1px solid rgba(15, 118, 110, 0.18);
+  gap: 0.35rem;
+  min-width: 96px;
+  min-height: 34px;
+  border: 1px solid var(--color-info-border);
   border-radius: var(--radius-md);
-  background: #f0fdfa;
+  background: #fff;
   color: var(--color-primary-hover);
   cursor: pointer;
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: background var(--transition);
+}
+
+.patient-notification-read-button:hover:not(:disabled) {
+  background: var(--color-brand-tint);
 }
 
 .patient-notification-read-button svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
 }
 
 .patient-notification-read-button:disabled {
@@ -279,16 +482,27 @@
   border-color: rgba(15, 23, 42, 0.08);
 }
 
-@media (max-width: 640px) {
-  .patient-notifications-header,
-  .patient-push-panel,
-  .patient-notification-item {
-    align-items: stretch;
-    flex-direction: column;
+@media (max-width: 720px) {
+  .patient-notifications-hero-inner {
+    flex-wrap: wrap;
   }
 
-  .patient-notifications-summary {
-    align-self: flex-start;
+  .patient-notifications-unread-badge {
+    width: 100%;
+    text-align: center;
+  }
+
+  .patient-notifications-alert-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patient-notifications-alert-strip .btn {
+    width: 100%;
+  }
+
+  .patient-notification-item {
+    flex-direction: column;
   }
 
   .patient-notification-read-button {

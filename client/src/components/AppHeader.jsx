@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import LogoIcon from "./LogoIcon.jsx";
 import { formatRoleLabel } from "../utils/roleLabels.js";
+import { NotificationApiClient } from "../services/notificationApi.js";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
@@ -34,6 +35,44 @@ export default function AppHeader() {
       document.body.style.overflow = "";
     };
   }, [menuOpen]);
+
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (role !== "patient") {
+      setUnreadNotifications(0);
+      return undefined;
+    }
+
+    let active = true;
+
+    const loadUnread = () => {
+      NotificationApiClient.listNotifications()
+        .then(({ data }) => {
+          if (active) setUnreadNotifications(data.unreadCount || 0);
+        })
+        .catch(() => {
+          if (active) setUnreadNotifications(0);
+        });
+    };
+
+    loadUnread();
+    const timer = window.setInterval(loadUnread, 45000);
+    const onUpdated = (event) => {
+      if (typeof event.detail?.unreadCount === "number") {
+        setUnreadNotifications(event.detail.unreadCount);
+      } else {
+        loadUnread();
+      }
+    };
+
+    window.addEventListener("orcax:notifications-updated", onUpdated);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("orcax:notifications-updated", onUpdated);
+    };
+  }, [role, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -86,6 +125,17 @@ export default function AppHeader() {
                 className={`nav-link ${isActive(dashboardLink) ? "nav-link-active" : ""}`}
               >
                 {dashboardLabel}
+              </Link>
+            )}
+            {isAuthenticated && role === "patient" && (
+              <Link
+                to="/patient/notifications"
+                className={`nav-link nav-link-notifications ${isActive("/patient/notifications") ? "nav-link-active" : ""}`}
+              >
+                Notifications
+                {unreadNotifications > 0 && (
+                  <span className="nav-notification-badge">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
+                )}
               </Link>
             )}
           </div>
@@ -155,6 +205,12 @@ export default function AppHeader() {
                     {dashboardLink && (
                       <Link to={dashboardLink} role="menuitem" onClick={() => setUserMenuOpen(false)}>
                         {dashboardLabel}
+                      </Link>
+                    )}
+                    {role === "patient" && (
+                      <Link to="/patient/notifications" role="menuitem" onClick={() => setUserMenuOpen(false)}>
+                        Notifications
+                        {unreadNotifications > 0 ? ` (${unreadNotifications})` : ""}
                       </Link>
                     )}
                     <Link to="/profile" role="menuitem" onClick={() => setUserMenuOpen(false)}>

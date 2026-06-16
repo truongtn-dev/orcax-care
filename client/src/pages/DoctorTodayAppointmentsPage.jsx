@@ -5,20 +5,30 @@ import { getApiErrorMessage } from "../services/api.js";
 import { DoctorApiClient } from "../services/doctorApi.js";
 
 const STATUS_OPTIONS = [
-  { value: "all", label: "All" },
-  { value: "scheduled", label: "Scheduled" },
-  { value: "checked_in", label: "Checked in" },
+  { value: "all", label: "All statuses" },
+  { value: "confirmed", label: "Confirmed" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
 ];
 
 function formatStatus(value) {
-  return String(value || "").replace("_", " ");
+  const labels = {
+    confirmed: "Confirmed",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+  return labels[value] || String(value || "").replace("_", " ");
+}
+
+function statusClassName(value) {
+  if (value === "cancelled") return "status-pill status-cancelled";
+  if (value === "completed") return "status-pill status-completed";
+  return "status-pill status-active";
 }
 
 function formatSlot(slot) {
   if (!slot) return "No slot";
-  return `${slot.startTime} - ${slot.endTime}`;
+  return `${slot.startTime} – ${slot.endTime}`;
 }
 
 export default function DoctorTodayAppointmentsPage() {
@@ -73,7 +83,9 @@ export default function DoctorTodayAppointmentsPage() {
         <div className="admin-toolbar">
           <div>
             <h2>Today appointments</h2>
-            <p className="muted">{date || "Today"} · {appointments.length} appointment{appointments.length === 1 ? "" : "s"}</p>
+            <p className="muted">
+              {date || "Today"} · {appointments.length} appointment{appointments.length === 1 ? "" : "s"}
+            </p>
           </div>
           <button type="button" className="btn btn-outline" onClick={loadAppointments} disabled={loading}>
             Refresh
@@ -107,7 +119,7 @@ export default function DoctorTodayAppointmentsPage() {
         <div className="detail-grid">
           <section className="card data-table-card">
             {loading ? (
-              <p className="empty-cell">Loading today's appointments...</p>
+              <p className="empty-cell">Loading today&apos;s appointments…</p>
             ) : appointments.length === 0 ? (
               <p className="empty-cell">No appointments match this filter.</p>
             ) : (
@@ -124,15 +136,20 @@ export default function DoctorTodayAppointmentsPage() {
                   </thead>
                   <tbody>
                     {appointments.map((appointment) => (
-                      <tr key={appointment._id}>
+                      <tr
+                        key={appointment._id}
+                        className={selectedAppointment?._id === appointment._id ? "is-selected-row" : ""}
+                      >
                         <td>{formatSlot(appointment.slot)}</td>
                         <td>{appointment.patientName || "Patient"}</td>
                         <td>
-                          <span className="status-pill status-active">
+                          <span className={statusClassName(appointment.status)}>
                             {formatStatus(appointment.status)}
                           </span>
                         </td>
-                        <td>{appointment.referenceCode}</td>
+                        <td>
+                          <code className="doctor-appt-ref">{appointment.referenceCode || "—"}</code>
+                        </td>
                         <td className="table-actions-col">
                           <button
                             type="button"
@@ -153,7 +170,7 @@ export default function DoctorTodayAppointmentsPage() {
           <aside className="card detail-section">
             <div className="detail-section-header">
               <h3>Appointment detail</h3>
-              {detailLoading && <span className="muted">Loading...</span>}
+              {detailLoading && <span className="muted">Loading…</span>}
             </div>
 
             {!selectedAppointment ? (
@@ -162,12 +179,20 @@ export default function DoctorTodayAppointmentsPage() {
               <dl className="detail-list">
                 <div>
                   <dt>Reference</dt>
-                  <dd>{selectedAppointment.referenceCode}</dd>
+                  <dd>
+                    <code className="doctor-appt-ref">{selectedAppointment.referenceCode || "—"}</code>
+                  </dd>
                 </div>
                 <div>
                   <dt>Patient</dt>
                   <dd>{selectedAppointment.patientName || "Patient"}</dd>
                 </div>
+                {selectedAppointment.patientEmail && (
+                  <div>
+                    <dt>Email</dt>
+                    <dd>{selectedAppointment.patientEmail}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>Date</dt>
                   <dd>{selectedAppointment.slot?.date || date}</dd>
@@ -184,8 +209,18 @@ export default function DoctorTodayAppointmentsPage() {
                 )}
                 <div>
                   <dt>Status</dt>
-                  <dd>{formatStatus(selectedAppointment.status)}</dd>
+                  <dd>
+                    <span className={statusClassName(selectedAppointment.status)}>
+                      {formatStatus(selectedAppointment.status)}
+                    </span>
+                  </dd>
                 </div>
+                {selectedAppointment.fee != null && (
+                  <div>
+                    <dt>Fee</dt>
+                    <dd>{new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND", maximumFractionDigits: 0 }).format(selectedAppointment.fee)}</dd>
+                  </div>
+                )}
                 {selectedAppointment.reason && (
                   <div>
                     <dt>Reason</dt>
