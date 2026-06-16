@@ -23,6 +23,9 @@ function serializeAppointment(doc) {
     reason: doc.reason || "",
     fee: doc.fee,
     currency: "VND",
+    rating: doc.rating ?? null,
+    reviewComment: doc.reviewComment || "",
+    reviewedAt: doc.reviewedAt || null,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     doctor: {
@@ -284,6 +287,89 @@ export async function rescheduleAppointment(userId, appointmentId, payload = {})
   }
 
   await AppointmentSlot.updateOne({ _id: oldSlotId }, { status: "available" });
+
+  const populated = await Appointment.findById(appointment._id)
+    .populate({
+      path: "doctorId",
+      populate: [
+        { path: "userId", select: "fullName" },
+        { path: "specialtyId", select: "name" },
+      ],
+    })
+    .populate({
+      path: "slotId",
+      populate: { path: "roomId", select: "name" },
+    })
+    .lean();
+
+  return { status: 200, body: serializeAppointment(populated) };
+}
+
+export async function rateAppointment(userId, appointmentId, payload = {}) {
+  if (!appointmentId || !mongoose.Types.ObjectId.isValid(appointmentId)) {
+    return { status: 400, body: { message: "Invalid appointment" } };
+  }
+
+  const rating = parseInt(payload.rating, 10);
+  if (Number.isNaN(rating) || rating < 1 || rating > 5) {
+    return { status: 400, body: { message: "Rating must be an integer between 1 and 5" } };
+  }
+
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    patientUserId: userId,
+  }).populate({
+    path: "slotId",
+    select: "date startTime",
+  });
+
+  if (!appointment) {
+    return { status: 404, body: { message: "Appointment not found" } };
+  }
+
+  if (appointment.rating != null) {
+    return { status: 400, body: { message: "This appointment has already been rated" } };
+  }
+
+  if (appointment.status === "cancelled") {
+    return { status: 409, body: { message: "Cancelled appointments cannot be rated" } };
+  }
+
+  const slot = appointment.slotId;
+  if (!slot) {
+    return { status: 404, body: { message: "Appointment slot data is missing" } };
+  }
+
+  if (!isSlotDatetimePast(slot.date, slot.startTime)) {
+    return {
+      status: 400,
+      body: { message: "Cannot rate an appointment before its scheduled start time" },
+    };
+  }
+
+  appointment.rating = rating;
+  appointment.reviewComment = String(payload.comment || "").trim().slice(0, 1000);
+  appointment.reviewedAt = new Date();
+  appointment.status = "completed";
+  await appointment.save();
+
+  const ratings = await Appointment.find({
+    doctorId: appointment.doctorId,
+    rating: { $ne: null },
+  })
+    .select("rating")
+    .lean();
+
+  const ratingCount = ratings.length;
+  const ratingAverage =
+    ratingCount > 0
+      ? parseFloat((ratings.reduce((sum, row) => sum + row.rating, 0) / ratingCount).toFixed(1))
+      : 0;
+
+  await Doctor.findByIdAndUpdate(appointment.doctorId, {
+    ratingAverage,
+    ratingCount,
+  });
 
   const populated = await Appointment.findById(appointment._id)
     .populate({

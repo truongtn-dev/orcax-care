@@ -24,7 +24,7 @@ const appointmentSchema = new mongoose.Schema(
     fee: { type: Number, required: true, min: 0 },
     status: {
       type: String,
-      enum: ["confirmed", "cancelled"],
+      enum: ["confirmed", "completed", "cancelled"],
       default: "confirmed",
       index: true,
     },
@@ -33,6 +33,9 @@ const appointmentSchema = new mongoose.Schema(
       ref: "InsuranceCard",
       default: null,
     },
+    rating: { type: Number, min: 1, max: 5, default: null },
+    reviewComment: { type: String, default: "", trim: true, maxlength: 1000 },
+    reviewedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./PatientDashboardPage.css";
 import PageLayout from "../components/PageLayout.jsx";
@@ -56,7 +56,6 @@ const DASHBOARD_SECTIONS = [
         badge: "Booking",
         theme: "cyan",
         cta: "Start booking",
-        tag: "Soon",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M8 2v4" />
@@ -75,7 +74,6 @@ const DASHBOARD_SECTIONS = [
         badge: "Visits",
         theme: "teal",
         cta: "View appointments",
-        tag: "Soon",
         icon: (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
             <path d="M8 2v4" />
@@ -188,6 +186,7 @@ export default function PatientDashboardPage() {
   const { fullName } = useAuth();
   const firstName = fullName?.split(" ")[0] || "there";
   const [walletBalance, setWalletBalance] = useState(null);
+  const [upcomingCount, setUpcomingCount] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -198,6 +197,24 @@ export default function PatientDashboardPage() {
       .catch(() => {
         if (active) setWalletBalance(null);
       });
+
+    PatientApiClient.listAppointments()
+      .then(({ data }) => {
+        if (!active) return;
+        const now = new Date();
+        const upcoming = (data.items || []).filter((app) => {
+          if (app.status !== "confirmed") return false;
+          const slot = app.slot;
+          if (!slot?.date) return false;
+          const slotDate = new Date(`${slot.date}T${slot.startTime || "00:00"}:00`);
+          return slotDate > now;
+        });
+        setUpcomingCount(upcoming.length);
+      })
+      .catch(() => {
+        if (active) setUpcomingCount(null);
+      });
+
     return () => {
       active = false;
     };
@@ -257,9 +274,11 @@ export default function PatientDashboardPage() {
                 </svg>
               </span>
               <div className="patient-quick-body">
-                <span className="patient-quick-value">0</span>
+                <span className="patient-quick-value">
+                  {upcomingCount === null ? "—" : upcomingCount}
+                </span>
                 <span className="patient-quick-label">Upcoming visits</span>
-                <span className="patient-quick-hint">Online booking coming soon</span>
+                <span className="patient-quick-hint">View your booked appointments</span>
               </div>
             </Link>
 

@@ -50,4 +50,115 @@
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.patient-appointment-reschedule {
+  margin-top: 1rem;
+}
+
+.patient-appointment-review-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stars-row {
+  display: flex;
+  gap: 2px;
+}
+
+.star-icon {
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  line-height: 1;
+}
+
+.star-icon.star-active {
+  color: #f59e0b;
+}
+
+.patient-appointment-review-display p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.patient-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.patient-modal-card {
+  background: white;
+  border-radius: 1.25rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.patient-modal-card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+}
+
+.patient-modal-desc {
+  color: var(--color-text-secondary);
+  margin: 0 0 1.5rem;
+}
+
+.patient-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.patient-modal-field textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1.5px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.625rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.patient-modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.patient-modal-rating-picker {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+.star-select-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #e2e8f0;
+  line-height: 1;
+  padding: 0;
+}
+
+.star-select-btn.is-selected,
+.star-select-btn:hover {
+  color: #f59e0b;
 }
