@@ -41,7 +41,7 @@ export default function LoginPage() {
       return;
     }
     if (role === "admin") navigate("/admin", { replace: true });
-    else if (role === "doctor") navigate("/doctor/schedule", { replace: true });
+    else if (role === "doctor") navigate("/doctor", { replace: true });
     else if (role === "staff") navigate("/staff", { replace: true });
     else navigate("/patient", { replace: true });
   };

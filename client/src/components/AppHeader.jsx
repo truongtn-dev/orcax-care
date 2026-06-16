@@ -45,7 +45,7 @@ export default function AppHeader() {
     role === "admin"
       ? "/admin"
       : role === "doctor"
-        ? "/doctor/schedule"
+        ? "/doctor"
         : role === "staff"
           ? "/staff"
           : role === "patient"
@@ -56,7 +56,7 @@ export default function AppHeader() {
     role === "admin"
       ? "Admin dashboard"
       : role === "doctor"
-        ? "Doctor portal"
+        ? "Doctor dashboard"
         : role === "staff"
           ? "Staff portal"
           : "My dashboard";

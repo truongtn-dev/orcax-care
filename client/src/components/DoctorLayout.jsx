@@ -2,13 +2,24 @@ import PortalShell from "./PortalShell.jsx";
 
 const DOCTOR_SECTIONS = [
   {
+    label: "Main",
+    items: [
+      {
+        to: "/doctor",
+        label: "Dashboard",
+        icon: "grid",
+        match: ["/doctor"],
+      },
+    ],
+  },
+  {
     label: "Clinical work",
     items: [
       {
         to: "/doctor/schedule",
         label: "Calendar",
         icon: "calendar",
-        match: ["/doctor/schedule", "/doctor"],
+        match: ["/doctor/schedule"],
       },
       {
         to: "/doctor/work-shifts",
@@ -35,9 +46,9 @@ export default function DoctorLayout({ children, title, actions }) {
   return (
     <PortalShell
       portalLabel="Doctor"
-      homeLink="/doctor/schedule"
+      homeLink="/doctor"
       sections={DOCTOR_SECTIONS}
-      title={title || "My calendar"}
+      title={title || "Doctor dashboard"}
       actions={actions}
     >
       {children}

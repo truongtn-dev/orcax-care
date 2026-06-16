@@ -183,7 +183,7 @@ export default function HomePage() {
     role === "admin"
       ? "/admin"
       : role === "doctor"
-        ? "/doctor/schedule"
+        ? "/doctor"
         : role === "staff"
           ? "/staff"
           : role === "patient"
