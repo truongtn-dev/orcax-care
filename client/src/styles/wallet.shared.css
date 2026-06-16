@@ -277,7 +277,6 @@
 }
 
 .wallet-provider-badge--payos { background: var(--color-brand-surface); color: var(--color-primary-hover); }
-.wallet-provider-badge--vnpay { background: #eff6ff; color: #1d4ed8; }
 .wallet-provider-badge--sepay { background: #ecfdf5; color: #047857; }
 
 /* Cards */
@@ -1099,28 +1098,6 @@
 .wallet-sepay-launcher-btn {
   margin-top: 0.5rem;
   min-width: 220px;
-}
-
-.wallet-vnpay-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  min-height: 360px;
-  padding: 2rem;
-  text-align: center;
-  border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, #eff6ff, #f8fafc);
-  border: 1px solid #bfdbfe;
-}
-
-.wallet-vnpay-panel p {
-  margin: 0;
-  max-width: 36ch;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--color-text-secondary);
 }
 
 .wallet-checkout-steps {

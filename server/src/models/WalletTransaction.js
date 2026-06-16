@@ -12,7 +12,7 @@ const walletTransactionSchema = new mongoose.Schema(
     },
     provider: {
       type: String,
-      enum: ["payos", "vnpay", "sepay", "internal"],
+      enum: ["payos", "sepay", "internal"],
       default: "payos",
     },
     orderCode: { type: Number, unique: true, sparse: true },

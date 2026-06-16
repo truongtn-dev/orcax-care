@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import "../../styles/wallet.shared.css";
 import "../../styles/patient.shared.css";
+import { WALLET_PROVIDER_LABELS } from "../../utils/walletUtils.js";
 
 export function WalletBackLink({ to = "/patient/wallet", label = "Back to wallet" }) {
   return (
@@ -68,8 +69,7 @@ export function WalletAlert({ type = "error", title, children, onRetry }) {
 }
 
 export function WalletProviderBadge({ provider }) {
-  const label =
-    provider === "payos" ? "PayOS" : provider === "vnpay" ? "VNPay" : provider === "sepay" ? "SePay" : provider;
+  const label = WALLET_PROVIDER_LABELS[provider] || provider;
   return <span className={`wallet-provider-badge wallet-provider-badge--${provider}`}>{label}</span>;
 }
 

@@ -22,7 +22,6 @@ export const WALLET_PAYMENT_METHODS = [
 
 export const WALLET_PROVIDER_LABELS = {
   payos: "PayOS",
-  vnpay: "VNPay",
   sepay: "SePay",
 };
 

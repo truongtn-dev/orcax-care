@@ -20,16 +20,6 @@ export async function createPayosTopup(req, res) {
   }
 }
 
-export async function createVnpayTopup(req, res) {
-  try {
-    const result = await PatientWalletService.createVnpayTopup(req.user.userId, req.body, req);
-    return res.status(result.status).json(result.body);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "System error" });
-  }
-}
-
 export async function createSepayTopup(req, res) {
   try {
     const result = await PatientWalletService.createSepayTopup(req.user.userId, req.body, req);
@@ -43,16 +33,6 @@ export async function createSepayTopup(req, res) {
 export async function confirmMockPayosTopup(req, res) {
   try {
     const result = await PatientWalletService.confirmMockPayosTopup(req.user.userId, req.body);
-    return res.status(result.status).json(result.body);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "System error" });
-  }
-}
-
-export async function confirmMockVnpayTopup(req, res) {
-  try {
-    const result = await PatientWalletService.confirmMockVnpayTopup(req.user.userId, req.body);
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);

@@ -1,14 +1,6 @@
 import { getApiPublicOrigin, getClientOrigin, getWalletLimits } from "../config/wallet.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import {
-  buildVnpayIpnFailure,
-  buildVnpayIpnSuccess,
-  createVnpayPaymentUrl,
-  isVnpayMockMode,
-  isVnpayPaymentSuccess,
-  verifyVnpayCallback,
-} from "./vnpay.service.js";
-import {
   createPayosPaymentLink,
   isPayosMockMode,
   verifyPayosPayment,
@@ -53,7 +45,6 @@ export async function getPatientWallet(userId, query = {}) {
       ...overview,
       paymentMethods: [
         { id: "payos", label: "PayOS", enabled: !isPayosMockMode() },
-        { id: "vnpay", label: "VNPay", enabled: !isVnpayMockMode() },
         { id: "sepay", label: "SePay", enabled: !isSepayMockMode() },
       ],
       limits: { minTopup, maxTopup },
@@ -200,130 +191,6 @@ export async function confirmMockPayosTopup(userId, payload = {}) {
 
   const result = await completeTopupTransaction(orderCode);
   return result;
-}
-
-export async function createVnpayTopup(userId, payload = {}, req) {
-  const validated = validateTopupAmount(payload.amount);
-  if (validated.error) return validated.error;
-
-  const providerOrderId = await generateUniqueProviderOrderId("VNP");
-  const apiOrigin = getApiPublicOrigin(req);
-  const clientOrigin = getClientOrigin();
-  const returnUrl = `${apiOrigin}/api/payments/vnpay/return`;
-  const ipnUrl = `${apiOrigin}/api/payments/vnpay/ipn`;
-  const ipAddr = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip || "127.0.0.1";
-
-  const txn = await WalletTransaction.create({
-    userId,
-    type: "topup",
-    amount: validated.value,
-    status: "pending",
-    provider: "vnpay",
-    providerOrderId,
-    description: payload.description?.trim() || "OrcaXCare wallet top-up via VNPay",
-  });
-
-  const payment = createVnpayPaymentUrl({
-    orderId: providerOrderId,
-    amount: validated.value,
-    orderInfo: txn.description,
-    returnUrl,
-    ipnUrl,
-    ipAddr,
-  });
-
-  if (!payment.mock) {
-    txn.checkoutSnapshot = { payUrl: payment.payUrl };
-    await txn.save();
-  }
-
-  const checkoutPath = payment.mock
-    ? `/patient/wallet/vnpay/mock?orderId=${providerOrderId}`
-    : `/patient/wallet/checkout/vnpay/${providerOrderId}`;
-
-  return {
-    status: 201,
-    body: {
-      transactionId: txn._id.toString(),
-      providerOrderId,
-      amount: validated.value,
-      checkoutPath,
-      checkoutUrl: `${clientOrigin}${checkoutPath}`,
-      externalCheckoutUrl: payment.mock ? null : payment.payUrl,
-      paymentMethod: "vnpay",
-      checkoutMode: payment.mock ? "mock" : "embedded",
-    },
-  };
-}
-
-async function finalizeVnpayTopup(query = {}) {
-  const providerOrderId = query.vnp_TxnRef || query.orderId;
-  if (!providerOrderId) {
-    return { redirectStatus: "failed", reason: "Missing VNPay order id" };
-  }
-
-  if (!isVnpayMockMode() && !verifyVnpayCallback(query)) {
-    await markTopupFailed({ providerOrderId }, "Invalid VNPay signature");
-    return {
-      redirectStatus: "failed",
-      providerOrderId,
-      reason: "Invalid payment signature",
-    };
-  }
-
-  if (!isVnpayPaymentSuccess(query) && !isVnpayMockMode()) {
-    await markTopupFailed(
-      { providerOrderId },
-      query.vnp_Message || `VNPay response code ${query.vnp_ResponseCode}`
-    );
-    return {
-      redirectStatus: "failed",
-      providerOrderId,
-      reason: query.vnp_Message || "VNPay payment failed",
-    };
-  }
-
-  const result = await completeTopupTransaction(
-    { providerOrderId },
-    { providerReferenceId: query.vnp_TransactionNo || query.vnp_BankTranNo || "" }
-  );
-
-  if (result.status === 200) {
-    return {
-      redirectStatus: "success",
-      providerOrderId,
-      receipt: result.body.receipt,
-    };
-  }
-
-  return {
-    redirectStatus: "failed",
-    providerOrderId,
-    reason: result.body?.message || "Could not credit wallet",
-  };
-}
-
-export async function handleVnpayReturn(query = {}) {
-  if (query.mock === "1" || isVnpayMockMode()) {
-    return finalizeVnpayTopup({
-      ...query,
-      vnp_TxnRef: query.orderId,
-      vnp_ResponseCode: "00",
-      vnp_TransactionNo: query.vnp_TransactionNo || `MOCK-${query.orderId}`,
-    });
-  }
-
-  return finalizeVnpayTopup(query);
-}
-
-export async function handleVnpayIpn(query = {}) {
-  const result = await finalizeVnpayTopup(query);
-  return {
-    body:
-      result.redirectStatus === "success"
-        ? buildVnpayIpnSuccess()
-        : buildVnpayIpnFailure(result.reason || "VNPay IPN rejected"),
-  };
 }
 
 export async function createSepayTopup(userId, payload = {}, req) {
@@ -508,27 +375,6 @@ export async function confirmMockSepayTopup(userId, payload = {}) {
   );
 }
 
-export async function confirmMockVnpayTopup(userId, payload = {}) {
-  if (!isVnpayMockMode()) {
-    return { status: 403, body: { message: "Mock VNPay confirmation is disabled" } };
-  }
-
-  const providerOrderId = String(payload.orderId || "").trim();
-  if (!providerOrderId) {
-    return { status: 400, body: { message: "orderId is required" } };
-  }
-
-  const txn = await WalletTransaction.findOne({ providerOrderId, type: "topup" });
-  if (!txn || txn.userId.toString() !== userId) {
-    return { status: 404, body: { message: "Top-up transaction not found" } };
-  }
-
-  return completeTopupTransaction(
-    { providerOrderId },
-    { providerReferenceId: `MOCK-${providerOrderId}` }
-  );
-}
-
 export async function deductPatientWallet(userId, payload = {}) {
   return deductWalletBalance(userId, payload.amount, payload.description);
 }
@@ -579,12 +425,7 @@ export async function getTopupCheckout(userId, provider, ref) {
       status: txn.status,
       description: txn.description,
       checkoutSnapshot: txn.checkoutSnapshot || null,
-      mockMode:
-        txn.provider === "payos"
-          ? isPayosMockMode()
-          : txn.provider === "vnpay"
-            ? isVnpayMockMode()
-            : isSepayMockMode(),
+      mockMode: txn.provider === "payos" ? isPayosMockMode() : isSepayMockMode(),
     },
   };
 }
