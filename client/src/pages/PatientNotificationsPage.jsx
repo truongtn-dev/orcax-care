@@ -11,6 +11,11 @@ const FILTERS = [
   { id: "unread", label: "Unread" },
 ];
 
+const PUSH_UNSUPPORTED = "unsupported";
+const PUSH_DISABLED = "disabled";
+const PUSH_ENABLED = "enabled";
+const PUSH_BLOCKED = "blocked";
+
 function formatDateTime(value) {
   if (!value) return "";
   return new Intl.DateTimeFormat("en", {
@@ -43,6 +48,39 @@ const CheckIcon = () => (
   </svg>
 );
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = `${base64String}${padding}`.replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+}
+
+function browserSupportsPush() {
+  return "Notification" in window && "serviceWorker" in navigator;
+}
+
+function createLocalPermissionPayload(permission) {
+  return {
+    endpoint: `local-permission://${window.location.host}/patient-notifications`,
+    keys: { p256dh: "", auth: "" },
+    permission,
+    userAgent: navigator.userAgent || "",
+  };
+}
+
+function serializeBrowserSubscription(subscription, permission) {
+  const json = subscription.toJSON();
+  return {
+    endpoint: json.endpoint,
+    keys: {
+      p256dh: json.keys?.p256dh || "",
+      auth: json.keys?.auth || "",
+    },
+    permission,
+    userAgent: navigator.userAgent || "",
+  };
+}
+
 export default function PatientNotificationsPage() {
   const [filter, setFilter] = useState("all");
   const [notifications, setNotifications] = useState([]);
@@ -50,6 +88,9 @@ export default function PatientNotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [markingId, setMarkingId] = useState("");
+  const [pushStatus, setPushStatus] = useState(PUSH_DISABLED);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [vapidPublicKey, setVapidPublicKey] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -75,6 +116,35 @@ export default function PatientNotificationsPage() {
       active = false;
     };
   }, [filter]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!browserSupportsPush()) {
+      setPushStatus(PUSH_UNSUPPORTED);
+      return () => {
+        active = false;
+      };
+    }
+
+    NotificationApiClient.getPushSubscription()
+      .then(({ data }) => {
+        if (!active) return;
+        setVapidPublicKey(data.vapidPublicKey || "");
+        if (Notification.permission === "denied") {
+          setPushStatus(PUSH_BLOCKED);
+        } else {
+          setPushStatus(data.isSubscribed ? PUSH_ENABLED : PUSH_DISABLED);
+        }
+      })
+      .catch(() => {
+        if (active) setPushStatus(PUSH_DISABLED);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const totalLabel = useMemo(() => {
     if (loading) return "Loading";
@@ -103,6 +173,74 @@ export default function PatientNotificationsPage() {
     }
   }
 
+  async function handleEnablePush() {
+    if (!browserSupportsPush() || pushBusy) return;
+    setPushBusy(true);
+    setError("");
+
+    try {
+      const permission = await window.Notification.requestPermission();
+      if (permission === "denied") {
+        setPushStatus(PUSH_BLOCKED);
+        await NotificationApiClient.savePushSubscription(createLocalPermissionPayload(permission));
+        return;
+      }
+      if (permission !== "granted") {
+        setPushStatus(PUSH_DISABLED);
+        return;
+      }
+
+      const registration = await navigator.serviceWorker.register("/sw.js");
+      await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager?.getSubscription();
+
+      if (!subscription && registration.pushManager && vapidPublicKey) {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        });
+      }
+
+      const payload = subscription
+        ? serializeBrowserSubscription(subscription, permission)
+        : createLocalPermissionPayload(permission);
+
+      await NotificationApiClient.savePushSubscription(payload);
+      setPushStatus(PUSH_ENABLED);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleDisablePush() {
+    if (pushBusy) return;
+    setPushBusy(true);
+    setError("");
+
+    try {
+      if (browserSupportsPush()) {
+        const registration = await navigator.serviceWorker.getRegistration("/sw.js");
+        const subscription = await registration?.pushManager?.getSubscription();
+        await subscription?.unsubscribe();
+      }
+      await NotificationApiClient.deactivatePushSubscription();
+      setPushStatus(Notification.permission === "denied" ? PUSH_BLOCKED : PUSH_DISABLED);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  const pushLabel = {
+    [PUSH_UNSUPPORTED]: "Unavailable",
+    [PUSH_DISABLED]: "Off",
+    [PUSH_ENABLED]: "On",
+    [PUSH_BLOCKED]: "Blocked",
+  }[pushStatus];
+
   return (
     <PageLayout>
       <div className="patient-notifications-page">
@@ -125,6 +263,29 @@ export default function PatientNotificationsPage() {
         </ScrollReveal>
 
         <ScrollReveal variant="up" delay={40}>
+          <section className="patient-push-panel">
+            <div>
+              <p className="patient-push-eyebrow">Browser push</p>
+              <h2>{pushLabel}</h2>
+            </div>
+            {pushStatus === PUSH_ENABLED ? (
+              <button type="button" className="btn btn-outline" onClick={handleDisablePush} disabled={pushBusy}>
+                {pushBusy ? "Saving..." : "Turn off"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleEnablePush}
+                disabled={pushBusy || pushStatus === PUSH_UNSUPPORTED || pushStatus === PUSH_BLOCKED}
+              >
+                {pushBusy ? "Saving..." : "Enable push"}
+              </button>
+            )}
+          </section>
+        </ScrollReveal>
+
+        <ScrollReveal variant="up" delay={60}>
           <section className="patient-notifications-toolbar">
             <div className="patient-notifications-segmented" aria-label="Notification filter">
               {FILTERS.map((item) => (
@@ -144,7 +305,7 @@ export default function PatientNotificationsPage() {
 
         {error && <div className="patient-notifications-alert">{error}</div>}
 
-        <ScrollReveal variant="up" delay={80}>
+        <ScrollReveal variant="up" delay={90}>
           <section className="patient-notifications-list" aria-live="polite">
             {loading ? (
               <div className="patient-notifications-state">Loading notifications...</div>

@@ -3,6 +3,7 @@ import * as PatientFavoriteDoctorController from "../controllers/patientFavorite
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientAppointmentController from "../controllers/patientAppointment.controller.js";
 import * as PatientNotificationController from "../controllers/patientNotification.controller.js";
+import * as PatientPushSubscriptionController from "../controllers/patientPushSubscription.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
@@ -46,3 +47,16 @@ patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointme
 
 patientRouter.get("/notifications", PatientNotificationController.listNotifications);
 patientRouter.put("/notifications/:id/read", PatientNotificationController.markNotificationRead);
+
+patientRouter.get(
+  "/push-subscription",
+  PatientPushSubscriptionController.getPushSubscription
+);
+patientRouter.post(
+  "/push-subscription",
+  PatientPushSubscriptionController.savePushSubscription
+);
+patientRouter.delete(
+  "/push-subscription",
+  PatientPushSubscriptionController.deactivatePushSubscription
+);
