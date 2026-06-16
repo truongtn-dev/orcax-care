@@ -69,6 +69,10 @@ export const PatientApiClient = {
     return api.post(`/api/patient/appointments/${id}/rate`, payload);
   },
 
+  cancelAppointment(id, payload) {
+    return api.post(`/api/patient/appointments/${id}/cancel`, payload);
+  },
+
   listInsuranceCards() {
     return api.get("/api/patient/insurance-cards");
   },

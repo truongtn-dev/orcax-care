@@ -162,3 +162,57 @@
 .star-select-btn:hover {
   color: #f59e0b;
 }
+
+.btn-danger-outline {
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+.btn-danger {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.patient-appointment-cancelled-tag {
+  font-size: 0.875rem;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.patient-modal-policy-box {
+  background: #f8fafc;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.patient-modal-policy-box h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.patient-modal-policy-box ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.patient-modal-refund-estimate {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 0.5rem;
+  background: white;
+}
+
+.patient-modal-field select {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1.5px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.625rem;
+  font-family: inherit;
+}

@@ -36,6 +36,8 @@ const appointmentSchema = new mongoose.Schema(
     rating: { type: Number, min: 1, max: 5, default: null },
     reviewComment: { type: String, default: "", trim: true, maxlength: 1000 },
     reviewedAt: { type: Date, default: null },
+    cancellationReason: { type: String, default: "", trim: true, maxlength: 500 },
+    refundAmount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true }
 );

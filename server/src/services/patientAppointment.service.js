@@ -6,7 +6,7 @@ import { InsuranceCard } from "../models/InsuranceCard.js";
 import { User } from "../models/User.js";
 import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
 import { getConsultationFee } from "./doctorAvailability.service.js";
-import { deductWalletBalance, getOrCreateWallet } from "./wallet.service.js";
+import { deductWalletBalance, getOrCreateWallet, refundWalletBalance } from "./wallet.service.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import { formatDateOnly, isSlotDatetimePast } from "../utils/shiftTime.js";
 
@@ -26,6 +26,8 @@ function serializeAppointment(doc) {
     rating: doc.rating ?? null,
     reviewComment: doc.reviewComment || "",
     reviewedAt: doc.reviewedAt || null,
+    cancellationReason: doc.cancellationReason || "",
+    refundAmount: doc.refundAmount ?? 0,
     createdAt: doc.createdAt,
     updatedAt: doc.updatedAt,
     doctor: {
@@ -287,6 +289,82 @@ export async function rescheduleAppointment(userId, appointmentId, payload = {})
   }
 
   await AppointmentSlot.updateOne({ _id: oldSlotId }, { status: "available" });
+
+  const populated = await Appointment.findById(appointment._id)
+    .populate({
+      path: "doctorId",
+      populate: [
+        { path: "userId", select: "fullName" },
+        { path: "specialtyId", select: "name" },
+      ],
+    })
+    .populate({
+      path: "slotId",
+      populate: { path: "roomId", select: "name" },
+    })
+    .lean();
+
+  return { status: 200, body: serializeAppointment(populated) };
+}
+
+function getRefundAmount(fee, slotDate, startTime) {
+  const slotDateTime = new Date(`${formatDateOnly(slotDate)}T${startTime || "00:00"}:00`);
+  const diffHours = (slotDateTime.getTime() - Date.now()) / (1000 * 60 * 60);
+
+  if (diffHours >= 24) return fee;
+  if (diffHours >= 12) return Math.floor(fee * 0.5);
+  return 0;
+}
+
+export async function cancelAppointment(userId, appointmentId, payload = {}) {
+  if (!appointmentId || !mongoose.Types.ObjectId.isValid(appointmentId)) {
+    return { status: 400, body: { message: "Invalid appointment" } };
+  }
+
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    patientUserId: userId,
+  }).populate({ path: "slotId", select: "date startTime status" });
+
+  if (!appointment) {
+    return { status: 404, body: { message: "Appointment not found" } };
+  }
+
+  if (appointment.status !== "confirmed") {
+    return { status: 409, body: { message: "Only confirmed appointments can be cancelled" } };
+  }
+
+  const slot = appointment.slotId;
+  if (!slot) {
+    return { status: 404, body: { message: "Appointment slot data is missing" } };
+  }
+
+  if (isSlotDatetimePast(slot.date, slot.startTime)) {
+    return {
+      status: 400,
+      body: { message: "Cannot cancel an appointment that has already started or passed" },
+    };
+  }
+
+  const refundAmount = getRefundAmount(appointment.fee, slot.date, slot.startTime);
+
+  if (refundAmount > 0) {
+    const refund = await refundWalletBalance(
+      userId,
+      refundAmount,
+      `Refund for cancelled appointment ${appointment._id}`
+    );
+    if (refund.status !== 200) {
+      return refund;
+    }
+  }
+
+  await AppointmentSlot.updateOne({ _id: slot._id }, { status: "available" });
+
+  appointment.status = "cancelled";
+  appointment.cancellationReason = String(payload.reason || "Cancelled by patient").trim().slice(0, 500);
+  appointment.refundAmount = refundAmount;
+  await appointment.save();
 
   const populated = await Appointment.findById(appointment._id)
     .populate({

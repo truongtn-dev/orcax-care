@@ -43,6 +43,18 @@ export async function rescheduleAppointment(req, res) {
   }
 }
 
+export async function cancelAppointment(req, res) {
+  try {
+    return sendResult(
+      res,
+      await PatientAppointmentService.cancelAppointment(req.user.userId, req.params.id, req.body)
+    );
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function rateAppointment(req, res) {
   try {
     return sendResult(

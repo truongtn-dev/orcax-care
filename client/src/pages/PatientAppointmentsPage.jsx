@@ -18,6 +18,15 @@ function canRateAppointment(item) {
   return item.rating == null && item.status !== "cancelled" && isAppointmentPast(item);
 }
 
+function getRefundEstimate(fee, slot) {
+  if (!slot?.date) return 0;
+  const slotDate = new Date(`${slot.date}T${slot.startTime || "00:00"}:00`);
+  const diffHours = (slotDate.getTime() - Date.now()) / (1000 * 60 * 60);
+  if (diffHours >= 24) return fee;
+  if (diffHours >= 12) return Math.floor(fee * 0.5);
+  return 0;
+}
+
 export default function PatientAppointmentsPage() {
   const [searchParams] = useSearchParams();
   const [items, setItems] = useState([]);
@@ -28,6 +37,10 @@ export default function PatientAppointmentsPage() {
   const [selectedAppointmentForRate, setSelectedAppointmentForRate] = useState(null);
   const [ratingValue, setRatingValue] = useState(5);
   const [rateComment, setRateComment] = useState("");
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedAppointmentForCancel, setSelectedAppointmentForCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState("Change of plans");
+  const [cancelRefundEstimate, setCancelRefundEstimate] = useState(0);
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
   const [message, setMessage] = useState("");
@@ -87,6 +100,34 @@ export default function PatientAppointmentsPage() {
     setRateComment("");
     setModalError("");
     setRateModalOpen(true);
+  };
+
+  const openCancelModal = (item) => {
+    setSelectedAppointmentForCancel(item);
+    setCancelReason("Change of plans");
+    setCancelRefundEstimate(getRefundEstimate(item.fee, item.slot));
+    setModalError("");
+    setCancelModalOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!selectedAppointmentForCancel) return;
+
+    setModalSubmitting(true);
+    setModalError("");
+
+    try {
+      await PatientApiClient.cancelAppointment(selectedAppointmentForCancel._id, {
+        reason: cancelReason,
+      });
+      setCancelModalOpen(false);
+      setMessage("Appointment cancelled successfully.");
+      await loadAppointments();
+    } catch (err) {
+      setModalError(getApiErrorMessage(err));
+    } finally {
+      setModalSubmitting(false);
+    }
   };
 
   const handleRateSubmit = async () => {
@@ -211,6 +252,20 @@ export default function PatientAppointmentsPage() {
                         Rate doctor
                       </button>
                     )}
+                    {item.status === "confirmed" && !isAppointmentPast(item) && (
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm btn-danger-outline"
+                        onClick={() => openCancelModal(item)}
+                      >
+                        Cancel appointment
+                      </button>
+                    )}
+                    {item.status === "cancelled" && (
+                      <span className="patient-appointment-cancelled-tag">
+                        Cancelled · Refunded {formatWalletCurrency(item.refundAmount || 0)}
+                      </span>
+                    )}
                     {item.rating != null && (
                       <div className="patient-appointment-review-display">
                         <div className="stars-row">
@@ -258,6 +313,65 @@ export default function PatientAppointmentsPage() {
           </div>
         )}
       </div>
+
+      {cancelModalOpen && selectedAppointmentForCancel && (
+        <div className="patient-modal-overlay">
+          <div className="patient-modal-card">
+            <h3>Cancel appointment</h3>
+            <p className="patient-modal-desc">
+              Review the refund policy before confirming cancellation.
+            </p>
+
+            <div className="patient-modal-policy-box">
+              <h4>Refund policy</h4>
+              <ul>
+                <li>More than 24h before: 100% refund</li>
+                <li>12h to 24h before: 50% refund</li>
+                <li>Less than 12h before: no refund</li>
+              </ul>
+              <div className="patient-modal-refund-estimate">
+                <span>Estimated refund</span>
+                <strong>{formatWalletCurrency(cancelRefundEstimate)}</strong>
+              </div>
+            </div>
+
+            <div className="patient-modal-field">
+              <label htmlFor="cancel-reason">Reason for cancellation</label>
+              <select
+                id="cancel-reason"
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+              >
+                <option value="Change of plans">Change of plans</option>
+                <option value="Schedule conflict">Schedule conflict</option>
+                <option value="Illness">Illness</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {modalError && <div className="alert alert-error">{modalError}</div>}
+
+            <div className="patient-modal-actions">
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                disabled={modalSubmitting}
+                onClick={() => setCancelModalOpen(false)}
+              >
+                Keep appointment
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm btn-danger"
+                disabled={modalSubmitting}
+                onClick={handleCancelConfirm}
+              >
+                {modalSubmitting ? "Cancelling…" : "Confirm cancellation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {rateModalOpen && selectedAppointmentForRate && (
         <div className="patient-modal-overlay">

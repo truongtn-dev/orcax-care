@@ -52,6 +52,7 @@ patientRouter.put(
   "/appointments/:id/reschedule",
   PatientAppointmentController.rescheduleAppointment
 );
+patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.cancelAppointment);
 patientRouter.post("/appointments/:id/rate", PatientAppointmentController.rateAppointment);
 
 patientRouter.get("/notifications", PatientNotificationController.listNotifications);
