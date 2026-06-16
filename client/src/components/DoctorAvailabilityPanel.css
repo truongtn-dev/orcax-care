@@ -182,6 +182,71 @@
   padding-top: 0.15rem;
 }
 
+/* Booking page — wider slot grid */
+.doctor-availability--booking {
+  gap: 1rem;
+}
+
+.doctor-availability--booking .doctor-availability-toolbar {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+}
+
+.doctor-availability--booking .doctor-availability-badge {
+  font-size: 0.8125rem;
+  padding: 0.3rem 0.75rem;
+}
+
+.doctor-availability--booking .doctor-availability-fee {
+  font-size: 0.9375rem;
+}
+
+.doctor-availability--booking .doctor-availability-days {
+  gap: 0.5rem;
+}
+
+.doctor-availability--booking .doctor-availability-day {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
+}
+
+.doctor-availability--booking .doctor-availability-day em {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(8, 145, 178, 0.1);
+}
+
+.doctor-availability--booking .doctor-availability-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.55rem;
+}
+
+.doctor-availability--booking .doctor-availability-slot {
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-md);
+}
+
+.doctor-availability--booking .doctor-availability-slot strong {
+  font-size: 0.875rem;
+}
+
+.doctor-availability--booking .doctor-availability-room {
+  font-size: 0.75rem;
+  padding: 0.22rem 0.55rem;
+}
+
+.doctor-availability--booking .doctor-availability-slot.is-selected {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.08) 0%, rgba(204, 251, 241, 0.25) 100%);
+  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.25);
+}
+
 @media (max-width: 640px) {
   .doctor-availability-toolbar {
     align-items: stretch;

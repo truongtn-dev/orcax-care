@@ -44,7 +44,8 @@ export default function DoctorAvailabilityPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const isProfile = variant === "profile";
-  const showSectionLabels = variant === "profile" || variant === "booking";
+  const isBooking = variant === "booking";
+  const showSectionLabels = isProfile || isBooking;
 
   const loadAvailability = useCallback(async () => {
     if (!doctorId) return;
@@ -127,7 +128,9 @@ export default function DoctorAvailabilityPanel({
   }
 
   return (
-    <div className={`doctor-availability${isProfile ? " doctor-availability--profile" : ""}`}>
+    <div
+      className={`doctor-availability${isProfile ? " doctor-availability--profile" : ""}${isBooking ? " doctor-availability--booking" : ""}`}
+    >
       <div className="doctor-availability-toolbar">
         <div className="doctor-availability-meta">
           <span className="doctor-availability-badge">

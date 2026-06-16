@@ -1,6 +1,271 @@
-.patient-book-page {
-  max-width: 1120px;
+/* Patient booking — full-page layout aligned with wallet & doctor profile */
+
+.patient-book-fullpage {
+  margin: -2rem calc(-1 * var(--page-gutter)) -3rem;
+  width: calc(100% + 2 * var(--page-gutter));
+  min-height: calc(100vh - 72px);
+  background: var(--gradient-page-bg);
+}
+
+.patient-book-toolbar {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: 0.85rem clamp(1rem, 3vw, 2rem) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.patient-book-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.patient-book-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-book-back:hover {
+  color: var(--color-primary-hover);
+  text-decoration: none;
+}
+
+.patient-book-wallet-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.patient-book-wallet-chip svg {
+  width: 16px;
+  height: 16px;
+  color: var(--color-primary-hover);
+}
+
+.patient-book-wallet-chip:hover {
+  border-color: rgba(8, 145, 178, 0.35);
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.1);
+  text-decoration: none;
+}
+
+/* Hero */
+.patient-book-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.75rem;
+  padding: clamp(1.35rem, 3vw, 2rem) clamp(1rem, 3vw, 2rem);
+  background: var(--gradient-hero);
+  color: #fff;
+  box-shadow: var(--shadow-hero);
+}
+
+.patient-book-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.patient-book-hero-orb--1 {
+  width: 240px;
+  height: 240px;
+  top: -90px;
+  right: -50px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.patient-book-hero-orb--2 {
+  width: 130px;
+  height: 130px;
+  bottom: -55px;
+  left: 20%;
+  background: rgba(204, 251, 241, 0.14);
+}
+
+.patient-book-hero-inner {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.patient-book-doctor-card {
+  display: flex;
+  align-items: center;
+  gap: 1.15rem;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.patient-book-avatar {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(204, 251, 241, 0.85));
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.18);
+}
+
+.patient-book-avatar img,
+.patient-book-avatar span {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, var(--color-brand-surface), var(--color-brand-surface-2));
+  color: var(--color-primary-hover);
+  font-size: 1.65rem;
+  font-weight: 800;
+  border: 2px solid #fff;
+}
+
+.patient-book-eyebrow {
+  margin: 0 0 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.patient-book-doctor-info h1 {
+  margin: 0 0 0.2rem;
+  color: #fff;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  line-height: 1.2;
+}
+
+.patient-book-specialty {
+  margin: 0 0 0.55rem;
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.patient-book-doctor-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+}
+
+.patient-book-doctor-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.patient-book-doctor-meta svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.85;
+}
+
+.patient-book-fee-tag {
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Steps */
+.patient-book-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.patient-book-step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+.patient-book-step.is-active {
+  opacity: 1;
+}
+
+.patient-book-step.is-done .patient-book-step-num {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-primary-hover);
+}
+
+.patient-book-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+}
+
+.patient-book-step.is-active .patient-book-step-num {
+  background: #fff;
+  color: var(--color-primary-hover);
+  border-color: #fff;
+}
+
+.patient-book-step-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.patient-book-step-line {
+  width: 28px;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Body */
+.patient-book-page-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem clamp(1rem, 3vw, 2rem) 3rem;
 }
 
 .patient-book-loading .patient-panel-body {
@@ -8,46 +273,243 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  padding: 2rem 1.35rem;
+  padding: 2.5rem 1.35rem;
   text-align: center;
   color: var(--color-text-secondary);
 }
 
 .patient-book-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.9fr);
   gap: 1.25rem;
   align-items: start;
 }
 
-.patient-book-wallet-hint {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: #b45309;
-  line-height: 1.5;
+.patient-book-slots-panel .patient-panel-head {
+  align-items: center;
 }
 
+.patient-book-slots-panel .patient-panel-head-main {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.patient-book-summary-wrap {
+  position: sticky;
+  top: 1rem;
+}
+
+.patient-book-summary .patient-panel-head-main {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+/* Slot preview in summary */
+.patient-book-slot-preview {
+  margin-bottom: 1.15rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.patient-book-slot-preview.has-slot {
+  background: linear-gradient(135deg, rgba(8, 145, 178, 0.06) 0%, rgba(204, 251, 241, 0.2) 100%);
+  border: 1px solid rgba(8, 145, 178, 0.22);
+}
+
+.patient-book-slot-preview-date {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.patient-book-slot-preview-date svg {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 0.1rem;
+  color: var(--color-primary-hover);
+}
+
+.patient-book-slot-preview-date strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.35;
+}
+
+.patient-book-slot-preview-date span {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.patient-book-room-badge {
+  display: inline-flex;
+  margin-top: 0.65rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  background: rgba(8, 145, 178, 0.12);
+  color: var(--color-primary-hover);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.patient-book-slot-empty {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.patient-book-slot-empty svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  opacity: 0.65;
+}
+
+/* Payment breakdown */
+.patient-book-payment-list {
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.patient-book-payment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.patient-book-payment-row:last-child {
+  border-bottom: none;
+}
+
+.patient-book-payment-row dt {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.patient-book-payment-row dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.patient-book-payment-row dd.is-ok {
+  color: #0e7490;
+}
+
+.patient-book-payment-row dd.is-low {
+  color: #dc2626;
+}
+
+.patient-book-payment-row--total {
+  margin-top: 0.25rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: none;
+}
+
+.patient-book-payment-row--total dt {
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.patient-book-payment-row--total dd {
+  font-size: 1rem;
+}
+
+/* Wallet alert */
+.patient-book-wallet-alert {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.patient-book-wallet-alert-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+.patient-book-wallet-alert strong {
+  display: block;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-bottom: 0.2rem;
+}
+
+.patient-book-wallet-alert p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #a16207;
+}
+
+.patient-book-wallet-alert a {
+  font-weight: 700;
+  color: #b45309;
+}
+
+/* Form */
 .patient-book-form {
-  margin-top: 1rem;
-  padding-top: 1rem;
+  margin-top: 0.25rem;
+  padding-top: 1.1rem;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
 }
 
 .patient-book-reason-field {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .patient-book-reason-field textarea {
   padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1.5px solid rgba(15, 23, 42, 0.1);
   border-radius: var(--radius-md);
   font-family: inherit;
   font-size: 0.9375rem;
   line-height: 1.5;
   resize: vertical;
+  min-height: 88px;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .patient-book-reason-field textarea:focus {
@@ -56,8 +518,78 @@
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
 }
 
-@media (max-width: 900px) {
+.patient-book-char-count {
+  align-self: flex-end;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.patient-book-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.patient-book-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.patient-book-submit svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-book-actions .btn-secondary {
+  width: 100%;
+  justify-content: center;
+}
+
+.patient-book-footnote {
+  margin: 0.85rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+@media (max-width: 960px) {
   .patient-book-layout {
     grid-template-columns: 1fr;
+  }
+
+  .patient-book-summary-wrap {
+    position: static;
+  }
+
+  .patient-book-hero-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .patient-book-steps {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-book-doctor-card {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .patient-book-step-label {
+    display: none;
+  }
+
+  .patient-book-step-line {
+    width: 20px;
   }
 }
