@@ -20,6 +20,7 @@ import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
 import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
 import PatientFavoritesPage from "./pages/PatientFavoritesPage.jsx";
+import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
@@ -147,6 +148,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientFavoritesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/notifications"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientNotificationsPage />
               </ProtectedRoute>
             }
           />
