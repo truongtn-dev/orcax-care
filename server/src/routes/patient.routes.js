@@ -1,4 +1,5 @@
 import { Router } from "express";
+import * as PatientAppointmentController from "../controllers/patientAppointment.controller.js";
 import * as PatientFavoriteDoctorController from "../controllers/patientFavoriteDoctor.controller.js";
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
@@ -37,3 +38,9 @@ patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsu
 patientRouter.get("/favorites", PatientFavoriteDoctorController.listFavoriteDoctors);
 patientRouter.post("/favorites/:doctorId", PatientFavoriteDoctorController.addFavoriteDoctor);
 patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.removeFavoriteDoctor);
+
+patientRouter.get("/doctors/:doctorId/slots", PatientAppointmentController.getDoctorSlots);
+patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
+patientRouter.post("/appointments", PatientAppointmentController.bookAppointment);
+// patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.cancelAppointment);
+patientRouter.post("/appointments/:id/rate", PatientAppointmentController.rateAppointment);

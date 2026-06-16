@@ -9,6 +9,8 @@ const doctorSchema = new mongoose.Schema(
     bio: { type: String, default: "" },
     photoUrl: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
+    ratingAverage: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

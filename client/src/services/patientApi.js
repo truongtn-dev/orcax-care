@@ -56,4 +56,24 @@ export const PatientApiClient = {
   createInsuranceCard(payload) {
     return api.post("/api/patient/insurance-cards", payload);
   },
+
+  getDoctorSlots(doctorId) {
+    return api.get(`/api/patient/doctors/${doctorId}/slots`);
+  },
+
+  listAppointments() {
+    return api.get("/api/patient/appointments");
+  },
+
+  bookAppointment(payload) {
+    return api.post("/api/patient/appointments", payload);
+  },
+
+  // cancelAppointment(id, payload) {
+  //   return api.post(`/api/patient/appointments/${id}/cancel`, payload);
+  // },
+
+  rateAppointment(id, payload) {
+    return api.post(`/api/patient/appointments/${id}/rate`, payload);
+  },
 };
