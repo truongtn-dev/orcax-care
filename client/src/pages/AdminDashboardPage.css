@@ -707,46 +707,8 @@
   border-color: rgba(48, 209, 88, 0.45);
 }
 
+/* Modal styles — see App.css + glass.css */
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(29, 29, 31, 0.35);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1.5rem;
-}
-.modal-card {
-  width: 100%;
-  max-width: 480px;
-  max-height: 85vh;
-  overflow-y: auto;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur-strong);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow-hover);
-  padding: 2rem;
-  border-radius: var(--radius-xl);
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-primary-muted) transparent;
-}
-.modal-card::-webkit-scrollbar {
-  width: 6px;
-}
-.modal-card::-webkit-scrollbar-track {
-  background: transparent;
-}
-.modal-card::-webkit-scrollbar-thumb {
-  background: var(--color-primary-muted);
-  border-radius: var(--radius-full);
-}
-.modal-card::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
-}
 .modal-card h3 {
   font-size: 1.35rem;
   margin-bottom: 0.5rem;

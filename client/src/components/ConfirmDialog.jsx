@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import "./AppModal.css";
 import "./ConfirmDialog.css";
 
 export default function ConfirmDialog({
@@ -40,7 +41,7 @@ export default function ConfirmDialog({
   return (
     <div className="modal-backdrop" onClick={handleBackdropClick}>
       <div
-        className="modal card confirm-dialog animate-scale"
+        className="modal card confirm-dialog app-modal animate-scale"
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"

@@ -355,24 +355,11 @@
   margin-bottom: 0.5rem;
 }
 
-/* Modals — create account / staff */
-.modal.card .form-section {
-  padding: 0;
-  background: transparent;
-  border: none;
-}
-
-.modal.card .form label {
+/* Modals — form sections inside app-modal shell */
+.modal.card.app-modal .form label {
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-secondary);
-}
-
-.modal.card .modal-footer,
-.modal.card .form-actions {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 @media (max-width: 768px) {

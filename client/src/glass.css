@@ -442,3 +442,88 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border-light);
 }
+
+/* Modals — liquid glass (single panel, no banded sections) */
+.modal-backdrop {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 0%, rgba(8, 145, 178, 0.1) 0%, transparent 55%),
+    rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+
+.modal.card,
+.modal-card {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 24px 56px rgba(15, 23, 42, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.95) inset;
+}
+
+.modal.card::after,
+.modal-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, transparent 22%);
+  opacity: 0.65;
+}
+
+.modal.card > *,
+.modal-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.modal.card:not(.app-modal) .modal-header,
+.modal-card .modal-header {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  margin: 0;
+  padding: 1.35rem 1.5rem 1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.modal.card:not(.app-modal) {
+  padding: 0;
+}
+
+.modal.card:not(.app-modal) .form,
+.modal.card:not(.app-modal) > form {
+  padding: 0 1.5rem 1.25rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.confirm-dialog .modal-header,
+.confirm-dialog .modal-actions {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.modal.card .form-section,
+.modal-card .form-section {
+  background: rgba(248, 250, 252, 0.55);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+

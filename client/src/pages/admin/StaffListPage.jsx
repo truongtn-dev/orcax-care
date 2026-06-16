@@ -7,6 +7,7 @@ import CustomSelect from "../../components/CustomSelect.jsx";
 import FilterSearchField from "../../components/FilterSearchField.jsx";
 import AppPagination from "../../components/AppPagination.jsx";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
+import AppModal from "../../components/AppModal.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 import { firstFormError, validateAdminCreateAccountForm } from "../../utils/validation.js";
@@ -376,24 +377,12 @@ export default function StaffListPage() {
         />
 
         {showCreateModal && (
-          <div className="modal-backdrop" onClick={closeCreateModal}>
-            <div
-              className="modal card"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="create-staff-title"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <div>
-                  <h2 id="create-staff-title">Add staff account</h2>
-                  <p>Create a support or reception staff login.</p>
-                </div>
-                <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
-                  ×
-                </button>
-              </div>
-
+          <AppModal
+            title="Add staff account"
+            description="Create a support or reception staff login."
+            titleId="create-staff-title"
+            onClose={closeCreateModal}
+          >
               <form onSubmit={onCreateSubmit} className="form form-compact">
                 {createError && <div className="alert alert-error">{createError}</div>}
                 {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
@@ -463,8 +452,8 @@ export default function StaffListPage() {
                   )}
                 </label>
 
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-ghost" onClick={closeCreateModal}>
+                <div className="form-actions">
+                  <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
                     Cancel
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={creating}>
@@ -472,8 +461,7 @@ export default function StaffListPage() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
+          </AppModal>
         )}
       </AdminLayout>
     </PageLayout>

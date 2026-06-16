@@ -6,6 +6,7 @@ import CustomSelect from "../components/CustomSelect.jsx";
 import FilterSearchField from "../components/FilterSearchField.jsx";
 import AppPagination from "../components/AppPagination.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import AppModal from "../components/AppModal.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { firstFormError, validateAdminCreateSpecialtyForm } from "../utils/validation.js";
@@ -336,24 +337,12 @@ export default function AdminSpecialtyPage() {
       />
 
       {showCreateModal && (
-        <div className="modal-backdrop" onClick={closeCreateModal}>
-          <div
-            className="modal card"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-specialty-title"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="modal-header">
-              <div>
-                <h2 id="create-specialty-title">Create specialty</h2>
-                <p>Add a new medical specialty to the system.</p>
-              </div>
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
-                ×
-              </button>
-            </div>
-
+        <AppModal
+          title="Create specialty"
+          description="Add a new medical specialty to the system."
+          titleId="create-specialty-title"
+          onClose={closeCreateModal}
+        >
             <form onSubmit={onCreateSubmit} className="form form-compact">
               {createError && <div className="alert alert-error">{createError}</div>}
               {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
@@ -413,8 +402,7 @@ export default function AdminSpecialtyPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </AppModal>
       )}
       </AdminLayout>
     </PageLayout>

@@ -16,6 +16,8 @@ import AppPagination from "../components/AppPagination.jsx";
 
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
+import AppModal from "../components/AppModal.jsx";
+
 import { AdminApiClient } from "../services/adminApi.js";
 
 import { PublicApiClient } from "../services/publicApi.js";
@@ -1085,43 +1087,12 @@ export default function AdminAccountPage() {
 
 
       {showCreateModal && (
-
-        <div className="modal-backdrop" onClick={closeCreateModal}>
-
-          <div
-
-            className="modal card"
-
-            role="dialog"
-
-            aria-modal="true"
-
-            aria-labelledby="create-account-title"
-
-            onClick={(e) => e.stopPropagation()}
-
-          >
-
-            <div className="modal-header">
-
-              <div>
-
-                <h2 id="create-account-title">Add new account</h2>
-
-                <p>Create a patient, staff, doctor, or administrator account.</p>
-
-              </div>
-
-              <button type="button" className="modal-close" onClick={closeCreateModal} aria-label="Close">
-
-                ×
-
-              </button>
-
-            </div>
-
-
-
+        <AppModal
+          title="Add new account"
+          description="Create a patient, staff, doctor, or administrator account."
+          titleId="create-account-title"
+          onClose={closeCreateModal}
+        >
             <form onSubmit={onCreateSubmit} className="form form-compact">
 
               {createError && <div className="alert alert-error">{createError}</div>}
@@ -1425,11 +1396,7 @@ export default function AdminAccountPage() {
               </div>
 
             </form>
-
-          </div>
-
-        </div>
-
+        </AppModal>
       )}
 
       </AdminLayout>

@@ -7,6 +7,7 @@ import StaffLayout from "../components/StaffLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
 import CloudinaryAvatarUpload from "../components/CloudinaryAvatarUpload.jsx";
 import RecordAvatar from "../components/RecordAvatar.jsx";
+import AppModal from "../components/AppModal.jsx";
 import { ProfileApiClient } from "../services/profileApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -276,15 +277,7 @@ export default function EditProfilePage() {
       )}
 
       {isModalOpen && (
-        <div className="modal-backdrop" onClick={handleCloseModal}>
-          <div className="card modal-card animate-scale" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Edit profile</h3>
-              <button className="modal-close-btn" onClick={handleCloseModal}>
-                &times;
-              </button>
-            </div>
-
+        <AppModal title="Edit profile" titleId="edit-profile-title" onClose={handleCloseModal} wide>
             <form onSubmit={onSubmit} className="form" noValidate>
               {modalError && <div className="alert alert-error">{modalError}</div>}
 
@@ -402,8 +395,7 @@ export default function EditProfilePage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </AppModal>
       )}
     </>
   );

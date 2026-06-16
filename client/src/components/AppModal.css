@@ -1,0 +1,100 @@
+/* Shared liquid-glass modal shell (form + confirm dialogs) */
+.modal.card.app-modal {
+  width: min(100%, 480px);
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.modal.card.app-modal-wide {
+  width: min(100%, 640px);
+  max-height: calc(100vh - 2.5rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(8, 145, 178, 0.35) transparent;
+}
+
+.modal.card.app-modal-wide::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal.card.app-modal-wide::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal.card.app-modal-wide::-webkit-scrollbar-thumb {
+  background: var(--color-primary-muted);
+  border-radius: var(--radius-full);
+}
+
+.modal.card.app-modal-wide::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+.app-modal .modal-header {
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0;
+  padding: 1.35rem 1.5rem 1.1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.app-modal .modal-header h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.app-modal .modal-header p {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-text-secondary);
+}
+
+.modal.card.app-modal > form,
+.modal.card.app-modal > .form,
+.app-modal-body {
+  padding: 1.15rem 1.5rem 0.25rem;
+}
+
+.app-modal .modal-actions,
+.app-modal .form-actions,
+.app-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 1rem 1.5rem 1.25rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: transparent;
+}
+
+.modal.card.app-modal form .form-actions,
+.modal.card.app-modal form .modal-footer {
+  margin: 1rem -1.5rem 0;
+  padding: 1rem 1.5rem 1.25rem;
+}
+
+.modal.card.app-modal .form-section {
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+@media (max-width: 480px) {
+  .app-modal .modal-actions,
+  .app-modal .form-actions,
+  .app-modal .modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .app-modal .modal-actions .btn,
+  .app-modal .form-actions .btn,
+  .app-modal .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

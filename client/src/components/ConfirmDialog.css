@@ -1,33 +1,5 @@
-.confirm-dialog.card {
-  width: min(100%, 480px);
-  padding: 0;
-  overflow: hidden;
-}
-
-.confirm-dialog .modal-header {
-  align-items: flex-start;
-  gap: 1rem;
-  margin-bottom: 0;
-  padding: 1.35rem 1.5rem 1rem;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.confirm-dialog .modal-header h2 {
-  margin: 0 0 0.35rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
-.confirm-dialog .modal-header p {
-  margin: 0;
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  color: var(--color-text-secondary);
-}
-
 .confirm-dialog-body {
-  padding: 1rem 1.5rem 1.25rem;
+  padding: 1.15rem 1.5rem 0.25rem;
 }
 
 .confirm-dialog-stats {
@@ -40,9 +12,9 @@
 }
 
 .confirm-dialog-stats li {
-  padding: 0.75rem 0.85rem;
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 0.8rem 0.9rem;
+  background: rgba(248, 250, 252, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--radius-md);
 }
 
@@ -70,36 +42,17 @@
 
 .confirm-dialog-warning {
   margin: 0.85rem 0 0;
-  padding: 0.75rem 0.85rem;
+  padding: 0.75rem 0.9rem;
   font-size: 0.8125rem;
   line-height: 1.45;
-  color: #b45309;
+  color: #92400e;
   background: #fffbeb;
   border: 1px solid #fde68a;
   border-radius: var(--radius-md);
 }
 
-.confirm-dialog .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  padding: 1rem 1.5rem 1.25rem;
-  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
-}
-
 @media (max-width: 480px) {
   .confirm-dialog-stats {
     grid-template-columns: 1fr;
-  }
-
-  .confirm-dialog .modal-actions {
-    flex-direction: column-reverse;
-  }
-
-  .confirm-dialog .modal-actions .btn {
-    width: 100%;
-    justify-content: center;
   }
 }
