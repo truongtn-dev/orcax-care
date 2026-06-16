@@ -130,7 +130,97 @@ export async function bookAppointment(req, res) {
   }
 }
 
+export async function cancelAppointment(req, res) {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
 
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid appointment ID" });
+    }
+
+    const appointment = await Appointment.findById(id).populate("slotId");
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    const patient = await Patient.findOne({ userId: req.user.userId });
+    if (!patient || String(appointment.patientId) !== String(patient._id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (appointment.status !== "booked") {
+      return res
+        .status(400)
+        .json({ message: "Only active booked appointments can be cancelled" });
+    }
+
+    const slot = appointment.slotId;
+    if (!slot) {
+      return res
+        .status(404)
+        .json({ message: "Appointment slot data is missing" });
+    }
+
+    const slotDateTime = getSlotDateTime(slot);
+    const now = new Date();
+
+    if (now >= slotDateTime) {
+      return res.status(400).json({
+        message:
+          "Cannot cancel an appointment that has already started or passed",
+      });
+    }
+
+    const diffMs = slotDateTime.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    let refundAmount = 0;
+    if (diffHours >= 24) {
+      refundAmount = appointment.price; // 100% refund
+    } else if (diffHours >= 12) {
+      refundAmount = Math.floor(appointment.price * 0.5); // 50% refund
+    } else {
+      refundAmount = 0; // 0% refund
+    }
+
+    // Trigger refund if amount > 0
+    if (refundAmount > 0) {
+      const refundRes = await refundWalletBalance(
+        req.user.userId,
+        refundAmount,
+        `Refund for cancelled appointment ${appointment._id}`,
+      );
+      if (refundRes.status !== 200) {
+        return res.status(refundRes.status).json(refundRes.body);
+      }
+    }
+
+    // Update slot and appointment status
+    slot.status = "available";
+    await slot.save();
+
+    appointment.status = "cancelled";
+    appointment.cancellationReason = reason || "Cancelled by patient";
+    appointment.refundAmount = refundAmount;
+    await appointment.save();
+
+    const populated = await Appointment.findById(appointment._id)
+      .populate({
+        path: "slotId",
+        populate: { path: "roomId", select: "name" },
+      })
+      .populate({
+        path: "doctorId",
+        populate: { path: "userId", select: "fullName photoUrl email phone" },
+      });
+
+    return res.json(populated);
+  } catch (err) {
+    console.error("Cancel appointment failed:", err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
 
 export async function rateAppointment(req, res) {
   try {

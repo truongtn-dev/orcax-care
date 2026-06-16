@@ -69,9 +69,9 @@ export const PatientApiClient = {
     return api.post("/api/patient/appointments", payload);
   },
 
-  // cancelAppointment(id, payload) {
-  //   return api.post(`/api/patient/appointments/${id}/cancel`, payload);
-  // },
+  cancelAppointment(id, payload) {
+    return api.post(`/api/patient/appointments/${id}/cancel`, payload);
+  },
 
   rateAppointment(id, payload) {
     return api.post(`/api/patient/appointments/${id}/rate`, payload);

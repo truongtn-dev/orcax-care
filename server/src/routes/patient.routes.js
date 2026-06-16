@@ -42,5 +42,5 @@ patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.rem
 patientRouter.get("/doctors/:doctorId/slots", PatientAppointmentController.getDoctorSlots);
 patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
 patientRouter.post("/appointments", PatientAppointmentController.bookAppointment);
-// patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.cancelAppointment);
+patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.cancelAppointment);
 patientRouter.post("/appointments/:id/rate", PatientAppointmentController.rateAppointment);

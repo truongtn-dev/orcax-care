@@ -248,8 +248,14 @@ export default function PatientAppointmentsPage() {
                         <strong>{slot.roomId?.name || "Not assigned"}</strong>
                       </div>
                     </div>
+
                     <div className="patient-appointment-actions">
-                      {isPast ? (
+                      {app.status === "cancelled" ? (
+                        <div className="patient-appointment-cancelled-tag">
+                          <span>Cancelled</span>
+                          <small>Refunded: {formatCurrency(app.refundAmount)}</small>
+                        </div>
+                      ) : isPast ? (
                         app.rating !== null ? (
                           <div className="patient-appointment-review-display">
                             <div className="stars-row">
@@ -273,7 +279,15 @@ export default function PatientAppointmentsPage() {
                             Rate Doctor
                           </button>
                         )
-                      ) : null}
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm btn-danger-outline"
+                          onClick={() => openCancelModal(app)}
+                        >
+                          Cancel Appointment
+                        </button>
+                      )}
                     </div>
                   </article>
                 </ScrollReveal>
