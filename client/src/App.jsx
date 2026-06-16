@@ -11,6 +11,7 @@ import ChangePasswordPage from "./pages/ChangePasswordPage.jsx";
 import EditProfilePage from "./pages/EditProfilePage.jsx";
 import SearchDoctorsPage from "./pages/SearchDoctorsPage.jsx";
 import PatientDashboardPage from "./pages/PatientDashboardPage.jsx";
+import PatientAppointmentsPage from "./pages/PatientAppointmentsPage.jsx";
 import PatientPortalPlaceholderPage from "./pages/PatientPortalPlaceholderPage.jsx";
 import PatientBookAppointmentPage from "./pages/PatientBookAppointmentPage.jsx";
 import PatientAppointmentsPage from "./pages/PatientAppointmentsPage.jsx";

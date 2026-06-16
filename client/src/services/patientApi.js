@@ -49,14 +49,6 @@ export const PatientApiClient = {
     return api.get(`/api/patient/wallet/receipts/${ref}`);
   },
 
-  listInsuranceCards() {
-    return api.get("/api/patient/insurance-cards");
-  },
-
-  createInsuranceCard(payload) {
-    return api.post("/api/patient/insurance-cards", payload);
-  },
-
   listAppointments(params) {
     return api.get("/api/patient/appointments", { params });
   },
@@ -67,6 +59,18 @@ export const PatientApiClient = {
 
   createAppointment(payload) {
     return api.post("/api/patient/appointments", payload);
+  },
+
+  rescheduleAppointment(id, payload) {
+    return api.put(`/api/patient/appointments/${id}/reschedule`, payload);
+  },
+
+  listInsuranceCards() {
+    return api.get("/api/patient/insurance-cards");
+  },
+
+  createInsuranceCard(payload) {
+    return api.post("/api/patient/insurance-cards", payload);
   },
 
   extractInsuranceCardOcr(payload) {

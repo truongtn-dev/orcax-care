@@ -48,6 +48,10 @@ patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.rem
 patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
 patientRouter.post("/appointments", PatientAppointmentController.createAppointment);
 patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointment);
+patientRouter.put(
+  "/appointments/:id/reschedule",
+  PatientAppointmentController.rescheduleAppointment
+);
 
 patientRouter.get("/notifications", PatientNotificationController.listNotifications);
 patientRouter.put("/notifications/:id/read", PatientNotificationController.markNotificationRead);

@@ -230,4 +230,76 @@ export async function getAppointment(userId, appointmentId) {
   return { status: 200, body: serializeAppointment(doc) };
 }
 
+const ACTIVE_RESCHEDULE_STATUSES = new Set(["confirmed"]);
+
+export async function rescheduleAppointment(userId, appointmentId, payload = {}) {
+  if (!appointmentId || !mongoose.Types.ObjectId.isValid(appointmentId)) {
+    return { status: 400, body: { message: "Invalid appointment" } };
+  }
+
+  const slotId = String(payload.slotId || "").trim();
+  if (!slotId || !mongoose.Types.ObjectId.isValid(slotId)) {
+    return { status: 400, body: { message: "Invalid appointment slot" } };
+  }
+
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    patientUserId: userId,
+  });
+
+  if (!appointment) {
+    return { status: 404, body: { message: "Appointment not found" } };
+  }
+
+  if (!ACTIVE_RESCHEDULE_STATUSES.has(appointment.status)) {
+    return { status: 409, body: { message: "Appointment cannot be rescheduled" } };
+  }
+
+  const oldSlotId = appointment.slotId;
+  const newSlot = await AppointmentSlot.findOneAndUpdate(
+    {
+      _id: slotId,
+      doctorId: appointment.doctorId,
+      status: "available",
+    },
+    { status: "booked" },
+    { new: true }
+  );
+
+  if (!newSlot) {
+    return { status: 409, body: { message: "Selected appointment slot is not available" } };
+  }
+
+  if (isSlotDatetimePast(newSlot.date, newSlot.startTime)) {
+    await AppointmentSlot.updateOne({ _id: newSlot._id }, { status: "available" });
+    return { status: 409, body: { message: "Cannot reschedule to a past appointment slot" } };
+  }
+
+  try {
+    appointment.slotId = newSlot._id;
+    await appointment.save();
+  } catch (err) {
+    await AppointmentSlot.updateOne({ _id: newSlot._id }, { status: "available" });
+    throw err;
+  }
+
+  await AppointmentSlot.updateOne({ _id: oldSlotId }, { status: "available" });
+
+  const populated = await Appointment.findById(appointment._id)
+    .populate({
+      path: "doctorId",
+      populate: [
+        { path: "userId", select: "fullName" },
+        { path: "specialtyId", select: "name" },
+      ],
+    })
+    .populate({
+      path: "slotId",
+      populate: { path: "roomId", select: "name" },
+    })
+    .lean();
+
+  return { status: 200, body: serializeAppointment(populated) };
+}
+
 export { DEFAULT_CONSULTATION_FEE_VND };
