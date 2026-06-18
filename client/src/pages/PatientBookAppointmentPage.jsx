@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
+import DoctorSearchCard from "../components/DoctorSearchCard.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
@@ -11,6 +12,46 @@ import "./PatientBookAppointmentPage.css";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+const BOOKING_STEPS = [
+  { id: 1, label: "Specialty" },
+  { id: 2, label: "Doctor" },
+  { id: 3, label: "Time slot" },
+  { id: 4, label: "Confirm" },
+];
+
+function getInitials(name) {
+  if (!name) return "D";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+function isCardEligibleForVisit(card, visitDate) {
+  if (!card?.isActive || !(Number(card.coveragePercent) > 0)) return false;
+  if (!visitDate) return false;
+  if (card.validFrom && visitDate < card.validFrom) return false;
+  if (card.validTo && visitDate > card.validTo) return false;
+  return true;
+}
+
+function BookingSteps({ activeStep }) {
+  return (
+    <div className="patient-book-steps patient-book-steps--four" aria-label="Booking progress">
+      {BOOKING_STEPS.map((step, index) => (
+        <div key={step.id} className="patient-book-step-group">
+          <div
+            className={`patient-book-step${activeStep >= step.id ? " is-active" : ""}${activeStep > step.id ? " is-done" : ""}`}
+          >
+            <span className="patient-book-step-num">{step.id}</span>
+            <span className="patient-book-step-label">{step.label}</span>
+          </div>
+          {index < BOOKING_STEPS.length - 1 && <span className="patient-book-step-line" aria-hidden="true" />}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function formatSlotLabel(slot) {
   if (!slot?.date || !slot?.startTime) return null;
@@ -25,27 +66,15 @@ function formatSlotLabel(slot) {
   };
 }
 
-function isCardEligibleForVisit(card, visitDate) {
-  if (!card?.isActive || !(Number(card.coveragePercent) > 0)) return false;
-  if (!visitDate) return false;
-  if (card.validFrom && visitDate < card.validFrom) return false;
-  if (card.validTo && visitDate > card.validTo) return false;
-  return true;
-}
-
-function getInitials(name) {
-  if (!name) return "D";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
 export default function PatientBookAppointmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const specialtyId = searchParams.get("specialtyId") || "";
   const doctorId = searchParams.get("doctorId") || "";
   const initialSlotId = searchParams.get("slotId") || "";
 
+  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [doctor, setDoctor] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [insuranceCards, setInsuranceCards] = useState([]);
@@ -55,6 +84,7 @@ export default function PatientBookAppointmentPage() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(true);
+  const [wizardLoading, setWizardLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -69,12 +99,55 @@ export default function PatientBookAppointmentPage() {
     [insuranceCards, selectedSlot?.date],
   );
 
-  const loadPage = useCallback(async () => {
-    if (!doctorId) {
-      setLoading(false);
-      setError("Select a doctor before booking.");
-      return;
+  const activeStep = useMemo(() => {
+    if (!doctorId) return specialtyId ? 2 : 1;
+    return selectedSlot?._id ? 4 : 3;
+  }, [doctorId, specialtyId, selectedSlot]);
+
+  const selectedSpecialty = useMemo(
+    () => specialties.find((item) => item._id === specialtyId) || null,
+    [specialties, specialtyId]
+  );
+
+  const loadWallet = useCallback(async () => {
+    try {
+      const { data } = await PatientApiClient.getWallet();
+      setWallet(data);
+    } catch {
+      setWallet(null);
     }
+  }, []);
+
+  const loadWizardStep = useCallback(async () => {
+    if (doctorId) return;
+
+    setWizardLoading(true);
+    setError("");
+    try {
+      if (!specialtyId) {
+        const { data } = await PublicApiClient.getSpecialties();
+        setSpecialties(data.items || []);
+        setDoctors([]);
+      } else {
+        const [specialtyRes, doctorRes] = await Promise.all([
+          PublicApiClient.getSpecialties(),
+          PublicApiClient.searchDoctors({ specialtyId, limit: 24 }),
+        ]);
+        setSpecialties(specialtyRes.data.items || []);
+        setDoctors(doctorRes.data.items || []);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setSpecialties([]);
+      setDoctors([]);
+    } finally {
+      setWizardLoading(false);
+      setLoading(false);
+    }
+  }, [doctorId, specialtyId]);
+
+  const loadDoctorBooking = useCallback(async () => {
+    if (!doctorId) return;
 
     setLoading(true);
     setError("");
@@ -89,14 +162,22 @@ export default function PatientBookAppointmentPage() {
       setInsuranceCards(insuranceRes.data.items || []);
     } catch (err) {
       setError(getApiErrorMessage(err));
+      setDoctor(null);
     } finally {
       setLoading(false);
     }
-  }, [doctorId]);
+  }, [doctorId, loadWallet]);
 
   useEffect(() => {
-    loadPage();
-  }, [loadPage]);
+    if (doctorId) {
+      loadDoctorBooking();
+      return;
+    }
+    setDoctor(null);
+    setSelectedSlot(null);
+    loadWallet();
+    loadWizardStep();
+  }, [doctorId, specialtyId, loadDoctorBooking, loadWallet, loadWizardStep]);
 
   useEffect(() => {
     if (!selectedSlot?._id) {
@@ -138,7 +219,6 @@ export default function PatientBookAppointmentPage() {
 
   const canAfford = useMemo(() => balance >= finalFee, [balance, finalFee]);
   const balanceAfter = balance - finalFee;
-  const bookingStep = selectedSlot?._id ? 2 : 1;
 
   const onSelectSlot = (slot) => {
     setSelectedSlot(slot);
@@ -146,6 +226,17 @@ export default function PatientBookAppointmentPage() {
     setFeeSummary(null);
     setNotice("");
     setError("");
+  };
+
+  const onSelectSpecialty = (nextSpecialtyId) => {
+    navigate(`/patient/book?specialtyId=${nextSpecialtyId}`);
+  };
+
+  const onSelectDoctor = (nextDoctorId) => {
+    const query = specialtyId
+      ? `specialtyId=${specialtyId}&doctorId=${nextDoctorId}`
+      : `doctorId=${nextDoctorId}`;
+    navigate(`/patient/book?${query}`);
   };
 
   const onSubmit = async (event) => {
@@ -177,18 +268,21 @@ export default function PatientBookAppointmentPage() {
     }
   };
 
+  const wizardBackTo =
+    activeStep === 2 ? "/patient/book" : activeStep === 1 ? "/patient" : `/patient/book?specialtyId=${specialtyId}`;
+
   return (
     <PageLayout>
       <div className="patient-book-fullpage">
         <div className="patient-book-toolbar">
-          <Link to={doctorId ? `/doctor/${doctorId}` : "/search-doctors"} className="patient-book-back">
+          <Link to={doctorId ? wizardBackTo : wizardBackTo} className="patient-book-back">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
               <path d="M19 12H5" />
               <path d="m12 19-7-7 7-7" />
             </svg>
-            {doctorId ? "Back to profile" : "Find a doctor"}
+            {doctorId ? "Change doctor" : activeStep === 2 ? "Change specialty" : "Back to dashboard"}
           </Link>
-          {!loading && doctor && (
+          {wallet && (
             <Link to="/patient/wallet" className="patient-book-wallet-chip">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                 <path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1" />
@@ -199,7 +293,26 @@ export default function PatientBookAppointmentPage() {
           )}
         </div>
 
-        {loading ? (
+        {!doctorId && (
+          <section className="patient-book-hero patient-book-hero--wizard">
+            <span className="patient-book-hero-orb patient-book-hero-orb--1" aria-hidden="true" />
+            <span className="patient-book-hero-orb patient-book-hero-orb--2" aria-hidden="true" />
+            <div className="patient-book-hero-inner">
+              <div className="patient-book-wizard-intro">
+                <p className="patient-book-eyebrow">Book an appointment</p>
+                <h1>{activeStep === 1 ? "Choose a specialty" : "Choose your doctor"}</h1>
+                <p className="patient-book-wizard-lead">
+                  {activeStep === 1
+                    ? "Select the type of care you need to see available doctors."
+                    : `Doctors in ${selectedSpecialty?.name || "this specialty"} with open slots.`}
+                </p>
+              </div>
+              <BookingSteps activeStep={activeStep} />
+            </div>
+          </section>
+        )}
+
+        {loading || wizardLoading ? (
           <div className="patient-book-page-body">
             <div className="patient-panel patient-book-loading">
               <div className="patient-panel-body">
@@ -208,21 +321,69 @@ export default function PatientBookAppointmentPage() {
               </div>
             </div>
           </div>
-        ) : !doctorId || !doctor ? (
+        ) : !doctorId ? (
+          <div className="patient-book-page-body">
+            {error && <div className="alert alert-error">{error}</div>}
+
+            {activeStep === 1 && (
+              <div className="patient-book-specialty-grid">
+                {specialties.map((specialty) => (
+                  <button
+                    key={specialty._id}
+                    type="button"
+                    className="patient-book-specialty-card"
+                    onClick={() => onSelectSpecialty(specialty._id)}
+                  >
+                    <span className="patient-book-specialty-code">{specialty.code}</span>
+                    <strong>{specialty.name}</strong>
+                    <span>{specialty.description || "View doctors in this specialty"}</span>
+                  </button>
+                ))}
+                {specialties.length === 0 && (
+                  <div className="patient-panel">
+                    <div className="patient-panel-body">
+                      <p>No specialties are available right now.</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeStep === 2 && (
+              <>
+                {doctors.length === 0 ? (
+                  <div className="patient-panel">
+                    <div className="patient-panel-body">
+                      <h2>No doctors available</h2>
+                      <p>Try another specialty or check again later.</p>
+                      <Link to="/patient/book" className="btn btn-primary">
+                        Choose another specialty
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="doctor-grid-premium">
+                    {doctors.map((item) => (
+                      <div key={item._id} className="patient-book-doctor-pick">
+                        <DoctorSearchCard doctor={item} />
+                        <button type="button" className="btn btn-primary btn-sm" onClick={() => onSelectDoctor(item._id)}>
+                          Select doctor
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ) : !doctor ? (
           <div className="patient-book-page-body">
             <div className="patient-panel">
-              <div className="patient-panel-head">
-                <div className="patient-panel-head-main">
-                  <h2>{error || "Doctor not found"}</h2>
-                  <p className="patient-panel-lead">Choose a doctor from search to start booking.</p>
-                </div>
-              </div>
               <div className="patient-panel-body">
-                <div className="form-actions">
-                  <Link to="/search-doctors" className="btn btn-primary">
-                    Find a doctor
-                  </Link>
-                </div>
+                <h2>{error || "Doctor not found"}</h2>
+                <Link to={specialtyId ? `/patient/book?specialtyId=${specialtyId}` : "/patient/book"} className="btn btn-primary">
+                  Choose another doctor
+                </Link>
               </div>
             </div>
           </div>
@@ -260,17 +421,7 @@ export default function PatientBookAppointmentPage() {
                   </div>
                 </div>
 
-                <div className="patient-book-steps" aria-label="Booking progress">
-                  <div className={`patient-book-step${bookingStep >= 1 ? " is-active" : ""}${bookingStep > 1 ? " is-done" : ""}`}>
-                    <span className="patient-book-step-num">1</span>
-                    <span className="patient-book-step-label">Choose slot</span>
-                  </div>
-                  <span className="patient-book-step-line" aria-hidden="true" />
-                  <div className={`patient-book-step${bookingStep >= 2 ? " is-active" : ""}`}>
-                    <span className="patient-book-step-num">2</span>
-                    <span className="patient-book-step-label">Confirm & pay</span>
-                  </div>
-                </div>
+                <BookingSteps activeStep={activeStep} />
               </div>
             </section>
 
@@ -349,17 +500,10 @@ export default function PatientBookAppointmentPage() {
                                 <span>{slotLabel.timeLine}</span>
                               </div>
                             </div>
-                            {slotLabel.room && (
-                              <span className="patient-book-room-badge">{slotLabel.room}</span>
-                            )}
+                            {slotLabel.room && <span className="patient-book-room-badge">{slotLabel.room}</span>}
                           </>
                         ) : (
                           <p className="patient-book-slot-empty">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="M12 16v-4" />
-                              <path d="M12 8h.01" />
-                            </svg>
                             Select a time slot on the left to continue.
                           </p>
                         )}
@@ -424,7 +568,9 @@ export default function PatientBookAppointmentPage() {
 
                       {!canAfford && selectedSlot?._id && (
                         <div className="patient-book-wallet-alert">
-                          <div className="patient-book-wallet-alert-icon" aria-hidden="true">!</div>
+                          <div className="patient-book-wallet-alert-icon" aria-hidden="true">
+                            !
+                          </div>
                           <div>
                             <strong>Insufficient balance</strong>
                             <p>
@@ -455,19 +601,10 @@ export default function PatientBookAppointmentPage() {
                             className="btn btn-primary patient-book-submit"
                             disabled={submitting || !selectedSlot?._id || !canAfford || feePreviewLoading}
                           >
-                            {submitting ? (
-                              "Booking…"
-                            ) : (
-                              <>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-                                  <path d="M20 6 9 17l-5-5" />
-                                </svg>
-                                Confirm booking
-                              </>
-                            )}
+                            {submitting ? "Booking…" : "Confirm booking"}
                           </button>
-                          <Link to={`/doctor/${doctorId}`} className="btn btn-secondary">
-                            Cancel
+                          <Link to={wizardBackTo} className="btn btn-secondary">
+                            Back
                           </Link>
                         </div>
 

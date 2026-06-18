@@ -613,3 +613,85 @@
     width: 20px;
   }
 }
+
+.patient-book-steps--four {
+  flex-wrap: wrap;
+}
+
+.patient-book-step-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.patient-book-hero--wizard .patient-book-hero-inner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+.patient-book-wizard-intro h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+.patient-book-wizard-lead {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: 42rem;
+}
+
+.patient-book-specialty-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.patient-book-specialty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition), transform var(--transition), box-shadow var(--transition);
+}
+
+.patient-book-specialty-card:hover {
+  border-color: rgba(8, 145, 178, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.12);
+}
+
+.patient-book-specialty-code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-primary-hover);
+}
+
+.patient-book-specialty-card strong {
+  font-size: 1rem;
+  color: var(--color-navy);
+}
+
+.patient-book-specialty-card span:last-child {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.patient-book-doctor-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.patient-book-doctor-pick .btn {
+  align-self: flex-start;
+}
