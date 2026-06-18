@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -25,8 +25,6 @@ import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AdminPatientDetailPage from "./pages/AdminPatientDetailPage.jsx";
-import AdminPatientEditPage from "./pages/AdminPatientEditPage.jsx";
-import AdminPatientPage from "./pages/AdminPatientPage.jsx";
 import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
 import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
@@ -51,6 +49,16 @@ import "./App.css";
 import "./glass.css";
 import "./styles/adminRecordPages.css";
 import "./scroll-reveal.css";
+
+function LegacyAdminPatientRedirect() {
+  const { id } = useParams();
+  return <Navigate to={id ? `/admin/patients/${id}` : "/admin/patients"} replace />;
+}
+
+function LegacyAdminPatientEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/admin/patients/${id}/edit`} replace />;
+}
 
 export default function App() {
   return (
@@ -289,6 +297,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/patients/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminPatientDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/departments/new"
             element={
               <ProtectedRoute roles={["admin"]}>
@@ -308,7 +324,7 @@ export default function App() {
             path="/admin/patient/:id/edit"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <AdminPatientEditPage />
+                <LegacyAdminPatientEditRedirect />
               </ProtectedRoute>
             }
           />
@@ -316,18 +332,11 @@ export default function App() {
             path="/admin/patient/:id"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <AdminPatientDetailPage />
+                <LegacyAdminPatientRedirect />
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/patient"
-            element={
-              <ProtectedRoute roles={["admin"]}>
-                <AdminPatientPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/admin/patient" element={<Navigate to="/admin/patients" replace />} />
           <Route
             path="/admin/specialty"
             element={

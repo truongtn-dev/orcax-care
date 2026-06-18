@@ -93,10 +93,6 @@ export const AdminApiClient = {
     return api.delete(`/api/admin/specialties/${id}`);
   },
 
-  listPatients(params) {
-    return api.get("/api/admin/patients", { params });
-  },
-
   listClinicRoomDepartments() {
     return api.get("/api/admin/clinic-rooms/departments");
   },
