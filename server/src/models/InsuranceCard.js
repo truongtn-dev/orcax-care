@@ -7,6 +7,7 @@ const insuranceCardSchema = new mongoose.Schema(
     policyNumber: { type: String, required: true, trim: true },
     holderName: { type: String, required: true, trim: true },
     coverageType: { type: String, default: "", trim: true },
+    coveragePercent: { type: Number, default: 0, min: 0, max: 100 },
     validFrom: { type: Date, default: null },
     validTo: { type: Date, default: null },
     isPrimary: { type: Boolean, default: false },

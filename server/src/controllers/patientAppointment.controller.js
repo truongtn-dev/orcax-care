@@ -13,6 +13,15 @@ export async function createAppointment(req, res) {
   }
 }
 
+export async function previewBookingFee(req, res) {
+  try {
+    return sendResult(res, await PatientAppointmentService.previewBookingFee(req.user.userId, req.query));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function listAppointments(req, res) {
   try {
     return sendResult(res, await PatientAppointmentService.listAppointments(req.user.userId, req.query));

@@ -22,6 +22,7 @@ const appointmentSchema = new mongoose.Schema(
     },
     reason: { type: String, default: "", trim: true, maxlength: 500 },
     fee: { type: Number, required: true, min: 0 },
+    discountAmount: { type: Number, default: 0, min: 0 },
     status: {
       type: String,
       enum: ["confirmed", "completed", "cancelled"],

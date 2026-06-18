@@ -34,6 +34,8 @@ patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopu
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
+patientRouter.put("/insurance-cards/:id", PatientInsuranceCardController.updateInsuranceCard);
+patientRouter.delete("/insurance-cards/:id", PatientInsuranceCardController.deleteInsuranceCard);
 patientRouter.post(
   "/insurance-cards/ocr",
   PatientInsuranceCardController.extractInsuranceCardOcr
@@ -43,6 +45,7 @@ patientRouter.get("/favorites", PatientFavoriteDoctorController.listFavoriteDoct
 patientRouter.post("/favorites/:doctorId", PatientFavoriteDoctorController.addFavoriteDoctor);
 patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.removeFavoriteDoctor);
 
+patientRouter.get("/appointments/fee-preview", PatientAppointmentController.previewBookingFee);
 patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
 patientRouter.post("/appointments", PatientAppointmentController.createAppointment);
 patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointment);

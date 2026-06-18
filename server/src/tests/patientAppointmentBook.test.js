@@ -14,6 +14,7 @@ import { Doctor } from "../models/Doctor.js";
 import { Specialty } from "../models/Specialty.js";
 import { User } from "../models/User.js";
 import { Notification } from "../models/Notification.js";
+import { InsuranceCard } from "../models/InsuranceCard.js";
 import { Wallet } from "../models/Wallet.js";
 import { WorkShift } from "../models/WorkShift.js";
 import { issueAuthToken } from "../services/token.service.js";
@@ -60,6 +61,7 @@ describe("Patient booking — availability & appointments", () => {
     await Notification.deleteMany({});
     await Appointment.deleteMany({});
     await AppointmentSlot.deleteMany({});
+    await InsuranceCard.deleteMany({});
     await WorkShift.deleteMany({});
     await Wallet.deleteMany({});
     await Doctor.deleteMany({});
@@ -175,6 +177,86 @@ describe("Patient booking — availability & appointments", () => {
     assert.ok(notice);
     assert.equal(notice.type, "appointment");
     assert.match(notice.title, /confirmed/i);
+  });
+
+  test("POST /api/patient/appointments applies insurance coverage discount (UC-7.3)", async () => {
+    const visitDate = availableSlot.date;
+    const card = await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Bao Viet Health",
+      policyNumber: "BV-2026-001",
+      holderName: "Patient Book Test",
+      coveragePercent: 25,
+      validFrom: visitDate,
+      validTo: new Date(visitDate.getTime() + 365 * 24 * 60 * 60 * 1000),
+      isPrimary: true,
+      isActive: true,
+    });
+
+    const auth = await authHeaderFor(patientUser);
+    const previewRes = await fetch(
+      `${baseUrl}/api/patient/appointments/fee-preview?slotId=${availableSlot._id}&insuranceCardId=${card._id}`,
+      { headers: { Authorization: auth } }
+    );
+    assert.equal(previewRes.status, 200);
+    const preview = await previewRes.json();
+    assert.equal(preview.baseFee, DEFAULT_CONSULTATION_FEE_VND);
+    assert.equal(preview.discountAmount, 50000);
+    assert.equal(preview.finalFee, 150000);
+
+    const res = await fetch(`${baseUrl}/api/patient/appointments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({
+        slotId: availableSlot._id.toString(),
+        insuranceCardId: card._id.toString(),
+      }),
+    });
+    assert.equal(res.status, 201);
+    const body = await res.json();
+    assert.equal(body.appointment.fee, 150000);
+    assert.equal(body.appointment.discountAmount, 50000);
+    assert.equal(body.wallet.balance, DEFAULT_CONSULTATION_FEE_VND + 50000 - 150000);
+
+    const stored = await Appointment.findOne({ patientUserId: patientUser._id }).lean();
+    assert.equal(stored.fee, 150000);
+    assert.equal(stored.discountAmount, 50000);
+    assert.equal(stored.insuranceCardId.toString(), card._id.toString());
+  });
+
+  test("POST /api/patient/appointments rejects expired insurance on visit date", async () => {
+    const card = await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Expired Policy",
+      policyNumber: "EXP-001",
+      holderName: "Patient Book Test",
+      coveragePercent: 50,
+      validFrom: new Date("2020-01-01"),
+      validTo: new Date("2021-01-01"),
+      isActive: true,
+    });
+
+    const freshSlot = await AppointmentSlot.create({
+      doctorId: doctor._id,
+      workShiftId: (await WorkShift.findOne())._id,
+      date: availableSlot.date,
+      startTime: "09:30",
+      endTime: "10:00",
+      status: "available",
+    });
+
+    const auth = await authHeaderFor(patientUser);
+    const res = await fetch(`${baseUrl}/api/patient/appointments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({
+        slotId: freshSlot._id.toString(),
+        insuranceCardId: card._id.toString(),
+      }),
+    });
+    assert.equal(res.status, 400);
+    const body = await res.json();
+    assert.match(body.message, /expired/i);
   });
 
   test("POST /api/patient/appointments rejects unavailable slot", async () => {

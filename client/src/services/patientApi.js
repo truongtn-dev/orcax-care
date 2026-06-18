@@ -61,6 +61,10 @@ export const PatientApiClient = {
     return api.post("/api/patient/appointments", payload);
   },
 
+  previewAppointmentFee(params) {
+    return api.get("/api/patient/appointments/fee-preview", { params });
+  },
+
   rescheduleAppointment(id, payload) {
     return api.put(`/api/patient/appointments/${id}/reschedule`, payload);
   },
@@ -79,6 +83,14 @@ export const PatientApiClient = {
 
   createInsuranceCard(payload) {
     return api.post("/api/patient/insurance-cards", payload);
+  },
+
+  updateInsuranceCard(id, payload) {
+    return api.put(`/api/patient/insurance-cards/${id}`, payload);
+  },
+
+  deleteInsuranceCard(id) {
+    return api.delete(`/api/patient/insurance-cards/${id}`);
   },
 
   extractInsuranceCardOcr(payload) {
