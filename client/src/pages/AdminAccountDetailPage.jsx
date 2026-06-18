@@ -8,8 +8,10 @@ import AdminLayout from "../components/AdminLayout.jsx";
 
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RecordAvatar from "../components/RecordAvatar.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 
 import { AdminApiClient } from "../services/adminApi.js";
+import { PublicApiClient } from "../services/publicApi.js";
 
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -24,6 +26,36 @@ const GENDER_LABELS = {
   female: "Female",
 
   other: "Other",
+
+};
+
+
+
+const CHANGE_ROLE_OPTIONS = [
+
+  { value: "patient", label: "Patient" },
+
+  { value: "doctor", label: "Doctor" },
+
+  { value: "staff", label: "Staff" },
+
+  { value: "admin", label: "Administrator" },
+
+];
+
+
+
+const EMPTY_ROLE_FORM = {
+
+  role: "",
+
+  specialtyId: "",
+
+  departmentId: "",
+
+  licenseNo: "",
+
+  bio: "",
 
 };
 
@@ -123,6 +155,18 @@ export default function AdminAccountDetailPage() {
 
   const [statusLoading, setStatusLoading] = useState(false);
 
+  const [roleForm, setRoleForm] = useState(EMPTY_ROLE_FORM);
+
+  const [specialties, setSpecialties] = useState([]);
+
+  const [departments, setDepartments] = useState([]);
+
+  const [showRoleConfirm, setShowRoleConfirm] = useState(false);
+
+  const [roleLoading, setRoleLoading] = useState(false);
+
+  const [roleError, setRoleError] = useState("");
+
 
 
   const loadAccount = useCallback(async () => {
@@ -158,6 +202,48 @@ export default function AdminAccountDetailPage() {
     loadAccount();
 
   }, [loadAccount]);
+
+
+
+  useEffect(() => {
+
+    PublicApiClient.getSpecialties()
+
+      .then(({ data }) => setSpecialties(data.items || []))
+
+      .catch(() => setSpecialties([]));
+
+    PublicApiClient.getDepartments()
+
+      .then(({ data }) => setDepartments(data.items || []))
+
+      .catch(() => setDepartments([]));
+
+  }, []);
+
+
+
+  useEffect(() => {
+
+    if (!account) return;
+
+    setRoleForm({
+
+      role: account.role,
+
+      specialtyId: account.profile?.specialty?._id || account.profile?.specialtyId || "",
+
+      departmentId: account.profile?.department?._id || account.profile?.departmentId || "",
+
+      licenseNo: account.profile?.licenseNo || "",
+
+      bio: account.profile?.bio || "",
+
+    });
+
+    setRoleError("");
+
+  }, [account]);
 
 
 
@@ -219,7 +305,89 @@ export default function AdminAccountDetailPage() {
 
 
 
+  const onRoleFieldChange = (event) => {
+
+    const { name, value } = event.target;
+
+    setRoleForm((current) => ({ ...current, [name]: value }));
+
+    setRoleError("");
+
+  };
+
+
+
   const isSelf = account?.email === currentAdminEmail;
+
+
+
+  const roleHasChanges = account && roleForm.role && roleForm.role !== account.role;
+
+
+
+  const canSubmitRoleChange =
+
+    roleHasChanges &&
+
+    !isSelf &&
+
+    (roleForm.role !== "doctor" ||
+
+      (roleForm.specialtyId && roleForm.departmentId && roleForm.licenseNo.trim()));
+
+
+
+  const handleChangeRole = async () => {
+
+    if (!canSubmitRoleChange) return;
+
+    setRoleLoading(true);
+
+    setRoleError("");
+
+    setStatusMessage({ type: "", text: "" });
+
+    try {
+
+      const extra = {};
+
+      if (roleForm.role === "doctor") {
+
+        extra.specialtyId = roleForm.specialtyId;
+
+        extra.departmentId = roleForm.departmentId;
+
+        extra.licenseNo = roleForm.licenseNo.trim();
+
+        extra.bio = roleForm.bio.trim();
+
+      }
+
+      await AdminApiClient.changeRole(id, roleForm.role, extra);
+
+      setShowRoleConfirm(false);
+
+      setStatusMessage({
+
+        type: "success",
+
+        text: "Role updated. The user must sign in again for permissions to take effect.",
+
+      });
+
+      await loadAccount();
+
+    } catch (err) {
+
+      setRoleError(getApiErrorMessage(err));
+
+    } finally {
+
+      setRoleLoading(false);
+
+    }
+
+  };
 
 
 
@@ -494,6 +662,158 @@ export default function AdminAccountDetailPage() {
 
             )}
 
+
+
+            <section className="card detail-section">
+
+              <h3>Change role</h3>
+
+              <p className="detail-note">
+
+                Permissions take effect on the user&apos;s next sign-in. All active sessions are revoked after a role
+
+                change.
+
+              </p>
+
+              {isSelf && (
+
+                <div className="alert alert-error">You cannot change your own role from this screen.</div>
+
+              )}
+
+              {roleError && <div className="alert alert-error">{roleError}</div>}
+
+              <div className="form-grid">
+
+                <CustomSelect
+
+                  label="New role"
+
+                  value={roleForm.role}
+
+                  onChange={(role) => setRoleForm((current) => ({ ...current, role }))}
+
+                  options={CHANGE_ROLE_OPTIONS}
+
+                  disabled={isSelf || roleLoading}
+
+                />
+
+                {roleForm.role === "doctor" && (
+
+                  <>
+
+                    <CustomSelect
+
+                      label="Specialty"
+
+                      value={roleForm.specialtyId}
+
+                      onChange={(specialtyId) => setRoleForm((current) => ({ ...current, specialtyId }))}
+
+                      options={[
+
+                        { value: "", label: "Select specialty" },
+
+                        ...specialties.map((item) => ({ value: item._id, label: item.name })),
+
+                      ]}
+
+                      disabled={isSelf || roleLoading}
+
+                    />
+
+                    <CustomSelect
+
+                      label="Department"
+
+                      value={roleForm.departmentId}
+
+                      onChange={(departmentId) => setRoleForm((current) => ({ ...current, departmentId }))}
+
+                      options={[
+
+                        { value: "", label: "Select department" },
+
+                        ...departments.map((item) => ({ value: item._id, label: item.name })),
+
+                      ]}
+
+                      disabled={isSelf || roleLoading}
+
+                    />
+
+                    <label>
+
+                      License number
+
+                      <input
+
+                        type="text"
+
+                        name="licenseNo"
+
+                        value={roleForm.licenseNo}
+
+                        onChange={onRoleFieldChange}
+
+                        disabled={isSelf || roleLoading}
+
+                        required
+
+                      />
+
+                    </label>
+
+                    <label className="form-grid-full">
+
+                      Bio
+
+                      <textarea
+
+                        name="bio"
+
+                        value={roleForm.bio}
+
+                        onChange={onRoleFieldChange}
+
+                        rows={3}
+
+                        disabled={isSelf || roleLoading}
+
+                      />
+
+                    </label>
+
+                  </>
+
+                )}
+
+              </div>
+
+              <div className="form-actions">
+
+                <button
+
+                  type="button"
+
+                  className="btn btn-primary"
+
+                  disabled={!canSubmitRoleChange || roleLoading}
+
+                  onClick={() => setShowRoleConfirm(true)}
+
+                >
+
+                  Change role
+
+                </button>
+
+              </div>
+
+            </section>
+
           </div>
 
         </>
@@ -527,6 +847,34 @@ export default function AdminAccountDetailPage() {
         onConfirm={handleDeactivate}
 
         onCancel={() => setShowDeactivateConfirm(false)}
+
+      />
+
+
+
+      <ConfirmDialog
+
+        open={showRoleConfirm}
+
+        title="Confirm role change"
+
+        description={
+
+          account && roleForm.role
+
+            ? `Change ${account.fullName}'s role from ${formatRoleLabel(account.role)} to ${formatRoleLabel(roleForm.role)}? Active sessions will be revoked.`
+
+            : ""
+
+        }
+
+        confirmText="Change role"
+
+        loading={roleLoading}
+
+        onConfirm={handleChangeRole}
+
+        onCancel={() => setShowRoleConfirm(false)}
 
       />
 
