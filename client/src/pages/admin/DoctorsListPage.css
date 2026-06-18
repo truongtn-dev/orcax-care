@@ -1,5 +1,91 @@
 @import "../../styles/adminPeopleList.shared.css";
 
+.doctors-import-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.doctors-import-modal {
+  width: min(560px, 100%);
+  padding: 1.25rem 1.35rem;
+}
+
+.doctors-import-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.doctors-import-modal-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.doctors-import-close {
+  border: 0;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.doctors-import-lead {
+  margin: 0.75rem 0 1rem;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.doctors-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.doctors-import-upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.doctors-import-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.doctors-import-file {
+  margin: 0.85rem 0 0;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.doctors-import-result {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.doctors-import-errors {
+  margin: 0.75rem 0 0;
+  padding-left: 1.1rem;
+  color: #b91c1c;
+  font-size: 0.88rem;
+}
+
+.doctors-import-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
 @media (max-width: 900px) {
   .people-list-toolbar .filters-toolbar-actions {
     margin-left: 0;

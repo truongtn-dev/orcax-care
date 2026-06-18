@@ -31,6 +31,9 @@ adminRouter.put("/users/:userId/deactivate", AdminController.deactivateAccount);
 adminRouter.put("/users/:userId/reactivate", AdminController.reactivateAccount);
 
 adminRouter.get("/doctors", AdminDoctorController.listDoctors);
+adminRouter.get("/doctors/export", AdminDoctorController.exportDoctors);
+adminRouter.get("/doctors/import-template", AdminDoctorController.downloadImportTemplate);
+adminRouter.post("/doctors/import", AdminDoctorController.importDoctors);
 adminRouter.get("/doctors/:id", AdminDoctorController.getDoctor);
 adminRouter.put("/doctors/:id", AdminDoctorController.updateDoctor);
 

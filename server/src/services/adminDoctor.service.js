@@ -65,15 +65,13 @@ async function requireReference(Model, id, label) {
   return { record };
 }
 
-export async function listDoctors({
+export async function queryFilteredDoctors({
   q = "",
   name = "",
   specialtyId = "",
   departmentId = "",
   activeOnly = false,
   isActive = "",
-  page = 1,
-  limit = 20,
 } = {}) {
   const filter = {};
   const activeFilter = String(isActive || "").trim().toLowerCase();
@@ -99,11 +97,22 @@ export async function listDoctors({
     });
   }
 
-  doctors = doctors.sort((a, b) => {
-    const left = a.userId?.fullName || "";
-    const right = b.userId?.fullName || "";
-    return left.localeCompare(right);
-  });
+  return doctors
+    .sort((a, b) => (a.userId?.fullName || "").localeCompare(b.userId?.fullName || ""))
+    .map(mapDoctor);
+}
+
+export async function listDoctors({
+  q = "",
+  name = "",
+  specialtyId = "",
+  departmentId = "",
+  activeOnly = false,
+  isActive = "",
+  page = 1,
+  limit = 20,
+} = {}) {
+  const doctors = await queryFilteredDoctors({ q, name, specialtyId, departmentId, activeOnly, isActive });
 
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
@@ -113,7 +122,7 @@ export async function listDoctors({
   return {
     status: 200,
     body: {
-      items: doctors.slice(skip, skip + limitNum).map(mapDoctor),
+      items: doctors.slice(skip, skip + limitNum),
       page: pageNum,
       limit: limitNum,
       total,
