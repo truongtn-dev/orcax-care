@@ -78,7 +78,7 @@ const ADMIN_SECTIONS = [
 
         icon: "users",
 
-        match: ["/admin/patients", "/admin/patient"],
+        match: ["/admin/patients"],
 
       },
 

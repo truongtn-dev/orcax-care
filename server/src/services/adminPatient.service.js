@@ -70,6 +70,9 @@ function mapPatient(patient) {
     phone: user.phone || "",
     accountIsActive: Boolean(user.isActive),
     isEmailVerified: Boolean(user.isEmailVerified),
+    isLocked: Boolean(user.isLocked),
+    lastLoginAt: user.lastLoginAt || null,
+    passwordChangedAt: user.passwordChangedAt || null,
     isActive: patient.isActive,
     profile: {
       dateOfBirth: formatDate(patient.dateOfBirth),
@@ -85,7 +88,10 @@ function mapPatient(patient) {
 }
 
 function populatePatient(query) {
-  return query.populate("userId", "email fullName phone isActive isEmailVerified");
+  return query.populate(
+    "userId",
+    "email fullName phone isActive isEmailVerified isLocked lastLoginAt passwordChangedAt createdAt"
+  );
 }
 
 function findPatient(id) {

@@ -328,7 +328,7 @@ export default function AdminDashboardPage() {
       const [accountsRes, doctorsRes, patientsRes, specialtiesRes, roomsRes, deptRes] = await Promise.all([
         AdminApiClient.listAccounts({ limit: 1 }),
         AdminApiClient.listDoctors({ limit: 1 }),
-        AdminApiClient.listPatients({ limit: 1 }),
+        AdminApiClient.getPatients({ limit: 1 }),
         AdminApiClient.listSpecialties({ limit: 1 }),
         AdminApiClient.listClinicRooms({ limit: 1 }),
         PublicApiClient.getDepartments(),

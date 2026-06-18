@@ -50,6 +50,9 @@ export default function AdminPatientDetailPage() {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const accountId = patient?.userId || patient?._id;
+  const accountIsActive = patient?.accountIsActive ?? patient?.isActive;
+  const profileIsActive = patient?.accountIsActive != null ? patient?.isActive : null;
 
   useEffect(() => {
     setLoading(true);
@@ -67,7 +70,7 @@ export default function AdminPatientDetailPage() {
         description="View and manage patient information."
         actions={
           patient ? (
-            <Link to={`/admin/patient/${id}/edit`} className="btn btn-primary">
+            <Link to={`/admin/patients/${id}/edit`} className="btn btn-primary">
               Edit patient
             </Link>
           ) : null
@@ -91,12 +94,18 @@ export default function AdminPatientDetailPage() {
               <h2>{patient.fullName}</h2>
               <p>{patient.email}</p>
               <p>
-                <Link to={`/admin/account/${patient._id}`} className="table-link">
+                <Link to={`/admin/account/${accountId}`} className="table-link">
                   Open linked account →
                 </Link>
               </p>
               <div className="status-badge-group">
-                <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
+                <StatusBadge active={accountIsActive} label={accountIsActive ? "Active" : "Inactive"} />
+                {profileIsActive != null && (
+                  <StatusBadge
+                    active={profileIsActive}
+                    label={profileIsActive ? "Profile active" : "Profile inactive"}
+                  />
+                )}
                 <StatusBadge
                   active={patient.isEmailVerified}
                   label={patient.isEmailVerified ? "Email verified" : "Email not verified"}
@@ -139,9 +148,23 @@ export default function AdminPatientDetailPage() {
                 <DetailItem
                   label="Account status"
                   value={
-                    <StatusBadge active={patient.isActive} label={patient.isActive ? "Active" : "Inactive"} />
+                    <StatusBadge
+                      active={accountIsActive}
+                      label={accountIsActive ? "Active" : "Inactive"}
+                    />
                   }
                 />
+                {profileIsActive != null && (
+                  <DetailItem
+                    label="Profile status"
+                    value={
+                      <StatusBadge
+                        active={profileIsActive}
+                        label={profileIsActive ? "Active" : "Inactive"}
+                      />
+                    }
+                  />
+                )}
                 <DetailItem
                   label="Email verification"
                   value={

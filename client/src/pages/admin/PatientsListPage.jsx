@@ -142,7 +142,7 @@ export default function PatientsListPage() {
                   <tbody>
                     {result.items.map((patient) => {
                       const isActive = patient.isActive && patient.accountIsActive;
-                      const detailTo = patient.userId ? `/admin/patient/${patient.userId}` : null;
+                      const detailTo = `/admin/patients/${patient._id}`;
 
                       return (
                         <tr key={patient._id}>
