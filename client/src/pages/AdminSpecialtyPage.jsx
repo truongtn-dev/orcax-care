@@ -50,6 +50,12 @@ export default function AdminSpecialtyPage() {
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editFieldErrors, setEditFieldErrors] = useState({});
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+  const [updating, setUpdating] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
   const [actionError, setActionError] = useState("");
 
@@ -148,6 +154,84 @@ export default function AdminSpecialtyPage() {
   };
 
   const fieldError = (name) => fieldErrors[name];
+
+  const editFieldError = (name) => editFieldErrors[name];
+
+  const openEditModal = (specialty) => {
+    const nextForm = {
+      code: specialty.code || "",
+      name: specialty.name || "",
+      description: specialty.description || "",
+      isActive: Boolean(specialty.isActive),
+    };
+    setEditTarget(specialty);
+    setEditForm(nextForm);
+    setEditFieldErrors({});
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const closeEditModal = () => {
+    if (updating) return;
+    setEditTarget(null);
+    setEditFieldErrors({});
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setEditFieldErrors((current) => ({ ...current, [name]: undefined }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editTarget) return;
+
+    setEditError("");
+    setEditSuccess("");
+
+    const errors = validateAdminCreateSpecialtyForm(editForm);
+    if (Object.keys(errors).length > 0) {
+      setEditFieldErrors(errors);
+      setEditError(firstFormError(errors));
+      return;
+    }
+
+    setEditFieldErrors({});
+    setUpdating(true);
+
+    try {
+      const { data } = await AdminApiClient.updateSpecialty(editTarget._id, {
+        code: editForm.code.trim().toUpperCase(),
+        name: editForm.name.trim(),
+        description: editForm.description.trim(),
+        isActive: editForm.isActive,
+      });
+      setEditSuccess(data.message || "Specialty updated successfully.");
+      loadSpecialties(filters);
+      setTimeout(() => closeEditModal(), 900);
+    } catch (err) {
+      const message = getApiErrorMessage(err);
+      setEditError(message);
+      if (err?.response?.status === 409) {
+        const bodyMessage = message.toLowerCase();
+        if (bodyMessage.includes("code")) {
+          setEditFieldErrors({ code: message });
+        } else {
+          setEditFieldErrors({ name: message });
+        }
+      }
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const openDeleteConfirm = (specialty) => {
     if (specialty.doctorCount > 0) {
@@ -273,6 +357,18 @@ export default function AdminSpecialtyPage() {
                     <td>{formatDate(specialty.createdAt)}</td>
                     <td className="table-actions-col">
                       <div className="table-row-actions">
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-icon"
+                        aria-label={`Edit ${specialty.name}`}
+                        title="Edit specialty"
+                        onClick={() => openEditModal(specialty)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
                       <button
                         type="button"
                         className="btn btn-outline btn-icon btn-icon-danger"
@@ -402,6 +498,71 @@ export default function AdminSpecialtyPage() {
                 </button>
               </div>
             </form>
+        </AppModal>
+      )}
+
+      {editTarget && (
+        <AppModal
+          title="Update specialty"
+          description={`Edit ${editTarget.name} (${editTarget.code}). Cancel restores the original values.`}
+          titleId="edit-specialty-title"
+          onClose={closeEditModal}
+        >
+          <form onSubmit={onEditSubmit} className="form form-compact">
+            {editError && <div className="alert alert-error">{editError}</div>}
+            {editSuccess && <div className="alert alert-success">{editSuccess}</div>}
+
+            <label>
+              Code
+              <input
+                name="code"
+                value={editForm.code}
+                onChange={onEditFormChange}
+                aria-invalid={Boolean(editFieldError("code"))}
+                style={{ textTransform: "uppercase" }}
+              />
+              {editFieldError("code") && <span className="field-error">{editFieldError("code")}</span>}
+            </label>
+
+            <label>
+              Name
+              <input
+                name="name"
+                value={editForm.name}
+                onChange={onEditFormChange}
+                aria-invalid={Boolean(editFieldError("name"))}
+              />
+              {editFieldError("name") && <span className="field-error">{editFieldError("name")}</span>}
+            </label>
+
+            <label>
+              Description
+              <textarea
+                name="description"
+                value={editForm.description}
+                onChange={onEditFormChange}
+                rows={3}
+                aria-invalid={Boolean(editFieldError("description"))}
+              />
+              {editFieldError("description") && (
+                <span className="field-error">{editFieldError("description")}</span>
+              )}
+            </label>
+
+            <label className="checkbox-row">
+              <input type="checkbox" name="isActive" checked={editForm.isActive} onChange={onEditFormChange} />
+              Active (visible in system)
+            </label>
+
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={closeEditModal} disabled={updating}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={updating}>
+                {updating ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </form>
         </AppModal>
       )}
       </AdminLayout>
