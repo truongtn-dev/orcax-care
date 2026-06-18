@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [role, setRole] = useState(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
 
   const clearLocalSession = useCallback(() => {
@@ -18,6 +19,7 @@ export function AuthProvider({ children }) {
     setRole(null);
     setFullName("");
     setEmail("");
+    setAvatarUrl("");
   }, []);
 
   const logout = useCallback(async () => {
@@ -54,6 +56,7 @@ export function AuthProvider({ children }) {
         setRole(data.role);
         setFullName(data.fullName || AuthApiClient.getUserName());
         setEmail(data.email || AuthApiClient.getUserEmail());
+        setAvatarUrl(data.avatarUrl || "");
       } catch {
         if (!cancelled) clearLocalSession();
       } finally {
@@ -73,23 +76,36 @@ export function AuthProvider({ children }) {
       role,
       fullName,
       email,
+      avatarUrl,
       authLoading,
       loginSuccess(data, rememberMe) {
         AuthApiClient.storeToken(data.accessToken, rememberMe, data.tokenType || "Token");
-        AuthApiClient.storeUserMeta(data.role, data.fullName, rememberMe, data.email);
+        AuthApiClient.storeUserMeta(data.role, data.fullName, rememberMe, data.email, data.avatarUrl);
         setIsAuth(true);
         setRole(data.role);
         setFullName(data.fullName || "");
         setEmail(data.email || "");
+        setAvatarUrl(data.avatarUrl || "");
       },
-      updateProfileMeta(name) {
-        setFullName(name || "");
+      updateProfileMeta({ fullName: nextName, avatarUrl: nextAvatarUrl } = {}) {
+        if (nextName !== undefined) {
+          setFullName(nextName || "");
+        }
+        if (nextAvatarUrl !== undefined) {
+          setAvatarUrl(nextAvatarUrl || "");
+        }
         const rememberMe = Boolean(localStorage.getItem("accessToken"));
-        AuthApiClient.storeUserMeta(role, name, rememberMe, email);
+        AuthApiClient.storeUserMeta(
+          role,
+          nextName !== undefined ? nextName : fullName,
+          rememberMe,
+          email,
+          nextAvatarUrl !== undefined ? nextAvatarUrl : avatarUrl
+        );
       },
       logout,
     }),
-    [isAuth, role, fullName, email, authLoading, logout]
+    [isAuth, role, fullName, email, avatarUrl, authLoading, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { User } from "../models/User.js";
 import { Patient } from "../models/Patient.js";
+import { Doctor } from "../models/Doctor.js";
 import { EmailVerificationToken } from "../models/EmailVerificationToken.js";
 import { PasswordResetToken } from "../models/PasswordResetToken.js";
 import { generateToken, validateEmail, validatePasswordStrength } from "../utils/validation.js";
@@ -14,6 +15,18 @@ import {
 } from "./token.service.js";
 
 const RESEND_COOLDOWN_MS = 60 * 1000;
+
+async function resolveProfileImageUrl(user) {
+  if (user.role === "patient") {
+    const patient = await Patient.findOne({ userId: user._id }).select("avatarUrl").lean();
+    return patient?.avatarUrl || "";
+  }
+  if (user.role === "doctor") {
+    const doctor = await Doctor.findOne({ userId: user._id }).select("photoUrl").lean();
+    return doctor?.photoUrl || "";
+  }
+  return "";
+}
 
 function formatExpiresIn(ms) {
   if (ms >= 24 * 60 * 60 * 1000) return `${Math.round(ms / (24 * 60 * 60 * 1000))}d`;
@@ -62,6 +75,7 @@ export async function login(email, password, rememberMe = false) {
   await user.save();
 
   const session = await issueAuthToken(user._id, rememberMe);
+  const avatarUrl = await resolveProfileImageUrl(user);
 
   return {
     status: 200,
@@ -71,6 +85,7 @@ export async function login(email, password, rememberMe = false) {
       role: user.role,
       fullName: user.fullName,
       email: user.email,
+      avatarUrl,
       expiresIn: formatExpiresIn(session.expiresInMs),
     },
   };
@@ -276,6 +291,7 @@ export async function getMe(userId) {
   if (user.role === "patient" && !user.isEmailVerified) {
     return { status: 403, body: { message: "Email verification required" } };
   }
+  const avatarUrl = await resolveProfileImageUrl(user);
   return {
     status: 200,
     body: {
@@ -283,6 +299,7 @@ export async function getMe(userId) {
       email: user.email,
       role: user.role,
       fullName: user.fullName,
+      avatarUrl,
     },
   };
 }
