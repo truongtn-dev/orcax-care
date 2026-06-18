@@ -52,6 +52,8 @@ adminRouter.delete("/specialties/:id", AdminSpecialtyController.deleteSpecialty)
 adminRouter.get("/departments", AdminMasterController.listDepartments);
 adminRouter.post("/departments", AdminMasterController.createDepartment);
 adminRouter.get("/departments/:id", AdminMasterController.getDepartmentDetail);
+adminRouter.put("/departments/:id", AdminMasterController.updateDepartment);
+adminRouter.put("/departments/:id/deactivate", AdminMasterController.deactivateDepartment);
 
 adminRouter.get("/clinic-rooms/departments", AdminClinicRoomController.listDepartmentOptions);
 adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);

@@ -87,6 +87,91 @@ export async function createDepartment(dto) {
   return { status: 201, body: mapDepartment(department) };
 }
 
+export async function updateDepartment(id, dto) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return { status: 404, body: { message: "Department not found" } };
+  }
+
+  const department = await Department.findById(id);
+  if (!department) return { status: 404, body: { message: "Department not found" } };
+
+  const name = dto.name !== undefined ? String(dto.name || "").trim() : department.name;
+  const location = dto.location !== undefined ? String(dto.location || "").trim() : department.location;
+  const phone = dto.phone !== undefined ? String(dto.phone || "").trim() : department.phone;
+
+  const nameError = validateRequired(name, "Department name");
+  if (nameError) return { status: 400, body: { message: nameError } };
+  const locationError = validateRequired(location, "Location");
+  if (locationError) return { status: 400, body: { message: locationError } };
+  const phoneRequiredError = validateRequired(phone, "Phone number");
+  if (phoneRequiredError) return { status: 400, body: { message: phoneRequiredError } };
+  const phoneError = validatePhoneOptional(phone);
+  if (phoneError) return { status: 400, body: { message: phoneError } };
+
+  if (name !== department.name) {
+    const duplicate = await Department.findOne({ name, _id: { $ne: department._id } }).lean();
+    if (duplicate) return { status: 409, body: { message: "Department name already exists" } };
+  }
+
+  department.name = name;
+  department.location = location;
+  department.phone = phone;
+  if (typeof dto.isActive === "boolean") {
+    department.isActive = dto.isActive;
+  }
+
+  await department.save();
+  invalidateSearchCache();
+
+  return {
+    status: 200,
+    body: {
+      message: "Department updated successfully",
+      department: mapDepartment(department),
+    },
+  };
+}
+
+export async function deactivateDepartment(id) {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return { status: 404, body: { message: "Department not found" } };
+  }
+
+  const department = await Department.findById(id);
+  if (!department) return { status: 404, body: { message: "Department not found" } };
+
+  if (!department.isActive) {
+    return { status: 400, body: { message: "Department is already inactive" } };
+  }
+
+  const doctors = await Doctor.find({ departmentId: department._id, isActive: true })
+    .populate("userId", "isActive")
+    .lean();
+  const activeDoctorCount = doctors.filter((doctor) => doctor.userId?.isActive).length;
+
+  if (activeDoctorCount > 0) {
+    return {
+      status: 409,
+      body: {
+        message: `Cannot deactivate department. ${activeDoctorCount} active doctor(s) are still assigned.`,
+        activeDoctorCount,
+      },
+    };
+  }
+
+  department.isActive = false;
+  await department.save();
+  invalidateSearchCache();
+
+  return {
+    status: 200,
+    body: {
+      message: "Department deactivated successfully",
+      department: mapDepartment(department),
+    },
+  };
+}
+
 export async function getDepartmentDetail(id) {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return { status: 404, body: { message: "Department not found" } };

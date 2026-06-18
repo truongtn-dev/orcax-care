@@ -41,6 +41,24 @@ export async function createDepartment(req, res) {
   }
 }
 
+export async function updateDepartment(req, res) {
+  try {
+    return sendResult(res, await AdminMasterService.updateDepartment(req.params.id, req.body));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function deactivateDepartment(req, res) {
+  try {
+    return sendResult(res, await AdminMasterService.deactivateDepartment(req.params.id));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function getDepartmentDetail(req, res) {
   try {
     return sendResult(res, await AdminMasterService.getDepartmentDetail(req.params.id));
