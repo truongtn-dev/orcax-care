@@ -8,6 +8,7 @@ import * as AdminSpecialtyController from "../controllers/adminSpecialty.control
 import * as AdminAppointmentSlotController from "../controllers/adminAppointmentSlot.controller.js";
 import * as AdminWorkShiftController from "../controllers/adminWorkShift.controller.js";
 import * as AdminController from "../controllers/admin.controller.js";
+import * as AdminDashboardController from "../controllers/adminDashboard.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
 
@@ -18,6 +19,8 @@ adminRouter.use(requireDatabase, authMiddleware, requireRole("admin"));
 adminRouter.get("/ping", (req, res) => {
   res.json({ ok: true, scope: "admin" });
 });
+
+adminRouter.get("/dashboard", AdminDashboardController.getDashboard);
 
 adminRouter.get("/accounts", AdminAccountController.listAccounts);
 adminRouter.post("/accounts", AdminAccountController.createAccount);

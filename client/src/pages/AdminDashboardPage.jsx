@@ -8,6 +8,31 @@ import { AdminApiClient } from "../services/adminApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
+
+function formatDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function defaultDashboardPeriod() {
+  const to = new Date();
+  to.setHours(0, 0, 0, 0);
+  const from = new Date(to);
+  from.setDate(from.getDate() - 29);
+  return { from: formatDateInput(from), to: formatDateInput(to) };
+}
+
+const DEFAULT_DASHBOARD_PERIOD = defaultDashboardPeriod();
+
 const OVERVIEW_STATS = [
   {
     key: "accounts",
@@ -276,6 +301,12 @@ export default function AdminDashboardPage() {
   const [deptSort, setDeptSort] = useState({ key: "name", direction: "asc" });
   const [overviewStats, setOverviewStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [dashboardFrom, setDashboardFrom] = useState(DEFAULT_DASHBOARD_PERIOD.from);
+  const [dashboardTo, setDashboardTo] = useState(DEFAULT_DASHBOARD_PERIOD.to);
+  const [dashboardDoctorId, setDashboardDoctorId] = useState("");
+  const [doctorFilterOptions, setDoctorFilterOptions] = useState([]);
   const [allDoctorsForCount, setAllDoctorsForCount] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, type: "success", message: "" });
@@ -319,9 +350,31 @@ export default function AdminDashboardPage() {
     loadDepartments();
   }, [loadDepartments]);
 
-  
-  
-  
+  const loadDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    try {
+      const params = { from: dashboardFrom, to: dashboardTo };
+      if (dashboardDoctorId) params.doctorId = dashboardDoctorId;
+      const { data } = await AdminApiClient.getDashboard(params);
+      setDashboardData(data);
+    } catch (err) {
+      console.error("Failed to load dashboard KPIs:", err);
+      setDashboardData(null);
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [dashboardFrom, dashboardTo, dashboardDoctorId]);
+
+  const loadDoctorFilterOptions = useCallback(async () => {
+    try {
+      const { data } = await AdminApiClient.listDoctors({ limit: 200, isActive: true });
+      setDoctorFilterOptions(data.items || []);
+    } catch (err) {
+      console.error("Failed to load doctors for dashboard filter:", err);
+      setDoctorFilterOptions([]);
+    }
+  }, []);
+
   const loadOverviewStats = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -363,11 +416,13 @@ export default function AdminDashboardPage() {
     setSuccess("");
     if (activeTab === "overview") {
       loadOverviewStats();
+      loadDashboard();
+      loadDoctorFilterOptions();
     } else if (activeTab === "departments") {
       setLoading(true);
       Promise.all([loadDepartments(), loadAllDoctorsForCount()]).finally(() => setLoading(false));
     }
-  }, [activeTab, loadOverviewStats, loadDepartments]);
+  }, [activeTab, loadOverviewStats, loadDepartments, loadDashboard, loadDoctorFilterOptions]);
 
   if (rawTab === "doctors") {
     return <Navigate to="/admin/doctors" replace />;
@@ -437,6 +492,131 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
             </div>
+          </ScrollReveal>
+
+          <ScrollReveal variant="up" delay={30}>
+            <section className="admin-dashboard-kpis card" aria-labelledby="admin-dashboard-kpis-title">
+              <div className="admin-dashboard-kpis-head">
+                <div>
+                  <h2 id="admin-dashboard-kpis-title">Clinic KPIs</h2>
+                  <p className="admin-dashboard-kpis-sub">
+                    Revenue and activity for the selected period
+                    {dashboardData?.period?.from && dashboardData?.period?.to
+                      ? ` (${dashboardData.period.from} → ${dashboardData.period.to})`
+                      : ""}
+                  </p>
+                </div>
+                <form
+                  className="admin-dashboard-filters"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    loadDashboard();
+                  }}
+                >
+                  <label>
+                    <span>From</span>
+                    <input
+                      type="date"
+                      value={dashboardFrom}
+                      onChange={(event) => setDashboardFrom(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>To</span>
+                    <input
+                      type="date"
+                      value={dashboardTo}
+                      onChange={(event) => setDashboardTo(event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>Doctor</span>
+                    <select
+                      value={dashboardDoctorId}
+                      onChange={(event) => setDashboardDoctorId(event.target.value)}
+                    >
+                      <option value="">All doctors</option>
+                      {doctorFilterOptions.map((item) => (
+                        <option key={item._id} value={item._id}>
+                          {item.fullName || item.licenseNo || item._id}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
+                    {dashboardLoading ? "Loading…" : "Apply"}
+                  </button>
+                </form>
+              </div>
+
+              <div className="admin-kpi-grid">
+                <article className="admin-kpi-card admin-kpi-card--rose">
+                  <p className="admin-kpi-label">Appointments today</p>
+                  <p className="admin-kpi-value">
+                    {dashboardLoading ? "—" : (dashboardData?.appointmentsToday?.total ?? 0)}
+                  </p>
+                  {!dashboardLoading && dashboardData?.appointmentsToday && (
+                    <p className="admin-kpi-meta">
+                      {dashboardData.appointmentsToday.confirmed} confirmed ·{" "}
+                      {dashboardData.appointmentsToday.completed} completed
+                    </p>
+                  )}
+                </article>
+                <article className="admin-kpi-card admin-kpi-card--emerald">
+                  <p className="admin-kpi-label">Revenue</p>
+                  <p className="admin-kpi-value">
+                    {dashboardLoading ? "—" : formatCurrency(dashboardData?.kpis?.totalRevenue)}
+                  </p>
+                </article>
+                <article className="admin-kpi-card admin-kpi-card--cyan">
+                  <p className="admin-kpi-label">Appointments</p>
+                  <p className="admin-kpi-value">
+                    {dashboardLoading ? "—" : (dashboardData?.kpis?.appointmentCount ?? 0)}
+                  </p>
+                </article>
+                <article className="admin-kpi-card admin-kpi-card--violet">
+                  <p className="admin-kpi-label">New patients</p>
+                  <p className="admin-kpi-value">
+                    {dashboardLoading ? "—" : (dashboardData?.kpis?.newPatients ?? 0)}
+                  </p>
+                </article>
+                <article className="admin-kpi-card admin-kpi-card--amber">
+                  <p className="admin-kpi-label">Active doctors</p>
+                  <p className="admin-kpi-value">
+                    {dashboardLoading ? "—" : (dashboardData?.kpis?.activeDoctors ?? 0)}
+                  </p>
+                </article>
+              </div>
+
+              <div className="admin-revenue-chart" aria-label="Revenue by day">
+                <div className="admin-revenue-chart-head">
+                  <h3>Revenue by day</h3>
+                  {!dashboardLoading && dashboardData?.revenueChart?.length === 0 && (
+                    <p>No bookings in this period.</p>
+                  )}
+                </div>
+                {!dashboardLoading && dashboardData?.revenueChart?.length > 0 && (
+                  <div className="admin-revenue-chart-bars">
+                    {(() => {
+                      const maxRevenue = Math.max(
+                        ...dashboardData.revenueChart.map((point) => point.revenue || 0),
+                        1
+                      );
+                      return dashboardData.revenueChart.map((point) => (
+                        <div key={point.date} className="admin-revenue-bar-wrap">
+                          <div
+                            className="admin-revenue-bar"
+                            style={{ height: `${Math.max(6, (point.revenue / maxRevenue) * 100)}%` }}
+                            title={`${point.date}: ${formatCurrency(point.revenue)} (${point.appointments} appts)`}
+                          />
+                          <span className="admin-revenue-bar-label">{point.date.slice(5)}</span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+              </div>
+            </section>
           </ScrollReveal>
 
           <ScrollReveal variant="up" delay={40}>

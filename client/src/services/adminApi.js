@@ -1,6 +1,10 @@
 import { api } from "./api.js";
 
 export const AdminApiClient = {
+  getDashboard(params) {
+    return api.get("/api/admin/dashboard", { params });
+  },
+
   listAccounts(params) {
     return api.get("/api/admin/accounts", { params });
   },
