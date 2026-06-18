@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "../styles/patient.shared.css";
@@ -10,7 +11,6 @@ const emptyForm = {
   providerName: "",
   policyNumber: "",
   holderName: "",
-  coverageType: "",
   coveragePercent: "0",
   validFrom: "",
   validTo: "",
@@ -64,8 +64,47 @@ export default function PatientInsuranceCardsPage() {
   const [ocrMessage, setOcrMessage] = useState("");
   const [ocrFileName, setOcrFileName] = useState("");
   const [error, setError] = useState("");
+  const [editingCardId, setEditingCardId] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const isEditing = Boolean(editingCardId);
 
   const primaryCount = cards.filter((card) => card.isPrimary).length;
+
+  const resetForm = () => {
+    setForm(emptyForm);
+    setEditingCardId("");
+    setOcrFileName("");
+    setOcrMessage("");
+  };
+
+  const openCreateForm = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const openEditForm = (card) => {
+    setEditingCardId(card._id);
+    setForm({
+      providerName: card.providerName || "",
+      policyNumber: card.policyNumber || "",
+      holderName: card.holderName || "",
+      coverageType: card.coverageType || "",
+      coveragePercent: card.coveragePercent != null ? String(card.coveragePercent) : "",
+      validFrom: card.validFrom || "",
+      validTo: card.validTo || "",
+      isPrimary: Boolean(card.isPrimary),
+    });
+    setOcrFileName("");
+    setOcrMessage("");
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    resetForm();
+  };
 
   const loadCards = useCallback(async () => {
     setLoading(true);
@@ -161,7 +200,7 @@ export default function PatientInsuranceCardsPage() {
     setSaving(true);
     setError("");
     try {
-      await PatientApiClient.createInsuranceCard({
+      const payload = {
         providerName: form.providerName,
         policyNumber: form.policyNumber,
         holderName: form.holderName,
@@ -170,16 +209,35 @@ export default function PatientInsuranceCardsPage() {
         validFrom: form.validFrom || undefined,
         validTo: form.validTo || undefined,
         isPrimary: form.isPrimary,
-      });
-      setForm(emptyForm);
-      setOcrFileName("");
-      setOcrMessage("");
-      setShowForm(false);
+      };
+      if (isEditing) {
+        await PatientApiClient.updateInsuranceCard(editingCardId, payload);
+      } else {
+        await PatientApiClient.createInsuranceCard(payload);
+      }
+      closeForm();
       await loadCards();
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await PatientApiClient.deleteInsuranceCard(deleteTarget._id);
+      setDeleteTarget(null);
+      if (editingCardId === deleteTarget._id) closeForm();
+      await loadCards();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setDeleteTarget(null);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -195,7 +253,7 @@ export default function PatientInsuranceCardsPage() {
           <button
             type="button"
             className="btn btn-primary btn-sm"
-            onClick={() => setShowForm((current) => !current)}
+            onClick={() => (showForm && !isEditing ? closeForm() : openCreateForm())}
           >
             {showForm ? "Hide form" : "Add insurance card"}
           </button>
@@ -248,7 +306,7 @@ export default function PatientInsuranceCardsPage() {
             </div>
             <h2>No insurance cards yet</h2>
             <p>Add a policy to use insurance benefits when booking appointments.</p>
-            <button type="button" className="btn btn-primary" onClick={() => setShowForm(true)}>
+            <button type="button" className="btn btn-primary" onClick={openCreateForm}>
               Add insurance card
             </button>
           </div>
@@ -258,20 +316,17 @@ export default function PatientInsuranceCardsPage() {
               <div className="patient-insurance-panel patient-insurance-form-panel">
                 <div className="patient-insurance-form-head">
                   <div>
-                    <h2>Add insurance card</h2>
-                    <p>Upload a card photo for OCR, then review the fields below.</p>
+                    <h2>{isEditing ? "Update insurance card" : "Add insurance card"}</h2>
+                    <p>{isEditing ? "Edit policy details and save changes." : "Upload a card photo for OCR, then review the fields below."}</p>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-sm"
-                    onClick={() => setShowForm(false)}
-                  >
+                  <button type="button" className="btn btn-outline btn-sm" onClick={closeForm}>
                     Close
                   </button>
                 </div>
 
                 <form onSubmit={onSubmit} className="patient-insurance-form">
                   <div className="patient-insurance-form-layout">
+                    {!isEditing && (
                     <div className="patient-insurance-form-ocr">
                       <span className="patient-insurance-field-label">Scan card image (OCR)</span>
                       <input
@@ -301,6 +356,7 @@ export default function PatientInsuranceCardsPage() {
                       </label>
                       {ocrMessage && <p className="patient-insurance-ocr-success">{ocrMessage}</p>}
                     </div>
+                    )}
 
                     <div className="patient-insurance-form-fields">
                       <p className="patient-insurance-field-label patient-insurance-field-label--section">
@@ -380,14 +436,9 @@ export default function PatientInsuranceCardsPage() {
 
                       <div className="patient-insurance-form-actions">
                         <button type="submit" className="btn btn-primary" disabled={saving || ocrBusy}>
-                          {saving ? "Saving…" : "Save insurance card"}
+                          {saving ? "Saving…" : isEditing ? "Save changes" : "Save insurance card"}
                         </button>
-                        <button
-                          type="button"
-                          className="btn btn-outline"
-                          disabled={saving}
-                          onClick={() => setShowForm(false)}
-                        >
+                        <button type="button" className="btn btn-outline" disabled={saving} onClick={closeForm}>
                           Cancel
                         </button>
                       </div>
@@ -414,6 +465,18 @@ export default function PatientInsuranceCardsPage() {
                       </div>
                       {card.isPrimary && <span className="insurance-primary-badge">Primary</span>}
                     </div>
+                    <div className="patient-insurance-card-actions">
+                      <button type="button" className="btn btn-outline btn-sm" onClick={() => openEditForm(card)}>
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm btn-danger-outline"
+                        onClick={() => setDeleteTarget(card)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                     <dl className="patient-insurance-card-meta">
                       <div>
                         <dt>Holder</dt>
@@ -421,11 +484,10 @@ export default function PatientInsuranceCardsPage() {
                       </div>
                       <div>
                         <dt>Coverage</dt>
-                        <dd>{card.coverageType || "—"}</dd>
-                      </div>
-                      <div>
-                        <dt>Coverage rate</dt>
-                        <dd>{card.coveragePercent ? `${card.coveragePercent}%` : "—"}</dd>
+                        <dd>
+                          {card.coverageType || "General"}
+                          {card.coveragePercent > 0 ? ` · ${card.coveragePercent}% bảo lãnh` : ""}
+                        </dd>
                       </div>
                       <div>
                         <dt>Validity</dt>
@@ -440,6 +502,21 @@ export default function PatientInsuranceCardsPage() {
         )}
       </div>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete insurance card?"
+        description={
+          deleteTarget
+            ? `Remove policy ${deleteTarget.policyNumber}? It will no longer appear when booking.`
+            : ""
+        }
+        confirmText="Delete"
+        variant="danger"
+        loading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => !deleting && setDeleteTarget(null)}
+      />
     </PageLayout>
   );
 }

@@ -141,4 +141,105 @@ describe("UC-13 Insurance Card List", () => {
     const listBody = await listRes.json();
     assert.equal(listBody.total, 1);
   });
+
+  test("updates insurance card for edit flow", async () => {
+    const card = await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Bao Viet",
+      policyNumber: "BV-001",
+      holderName: "Insurance Patient",
+      coveragePercent: 20,
+      validFrom: new Date("2026-01-01"),
+      validTo: new Date("2026-12-31"),
+    });
+
+    const res = await fetch(`${baseUrl}/api/patient/insurance-cards/${card._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: await authHeaderFor(patientUser),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        providerName: "Bao Viet Plus",
+        coveragePercent: 50,
+        isPrimary: true,
+      }),
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.providerName, "Bao Viet Plus");
+    assert.equal(body.policyNumber, "BV-001");
+    assert.equal(body.coveragePercent, 50);
+    assert.equal(body.isPrimary, true);
+  });
+
+  test("rejects duplicate policy number on update", async () => {
+    await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Bao Viet",
+      policyNumber: "BV-001",
+      holderName: "Insurance Patient",
+    });
+    const second = await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Prudential",
+      policyNumber: "PRU-002",
+      holderName: "Insurance Patient",
+    });
+
+    const res = await fetch(`${baseUrl}/api/patient/insurance-cards/${second._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: await authHeaderFor(patientUser),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ policyNumber: "BV-001" }),
+    });
+    assert.equal(res.status, 409);
+  });
+
+  test("soft-deletes insurance card", async () => {
+    const card = await InsuranceCard.create({
+      userId: patientUser._id,
+      providerName: "Bao Viet",
+      policyNumber: "BV-001",
+      holderName: "Insurance Patient",
+      isPrimary: true,
+    });
+
+    const delRes = await fetch(`${baseUrl}/api/patient/insurance-cards/${card._id}`, {
+      method: "DELETE",
+      headers: { Authorization: await authHeaderFor(patientUser) },
+    });
+    assert.equal(delRes.status, 200);
+
+    const listRes = await fetch(`${baseUrl}/api/patient/insurance-cards`, {
+      headers: { Authorization: await authHeaderFor(patientUser) },
+    });
+    const listBody = await listRes.json();
+    assert.equal(listBody.total, 0);
+
+    const stored = await InsuranceCard.findById(card._id).lean();
+    assert.equal(stored.isActive, false);
+    assert.equal(stored.isPrimary, false);
+  });
+
+  test("returns 404 when updating another patient card", async () => {
+    const otherCard = await InsuranceCard.create({
+      userId: otherUser._id,
+      providerName: "Prudential",
+      policyNumber: "PRU-999",
+      holderName: "Other Patient",
+    });
+
+    const res = await fetch(`${baseUrl}/api/patient/insurance-cards/${otherCard._id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: await authHeaderFor(patientUser),
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ providerName: "Hacked" }),
+    });
+    assert.equal(res.status, 404);
+  });
 });

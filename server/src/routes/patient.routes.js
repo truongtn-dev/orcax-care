@@ -34,6 +34,8 @@ patientRouter.get("/wallet/receipts/:orderCode", PatientWalletController.getTopu
 
 patientRouter.get("/insurance-cards", PatientInsuranceCardController.listInsuranceCards);
 patientRouter.post("/insurance-cards", PatientInsuranceCardController.createInsuranceCard);
+patientRouter.put("/insurance-cards/:id", PatientInsuranceCardController.updateInsuranceCard);
+patientRouter.delete("/insurance-cards/:id", PatientInsuranceCardController.deleteInsuranceCard);
 patientRouter.post(
   "/insurance-cards/ocr",
   PatientInsuranceCardController.extractInsuranceCardOcr

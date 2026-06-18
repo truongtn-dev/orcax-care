@@ -85,6 +85,14 @@ export const PatientApiClient = {
     return api.post("/api/patient/insurance-cards", payload);
   },
 
+  updateInsuranceCard(id, payload) {
+    return api.put(`/api/patient/insurance-cards/${id}`, payload);
+  },
+
+  deleteInsuranceCard(id) {
+    return api.delete(`/api/patient/insurance-cards/${id}`);
+  },
+
   extractInsuranceCardOcr(payload) {
     return api.post("/api/patient/insurance-cards/ocr", payload);
   },
