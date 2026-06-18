@@ -10,8 +10,31 @@ const NAV_LINKS = [
   { to: "/search-doctors", label: "Find doctors" },
 ];
 
+function UserAvatarStack({ name, imageUrl, className = "" }) {
+  const initials = name?.charAt(0)?.toUpperCase() || "U";
+  if (!imageUrl) {
+    return <span className={`avatar ${className}`.trim()}>{initials}</span>;
+  }
+  return (
+    <>
+      <img
+        src={imageUrl}
+        alt=""
+        className={`avatar avatar-photo ${className}`.trim()}
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+          event.currentTarget.nextElementSibling?.classList.remove("avatar-fallback-hidden");
+        }}
+      />
+      <span className={`avatar avatar-fallback-hidden ${className}`.trim()} aria-hidden="true">
+        {initials}
+      </span>
+    </>
+  );
+}
+
 export default function AppHeader() {
-  const { isAuthenticated, role, fullName, logout } = useAuth();
+  const { isAuthenticated, role, fullName, avatarUrl, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -178,7 +201,7 @@ export default function AppHeader() {
                 aria-haspopup="true"
                 aria-label="User menu"
               >
-                <span className="avatar">{fullName?.charAt(0)?.toUpperCase() || "U"}</span>
+                <UserAvatarStack name={fullName} imageUrl={avatarUrl} />
                 <span className="avatar-info hide-mobile">
                   <span className="avatar-name">{fullName || "User"}</span>
                   <span className="avatar-role">{formatRoleLabel(role)}</span>
@@ -196,7 +219,7 @@ export default function AppHeader() {
                   <div className="dropdown-backdrop" onClick={() => setUserMenuOpen(false)} aria-hidden="true" />
                   <div className="dropdown" role="menu">
                     <div className="dropdown-header">
-                      <span className="avatar avatar-sm">{fullName?.charAt(0)?.toUpperCase() || "U"}</span>
+                      <UserAvatarStack name={fullName} imageUrl={avatarUrl} className="avatar-sm" />
                       <div>
                         <strong>{fullName}</strong>
                         <span className="dropdown-role">{formatRoleLabel(role)}</span>

@@ -62,13 +62,16 @@ export const AuthApiClient = {
     sessionStorage.removeItem("userRole");
     sessionStorage.removeItem("userName");
     sessionStorage.removeItem("userEmail");
+    localStorage.removeItem("userAvatarUrl");
+    sessionStorage.removeItem("userAvatarUrl");
   },
 
-  storeUserMeta(role, fullName, rememberMe = false, email = "") {
+  storeUserMeta(role, fullName, rememberMe = false, email = "", avatarUrl = "") {
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem("userRole", role);
     storage.setItem("userName", fullName || "");
     storage.setItem("userEmail", email || "");
+    storage.setItem("userAvatarUrl", avatarUrl || "");
   },
 
   getUserRole() {

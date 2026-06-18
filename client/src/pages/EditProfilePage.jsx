@@ -136,7 +136,10 @@ export default function EditProfilePage() {
       setProfileData(updatedData);
       setForm(updatedData);
       setSuccess("Profile updated successfully.");
-      updateProfileMeta(data.fullName, data.phone);
+      updateProfileMeta({
+        fullName: data.fullName,
+        avatarUrl: role === "doctor" ? data.profile?.photoUrl || "" : data.profile?.avatarUrl || "",
+      });
       setIsModalOpen(false);
     } catch (err) {
       setModalError(getApiErrorMessage(err));
