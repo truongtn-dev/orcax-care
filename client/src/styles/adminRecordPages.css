@@ -297,6 +297,24 @@
   border: none;
 }
 
+.portal-shell .breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.portal-shell .breadcrumb-nav a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.portal-shell .breadcrumb-nav a:hover {
+  text-decoration: underline;
+}
+
 .portal-shell .detail-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
