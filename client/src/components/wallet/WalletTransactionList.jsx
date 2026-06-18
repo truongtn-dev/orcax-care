@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
-import { formatWalletCurrency, getTransactionCheckoutPath } from "../../utils/walletUtils.js";
+import {
+  formatWalletCurrency,
+  formatWalletTransactionDate,
+  getTransactionCheckoutPath,
+} from "../../utils/walletUtils.js";
 
 const TYPE_LABELS = {
   topup: "Top-up",
@@ -44,6 +48,11 @@ export default function WalletTransactionList({
             </div>
             <div className="wallet-txn-main">
               <strong>{TYPE_LABELS[txn.type] || txn.type}</strong>
+              {txn.createdAt && (
+                <time className="wallet-txn-date" dateTime={txn.createdAt}>
+                  {formatWalletTransactionDate(txn.createdAt)}
+                </time>
+              )}
               <span>{txn.description || txn.provider}</span>
               {txn.status === "pending" && (
                 <span className="wallet-txn-pending-hint">

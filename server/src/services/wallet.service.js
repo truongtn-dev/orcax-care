@@ -50,7 +50,56 @@ async function findTopupTransaction(ref = {}) {
   return null;
 }
 
-export async function getWalletOverview(userId, { limit = 10 } = {}) {
+const TXN_TYPES = ["topup", "deduct", "refund"];
+
+function computeWalletStats(transactions = []) {
+  let totalTopup = 0;
+  let totalSpent = 0;
+  let pendingTopups = 0;
+
+  for (const txn of transactions) {
+    if (txn.type === "topup") {
+      if (txn.status === "success") totalTopup += txn.amount;
+      if (txn.status === "pending") pendingTopups += 1;
+    }
+    if (txn.type === "deduct" && txn.status === "success") {
+      totalSpent += txn.amount;
+    }
+  }
+
+  return { totalTopup, totalSpent, pendingTopups };
+}
+
+function buildTransactionQuery(query = {}) {
+  const filter = {};
+
+  if (query.type && TXN_TYPES.includes(query.type)) {
+    filter.type = query.type;
+  }
+
+  const range = {};
+  if (query.from) {
+    const from = new Date(query.from);
+    if (!Number.isNaN(from.getTime())) {
+      from.setHours(0, 0, 0, 0);
+      range.$gte = from;
+    }
+  }
+  if (query.to) {
+    const to = new Date(query.to);
+    if (!Number.isNaN(to.getTime())) {
+      to.setHours(23, 59, 59, 999);
+      range.$lte = to;
+    }
+  }
+  if (Object.keys(range).length) {
+    filter.createdAt = range;
+  }
+
+  return filter;
+}
+
+export async function getWalletOverview(userId, query = {}) {
   const wallet = await getOrCreateWallet(userId);
 
   // Ledger reconciliation check
@@ -70,14 +119,23 @@ export async function getWalletOverview(userId, { limit = 10 } = {}) {
     await wallet.save();
   }
 
-  const transactions = await WalletTransaction.find({ userId })
+  const statsSource = await WalletTransaction.find({ userId })
+    .select("type amount status")
+    .lean();
+  const stats = computeWalletStats(statsSource);
+
+  const txnFilter = buildTransactionQuery(query);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit, 10) || 50));
+
+  const transactions = await WalletTransaction.find({ userId, ...txnFilter })
     .sort({ createdAt: -1 })
-    .limit(Math.min(50, Math.max(1, parseInt(limit, 10) || 10)))
+    .limit(limit)
     .lean();
 
   return {
     balance: wallet.balance,
     currency: wallet.currency,
+    stats,
     transactions: transactions.map(serializeTransaction),
   };
 }

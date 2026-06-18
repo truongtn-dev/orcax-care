@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import {
@@ -14,6 +14,7 @@ import {
   WALLET_AMOUNT_PRESETS,
   WALLET_LIMITS,
   WALLET_PAYMENT_METHODS,
+  WALLET_TXN_TYPE_OPTIONS,
   computeWalletStats,
   formatWalletCurrency,
   getWalletErrorMessage,
@@ -53,14 +54,18 @@ export default function PatientWalletPage() {
   const [formError, setFormError] = useState("");
   const [notice, setNotice] = useState("");
   const [receipt, setReceipt] = useState(null);
+  const [txnFilters, setTxnFilters] = useState({ type: "", from: "", to: "" });
+  const [txnFilterDraft, setTxnFilterDraft] = useState({ type: "", from: "", to: "" });
+  const [txnLoading, setTxnLoading] = useState(false);
+  const isInitialWalletLoad = useRef(true);
 
   const minTopup = wallet?.limits?.minTopup ?? WALLET_LIMITS.minTopup;
   const maxTopup = wallet?.limits?.maxTopup ?? WALLET_LIMITS.maxTopup;
 
-  const stats = useMemo(
-    () => computeWalletStats(wallet?.transactions || []),
-    [wallet?.transactions],
-  );
+  const stats = useMemo(() => {
+    if (wallet?.stats) return wallet.stats;
+    return computeWalletStats(wallet?.transactions || []);
+  }, [wallet?.stats, wallet?.transactions]);
 
   const walletStatus = useMemo(() => {
     if (loading) return { label: "Loading…", tone: "pending" };
@@ -69,23 +74,51 @@ export default function PatientWalletPage() {
     return { label: "Ready to pay", tone: "active" };
   }, [loading, loadError, stats.pendingTopups]);
 
-  const loadWallet = useCallback(async () => {
-    setLoading(true);
+  const loadWallet = useCallback(async (filters, { silent = false } = {}) => {
+    const activeFilters = filters || { type: "", from: "", to: "" };
+    if (!silent) setLoading(true);
+    else setTxnLoading(true);
     setLoadError("");
     try {
-      const { data } = await PatientApiClient.getWallet();
+      const params = { limit: 100 };
+      if (activeFilters.type) params.type = activeFilters.type;
+      if (activeFilters.from) params.from = activeFilters.from;
+      if (activeFilters.to) params.to = activeFilters.to;
+      const { data } = await PatientApiClient.getWallet(params);
       setWallet(data);
     } catch (err) {
       setLoadError(getWalletErrorMessage(err));
-      setWallet(null);
+      if (!silent) setWallet(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      else setTxnLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadWallet();
-  }, [loadWallet]);
+    const silent = !isInitialWalletLoad.current;
+    loadWallet(txnFilters, { silent }).finally(() => {
+      isInitialWalletLoad.current = false;
+    });
+  }, [loadWallet, txnFilters]);
+
+  const refreshWallet = () => loadWallet(txnFilters);
+
+  const applyTxnFilters = () => {
+    setTxnFilters({ ...txnFilterDraft });
+  };
+
+  const clearTxnFilters = () => {
+    const empty = { type: "", from: "", to: "" };
+    setTxnFilterDraft(empty);
+    setTxnFilters(empty);
+  };
+
+  const hasActiveTxnFilters = Boolean(txnFilters.type || txnFilters.from || txnFilters.to);
+  const txnFilterDraftDirty =
+    txnFilterDraft.type !== txnFilters.type
+    || txnFilterDraft.from !== txnFilters.from
+    || txnFilterDraft.to !== txnFilters.to;
 
   const enabledMethods = WALLET_PAYMENT_METHODS.filter((method) => {
     const remote = wallet?.paymentMethods?.find((item) => item.id === method.id);
@@ -113,7 +146,7 @@ export default function PatientWalletPage() {
       PatientApiClient.getTopupReceipt(receiptRef)
         .then(({ data }) => setReceipt(data.receipt))
         .catch(() => setReceipt(null));
-      loadWallet();
+      loadWallet(txnFilters, { silent: true });
     } else if (paymentStatus === "cancelled") {
       setFormError(reason || "Payment cancelled. Your balance was not changed.");
     } else if (paymentStatus === "failed") {
@@ -121,7 +154,7 @@ export default function PatientWalletPage() {
     }
 
     setSearchParams({}, { replace: true });
-  }, [loadWallet, searchParams, setSearchParams]);
+  }, [loadWallet, searchParams, setSearchParams, txnFilters]);
 
   const scrollToTopup = () => {
     document.getElementById("wallet-topup")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -158,7 +191,7 @@ export default function PatientWalletPage() {
     if (!ref) return;
     try {
       await PatientApiClient.cancelTopup(txn.provider, ref);
-      await loadWallet();
+      await loadWallet(txnFilters, { silent: true });
     } catch (err) {
       setFormError(getWalletErrorMessage(err));
     }
@@ -181,7 +214,7 @@ export default function PatientWalletPage() {
           <button
             type="button"
             className={`patient-wallet-refresh${loading ? " is-spinning" : ""}`}
-            onClick={loadWallet}
+            onClick={refreshWallet}
             disabled={loading}
             aria-label="Refresh wallet"
           >
@@ -229,7 +262,7 @@ export default function PatientWalletPage() {
 
         <div className="patient-wallet-page-body">
         {loadError && (
-          <WalletAlert type="error" title="Could not load wallet" onRetry={loadWallet}>
+          <WalletAlert type="error" title="Could not load wallet" onRetry={refreshWallet}>
             {loadError}
           </WalletAlert>
         )}
@@ -425,16 +458,88 @@ export default function PatientWalletPage() {
             </div>
 
             <WalletCard
-              title="Recent transactions"
+              title="Transaction history"
               icon={<IconWalletTransactions />}
               elevated
               variant="transactions"
             >
-              <WalletTransactionList
-                transactions={wallet?.transactions}
-                emptyText="No transactions yet. Top up to get started."
-                onCancelPending={handleCancelPending}
-              />
+              <div className="wallet-txn-filters" aria-label="Transaction filters">
+                <div className="wallet-txn-filters-fields">
+                  <label className="wallet-txn-filter-field">
+                    <span>Type</span>
+                    <select
+                      value={txnFilterDraft.type}
+                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                        ...prev,
+                        type: event.target.value,
+                      }))}
+                    >
+                      {WALLET_TXN_TYPE_OPTIONS.map((option) => (
+                        <option key={option.value || "all"} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="wallet-txn-filter-field">
+                    <span>From</span>
+                    <input
+                      type="date"
+                      value={txnFilterDraft.from}
+                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                        ...prev,
+                        from: event.target.value,
+                      }))}
+                    />
+                  </label>
+                  <label className="wallet-txn-filter-field">
+                    <span>To</span>
+                    <input
+                      type="date"
+                      value={txnFilterDraft.to}
+                      min={txnFilterDraft.from || undefined}
+                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                        ...prev,
+                        to: event.target.value,
+                      }))}
+                    />
+                  </label>
+                </div>
+                <div className="wallet-txn-filters-actions">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={applyTxnFilters}
+                    disabled={!txnFilterDraftDirty || txnLoading}
+                  >
+                    Apply filters
+                  </button>
+                  {hasActiveTxnFilters && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={clearTxnFilters}
+                      disabled={txnLoading}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {txnLoading ? (
+                <WalletLoading label="Loading transactions…" />
+              ) : (
+                <WalletTransactionList
+                  transactions={wallet?.transactions}
+                  emptyText={
+                    hasActiveTxnFilters
+                      ? "No transactions match these filters."
+                      : "No transactions yet. Top up to get started."
+                  }
+                  onCancelPending={handleCancelPending}
+                />
+              )}
             </WalletCard>
           </div>
         )}
