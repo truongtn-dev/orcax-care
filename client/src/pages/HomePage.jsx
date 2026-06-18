@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link } from "react-router-dom";
 
@@ -6,9 +6,17 @@ import PageLayout from "../components/PageLayout.jsx";
 
 import ScrollReveal from "../components/ScrollReveal.jsx";
 
+import DoctorSearchCard from "../components/DoctorSearchCard.jsx";
+
+import DoctorCardSkeleton from "../components/DoctorCardSkeleton.jsx";
+
+import { PublicApiClient } from "../services/publicApi.js";
+
 import { useAuth } from "../context/AuthContext.jsx";
 
 import { useHeroParallax } from "../hooks/useHeroParallax.js";
+
+const FEATURED_DOCTORS_LIMIT = 6;
 
 
 
@@ -174,7 +182,43 @@ export default function HomePage() {
 
   const { fullName, isAuthenticated, role } = useAuth();
 
+  const [featuredDoctors, setFeaturedDoctors] = useState([]);
+
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+
   useHeroParallax(heroRef);
+
+  useEffect(() => {
+
+    let active = true;
+
+    PublicApiClient.getFeaturedDoctors(FEATURED_DOCTORS_LIMIT)
+
+      .then(({ data }) => {
+
+        if (active) setFeaturedDoctors(data.items || []);
+
+      })
+
+      .catch(() => {
+
+        if (active) setFeaturedDoctors([]);
+
+      })
+
+      .finally(() => {
+
+        if (active) setFeaturedLoading(false);
+
+      });
+
+    return () => {
+
+      active = false;
+
+    };
+
+  }, []);
 
 
 
@@ -313,6 +357,82 @@ export default function HomePage() {
           </div>
 
         </section>
+
+
+
+        {(featuredLoading || featuredDoctors.length > 0) && (
+
+          <section className="section section-alt">
+
+            <ScrollReveal className="section-header" variant="up">
+
+              <span className="section-label">Featured doctors</span>
+
+              <h2>Top-rated specialists</h2>
+
+              <p>
+
+                Browse highly rated doctors with open appointment slots — click a profile to view details and book.
+
+              </p>
+
+            </ScrollReveal>
+
+
+
+            {featuredLoading && (
+
+              <div className="doctor-grid-premium" aria-busy="true" aria-label="Loading featured doctors">
+
+                {Array.from({ length: FEATURED_DOCTORS_LIMIT }).map((_, index) => (
+
+                  <DoctorCardSkeleton key={index} />
+
+                ))}
+
+              </div>
+
+            )}
+
+
+
+            {!featuredLoading && featuredDoctors.length > 0 && (
+
+              <>
+
+                <div className="doctor-grid-premium scroll-stagger-grid">
+
+                  {featuredDoctors.map((doctor, index) => (
+
+                    <ScrollReveal key={doctor._id} variant="float" delay={index * 80}>
+
+                      <DoctorSearchCard doctor={doctor} />
+
+                    </ScrollReveal>
+
+                  ))}
+
+                </div>
+
+
+
+                <div className="section-footer-actions">
+
+                  <Link to="/search-doctors" className="btn btn-primary">
+
+                    View all doctors
+
+                  </Link>
+
+                </div>
+
+              </>
+
+            )}
+
+          </section>
+
+        )}
 
 
 

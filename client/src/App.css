@@ -1400,6 +1400,12 @@
   line-height: 1.7;
 }
 
+.section-footer-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
