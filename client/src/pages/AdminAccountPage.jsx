@@ -28,6 +28,8 @@ import { firstFormError, validateAdminCreateAccountForm } from "../utils/validat
 
 import { useAuth } from "../context/AuthContext.jsx";
 
+import { useDebouncedValue } from "../hooks/useDebouncedValue.js";
+
 
 
 const PAGE_SIZE = 10;
@@ -45,6 +47,18 @@ const FILTER_ROLE_OPTIONS = [
   { value: "staff", label: "Staff" },
 
   { value: "admin", label: "Administrator" },
+
+];
+
+
+
+const FILTER_STATUS_OPTIONS = [
+
+  { value: "", label: "All statuses" },
+
+  { value: "true", label: "Active" },
+
+  { value: "false", label: "Inactive" },
 
 ];
 
@@ -302,7 +316,11 @@ function AccountStatus({ account }) {
 
 export default function AdminAccountPage() {
 
-  const [filters, setFilters] = useState({ q: "", role: "", page: 1, limit: PAGE_SIZE });
+  const [searchDraft, setSearchDraft] = useState("");
+
+  const debouncedSearch = useDebouncedValue(searchDraft, 400);
+
+  const [filters, setFilters] = useState({ q: "", role: "", isActive: "", page: 1, limit: PAGE_SIZE });
 
   const [result, setResult] = useState({ items: [], total: 0, totalPages: 1, page: 1 });
 
@@ -366,6 +384,20 @@ export default function AdminAccountPage() {
 
   useEffect(() => {
 
+    setFilters((current) => {
+
+      if (current.q === debouncedSearch) return current;
+
+      return { ...current, q: debouncedSearch, page: 1 };
+
+    });
+
+  }, [debouncedSearch]);
+
+
+
+  useEffect(() => {
+
     loadAccounts(filters);
 
   }, [filters, loadAccounts]);
@@ -410,7 +442,9 @@ export default function AdminAccountPage() {
 
   const clearFilters = () => {
 
-    setFilters({ q: "", role: "", page: 1, limit: PAGE_SIZE });
+    setSearchDraft("");
+
+    setFilters({ q: "", role: "", isActive: "", page: 1, limit: PAGE_SIZE });
 
   };
 
@@ -658,11 +692,11 @@ export default function AdminAccountPage() {
 
                 placeholder="Search by name, email, or phone…"
 
-                value={filters.q}
+                value={searchDraft}
 
-                onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                onChange={(e) => setSearchDraft(e.target.value)}
 
-                onSearch={() => applyFilters({ q: filters.q })}
+                onSearch={() => applyFilters({ q: searchDraft })}
 
               />
 
@@ -680,11 +714,25 @@ export default function AdminAccountPage() {
 
               />
 
+              <CustomSelect
+
+                className="filter-field"
+
+                label="Status"
+
+                value={filters.isActive}
+
+                onChange={(isActive) => applyFilters({ isActive })}
+
+                options={FILTER_STATUS_OPTIONS}
+
+              />
+
             </div>
 
             <div className="filters-toolbar-actions">
 
-              <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
+              <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: searchDraft })}>
 
                 Search
 
