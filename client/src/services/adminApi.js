@@ -37,6 +37,14 @@ export const AdminApiClient = {
     return api.get(`/api/admin/departments/${id}`);
   },
 
+  updateDepartment(id, payload) {
+    return api.put(`/api/admin/departments/${id}`, payload);
+  },
+
+  deactivateDepartment(id) {
+    return api.put(`/api/admin/departments/${id}/deactivate`);
+  },
+
   getDoctors(params) {
     return api.get("/api/admin/doctors", { params });
   },
