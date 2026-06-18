@@ -125,6 +125,18 @@ export const AdminApiClient = {
     return api.get("/api/admin/doctors", { params });
   },
 
+  exportDoctors(params) {
+    return api.get("/api/admin/doctors/export", { params, responseType: "blob" });
+  },
+
+  downloadDoctorImportTemplate() {
+    return api.get("/api/admin/doctors/import-template", { responseType: "blob" });
+  },
+
+  importDoctors(payload) {
+    return api.post("/api/admin/doctors/import", payload);
+  },
+
   createWorkShift(payload) {
     return api.post("/api/admin/work-shifts", payload);
   },

@@ -17,6 +17,33 @@ import {
 
 const PAGE_SIZE = 10;
 
+function downloadBlobResponse(response, fallbackName) {
+  const disposition = response.headers["content-disposition"] || "";
+  const match = disposition.match(/filename="([^"]+)"/i);
+  const filename = match?.[1] || fallbackName;
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || "");
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Could not read the selected file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 const STATUS_OPTIONS = [
   { value: "", label: "All statuses" },
   { value: "true", label: "Active" },
@@ -37,6 +64,11 @@ export default function DoctorsListPage() {
   const [result, setResult] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [exportBusy, setExportBusy] = useState(false);
+  const [importBusy, setImportBusy] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFileName, setImportFileName] = useState("");
+  const [importResult, setImportResult] = useState(null);
 
   const loadMasters = useCallback(async () => {
     const [specialtyRes, departmentRes] = await Promise.all([
@@ -82,6 +114,74 @@ export default function DoctorsListPage() {
       page: 1,
       limit: PAGE_SIZE,
     });
+  };
+
+  const handleExport = async () => {
+    setExportBusy(true);
+    setError("");
+    try {
+      const { q, specialtyId, departmentId, isActive } = filters;
+      const response = await AdminApiClient.exportDoctors({ q, specialtyId, departmentId, isActive });
+      downloadBlobResponse(response, "doctors-export.xlsx");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    setExportBusy(true);
+    setError("");
+    try {
+      const response = await AdminApiClient.downloadDoctorImportTemplate();
+      downloadBlobResponse(response, "doctor-import-template.xlsx");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setExportBusy(false);
+    }
+  };
+
+  const openImportModal = () => {
+    setImportResult(null);
+    setImportFileName("");
+    setShowImportModal(true);
+  };
+
+  const closeImportModal = () => {
+    if (importBusy) return;
+    setShowImportModal(false);
+    setImportResult(null);
+    setImportFileName("");
+  };
+
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith(".xlsx")) {
+      setError("Please upload an .xlsx file using the doctor import template.");
+      return;
+    }
+
+    setImportBusy(true);
+    setError("");
+    setImportResult(null);
+    setImportFileName(file.name);
+
+    try {
+      const fileBase64 = await readFileAsBase64(file);
+      const { data } = await AdminApiClient.importDoctors({ fileBase64, fileName: file.name });
+      setImportResult(data);
+      if (data.imported > 0) {
+        await loadDoctors(filters);
+      }
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setImportBusy(false);
+      event.target.value = "";
+    }
   };
 
   return (
@@ -130,6 +230,15 @@ export default function DoctorsListPage() {
                 />
               </div>
               <div className="filters-toolbar-actions">
+                <button type="button" className="btn btn-outline" onClick={handleDownloadTemplate} disabled={exportBusy}>
+                  Template
+                </button>
+                <button type="button" className="btn btn-outline" onClick={openImportModal} disabled={importBusy}>
+                  Import Excel
+                </button>
+                <button type="button" className="btn btn-outline" onClick={handleExport} disabled={exportBusy}>
+                  {exportBusy ? "Exporting…" : "Export Excel"}
+                </button>
                 <button type="button" className="btn btn-primary" onClick={() => applyFilters({ q: filters.q })}>
                   Search
                 </button>
@@ -267,6 +376,65 @@ export default function DoctorsListPage() {
             />
           )}
         </div>
+
+        {showImportModal && (
+          <div className="doctors-import-modal-backdrop" role="presentation" onClick={closeImportModal}>
+            <div
+              className="card doctors-import-modal"
+              role="dialog"
+              aria-labelledby="doctors-import-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="doctors-import-modal-head">
+                <h2 id="doctors-import-title">Import doctors from Excel</h2>
+                <button type="button" className="doctors-import-close" onClick={closeImportModal} aria-label="Close">
+                  ×
+                </button>
+              </div>
+              <p className="doctors-import-lead">
+                Use the official template (.xlsx). Valid rows are created immediately; invalid rows are listed below.
+              </p>
+              <div className="doctors-import-actions">
+                <button type="button" className="btn btn-outline btn-sm" onClick={handleDownloadTemplate} disabled={exportBusy}>
+                  Download template
+                </button>
+                <label className="btn btn-primary btn-sm doctors-import-upload">
+                  {importBusy ? "Importing…" : "Choose .xlsx file"}
+                  <input
+                    type="file"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    onChange={handleImportFile}
+                    disabled={importBusy}
+                  />
+                </label>
+              </div>
+              {importFileName && <p className="doctors-import-file">Selected: {importFileName}</p>}
+              {importResult && (
+                <div className="doctors-import-result">
+                  <p>
+                    Imported <strong>{importResult.imported}</strong> doctor(s).
+                    {importResult.failedCount > 0 ? ` ${importResult.failedCount} row(s) failed.` : ""}
+                  </p>
+                  {importResult.failed?.length > 0 && (
+                    <ul className="doctors-import-errors">
+                      {importResult.failed.map((row) => (
+                        <li key={`${row.row}-${row.email}`}>
+                          Row {row.row}: {row.message}
+                          {row.email ? ` (${row.email})` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {importResult.succeeded?.some((row) => row.generatedPassword) && (
+                    <p className="doctors-import-note">
+                      Temporary passwords were generated for imported accounts without a password column.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </AdminLayout>
     </PageLayout>
   );
