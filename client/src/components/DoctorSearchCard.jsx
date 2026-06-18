@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 
 function getInitials(name) {
   if (!name) return "D";
@@ -83,7 +84,7 @@ export default function DoctorSearchCard({ doctor }) {
           </svg>
           Verified profile
         </span>
-        <Link to={`/doctor/${_id}`} className="btn btn-primary btn-sm doctor-card-cta">
+        <Link to={getDoctorProfilePath(doctor)} className="btn btn-primary btn-sm doctor-card-cta">
           View profile
         </Link>
       </div>

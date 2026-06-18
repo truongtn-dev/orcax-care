@@ -15,6 +15,7 @@ import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import DoctorRatingDisplay from "../components/DoctorRatingDisplay.jsx";
+import { getDoctorProfilePath, isMongoObjectId } from "../utils/doctorUrls.js";
 
 function getInitials(name) {
   if (!name) return "D";
@@ -24,7 +25,7 @@ function getInitials(name) {
 }
 
 export default function DoctorPublicProfilePage() {
-  const { id } = useParams();
+  const { slug: slugParam } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, role } = useAuth();
   const [doctor, setDoctor] = useState(null);
@@ -36,14 +37,21 @@ export default function DoctorPublicProfilePage() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    PublicApiClient.getDoctor(id)
+    PublicApiClient.getDoctor(slugParam)
       .then(({ data }) => setDoctor(data))
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [slugParam]);
 
   useEffect(() => {
-    if (!isAuthenticated || role !== "patient") {
+    if (!doctor?.slug) return;
+    if (isMongoObjectId(slugParam) && doctor.slug !== slugParam) {
+      navigate(getDoctorProfilePath(doctor), { replace: true });
+    }
+  }, [doctor, slugParam, navigate]);
+
+  useEffect(() => {
+    if (!isAuthenticated || role !== "patient" || !doctor?._id) {
       setIsFavorite(false);
       return;
     }
@@ -52,7 +60,7 @@ export default function DoctorPublicProfilePage() {
     PatientApiClient.listFavoriteDoctors()
       .then(({ data }) => {
         if (!active) return;
-        const found = (data.items || []).some((item) => item.doctorId === id);
+        const found = (data.items || []).some((item) => item.doctorId === doctor._id);
         setIsFavorite(found);
       })
       .catch(() => {
@@ -62,26 +70,28 @@ export default function DoctorPublicProfilePage() {
     return () => {
       active = false;
     };
-  }, [id, isAuthenticated, role]);
+  }, [doctor?._id, isAuthenticated, role]);
 
   const handleBook = () => {
+    if (!doctor?._id) return;
+
     if (isAuthenticated) {
-      navigate(`/patient/book?doctorId=${id}`);
+      navigate(`/patient/book?doctorId=${doctor._id}`);
       return;
     }
-    navigate(`/login?next=${encodeURIComponent(`/patient/book?doctorId=${id}`)}`);
+    navigate(`/login?next=${encodeURIComponent(`/patient/book?doctorId=${doctor._id}`)}`);
   };
 
   const handleToggleFavorite = async () => {
-    if (!isAuthenticated || role !== "patient") return;
+    if (!isAuthenticated || role !== "patient" || !doctor?._id) return;
 
     setFavoriteLoading(true);
     try {
       if (isFavorite) {
-        await PatientApiClient.removeFavoriteDoctor(id);
+        await PatientApiClient.removeFavoriteDoctor(doctor._id);
         setIsFavorite(false);
       } else {
-        await PatientApiClient.addFavoriteDoctor(id);
+        await PatientApiClient.addFavoriteDoctor(doctor._id);
         setIsFavorite(true);
       }
     } catch (err) {
@@ -242,7 +252,7 @@ export default function DoctorPublicProfilePage() {
                         <h2>Book an appointment</h2>
                       </div>
                       <DoctorAvailabilityPanel
-                        doctorId={id}
+                        doctorId={doctor._id}
                         consultationFee={doctor.consultationFee}
                         isAuthenticated={isAuthenticated}
                         variant="profile"

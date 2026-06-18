@@ -7,6 +7,7 @@ import { PublicApiClient } from "../services/publicApi.js";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 import "../styles/patient.shared.css";
 import "./PatientBookAppointmentPage.css";
 
@@ -443,7 +444,7 @@ export default function PatientBookAppointmentPage() {
                         <p className="patient-panel-lead">Pick a date and time that works for you.</p>
                       </div>
                     </div>
-                    <Link to={`/doctor/${doctorId}`} className="btn btn-secondary btn-sm">
+                    <Link to={getDoctorProfilePath(doctor)} className="btn btn-secondary btn-sm">
                       View profile
                     </Link>
                   </div>

@@ -6,6 +6,7 @@ import { extractQueryEntities } from "./search/hmmExtractor.js";
 import { rankDoctors } from "./search/retrievalEngine.js";
 import { getAvailabilitySummariesForDoctors } from "./doctorAvailability.service.js";
 import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
+import { isMongoObjectId } from "../utils/doctorSlug.js";
 
 let catalogCache = null;
 
@@ -69,6 +70,7 @@ async function fetchDoctorRecords(matchStage = { isActive: true }) {
     {
       $project: {
         _id: 1,
+        slug: 1,
         bio: 1,
         photoUrl: { $ifNull: ["$photoUrl", "$user.photoUrl"] },
         licenseNo: 1,
@@ -91,12 +93,23 @@ async function fetchDoctorRecords(matchStage = { isActive: true }) {
   return Doctor.aggregate(pipeline);
 }
 
-export async function getDoctorById(doctorId) {
-  if (!doctorId || !mongoose.Types.ObjectId.isValid(doctorId)) {
-    return null;
+function buildDoctorMatchStage(identifier) {
+  if (!identifier) return null;
+
+  const matchStage = { isActive: true };
+  if (isMongoObjectId(identifier)) {
+    matchStage._id = new mongoose.Types.ObjectId(identifier);
+  } else {
+    matchStage.slug = String(identifier).trim().toLowerCase();
   }
 
-  const matchStage = { isActive: true, _id: new mongoose.Types.ObjectId(doctorId) };
+  return matchStage;
+}
+
+export async function getDoctorBySlugOrId(identifier) {
+  const matchStage = buildDoctorMatchStage(identifier);
+  if (!matchStage) return null;
+
   const doctors = await fetchDoctorRecords(matchStage);
   if (!doctors.length) return null;
 
@@ -109,9 +122,15 @@ export async function getDoctorById(doctorId) {
 
   return {
     ...doctor,
+    _id: doctor._id.toString(),
     consultationFee: DEFAULT_CONSULTATION_FEE_VND,
     availability,
   };
+}
+
+/** @deprecated Use getDoctorBySlugOrId */
+export async function getDoctorById(doctorId) {
+  return getDoctorBySlugOrId(doctorId);
 }
 
 export async function getFeaturedDoctors(limit = 6) {

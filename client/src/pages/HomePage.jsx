@@ -362,7 +362,7 @@ export default function HomePage() {
 
         {(featuredLoading || featuredDoctors.length > 0) && (
 
-          <section className="section section-alt">
+          <section className="section section-alt home-featured-doctors">
 
             <ScrollReveal className="section-header" variant="up">
 

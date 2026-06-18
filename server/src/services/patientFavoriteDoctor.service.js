@@ -5,6 +5,7 @@ import { Doctor } from "../models/Doctor.js";
 function serializeDoctor(doctor) {
   return {
     _id: doctor._id.toString(),
+    slug: doctor.slug || "",
     fullName: doctor.userId?.fullName || "",
     email: doctor.userId?.email || "",
     phone: doctor.userId?.phone || "",

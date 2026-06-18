@@ -4,6 +4,7 @@ import PageLayout from "../components/PageLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 
 function getInitials(name) {
   if (!name) return "D";
@@ -197,7 +198,7 @@ export default function PatientFavoritesPage() {
                     </p>
 
                     <div className="doctor-card-premium-footer">
-                      <Link to={`/doctor/${doctor._id}`} className="btn btn-primary btn-sm doctor-card-cta">
+                      <Link to={getDoctorProfilePath(doctor)} className="btn btn-primary btn-sm doctor-card-cta">
                         View profile
                       </Link>
                       <button

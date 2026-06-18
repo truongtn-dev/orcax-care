@@ -4,6 +4,7 @@ import { Specialty } from "../models/Specialty.js";
 import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
+import { ensureAllDoctorSlugs } from "../utils/doctorSlug.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -122,5 +123,6 @@ export async function runSeed() {
     );
   }
 
+  await ensureAllDoctorSlugs();
   console.log("Seed data ready (admin + doctors + master data).");
 }

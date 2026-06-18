@@ -44,6 +44,7 @@ function serializeAppointment(doc) {
     updatedAt: doc.updatedAt,
     doctor: {
       _id: doctor?._id?.toString() || "",
+      slug: doctor?.slug || "",
       fullName: doctorUser?.fullName || "",
       specialty: specialty?.name || "",
     },

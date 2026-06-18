@@ -11,6 +11,7 @@ import {
   groupSlotsByDate,
   summarizePublicSlots,
 } from "../utils/appointmentSlotSerializer.js";
+import { isMongoObjectId } from "../utils/doctorSlug.js";
 import {
   formatDateOnly,
   isSlotDatetimePast,
@@ -48,12 +49,17 @@ function resolveDateRange(query = {}) {
   return { rangeStart, rangeEnd };
 }
 
-async function loadActiveDoctor(doctorId) {
-  if (!doctorId || !mongoose.Types.ObjectId.isValid(doctorId)) {
-    return null;
+async function loadActiveDoctor(identifier) {
+  if (!identifier) return null;
+
+  const query = { isActive: true };
+  if (isMongoObjectId(identifier)) {
+    query._id = identifier;
+  } else {
+    query.slug = String(identifier).trim().toLowerCase();
   }
 
-  return Doctor.findOne({ _id: doctorId, isActive: true })
+  return Doctor.findOne(query)
     .populate("userId", "fullName isActive")
     .populate("specialtyId", "name code")
     .lean();
@@ -69,8 +75,8 @@ export function getConsultationFee() {
   return DEFAULT_CONSULTATION_FEE_VND;
 }
 
-export async function getDoctorAvailability(doctorId, query = {}) {
-  const doctor = await loadActiveDoctor(doctorId);
+export async function getDoctorAvailability(identifier, query = {}) {
+  const doctor = await loadActiveDoctor(identifier);
   if (!doctor || !doctor.userId?.isActive) {
     return { status: 404, body: { message: "Doctor not found" } };
   }
@@ -97,6 +103,7 @@ export async function getDoctorAvailability(doctorId, query = {}) {
     body: {
       doctor: {
         _id: doctor._id.toString(),
+        slug: doctor.slug || "",
         fullName: doctor.userId?.fullName || "",
         specialty: doctor.specialtyId?.name || "",
       },

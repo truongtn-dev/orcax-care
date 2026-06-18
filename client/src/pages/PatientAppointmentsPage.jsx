@@ -6,6 +6,7 @@ import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 import "../styles/patient.shared.css";
 import "./PatientAppointmentsPage.css";
 
@@ -424,7 +425,7 @@ export default function PatientAppointmentsPage() {
                             </div>
 
                             <div className="patient-appt-cell patient-appt-cell--actions">
-                              <Link to={`/doctor/${item.doctor._id}`} className="patient-appt-action-link">
+                              <Link to={getDoctorProfilePath(item.doctor)} className="patient-appt-action-link">
                                 View
                               </Link>
                               {canRateAppointment(item) && (

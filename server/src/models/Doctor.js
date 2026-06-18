@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { generateUniqueDoctorSlug } from "../utils/doctorSlug.js";
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -6,6 +7,7 @@ const doctorSchema = new mongoose.Schema(
     specialtyId: { type: mongoose.Schema.Types.ObjectId, ref: "Specialty", required: true },
     departmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
     licenseNo: { type: String, required: true, unique: true, trim: true },
+    slug: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     bio: { type: String, default: "" },
     photoUrl: { type: String, default: "" },
     isActive: { type: Boolean, default: true },
@@ -14,6 +16,16 @@ const doctorSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+doctorSchema.pre("save", async function assignSlug() {
+  if (this.slug) return;
+
+  const User = mongoose.model("User");
+  const user = await User.findById(this.userId).select("fullName").lean();
+  if (!user?.fullName) return;
+
+  this.slug = await generateUniqueDoctorSlug(user.fullName, this._id);
+});
 
 doctorSchema.index({ specialtyId: 1, isActive: 1 });
 doctorSchema.index({ departmentId: 1, isActive: 1 });

@@ -33,7 +33,7 @@ export async function getDoctorAvailability(req, res) {
 
 export async function getDoctor(req, res) {
   try {
-    const doctor = await DoctorSearchService.getDoctorById(req.params.id);
+    const doctor = await DoctorSearchService.getDoctorBySlugOrId(req.params.id);
     if (!doctor) {
       return res.status(404).json({ message: "Doctor not found" });
     }

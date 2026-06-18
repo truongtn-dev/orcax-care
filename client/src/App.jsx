@@ -385,7 +385,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/doctor/:id" element={<DoctorPublicProfilePage />} />
+          <Route path="/doctor/:slug" element={<DoctorPublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

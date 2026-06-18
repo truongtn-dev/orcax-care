@@ -1567,13 +1567,36 @@
 }
 
 .section-alt .section-header,
-.section-alt .steps-grid {
-  max-width: none;
+.section-alt .steps-grid,
+.section-alt .doctor-grid-premium,
+.section-alt .section-footer-actions {
   width: 100%;
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: auto;
+  margin-right: auto;
   padding-left: var(--page-gutter);
   padding-right: var(--page-gutter);
+}
+
+.section-alt .section-header {
+  margin-bottom: 3rem;
+}
+
+.section-alt .doctor-grid-premium {
+  gap: 1.5rem;
+}
+
+.home-featured-doctors .doctor-card-premium {
+  padding: 1.75rem;
+  border-radius: var(--radius-xl);
+}
+
+.home-featured-doctors .doctor-card-premium:hover {
+  transform: translateY(-4px);
+}
+
+.home-featured-doctors .doctor-card-premium-bio {
+  font-size: 0.9375rem;
+  line-height: 1.55;
 }
 
 .section-alt .steps-grid {
