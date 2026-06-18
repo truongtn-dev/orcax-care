@@ -80,6 +80,8 @@ describe("UC-19.2 PayOS Wallet Payment", () => {
     assert.equal(body.balance, 0);
     assert.equal(body.limits.minTopup, 10000);
     assert.ok(body.paymentMethods.some((item) => item.id === "payos"));
+    assert.ok(body.stats);
+    assert.equal(body.stats.totalTopup, 0);
   });
 
   test("rejects top-up below minimum amount", async () => {
@@ -126,6 +128,38 @@ describe("UC-19.2 PayOS Wallet Payment", () => {
     });
     const wallet = await walletRes.json();
     assert.equal(wallet.balance, 100000);
+  });
+
+  test("filters wallet transactions by type and returns aggregate stats", async () => {
+    await Wallet.create({ userId: patientUser._id, balance: 150000 });
+    await WalletTransaction.create([
+      {
+        userId: patientUser._id,
+        type: "topup",
+        amount: 100000,
+        status: "success",
+        provider: "payos",
+        orderCode: 910001,
+      },
+      {
+        userId: patientUser._id,
+        type: "deduct",
+        amount: 50000,
+        status: "success",
+        provider: "internal",
+        description: "Booking confirm",
+      },
+    ]);
+
+    const res = await fetch(`${baseUrl}/api/patient/wallet?type=deduct`, {
+      headers: { Authorization: await authHeaderFor(patientUser) },
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.transactions.length, 1);
+    assert.equal(body.transactions[0].type, "deduct");
+    assert.equal(body.stats.totalTopup, 100000);
+    assert.equal(body.stats.totalSpent, 50000);
   });
 
   test("blocks deduct when balance is insufficient", async () => {

@@ -683,9 +683,72 @@
   color: var(--color-navy);
 }
 
+.wallet-txn-date {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
 .wallet-txn-main > span:first-of-type {
   font-size: 0.76rem;
   color: var(--color-text-muted);
+}
+
+.wallet-txn-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.wallet-txn-filters-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  flex: 1 1 280px;
+}
+
+.wallet-txn-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 140px;
+}
+
+.wallet-txn-filter-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.wallet-txn-filter-field select,
+.wallet-txn-filter-field input {
+  height: 38px;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font: inherit;
+  color: var(--color-navy);
+}
+
+.wallet-txn-filter-field select:focus,
+.wallet-txn-filter-field input:focus {
+  outline: none;
+  border-color: rgba(8, 145, 178, 0.45);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+}
+
+.wallet-txn-filters-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .wallet-txn-pending-hint {

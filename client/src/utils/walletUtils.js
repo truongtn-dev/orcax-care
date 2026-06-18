@@ -71,6 +71,26 @@ export function getTransactionCheckoutPath(txn) {
   return null;
 }
 
+export const WALLET_TXN_TYPE_OPTIONS = [
+  { value: "", label: "All types" },
+  { value: "topup", label: "Top-up" },
+  { value: "deduct", label: "Payment" },
+  { value: "refund", label: "Refund" },
+];
+
+export function formatWalletTransactionDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function computeWalletStats(transactions = []) {
   let totalTopup = 0;
   let totalSpent = 0;
