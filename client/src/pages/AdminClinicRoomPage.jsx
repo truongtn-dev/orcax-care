@@ -51,6 +51,12 @@ export default function AdminClinicRoomPage() {
   const [createError, setCreateError] = useState("");
   const [createSuccess, setCreateSuccess] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_FORM);
+  const [editFieldErrors, setEditFieldErrors] = useState({});
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+  const [updating, setUpdating] = useState(false);
 
   const loadDepartments = useCallback(() => {
     return AdminApiClient.listClinicRoomDepartments()
@@ -156,6 +162,183 @@ export default function AdminClinicRoomPage() {
   };
 
   const fieldError = (name) => fieldErrors[name];
+  const editFieldError = (name) => editFieldErrors[name];
+
+  const openEditModal = (room) => {
+    setEditTarget(room);
+    setEditForm({
+      departmentId: room.department?._id || room.departmentId || "",
+      roomCode: room.roomCode || "",
+      name: room.name || "",
+      floor: room.floor || "",
+      capacity: String(room.capacity ?? 1),
+      equipmentNotes: room.equipmentNotes || "",
+      isActive: Boolean(room.isActive),
+    });
+    setEditFieldErrors({});
+    setEditError("");
+    setEditSuccess("");
+    loadDepartments();
+  };
+
+  const closeEditModal = () => {
+    if (updating) return;
+    setEditTarget(null);
+    setEditFieldErrors({});
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setEditFieldErrors((current) => ({ ...current, [name]: undefined }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editTarget) return;
+
+    setEditError("");
+    setEditSuccess("");
+
+    const errors = validateAdminCreateClinicRoomForm(editForm);
+    if (Object.keys(errors).length > 0) {
+      setEditFieldErrors(errors);
+      setEditError(firstFormError(errors));
+      return;
+    }
+
+    setEditFieldErrors({});
+    setUpdating(true);
+
+    try {
+      const { data } = await AdminApiClient.updateClinicRoom(editTarget._id, {
+        departmentId: editForm.departmentId,
+        roomCode: editForm.roomCode.trim(),
+        name: editForm.name.trim(),
+        floor: editForm.floor.trim(),
+        capacity: parseInt(editForm.capacity, 10),
+        equipmentNotes: editForm.equipmentNotes.trim(),
+        isActive: editForm.isActive,
+      });
+      setEditSuccess(data.message || "Clinic room updated successfully.");
+      loadClinicRooms(filters);
+      setTimeout(() => closeEditModal(), 900);
+    } catch (err) {
+      const message = getApiErrorMessage(err);
+      setEditError(message);
+      if (err?.response?.status === 409) {
+        setEditFieldErrors({ roomCode: message });
+      }
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const renderRoomFormFields = ({
+    formState,
+    onChange,
+    errorsFor,
+    disabled,
+  }) => (
+    <>
+      <div>
+        <CustomSelect
+          label="Department"
+          value={formState.departmentId}
+          placeholder="Select department"
+          onChange={(departmentId) => onChange({ target: { name: "departmentId", value: departmentId } })}
+          options={[
+            { value: "", label: "Select department" },
+            ...departments.map((dept) => ({ value: dept._id, label: dept.name })),
+          ]}
+          invalid={Boolean(errorsFor("departmentId"))}
+          disabled={disabled}
+        />
+        {errorsFor("departmentId") && <span className="field-error">{errorsFor("departmentId")}</span>}
+      </div>
+
+      <label>
+        Room code
+        <input
+          name="roomCode"
+          value={formState.roomCode}
+          onChange={onChange}
+          placeholder="e.g. IM-203"
+          aria-invalid={Boolean(errorsFor("roomCode"))}
+          style={{ textTransform: "uppercase" }}
+          disabled={disabled}
+        />
+        {errorsFor("roomCode") && <span className="field-error">{errorsFor("roomCode")}</span>}
+      </label>
+
+      <label>
+        Room name
+        <input
+          name="name"
+          value={formState.name}
+          onChange={onChange}
+          placeholder="e.g. Clinic room 203"
+          aria-invalid={Boolean(errorsFor("name"))}
+          disabled={disabled}
+        />
+        {errorsFor("name") && <span className="field-error">{errorsFor("name")}</span>}
+      </label>
+
+      <label>
+        Floor
+        <input
+          name="floor"
+          value={formState.floor}
+          onChange={onChange}
+          placeholder="e.g. 2"
+          aria-invalid={Boolean(errorsFor("floor"))}
+          disabled={disabled}
+        />
+        {errorsFor("floor") && <span className="field-error">{errorsFor("floor")}</span>}
+      </label>
+
+      <label>
+        Capacity
+        <input
+          type="number"
+          name="capacity"
+          value={formState.capacity}
+          onChange={onChange}
+          min={1}
+          max={50}
+          aria-invalid={Boolean(errorsFor("capacity"))}
+          disabled={disabled}
+        />
+        {errorsFor("capacity") && <span className="field-error">{errorsFor("capacity")}</span>}
+      </label>
+
+      <label>
+        Equipment notes
+        <textarea
+          name="equipmentNotes"
+          value={formState.equipmentNotes}
+          onChange={onChange}
+          rows={3}
+          placeholder="Available equipment (optional)"
+          aria-invalid={Boolean(errorsFor("equipmentNotes"))}
+          disabled={disabled}
+        />
+        {errorsFor("equipmentNotes") && <span className="field-error">{errorsFor("equipmentNotes")}</span>}
+      </label>
+
+      <label className="checkbox-row">
+        <input type="checkbox" name="isActive" checked={formState.isActive} onChange={onChange} disabled={disabled} />
+        Active (available for booking)
+      </label>
+    </>
+  );
 
   return (
     <PageLayout dashboard>
@@ -236,6 +419,7 @@ export default function AdminClinicRoomPage() {
                   <th>Equipment</th>
                   <th>Status</th>
                   <th>Created</th>
+                  <th className="table-actions-col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -258,6 +442,20 @@ export default function AdminClinicRoomPage() {
                       <StatusBadge active={room.isActive} />
                     </td>
                     <td>{formatDate(room.createdAt)}</td>
+                    <td className="table-actions-col">
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-icon"
+                        aria-label={`Edit ${room.name}`}
+                        title="Edit clinic room"
+                        onClick={() => openEditModal(room)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -288,94 +486,12 @@ export default function AdminClinicRoomPage() {
               {createError && <div className="alert alert-error">{createError}</div>}
               {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
 
-              <div>
-                <CustomSelect
-                  label="Department"
-                  value={form.departmentId}
-                  placeholder="Select department"
-                  onChange={(departmentId) => onFormChange({ target: { name: "departmentId", value: departmentId } })}
-                  options={[
-                    { value: "", label: "Select department" },
-                    ...departments.map((dept) => ({ value: dept._id, label: dept.name })),
-                  ]}
-                  invalid={Boolean(fieldError("departmentId"))}
-                />
-                {fieldError("departmentId") && (
-                  <span className="field-error">{fieldError("departmentId")}</span>
-                )}
-              </div>
-
-              <label>
-                Room code
-                <input
-                  name="roomCode"
-                  value={form.roomCode}
-                  onChange={onFormChange}
-                  placeholder="e.g. IM-203"
-                  aria-invalid={Boolean(fieldError("roomCode"))}
-                  style={{ textTransform: "uppercase" }}
-                />
-                {fieldError("roomCode") && <span className="field-error">{fieldError("roomCode")}</span>}
-                <span className="field-hint">2–12 characters: letters, numbers, hyphens, underscores</span>
-              </label>
-
-              <label>
-                Room name
-                <input
-                  name="name"
-                  value={form.name}
-                  onChange={onFormChange}
-                  placeholder="e.g. Clinic room 203"
-                  aria-invalid={Boolean(fieldError("name"))}
-                />
-                {fieldError("name") && <span className="field-error">{fieldError("name")}</span>}
-              </label>
-
-              <label>
-                Floor
-                <input
-                  name="floor"
-                  value={form.floor}
-                  onChange={onFormChange}
-                  placeholder="e.g. 2"
-                  aria-invalid={Boolean(fieldError("floor"))}
-                />
-                {fieldError("floor") && <span className="field-error">{fieldError("floor")}</span>}
-              </label>
-
-              <label>
-                Capacity
-                <input
-                  type="number"
-                  name="capacity"
-                  value={form.capacity}
-                  onChange={onFormChange}
-                  min={1}
-                  max={50}
-                  aria-invalid={Boolean(fieldError("capacity"))}
-                />
-                {fieldError("capacity") && <span className="field-error">{fieldError("capacity")}</span>}
-              </label>
-
-              <label>
-                Equipment notes
-                <textarea
-                  name="equipmentNotes"
-                  value={form.equipmentNotes}
-                  onChange={onFormChange}
-                  rows={3}
-                  placeholder="Available equipment (optional)"
-                  aria-invalid={Boolean(fieldError("equipmentNotes"))}
-                />
-                {fieldError("equipmentNotes") && (
-                  <span className="field-error">{fieldError("equipmentNotes")}</span>
-                )}
-              </label>
-
-              <label className="checkbox-row">
-                <input type="checkbox" name="isActive" checked={form.isActive} onChange={onFormChange} />
-                Active (available for booking)
-              </label>
+              {renderRoomFormFields({
+                formState: form,
+                onChange: onFormChange,
+                errorsFor: fieldError,
+                disabled: creating,
+              })}
 
               <div className="form-actions">
                 <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
@@ -386,6 +502,36 @@ export default function AdminClinicRoomPage() {
                 </button>
               </div>
             </form>
+        </AppModal>
+      )}
+
+      {editTarget && (
+        <AppModal
+          title="Update clinic room"
+          description={`Edit ${editTarget.name} (${editTarget.roomCode}). Cancel discards unsaved changes.`}
+          titleId="edit-clinic-room-title"
+          onClose={closeEditModal}
+        >
+          <form onSubmit={onEditSubmit} className="form form-compact">
+            {editError && <div className="alert alert-error">{editError}</div>}
+            {editSuccess && <div className="alert alert-success">{editSuccess}</div>}
+
+            {renderRoomFormFields({
+              formState: editForm,
+              onChange: onEditFormChange,
+              errorsFor: editFieldError,
+              disabled: updating,
+            })}
+
+            <div className="form-actions">
+              <button type="button" className="btn btn-outline" onClick={closeEditModal} disabled={updating}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={updating}>
+                {updating ? "Saving…" : "Save changes"}
+              </button>
+            </div>
+          </form>
         </AppModal>
       )}
       </AdminLayout>
