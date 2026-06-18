@@ -81,6 +81,150 @@
   max-width: 52ch;
 }
 
+.admin-dashboard-kpis {
+  padding: 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-dashboard-kpis-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-dashboard-kpis-head h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+}
+
+.admin-dashboard-kpis-sub {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.admin-dashboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.admin-dashboard-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted, #64748b);
+}
+
+.admin-dashboard-filters input,
+.admin-dashboard-filters select {
+  min-width: 9rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-md);
+  font: inherit;
+  background: #fff;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+}
+
+.admin-kpi-card {
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  background: #fff;
+}
+
+.admin-kpi-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.admin-kpi-value {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.admin-kpi-meta {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.admin-kpi-card--rose { background: linear-gradient(180deg, #fff1f2 0%, #fff 100%); }
+.admin-kpi-card--emerald { background: linear-gradient(180deg, #ecfdf5 0%, #fff 100%); }
+.admin-kpi-card--cyan { background: linear-gradient(180deg, #ecfeff 0%, #fff 100%); }
+.admin-kpi-card--violet { background: linear-gradient(180deg, #f5f3ff 0%, #fff 100%); }
+.admin-kpi-card--amber { background: linear-gradient(180deg, #fffbeb 0%, #fff 100%); }
+
+.admin-revenue-chart-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-revenue-chart-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.admin-revenue-chart-head p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.admin-revenue-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.35rem;
+  min-height: 160px;
+  padding-top: 0.5rem;
+  overflow-x: auto;
+}
+
+.admin-revenue-bar-wrap {
+  flex: 1 1 0;
+  min-width: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: 140px;
+}
+
+.admin-revenue-bar {
+  width: 100%;
+  max-width: 36px;
+  margin-top: auto;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, #14b8a6 0%, #0f766e 100%);
+}
+
+.admin-revenue-bar-label {
+  font-size: 0.65rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
 .admin-overview-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
