@@ -61,6 +61,10 @@ export const PatientApiClient = {
     return api.post("/api/patient/appointments", payload);
   },
 
+  previewAppointmentFee(params) {
+    return api.get("/api/patient/appointments/fee-preview", { params });
+  },
+
   rescheduleAppointment(id, payload) {
     return api.put(`/api/patient/appointments/${id}/reschedule`, payload);
   },

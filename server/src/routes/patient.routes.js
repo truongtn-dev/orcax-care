@@ -43,6 +43,7 @@ patientRouter.get("/favorites", PatientFavoriteDoctorController.listFavoriteDoct
 patientRouter.post("/favorites/:doctorId", PatientFavoriteDoctorController.addFavoriteDoctor);
 patientRouter.delete("/favorites/:doctorId", PatientFavoriteDoctorController.removeFavoriteDoctor);
 
+patientRouter.get("/appointments/fee-preview", PatientAppointmentController.previewBookingFee);
 patientRouter.get("/appointments", PatientAppointmentController.listAppointments);
 patientRouter.post("/appointments", PatientAppointmentController.createAppointment);
 patientRouter.get("/appointments/:id", PatientAppointmentController.getAppointment);

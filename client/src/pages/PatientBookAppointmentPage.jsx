@@ -12,13 +12,6 @@ import "./PatientBookAppointmentPage.css";
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-function getInitials(name) {
-  if (!name) return "D";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
-}
-
 function formatSlotLabel(slot) {
   if (!slot?.date || !slot?.startTime) return null;
   const [year, month, day] = slot.date.split("-").map(Number);
@@ -32,6 +25,21 @@ function formatSlotLabel(slot) {
   };
 }
 
+function isCardEligibleForVisit(card, visitDate) {
+  if (!card?.isActive || !(Number(card.coveragePercent) > 0)) return false;
+  if (!visitDate) return false;
+  if (card.validFrom && visitDate < card.validFrom) return false;
+  if (card.validTo && visitDate > card.validTo) return false;
+  return true;
+}
+
+function getInitials(name) {
+  if (!name) return "D";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
 export default function PatientBookAppointmentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -40,6 +48,10 @@ export default function PatientBookAppointmentPage() {
 
   const [doctor, setDoctor] = useState(null);
   const [wallet, setWallet] = useState(null);
+  const [insuranceCards, setInsuranceCards] = useState([]);
+  const [selectedInsuranceCardId, setSelectedInsuranceCardId] = useState("");
+  const [feeSummary, setFeeSummary] = useState(null);
+  const [feePreviewLoading, setFeePreviewLoading] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [reason, setReason] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,9 +59,15 @@ export default function PatientBookAppointmentPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const fee = doctor?.consultationFee || 200000;
+  const baseFee = feeSummary?.baseFee ?? doctor?.consultationFee ?? 200000;
+  const finalFee = feeSummary?.finalFee ?? baseFee;
+  const discountAmount = feeSummary?.discountAmount ?? 0;
   const balance = wallet?.balance ?? 0;
   const slotLabel = useMemo(() => formatSlotLabel(selectedSlot), [selectedSlot]);
+  const eligibleCards = useMemo(
+    () => insuranceCards.filter((card) => isCardEligibleForVisit(card, selectedSlot?.date)),
+    [insuranceCards, selectedSlot?.date],
+  );
 
   const loadPage = useCallback(async () => {
     if (!doctorId) {
@@ -61,12 +79,14 @@ export default function PatientBookAppointmentPage() {
     setLoading(true);
     setError("");
     try {
-      const [doctorRes, walletRes] = await Promise.all([
+      const [doctorRes, walletRes, insuranceRes] = await Promise.all([
         PublicApiClient.getDoctor(doctorId),
         PatientApiClient.getWallet(),
+        PatientApiClient.listInsuranceCards(),
       ]);
       setDoctor(doctorRes.data);
       setWallet(walletRes.data);
+      setInsuranceCards(insuranceRes.data.items || []);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -78,12 +98,52 @@ export default function PatientBookAppointmentPage() {
     loadPage();
   }, [loadPage]);
 
-  const canAfford = useMemo(() => balance >= fee, [balance, fee]);
-  const balanceAfter = balance - fee;
+  useEffect(() => {
+    if (!selectedSlot?._id) {
+      setFeeSummary(null);
+      return;
+    }
+
+    let ignore = false;
+    setFeePreviewLoading(true);
+    PatientApiClient.previewAppointmentFee({
+      slotId: selectedSlot._id,
+      insuranceCardId: selectedInsuranceCardId || undefined,
+    })
+      .then(({ data }) => {
+        if (!ignore) setFeeSummary(data);
+      })
+      .catch((err) => {
+        if (!ignore) {
+          setFeeSummary(null);
+          setError(getApiErrorMessage(err));
+        }
+      })
+      .finally(() => {
+        if (!ignore) setFeePreviewLoading(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedSlot?._id, selectedInsuranceCardId]);
+
+  useEffect(() => {
+    if (!selectedSlot?._id || selectedInsuranceCardId) return;
+    const primaryEligible = eligibleCards.find((card) => card.isPrimary) || eligibleCards[0];
+    if (primaryEligible) {
+      setSelectedInsuranceCardId(primaryEligible._id);
+    }
+  }, [selectedSlot?._id, eligibleCards, selectedInsuranceCardId]);
+
+  const canAfford = useMemo(() => balance >= finalFee, [balance, finalFee]);
+  const balanceAfter = balance - finalFee;
   const bookingStep = selectedSlot?._id ? 2 : 1;
 
   const onSelectSlot = (slot) => {
     setSelectedSlot(slot);
+    setSelectedInsuranceCardId("");
+    setFeeSummary(null);
     setNotice("");
     setError("");
   };
@@ -106,6 +166,7 @@ export default function PatientBookAppointmentPage() {
       const { data } = await PatientApiClient.createAppointment({
         slotId: selectedSlot._id,
         reason,
+        insuranceCardId: selectedInsuranceCardId || undefined,
       });
       setNotice("Appointment booked successfully.");
       navigate(`/patient/appointments?booked=${data.appointment._id}`, { replace: true });
@@ -194,7 +255,7 @@ export default function PatientBookAppointmentPage() {
                           {doctor.department.name}
                         </span>
                       )}
-                      <span className="patient-book-fee-tag">{formatWalletCurrency(fee)}</span>
+                      <span className="patient-book-fee-tag">{formatWalletCurrency(baseFee)}</span>
                     </div>
                   </div>
                 </div>
@@ -304,18 +365,55 @@ export default function PatientBookAppointmentPage() {
                         )}
                       </div>
 
+                      <p className="patient-section-label">Insurance (bảo lãnh)</p>
+                      <label className="patient-book-insurance-field">
+                        <span className="visually-hidden">Insurance card</span>
+                        <select
+                          value={selectedInsuranceCardId}
+                          onChange={(event) => {
+                            setSelectedInsuranceCardId(event.target.value);
+                            setError("");
+                          }}
+                          disabled={!selectedSlot?._id || feePreviewLoading}
+                        >
+                          <option value="">No insurance — pay full fee</option>
+                          {eligibleCards.map((card) => (
+                            <option key={card._id} value={card._id}>
+                              {card.providerName} · {card.coveragePercent}% coverage
+                              {card.isPrimary ? " (Primary)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {selectedSlot?._id && eligibleCards.length === 0 && (
+                        <p className="patient-book-insurance-hint">
+                          No eligible insurance card for this visit date.{" "}
+                          <Link to="/patient/insurance-cards">Manage cards</Link>
+                        </p>
+                      )}
+
                       <p className="patient-section-label">Payment breakdown</p>
                       <dl className="patient-book-payment-list">
                         <div className="patient-book-payment-row">
                           <dt>Consultation fee</dt>
-                          <dd>{formatWalletCurrency(fee)}</dd>
+                          <dd>{formatWalletCurrency(baseFee)}</dd>
+                        </div>
+                        {discountAmount > 0 && (
+                          <div className="patient-book-payment-row patient-book-payment-row--discount">
+                            <dt>Insurance coverage ({feeSummary?.coveragePercent || 0}%)</dt>
+                            <dd>-{formatWalletCurrency(discountAmount)}</dd>
+                          </div>
+                        )}
+                        <div className="patient-book-payment-row patient-book-payment-row--total">
+                          <dt>Amount due</dt>
+                          <dd>{feePreviewLoading ? "…" : formatWalletCurrency(finalFee)}</dd>
                         </div>
                         <div className="patient-book-payment-row">
                           <dt>Wallet balance</dt>
                           <dd className={canAfford ? "is-ok" : "is-low"}>{formatWalletCurrency(balance)}</dd>
                         </div>
                         {selectedSlot?._id && (
-                          <div className="patient-book-payment-row patient-book-payment-row--total">
+                          <div className="patient-book-payment-row">
                             <dt>Balance after booking</dt>
                             <dd className={canAfford ? "is-ok" : "is-low"}>
                               {canAfford ? formatWalletCurrency(balanceAfter) : "Insufficient"}
@@ -324,13 +422,13 @@ export default function PatientBookAppointmentPage() {
                         )}
                       </dl>
 
-                      {!canAfford && (
+                      {!canAfford && selectedSlot?._id && (
                         <div className="patient-book-wallet-alert">
                           <div className="patient-book-wallet-alert-icon" aria-hidden="true">!</div>
                           <div>
                             <strong>Insufficient balance</strong>
                             <p>
-                              You need {formatWalletCurrency(fee - balance)} more to complete this booking.{" "}
+                              You need {formatWalletCurrency(finalFee - balance)} more to complete this booking.{" "}
                               <Link to="/patient/wallet">Top up wallet</Link>
                             </p>
                           </div>
@@ -355,7 +453,7 @@ export default function PatientBookAppointmentPage() {
                           <button
                             type="submit"
                             className="btn btn-primary patient-book-submit"
-                            disabled={submitting || !selectedSlot?._id || !canAfford}
+                            disabled={submitting || !selectedSlot?._id || !canAfford || feePreviewLoading}
                           >
                             {submitting ? (
                               "Booking…"
@@ -374,7 +472,7 @@ export default function PatientBookAppointmentPage() {
                         </div>
 
                         <p className="patient-book-footnote">
-                          Payment is deducted from your OrcaXCare wallet instantly upon confirmation.
+                          Payment is deducted from your OrcaXCare wallet. Insurance coverage reduces the amount you pay (bảo lãnh viện phí).
                         </p>
                       </form>
                     </div>

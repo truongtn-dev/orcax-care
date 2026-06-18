@@ -1,21 +1,37 @@
 import { InsuranceCard } from "../models/InsuranceCard.js";
 import { parseDateOnly, formatDateOnly } from "../utils/shiftTime.js";
+import { isInsuranceCardEligibleOnDate } from "../utils/insuranceFee.js";
 import { runInsuranceCardOcr } from "./insuranceCardOcr.service.js";
 
-function serializeInsuranceCard(card) {
+function serializeInsuranceCard(card, { visitDate = null } = {}) {
+  const eligibleForDiscount = visitDate
+    ? isInsuranceCardEligibleOnDate(card, visitDate)
+    : isInsuranceCardEligibleOnDate(card, new Date());
+
   return {
     _id: card._id.toString(),
     providerName: card.providerName,
     policyNumber: card.policyNumber,
     holderName: card.holderName,
     coverageType: card.coverageType || "",
+    coveragePercent: card.coveragePercent ?? 0,
     validFrom: card.validFrom ? formatDateOnly(card.validFrom) : null,
     validTo: card.validTo ? formatDateOnly(card.validTo) : null,
     isPrimary: Boolean(card.isPrimary),
     isActive: Boolean(card.isActive),
+    eligibleForDiscount,
     createdAt: card.createdAt,
     updatedAt: card.updatedAt,
   };
+}
+
+function parseCoveragePercent(value) {
+  if (value === undefined || value === null || value === "") return 0;
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0 || num > 100) {
+    return { error: "coveragePercent must be between 0 and 100" };
+  }
+  return { value: Math.round(num) };
 }
 
 export async function listInsuranceCards(userId) {
@@ -69,12 +85,18 @@ export async function createInsuranceCard(userId, payload = {}) {
     await InsuranceCard.updateMany({ userId, isPrimary: true }, { isPrimary: false });
   }
 
+  const coverageResult = parseCoveragePercent(payload.coveragePercent);
+  if (coverageResult.error) {
+    return { status: 400, body: { message: coverageResult.error } };
+  }
+
   const card = await InsuranceCard.create({
     userId,
     providerName,
     policyNumber,
     holderName,
     coverageType,
+    coveragePercent: coverageResult.value,
     validFrom,
     validTo,
     isPrimary: payload.isPrimary === true,

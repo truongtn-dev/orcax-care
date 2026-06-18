@@ -11,6 +11,7 @@ const emptyForm = {
   policyNumber: "",
   holderName: "",
   coverageType: "",
+  coveragePercent: "0",
   validFrom: "",
   validTo: "",
   isPrimary: false,
@@ -165,6 +166,7 @@ export default function PatientInsuranceCardsPage() {
         policyNumber: form.policyNumber,
         holderName: form.holderName,
         coverageType: form.coverageType || undefined,
+        coveragePercent: form.coveragePercent === "" ? 0 : Number(form.coveragePercent),
         validFrom: form.validFrom || undefined,
         validTo: form.validTo || undefined,
         isPrimary: form.isPrimary,
@@ -345,6 +347,19 @@ export default function PatientInsuranceCardsPage() {
                           />
                         </label>
                         <label>
+                          <span className="patient-insurance-field-label">Coverage % (bảo lãnh)</span>
+                          <input
+                            type="number"
+                            name="coveragePercent"
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={form.coveragePercent}
+                            onChange={onChange}
+                            placeholder="e.g. 30"
+                          />
+                        </label>
+                        <label>
                           <span className="patient-insurance-field-label">Valid from</span>
                           <input type="date" name="validFrom" value={form.validFrom} onChange={onChange} />
                         </label>
@@ -407,6 +422,10 @@ export default function PatientInsuranceCardsPage() {
                       <div>
                         <dt>Coverage</dt>
                         <dd>{card.coverageType || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt>Coverage rate</dt>
+                        <dd>{card.coveragePercent ? `${card.coveragePercent}%` : "—"}</dd>
                       </div>
                       <div>
                         <dt>Validity</dt>

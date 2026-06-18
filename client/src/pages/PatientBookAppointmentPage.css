@@ -424,6 +424,26 @@
   color: #dc2626;
 }
 
+.patient-book-payment-row--discount dd {
+  color: #059669;
+}
+
+.patient-book-insurance-field select {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font: inherit;
+}
+
+.patient-book-insurance-hint {
+  margin: -0.35rem 0 0.85rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .patient-book-payment-row--total {
   margin-top: 0.25rem;
   padding-top: 0.85rem;

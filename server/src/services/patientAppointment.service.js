@@ -10,6 +10,11 @@ import { deductWalletBalance, getOrCreateWallet, refundWalletBalance } from "./w
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import { formatDateOnly, isSlotDatetimePast } from "../utils/shiftTime.js";
 import {
+  calculateInsuranceFee,
+  describeInsuranceIneligibility,
+  isInsuranceCardEligibleOnDate,
+} from "../utils/insuranceFee.js";
+import {
   buildAppointmentVisitLabel,
   formatWalletAmount,
   notifyPatientSafe,
@@ -27,6 +32,8 @@ function serializeAppointment(doc) {
     status: doc.status,
     reason: doc.reason || "",
     fee: doc.fee,
+    discountAmount: doc.discountAmount ?? 0,
+    baseFee: (doc.fee || 0) + (doc.discountAmount || 0),
     currency: "VND",
     rating: doc.rating ?? null,
     reviewComment: doc.reviewComment || "",
@@ -53,7 +60,7 @@ function serializeAppointment(doc) {
   };
 }
 
-async function validateInsuranceCard(userId, insuranceCardId) {
+async function validateInsuranceCard(userId, insuranceCardId, visitDate) {
   if (!insuranceCardId) return null;
   if (!mongoose.Types.ObjectId.isValid(insuranceCardId)) {
     return { status: 400, body: { message: "Invalid insurance card" } };
@@ -69,7 +76,50 @@ async function validateInsuranceCard(userId, insuranceCardId) {
     return { status: 404, body: { message: "Insurance card not found" } };
   }
 
+  if (!isInsuranceCardEligibleOnDate(card, visitDate)) {
+    const reason = describeInsuranceIneligibility(card, visitDate);
+    return {
+      status: 400,
+      body: {
+        message: reason || "Insurance card cannot be used for this appointment date.",
+      },
+    };
+  }
+
   return card;
+}
+
+export async function previewBookingFee(userId, payload = {}) {
+  const { slotId, insuranceCardId = null } = payload;
+
+  if (!slotId || !mongoose.Types.ObjectId.isValid(slotId)) {
+    return { status: 400, body: { message: "Valid slotId is required" } };
+  }
+
+  const slot = await AppointmentSlot.findById(slotId).lean();
+  if (!slot) {
+    return { status: 404, body: { message: "Appointment slot not found" } };
+  }
+
+  const baseFee = getConsultationFee();
+  let card = null;
+  if (insuranceCardId) {
+    const insuranceResult = await validateInsuranceCard(userId, insuranceCardId, slot.date);
+    if (insuranceResult?.status) return insuranceResult;
+    card = insuranceResult;
+  }
+
+  const feeSummary = calculateInsuranceFee(baseFee, card, slot.date);
+
+  return {
+    status: 200,
+    body: {
+      slotId: slot._id.toString(),
+      visitDate: formatDateOnly(slot.date),
+      ...feeSummary,
+      insuranceCardId: card?._id?.toString() || null,
+    },
+  };
 }
 
 export async function createAppointment(userId, payload = {}) {
@@ -84,9 +134,6 @@ export async function createAppointment(userId, payload = {}) {
     return { status: 403, body: { message: "Patient account required" } };
   }
 
-  const insuranceResult = await validateInsuranceCard(userId, insuranceCardId || null);
-  if (insuranceResult?.status) return insuranceResult;
-
   const slot = await AppointmentSlot.findById(slotId).lean();
   if (!slot) {
     return { status: 404, body: { message: "Appointment slot not found" } };
@@ -100,6 +147,9 @@ export async function createAppointment(userId, payload = {}) {
     return { status: 409, body: { message: "Cannot book a past appointment slot" } };
   }
 
+  const insuranceResult = await validateInsuranceCard(userId, insuranceCardId || null, slot.date);
+  if (insuranceResult?.status) return insuranceResult;
+
   const doctor = await Doctor.findOne({ _id: slot.doctorId, isActive: true })
     .populate("userId", "fullName isActive")
     .populate("specialtyId", "name")
@@ -109,7 +159,10 @@ export async function createAppointment(userId, payload = {}) {
     return { status: 404, body: { message: "Doctor not found" } };
   }
 
-  const fee = getConsultationFee();
+  const baseFee = getConsultationFee();
+  const insuranceCard = insuranceResult || null;
+  const feeSummary = calculateInsuranceFee(baseFee, insuranceCard, slot.date);
+  const { finalFee, discountAmount } = feeSummary;
   const trimmedReason = String(reason || "").trim().slice(0, 500);
 
   const claimed = await AppointmentSlot.findOneAndUpdate(
@@ -124,8 +177,10 @@ export async function createAppointment(userId, payload = {}) {
 
   const payment = await deductWalletBalance(
     userId,
-    fee,
-    `Appointment with ${doctor.userId.fullName} on ${formatDateOnly(claimed.date)} ${claimed.startTime}`
+    finalFee,
+    `Appointment with ${doctor.userId.fullName} on ${formatDateOnly(claimed.date)} ${claimed.startTime}${
+      discountAmount > 0 ? ` (insurance coverage ${feeSummary.coveragePercent}%)` : ""
+    }`
   );
 
   if (payment.status !== 200) {
@@ -139,9 +194,10 @@ export async function createAppointment(userId, payload = {}) {
       doctorId: doctor._id,
       slotId: claimed._id,
       reason: trimmedReason,
-      fee,
+      fee: finalFee,
+      discountAmount,
       status: "confirmed",
-      insuranceCardId: insuranceResult?._id || null,
+      insuranceCardId: insuranceCard?._id || null,
     });
 
     const populated = await Appointment.findById(appointment._id)
@@ -169,18 +225,19 @@ export async function createAppointment(userId, payload = {}) {
       status: 201,
       body: {
         appointment: serializeAppointment(populated),
+        feeSummary,
         wallet: payment.body,
       },
     };
   } catch (err) {
     await AppointmentSlot.findByIdAndUpdate(slotId, { status: "available" });
     const wallet = await getOrCreateWallet(userId);
-    wallet.balance += fee;
+    wallet.balance += finalFee;
     await wallet.save();
     await WalletTransaction.create({
       userId,
       type: "topup",
-      amount: fee,
+      amount: finalFee,
       status: "success",
       provider: "internal",
       description: "Refund — appointment booking failed",
