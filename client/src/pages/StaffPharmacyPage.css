@@ -1,0 +1,41 @@
+.staff-pharmacy-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.staff-pharmacy-stat {
+  padding: 1.25rem 1.5rem;
+}
+
+.staff-pharmacy-stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.staff-pharmacy-stat strong {
+  font-size: 1.75rem;
+}
+
+.staff-pharmacy-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.staff-pharmacy-form h3,
+.staff-pharmacy-inventory h3,
+.staff-pharmacy-ledger h3 {
+  margin-top: 0;
+}
+
+@media (max-width: 960px) {
+  .staff-pharmacy-grid,
+  .staff-pharmacy-stats {
+    grid-template-columns: 1fr;
+  }
+}

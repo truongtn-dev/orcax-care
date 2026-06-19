@@ -550,6 +550,32 @@ export default function AdminAccountDetailPage() {
 
                 <DetailItem label="Role" value={formatRoleLabel(account.role)} />
 
+                <DetailItem
+                  label="Linked patient ID"
+                  value={
+                    account.patientId ? (
+                      <Link to={`/admin/patients/${account.patientId}`} className="table-link">
+                        {account.patientId}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    )
+                  }
+                />
+
+                <DetailItem
+                  label="Linked doctor ID"
+                  value={
+                    account.doctorId ? (
+                      <Link to={`/admin/doctors/${account.doctorId}`} className="table-link">
+                        {account.doctorId}
+                      </Link>
+                    ) : (
+                      "N/A"
+                    )
+                  }
+                />
+
                 <DetailItem label="Last login" value={formatDate(account.lastLoginAt)} />
 
                 <DetailItem label="Last password change" value={formatDate(account.passwordChangedAt)} />
@@ -611,6 +637,16 @@ export default function AdminAccountDetailPage() {
                 <div className="detail-section-header">
 
                   <h3>Doctor profile</h3>
+
+                  {account.doctorId && (
+
+                    <Link to={`/admin/doctors/${account.doctorId}`} className="btn btn-outline btn-sm">
+
+                      View doctor profile
+
+                    </Link>
+
+                  )}
 
                   {account.doctorId && (
 

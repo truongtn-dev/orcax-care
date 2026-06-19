@@ -5,6 +5,7 @@ import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
 import { ensureAllDoctorSlugs } from "../utils/doctorSlug.js";
+import { Medicine } from "../models/Medicine.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -124,5 +125,15 @@ export async function runSeed() {
   }
 
   await ensureAllDoctorSlugs();
+
+  const defaultMedicines = [
+    { code: "PARA500", name: "Paracetamol 500mg", unit: "tablet", price: 1200, stockQty: 120, minStockLevel: 30 },
+    { code: "AMOX500", name: "Amoxicillin 500mg", unit: "capsule", price: 2500, stockQty: 45, minStockLevel: 40 },
+    { code: "VITC1000", name: "Vitamin C 1000mg", unit: "tablet", price: 1800, stockQty: 80, minStockLevel: 25 },
+  ];
+  for (const med of defaultMedicines) {
+    await Medicine.findOneAndUpdate({ code: med.code }, med, { upsert: true, new: true });
+  }
+
   console.log("Seed data ready (admin + doctors + master data).");
 }

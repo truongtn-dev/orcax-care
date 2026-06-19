@@ -1554,7 +1554,39 @@
 
 }
 
+.patient-appt-detail-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
 
+.patient-appt-detail-list div {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0.5rem;
+}
+
+.patient-appt-detail-list dt {
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.patient-appt-detail-list dd {
+  margin: 0;
+}
+
+.patient-appt-qr-block {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.patient-modal-card--detail {
+  max-width: 420px;
+}
 
 @media (max-width: 960px) {
 

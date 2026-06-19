@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import "./AdminAccountPage.css";
 
@@ -316,6 +316,8 @@ function AccountStatus({ account }) {
 
 export default function AdminAccountPage() {
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [searchDraft, setSearchDraft] = useState("");
 
   const debouncedSearch = useDebouncedValue(searchDraft, 400);
@@ -450,9 +452,9 @@ export default function AdminAccountPage() {
 
 
 
-  const openCreateModal = () => {
+  const openCreateModal = (preset = {}) => {
 
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, ...preset });
 
     setFieldErrors({});
 
@@ -463,6 +465,13 @@ export default function AdminAccountPage() {
     setShowCreateModal(true);
 
   };
+
+  useEffect(() => {
+    if (searchParams.get("create") === "doctor") {
+      openCreateModal({ role: "doctor" });
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
 
 

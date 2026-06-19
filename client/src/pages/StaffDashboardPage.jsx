@@ -25,6 +25,19 @@ export default function StaffDashboardPage() {
             <p>Search the public doctor directory to assist patients at the front desk.</p>
           </Link>
 
+          <Link to="/staff/pharmacy" className="card shortcut card-hover">
+            <span className="shortcut-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M10.5 20.5 3.5 13.5" />
+                <path d="M14 4l6 6" />
+                <path d="m21 3-3 3" />
+                <path d="M11 13 8 10" />
+              </svg>
+            </span>
+            <h3>Pharmacy stock</h3>
+            <p>Record inbound deliveries and monitor low-stock medicines.</p>
+          </Link>
+
           <Link to="/profile" className="card shortcut card-hover">
             <span className="shortcut-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

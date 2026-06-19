@@ -8,6 +8,7 @@ import FilterSearchField from "../../components/FilterSearchField.jsx";
 import AppPagination from "../../components/AppPagination.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue.js";
 import {
   ACTION_ICONS,
   PersonCell,
@@ -30,6 +31,7 @@ const GENDER_LABELS = {
 
 export default function PatientsListPage() {
   const [filters, setFilters] = useState({ q: "", activeOnly: "", page: 1, limit: PAGE_SIZE });
+  const debouncedQ = useDebouncedValue(filters.q, 400);
   const [result, setResult] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,8 +56,8 @@ export default function PatientsListPage() {
   }, []);
 
   useEffect(() => {
-    loadPatients(filters);
-  }, [filters, loadPatients]);
+    loadPatients({ ...filters, q: debouncedQ });
+  }, [debouncedQ, filters.activeOnly, filters.page, filters.limit, loadPatients]);
 
   const applyFilters = (patch) => {
     setFilters((current) => ({ ...current, ...patch, page: patch.page ?? 1 }));
@@ -70,6 +72,11 @@ export default function PatientsListPage() {
       <AdminLayout
         title="Patient list"
         description="Look up patient profiles, demographics, and linked accounts."
+        actions={
+          <Link to="/admin/patients/new" className="btn btn-primary btn-sm">
+            Create patient
+          </Link>
+        }
       >
         <div className="people-list-page">
           <div className="card filters-card people-list-toolbar">

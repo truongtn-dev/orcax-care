@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./DoctorsListPage.css";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
@@ -51,11 +51,12 @@ const STATUS_OPTIONS = [
 ];
 
 export default function DoctorsListPage() {
+  const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState({
-    q: "",
-    specialtyId: "",
-    departmentId: "",
-    isActive: "",
+    q: searchParams.get("q") || "",
+    specialtyId: searchParams.get("specialtyId") || "",
+    departmentId: searchParams.get("departmentId") || "",
+    isActive: searchParams.get("isActive") || "",
     page: 1,
     limit: PAGE_SIZE,
   });
@@ -189,6 +190,11 @@ export default function DoctorsListPage() {
       <AdminLayout
         title="Doctor list"
         description="Manage doctor profiles, specialties, and linked accounts."
+        actions={
+          <Link to="/admin/account?create=doctor" className="btn btn-primary btn-sm">
+            Create doctor
+          </Link>
+        }
       >
         <div className="people-list-page">
           <div className="card filters-card people-list-toolbar">
@@ -326,6 +332,14 @@ export default function DoctorsListPage() {
                           </td>
                           <td className="table-actions-col">
                             <div className="people-list-actions">
+                              <Link
+                                to={`/admin/doctors/${doctor._id}`}
+                                className="people-list-action people-list-action--view"
+                                title="View doctor details"
+                              >
+                                {ACTION_ICONS.view}
+                                Profile
+                              </Link>
                               {accountTo && (
                                 <Link
                                   to={accountTo}
@@ -333,27 +347,17 @@ export default function DoctorsListPage() {
                                   title="View account details"
                                 >
                                   {ACTION_ICONS.view}
-                                  Details
+                                  Account
                                 </Link>
                               )}
                               <Link
                                 to={`/admin/doctors/${doctor._id}/edit`}
-                                className="people-list-action people-list-action--profile"
+                                className="people-list-action people-list-action--edit"
                                 title="Edit professional profile"
                               >
-                                {ACTION_ICONS.profile}
-                                Profile
+                                {ACTION_ICONS.edit}
+                                Edit
                               </Link>
-                              {accountTo && (
-                                <Link
-                                  to={`/admin/account/${doctor.userId}/edit`}
-                                  className="people-list-action people-list-action--edit"
-                                  title="Edit account"
-                                >
-                                  {ACTION_ICONS.edit}
-                                  Edit
-                                </Link>
-                              )}
                             </div>
                           </td>
                         </tr>

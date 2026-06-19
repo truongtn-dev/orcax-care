@@ -148,3 +148,25 @@ export async function deleteSpecialty(specialtyId) {
     },
   };
 }
+
+export async function getSpecialty(specialtyId) {
+  if (!specialtyId || !mongoose.Types.ObjectId.isValid(specialtyId)) {
+    return { status: 400, body: { message: "Invalid specialty id" } };
+  }
+
+  const specialty = await Specialty.findById(specialtyId).lean();
+  if (!specialty) return { status: 404, body: { message: "Specialty not found" } };
+
+  const [doctorCount, activeDoctorCount] = await Promise.all([
+    Doctor.countDocuments({ specialtyId: specialty._id }),
+    Doctor.countDocuments({ specialtyId: specialty._id, isActive: true }),
+  ]);
+
+  return {
+    status: 200,
+    body: {
+      ...serializeSpecialty(specialty, doctorCount),
+      activeDoctorCount,
+    },
+  };
+}

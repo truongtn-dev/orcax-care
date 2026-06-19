@@ -41,6 +41,7 @@ adminRouter.get("/doctors/:id", AdminDoctorController.getDoctor);
 adminRouter.put("/doctors/:id", AdminDoctorController.updateDoctor);
 
 adminRouter.get("/patients", AdminPatientController.listPatients);
+adminRouter.post("/patients", AdminPatientController.createPatient);
 adminRouter.get("/patients/:id", AdminPatientController.getPatient);
 adminRouter.put("/patients/:id", AdminPatientController.updatePatient);
 
@@ -52,6 +53,7 @@ adminRouter.get("/specialties", (req, res) => {
   return AdminMasterController.listSpecialties(req, res);
 });
 adminRouter.post("/specialties", AdminSpecialtyController.createSpecialty);
+adminRouter.get("/specialties/:id", AdminSpecialtyController.getSpecialty);
 adminRouter.put("/specialties/:specialtyId", AdminController.updateSpecialty);
 adminRouter.delete("/specialties/:id", AdminSpecialtyController.deleteSpecialty);
 

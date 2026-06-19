@@ -3,6 +3,8 @@ import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { Specialty } from "../models/Specialty.js";
 import { User } from "../models/User.js";
+import { WorkShift } from "../models/WorkShift.js";
+import { Appointment } from "../models/Appointment.js";
 import { invalidateSearchCache } from "./doctorSearch.service.js";
 import {
   normalizeEmail,
@@ -139,7 +141,23 @@ export async function getDoctor(id) {
   const doctor = await doctorPopulate(Doctor.findById(id)).lean();
   if (!doctor) return { status: 404, body: { message: "Doctor not found" } };
 
-  return { status: 200, body: mapDoctor(doctor) };
+  const [workShiftCount, upcomingAppointments] = await Promise.all([
+    WorkShift.countDocuments({ doctorId: doctor._id }),
+    Appointment.countDocuments({ doctorId: doctor._id, status: "confirmed" }),
+  ]);
+
+  return {
+    status: 200,
+    body: {
+      ...mapDoctor(doctor),
+      slug: doctor.slug || "",
+      scheduleSummary: {
+        workShiftCount,
+        upcomingAppointments,
+        note: "Weekly work-shift templates and confirmed visits are summarized here.",
+      },
+    },
+  };
 }
 
 export async function updateDoctor(id, dto) {

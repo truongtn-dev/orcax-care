@@ -18,6 +18,27 @@ import { useHeroParallax } from "../hooks/useHeroParallax.js";
 
 const FEATURED_DOCTORS_LIMIT = 6;
 
+const NEWS_ITEMS = [
+  {
+    id: "flu-season",
+    title: "Flu season reminders",
+    summary: "Book preventive visits early and keep your insurance card ready at check-in.",
+    date: "Jun 12, 2026",
+  },
+  {
+    id: "wallet-topup",
+    title: "Wallet top-up now supports SePay",
+    summary: "Add funds instantly with VietQR before confirming your next appointment.",
+    date: "Jun 8, 2026",
+  },
+  {
+    id: "pediatrics",
+    title: "Pediatrics walk-in hours expanded",
+    summary: "Pediatrics Ward now offers additional afternoon slots on weekdays.",
+    date: "Jun 3, 2026",
+  },
+];
+
 
 
 const BENEFITS = [
@@ -434,7 +455,26 @@ export default function HomePage() {
 
         )}
 
-
+        <section className="section home-news-strip">
+          <ScrollReveal className="section-header" variant="up">
+            <span className="section-label">News & updates</span>
+            <h2>What&apos;s new at OrcaXCare</h2>
+            <p>Service announcements and tips for patients and families.</p>
+          </ScrollReveal>
+          <div className="home-news-grid scroll-stagger-grid">
+            {NEWS_ITEMS.map((item, index) => (
+              <ScrollReveal key={item.id} variant="up" delay={index * 70}>
+                <article className="card home-news-card">
+                  <time className="home-news-date" dateTime={item.date}>
+                    {item.date}
+                  </time>
+                  <h3>{item.title}</h3>
+                  <p>{item.summary}</p>
+                </article>
+              </ScrollReveal>
+            ))}
+          </div>
+        </section>
 
         <section className="section">
 

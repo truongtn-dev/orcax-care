@@ -7,6 +7,7 @@ import { doctorRouter } from "./doctor.routes.js";
 import { patientRouter } from "./patient.routes.js";
 import { paymentsRouter } from "./payments.routes.js";
 import { uploadRouter } from "./upload.routes.js";
+import { staffRouter } from "./staff.routes.js";
 
 export const apiRouter = Router();
 
@@ -22,3 +23,4 @@ apiRouter.use("/patient", patientRouter);
 apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/public", publicRouter);
 apiRouter.use("/upload", uploadRouter);
+apiRouter.use("/staff", staffRouter);

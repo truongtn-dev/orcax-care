@@ -36,9 +36,13 @@ import WorkShiftsListPage from "./pages/admin/WorkShiftsListPage.jsx";
 import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
 import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
+import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
+import DoctorDetailPage from "./pages/admin/DoctorDetailPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
+import SpecialtyDetailPage from "./pages/admin/SpecialtyDetailPage.jsx";
+import CreatePatientPage from "./pages/admin/CreatePatientPage.jsx";
 import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
 import DepartmentDetailPage from "./pages/admin/DepartmentDetailPage.jsx";
 import PatientEditPage from "./pages/admin/PatientEditPage.jsx";
@@ -177,6 +181,14 @@ export default function App() {
             }
           />
           <Route
+            path="/staff/pharmacy"
+            element={
+              <ProtectedRoute roles={["staff", "admin"]}>
+                <StaffPharmacyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute roles={["admin"]}>
@@ -241,6 +253,14 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/doctors/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <DoctorDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/work-shifts"
             element={
               <ProtectedRoute roles={["admin"]}>
@@ -277,6 +297,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <StaffListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/patients/new"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <CreatePatientPage />
               </ProtectedRoute>
             }
           />
@@ -337,6 +365,14 @@ export default function App() {
             }
           />
           <Route path="/admin/patient" element={<Navigate to="/admin/patients" replace />} />
+          <Route
+            path="/admin/specialty/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <SpecialtyDetailPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/admin/specialty"
             element={

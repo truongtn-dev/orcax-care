@@ -30,3 +30,12 @@ export async function updatePatient(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function createPatient(req, res) {
+  try {
+    return sendResult(res, await AdminPatientService.createPatient(req.body));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}

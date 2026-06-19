@@ -73,6 +73,10 @@ export const AdminApiClient = {
     return api.put(`/api/admin/patients/${id}`, payload);
   },
 
+  createPatient(payload) {
+    return api.post("/api/admin/patients", payload);
+  },
+
   createStaff(payload) {
     return api.post("/api/admin/staff", payload);
   },
@@ -103,6 +107,10 @@ export const AdminApiClient = {
 
   deleteSpecialty(id) {
     return api.delete(`/api/admin/specialties/${id}`);
+  },
+
+  getSpecialty(id) {
+    return api.get(`/api/admin/specialties/${id}`);
   },
 
   listClinicRoomDepartments() {

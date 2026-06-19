@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import AdminLayout from "../components/AdminLayout.jsx";
 import RecordAvatar from "../components/RecordAvatar.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
@@ -50,18 +51,78 @@ export default function AdminPatientDetailPage() {
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [showDeactivate, setShowDeactivate] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
   const accountId = patient?.userId || patient?._id;
   const accountIsActive = patient?.accountIsActive ?? patient?.isActive;
   const profileIsActive = patient?.accountIsActive != null ? patient?.isActive : null;
 
-  useEffect(() => {
+  const loadPatient = () => {
     setLoading(true);
     setError("");
     AdminApiClient.getPatient(id)
       .then(({ data }) => setPatient(data))
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadPatient();
   }, [id]);
+
+  const handleDeactivate = async () => {
+    if (!accountId || !patient) return;
+    setStatusLoading(true);
+    setMessage("");
+    try {
+      await AdminApiClient.deactivateUser(accountId);
+      await AdminApiClient.updatePatient(id, {
+        fullName: patient.fullName,
+        phone: patient.phone || "",
+        gender: patient.profile?.gender || "",
+        address: patient.profile?.address || "",
+        emergencyContactName: patient.profile?.emergencyContactName || "",
+        emergencyContactPhone: patient.profile?.emergencyContactPhone || "",
+        dateOfBirth: patient.profile?.dateOfBirth || "",
+        isActive: false,
+        accountIsActive: false,
+      });
+      setShowDeactivate(false);
+      setMessage("Patient deactivated. They cannot sign in or book appointments.");
+      loadPatient();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleReactivate = async () => {
+    if (!accountId || !patient) return;
+    setStatusLoading(true);
+    setMessage("");
+    try {
+      await AdminApiClient.reactivateUser(accountId);
+      await AdminApiClient.updatePatient(id, {
+        fullName: patient.fullName,
+        phone: patient.phone || "",
+        gender: patient.profile?.gender || "",
+        address: patient.profile?.address || "",
+        emergencyContactName: patient.profile?.emergencyContactName || "",
+        emergencyContactPhone: patient.profile?.emergencyContactPhone || "",
+        dateOfBirth: patient.profile?.dateOfBirth || "",
+        isActive: true,
+        accountIsActive: true,
+      });
+      setMessage("Patient reactivated.");
+      loadPatient();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   return (
     <PageLayout dashboard>
@@ -70,9 +131,30 @@ export default function AdminPatientDetailPage() {
         description="View and manage patient information."
         actions={
           patient ? (
-            <Link to={`/admin/patients/${id}/edit`} className="btn btn-primary">
-              Edit patient
-            </Link>
+            <>
+              <Link to={`/admin/patients/${id}/edit`} className="btn btn-primary">
+                Edit patient
+              </Link>
+              {accountIsActive ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowDeactivate(true)}
+                  disabled={statusLoading}
+                >
+                  Deactivate
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleReactivate}
+                  disabled={statusLoading}
+                >
+                  Reactivate
+                </button>
+              )}
+            </>
           ) : null
         }
       >
@@ -85,6 +167,7 @@ export default function AdminPatientDetailPage() {
       )}
 
       {error && !loading && <div className="alert alert-error">{error}</div>}
+      {message && <div className="alert alert-success">{message}</div>}
 
       {!loading && patient && (
         <>
@@ -119,6 +202,8 @@ export default function AdminPatientDetailPage() {
             <section className="card detail-section">
               <h3>Linked account</h3>
               <div className="detail-list">
+                <DetailItem label="Patient record ID" value={patient._id} />
+                <DetailItem label="Linked account ID" value={accountId || "N/A"} />
                 <DetailItem label="Full name" value={patient.fullName} />
                 <DetailItem label="Email" value={patient.email} />
                 <DetailItem label="Phone number" value={patient.phone || "—"} />
@@ -184,6 +269,15 @@ export default function AdminPatientDetailPage() {
           </div>
         </>
       )}
+
+      <ConfirmDialog
+        open={showDeactivate}
+        title="Deactivate patient?"
+        message="The patient account will be disabled and cannot book appointments. Data is retained."
+        confirmLabel={statusLoading ? "Processing…" : "Deactivate"}
+        onConfirm={handleDeactivate}
+        onCancel={() => setShowDeactivate(false)}
+      />
       </AdminLayout>
     </PageLayout>
   );

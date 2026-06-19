@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 import { Patient } from "../models/Patient.js";
 import { User } from "../models/User.js";
-import { validatePhoneOptional, validateRequired } from "../utils/validation.js";
+import { validatePhoneOptional, validateRequired, normalizeEmail, validateEmail, validatePasswordStrength } from "../utils/validation.js";
 
 const GENDERS = ["", "male", "female", "other"];
 const PROFILE_GENDERS = ["male", "female", "other"];
@@ -265,6 +266,70 @@ export async function updatePatient(id, dto) {
 
   await Promise.all([user.save(), patient.save()]);
   return getPatient(patient._id);
+}
+
+export async function createPatient(dto) {
+  const emailError = validateEmail(dto.email);
+  if (emailError) return { status: 400, body: { message: emailError } };
+
+  const pwdError = validatePasswordStrength(dto.password);
+  if (pwdError) return { status: 400, body: { message: pwdError } };
+
+  const fullName = String(dto.fullName || "").trim();
+  const fullNameError = validateRequired(fullName, "Full name");
+  if (fullNameError) return { status: 400, body: { message: fullNameError } };
+
+  const phone = String(dto.phone || "").trim();
+  const phoneError = validatePhoneOptional(phone);
+  if (phoneError) return { status: 400, body: { message: phoneError } };
+
+  const gender = String(dto.gender || "").trim();
+  if (gender && !PROFILE_GENDERS.includes(gender)) {
+    return { status: 400, body: { message: "Invalid gender" } };
+  }
+
+  const normalizedEmail = normalizeEmail(dto.email);
+  const exists = await User.findOne({ email: normalizedEmail }).lean();
+  if (exists) return { status: 409, body: { message: "Email already registered" } };
+
+  let dateOfBirth = null;
+  if (dto.dateOfBirth) {
+    dateOfBirth = new Date(dto.dateOfBirth);
+    if (Number.isNaN(dateOfBirth.getTime()) || dateOfBirth > new Date()) {
+      return { status: 400, body: { message: "Invalid date of birth" } };
+    }
+  }
+
+  const passwordHash = await bcrypt.hash(dto.password, 10);
+  const user = await User.create({
+    email: normalizedEmail,
+    passwordHash,
+    role: "patient",
+    fullName,
+    phone,
+    isActive: true,
+    isEmailVerified: true,
+    isLocked: false,
+  });
+
+  const patient = await Patient.create({
+    userId: user._id,
+    dateOfBirth,
+    gender,
+    address: String(dto.address || "").trim(),
+    emergencyContactName: String(dto.emergencyContactName || "").trim(),
+    emergencyContactPhone: String(dto.emergencyContactPhone || "").trim(),
+    isActive: true,
+  });
+
+  const result = await getPatient(patient._id);
+  return {
+    status: 201,
+    body: {
+      message: "Patient created successfully",
+      ...result.body,
+    },
+  };
 }
 
 async function updatePatientByUserAccount(userId, payload) {

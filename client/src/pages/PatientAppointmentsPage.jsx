@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import PageLayout from "../components/PageLayout.jsx";
 import AppPagination from "../components/AppPagination.jsx";
 import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
@@ -98,6 +99,8 @@ export default function PatientAppointmentsPage() {
   const [selectedAppointmentForCancel, setSelectedAppointmentForCancel] = useState(null);
   const [cancelReason, setCancelReason] = useState("Change of plans");
   const [cancelRefundEstimate, setCancelRefundEstimate] = useState(0);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedAppointmentForDetail, setSelectedAppointmentForDetail] = useState(null);
   const [modalSubmitting, setModalSubmitting] = useState(false);
   const [modalError, setModalError] = useState("");
   const [message, setMessage] = useState("");
@@ -209,6 +212,11 @@ export default function PatientAppointmentsPage() {
     setCancelRefundEstimate(getRefundEstimate(item.fee, item.slot));
     setModalError("");
     setCancelModalOpen(true);
+  };
+
+  const openDetailModal = (item) => {
+    setSelectedAppointmentForDetail(item);
+    setDetailModalOpen(true);
   };
 
   const handleCancelConfirm = async () => {
@@ -425,6 +433,13 @@ export default function PatientAppointmentsPage() {
                             </div>
 
                             <div className="patient-appt-cell patient-appt-cell--actions">
+                              <button
+                                type="button"
+                                className="patient-appt-action-link"
+                                onClick={() => openDetailModal(item)}
+                              >
+                                Details
+                              </button>
                               <Link to={getDoctorProfilePath(item.doctor)} className="patient-appt-action-link">
                                 View
                               </Link>
@@ -597,6 +612,69 @@ export default function PatientAppointmentsPage() {
                 onClick={handleCancelConfirm}
               >
                 {modalSubmitting ? "Cancelling…" : "Confirm cancellation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailModalOpen && selectedAppointmentForDetail && (
+        <div className="patient-modal-overlay">
+          <div className="patient-modal-card patient-modal-card--detail">
+            <h3>Appointment details</h3>
+            <p className="patient-modal-desc">
+              Confirmation <strong>{selectedAppointmentForDetail._id}</strong>
+            </p>
+            <dl className="patient-appt-detail-list">
+              <div>
+                <dt>Doctor</dt>
+                <dd>{selectedAppointmentForDetail.doctor.fullName}</dd>
+              </div>
+              <div>
+                <dt>Specialty</dt>
+                <dd>{selectedAppointmentForDetail.doctor.specialty}</dd>
+              </div>
+              <div>
+                <dt>Visit</dt>
+                <dd>{formatAppointmentDate(selectedAppointmentForDetail.slot?.date)}</dd>
+              </div>
+              <div>
+                <dt>Time</dt>
+                <dd>
+                  {selectedAppointmentForDetail.slot?.startTime} – {selectedAppointmentForDetail.slot?.endTime}
+                </dd>
+              </div>
+              <div>
+                <dt>Room</dt>
+                <dd>{selectedAppointmentForDetail.slot?.roomName || "—"}</dd>
+              </div>
+              <div>
+                <dt>Status</dt>
+                <dd>{selectedAppointmentForDetail.status}</dd>
+              </div>
+              <div>
+                <dt>Fee paid</dt>
+                <dd>{formatWalletCurrency(selectedAppointmentForDetail.fee)}</dd>
+              </div>
+            </dl>
+            {selectedAppointmentForDetail.status !== "cancelled" && (
+              <div className="patient-appt-qr-block">
+                <p className="patient-section-label">Check-in QR code</p>
+                <QRCodeSVG
+                  value={`ORCAX-APPT:${selectedAppointmentForDetail._id}`}
+                  size={148}
+                  includeMargin
+                />
+                <p className="patient-modal-desc">Show this code at clinic reception on your visit day.</p>
+              </div>
+            )}
+            <div className="patient-modal-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => setDetailModalOpen(false)}
+              >
+                Close
               </button>
             </div>
           </div>

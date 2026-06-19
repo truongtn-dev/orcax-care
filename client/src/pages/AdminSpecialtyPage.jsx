@@ -348,7 +348,11 @@ export default function AdminSpecialtyPage() {
                     <td>
                       <span className="code-badge">{specialty.code}</span>
                     </td>
-                    <td className="specialty-name-cell">{specialty.name}</td>
+                    <td className="specialty-name-cell">
+                      <Link to={`/admin/specialty/${specialty._id}`} className="table-link">
+                        {specialty.name}
+                      </Link>
+                    </td>
                     <td className="description-cell">{specialty.description || "—"}</td>
                     <td>{specialty.doctorCount}</td>
                     <td>

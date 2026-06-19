@@ -30,3 +30,13 @@ export async function deleteSpecialty(req, res) {
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
+export async function getSpecialty(req, res) {
+  try {
+    const result = await AdminSpecialtyService.getSpecialty(req.params.id);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}

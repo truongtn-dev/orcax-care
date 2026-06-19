@@ -11,6 +11,12 @@ const STAFF_SECTIONS = [
         match: ["/staff"],
       },
       {
+        to: "/staff/pharmacy",
+        label: "Pharmacy",
+        icon: "layers",
+        match: ["/staff/pharmacy"],
+      },
+      {
         to: "/search-doctors",
         label: "Find doctors",
         icon: "doctor",
