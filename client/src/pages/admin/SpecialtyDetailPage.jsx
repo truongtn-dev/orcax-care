@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import PageLayout from "../components/PageLayout.jsx";
-import AdminLayout from "../components/AdminLayout.jsx";
-import { AdminApiClient } from "../services/adminApi.js";
-import { getApiErrorMessage } from "../services/api.js";
+import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
+import { AdminApiClient } from "../../services/adminApi.js";
+import { getApiErrorMessage } from "../../services/api.js";
 
 function StatusBadge({ active }) {
   return (
