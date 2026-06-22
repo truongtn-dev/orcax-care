@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import { Specialty } from "../models/Specialty.js";
 import { Department } from "../models/Department.js";
@@ -6,6 +7,10 @@ import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
 import { ensureAllDoctorSlugs } from "../utils/doctorSlug.js";
 import { Medicine } from "../models/Medicine.js";
+import { ClinicRoom } from "../models/ClinicRoom.js";
+import { AppointmentSlot } from "../models/AppointmentSlot.js";
+import { Appointment } from "../models/Appointment.js";
+import { Encounter } from "../models/Encounter.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -29,6 +34,116 @@ const doctors = [
   { fullName: "Dr. Vo Thi Em", email: "doctor.em@orcaxcare.com", specialty: "ORTH", department: "Surgery", licenseNo: "LIC-005", bio: "Orthopedic surgeon — sports injuries.", consultationFee: 280000 },
   { fullName: "Dr. Hoang Quoc Giang", email: "doctor.giang@orcaxcare.com", specialty: "CARD", department: "Internal Medicine", licenseNo: "LIC-006", bio: "Interventional cardiology.", consultationFee: 260000 },
 ];
+
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+async function upsertEncounterDemoData({ patientUser, doctor, departmentId, signedOffBy }) {
+  const room = await ClinicRoom.findOneAndUpdate(
+    { roomCode: "EMR101" },
+    {
+      departmentId,
+      roomCode: "EMR101",
+      roomNumber: "EMR-101",
+      name: "EMR Demo Room 101",
+      floor: "2",
+      capacity: 1,
+      isActive: true,
+      status: "active",
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  const today = startOfToday();
+  const signedVisitDate = addDays(today, -10);
+
+  const demoVisits = [
+    {
+      key: "draft-signoff",
+      date: today,
+      startTime: "14:00",
+      endTime: "14:30",
+      reason: "Follow-up consultation for EMR sign-off demo",
+      status: "draft",
+      chiefComplaint: "Follow-up cough and mild fever",
+      clinicalNotes: "Patient reports dry cough for two days. No chest pain. Hydration and rest advised.",
+      vitals: { temperatureC: 37.8, bloodPressure: "118/76", pulse: 82 },
+      diagnoses: [{ code: "R05", text: "Cough", note: "Mild symptoms" }],
+    },
+    {
+      key: "signed-history",
+      date: signedVisitDate,
+      startTime: "09:00",
+      endTime: "09:30",
+      reason: "Completed cardiology follow-up",
+      status: "signed",
+      chiefComplaint: "Blood pressure follow-up",
+      clinicalNotes: "Blood pressure stable. Continue current lifestyle plan and recheck in one month.",
+      vitals: { temperatureC: 36.7, bloodPressure: "120/80", pulse: 76 },
+      diagnoses: [{ code: "I10", text: "Essential hypertension", note: "Stable follow-up" }],
+    },
+  ];
+
+  for (const visit of demoVisits) {
+    const slot = await AppointmentSlot.findOneAndUpdate(
+      {
+        doctorId: doctor._id,
+        date: visit.date,
+        startTime: visit.startTime,
+      },
+      {
+        doctorId: doctor._id,
+        workShiftId: new mongoose.Types.ObjectId(),
+        roomId: room._id,
+        date: visit.date,
+        startTime: visit.startTime,
+        endTime: visit.endTime,
+        status: "booked",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    const appointment = await Appointment.findOneAndUpdate(
+      { slotId: slot._id },
+      {
+        patientUserId: patientUser._id,
+        doctorId: doctor._id,
+        slotId: slot._id,
+        reason: visit.reason,
+        fee: doctor.consultationFee || 250000,
+        status: "completed",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    await Encounter.findOneAndUpdate(
+      { appointmentId: appointment._id },
+      {
+        patientUserId: patientUser._id,
+        doctorId: doctor._id,
+        appointmentId: appointment._id,
+        visitDate: new Date(visit.date.getTime() + 8 * 60 * 60 * 1000),
+        chiefComplaint: visit.chiefComplaint,
+        clinicalNotes: visit.clinicalNotes,
+        vitals: visit.vitals,
+        diagnoses: visit.diagnoses,
+        status: visit.status,
+        signedOffAt: visit.status === "signed" ? new Date(visit.date.getTime() + 10 * 60 * 60 * 1000) : null,
+        signedOffBy: visit.status === "signed" ? signedOffBy : null,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+}
 
 export async function runSeed() {
   const defaultAdminHash = await bcrypt.hash("Admin@123", 10);
@@ -96,6 +211,11 @@ export async function runSeed() {
     await Patient.create({ userId: patientUser._id, isActive: true });
     console.log("Created patient: patient@orcaxcare.com / Patient@123");
   }
+  await Patient.findOneAndUpdate(
+    { userId: patientUser._id },
+    { userId: patientUser._id, isActive: true },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   const staffHash = await bcrypt.hash("Staff@123", 10);
   let staffUser = await User.findOne({ email: "staff@orcaxcare.com" });
@@ -149,6 +269,17 @@ export async function runSeed() {
   ];
   for (const med of defaultMedicines) {
     await Medicine.findOneAndUpdate({ code: med.code }, med, { upsert: true, new: true });
+  }
+
+  const demoDoctor = await Doctor.findOne({ licenseNo: "LIC-001" }).populate("userId", "fullName email");
+  if (patientUser && demoDoctor) {
+    await upsertEncounterDemoData({
+      patientUser,
+      doctor: demoDoctor,
+      departmentId: deptMap["Internal Medicine"],
+      signedOffBy: demoDoctor.userId?._id,
+    });
+    console.log("Created EMR demo encounters for patient@orcaxcare.com and doctor.an@orcaxcare.com.");
   }
 
   console.log("Seed data ready (admin + staff + doctors + master data).");
