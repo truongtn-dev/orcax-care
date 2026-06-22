@@ -77,6 +77,10 @@ export const PatientApiClient = {
     return api.post(`/api/patient/appointments/${id}/cancel`, payload);
   },
 
+  listEmrTimeline(params) {
+    return api.get("/api/patient/emr/timeline", { params });
+  },
+
   listInsuranceCards() {
     return api.get("/api/patient/insurance-cards");
   },
