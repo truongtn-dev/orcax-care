@@ -63,6 +63,32 @@ export default function DoctorEncounterDetailPage() {
     }
   };
 
+  const handleDeleteImage = async (image) => {
+    if (!encounter || submitting) return;
+    const confirmed = window.confirm(`Delete medical image "${image.title}" from this encounter?`);
+    if (!confirmed) return;
+
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      await DoctorApiClient.deleteMedicalImage(image._id);
+      setEncounter((current) =>
+        current
+          ? {
+              ...current,
+              images: (current.images || []).filter((item) => item._id !== image._id),
+            }
+          : current
+      );
+      setMessage("Medical image deleted.");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <PageLayout dashboard>
       <DoctorLayout
@@ -151,6 +177,37 @@ export default function DoctorEncounterDetailPage() {
                   </ul>
                 ) : (
                   <p>No diagnosis recorded.</p>
+                )}
+              </section>
+
+              <section className="doctor-encounter-section">
+                <h3>Medical images</h3>
+                {encounter.images?.length ? (
+                  <div className="doctor-encounter-image-grid">
+                    {encounter.images.map((image) => (
+                      <article key={image._id} className="doctor-encounter-image-card">
+                        <a href={image.url} target="_blank" rel="noreferrer">
+                          <img src={image.thumbnailUrl || image.url} alt={image.title} />
+                        </a>
+                        <div>
+                          <strong>{image.title}</strong>
+                          <span>{image.type || "image"}</span>
+                        </div>
+                        {encounter.canSignOff && (
+                          <button
+                            type="button"
+                            className="btn btn-outline btn-sm"
+                            disabled={submitting}
+                            onClick={() => handleDeleteImage(image)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p>No medical images attached.</p>
                 )}
               </section>
             </section>

@@ -11,6 +11,7 @@ import { ClinicRoom } from "../models/ClinicRoom.js";
 import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { Appointment } from "../models/Appointment.js";
 import { Encounter } from "../models/Encounter.js";
+import { MedicalImage } from "../models/MedicalImage.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -139,6 +140,35 @@ async function upsertEncounterDemoData({ patientUser, doctor, departmentId, sign
         status: visit.status,
         signedOffAt: visit.status === "signed" ? new Date(visit.date.getTime() + 10 * 60 * 60 * 1000) : null,
         signedOffBy: visit.status === "signed" ? signedOffBy : null,
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+
+  const draftAppointment = await Appointment.findOne({
+    patientUserId: patientUser._id,
+    doctorId: doctor._id,
+    reason: "Follow-up consultation for EMR sign-off demo",
+  });
+  const draftEncounter = draftAppointment
+    ? await Encounter.findOne({ appointmentId: draftAppointment._id })
+    : null;
+
+  if (draftEncounter) {
+    await MedicalImage.findOneAndUpdate(
+      { encounterId: draftEncounter._id, title: "Demo chest X-ray" },
+      {
+        encounterId: draftEncounter._id,
+        patientUserId: patientUser._id,
+        uploadedBy: signedOffBy,
+        type: "xray",
+        title: "Demo chest X-ray",
+        url: "https://images.unsplash.com/photo-1583912267550-d6c2ac2b0152?auto=format&fit=crop&w=1200&q=80",
+        thumbnailUrl: "https://images.unsplash.com/photo-1583912267550-d6c2ac2b0152?auto=format&fit=crop&w=500&q=80",
+        mimeType: "image/jpeg",
+        sizeBytes: 204800,
+        deletedAt: null,
+        deletedBy: null,
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );

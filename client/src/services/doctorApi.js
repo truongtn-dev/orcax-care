@@ -25,6 +25,10 @@ export const DoctorApiClient = {
     return api.post(`/api/doctor/encounters/${id}/sign-off`);
   },
 
+  deleteMedicalImage(id) {
+    return api.delete(`/api/doctor/medical-images/${id}`);
+  },
+
   getAppointmentSlot(id) {
     return api.get(`/api/doctor/appointment-slots/${id}`);
   },
