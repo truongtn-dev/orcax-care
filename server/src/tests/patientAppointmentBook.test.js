@@ -154,6 +154,17 @@ describe("Patient booking — availability & appointments", () => {
     assert.equal(body.consultationFee, DEFAULT_CONSULTATION_FEE_VND);
   });
 
+  test("GET availability returns doctor-specific consultation fee", async () => {
+    await Doctor.findByIdAndUpdate(doctor._id, { consultationFee: 275000 });
+    const startDate = formatDateOnly(availableSlot.date);
+    const res = await fetch(
+      `${baseUrl}/api/public/doctors/${doctor._id}/availability?startDate=${startDate}&endDate=${startDate}`
+    );
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.consultationFee, 275000);
+  });
+
   test("POST /api/patient/appointments books slot and deducts wallet", async () => {
     const auth = await authHeaderFor(patientUser);
     const res = await fetch(`${baseUrl}/api/patient/appointments`, {
@@ -177,6 +188,30 @@ describe("Patient booking — availability & appointments", () => {
     assert.ok(notice);
     assert.equal(notice.type, "appointment");
     assert.match(notice.title, /confirmed/i);
+  });
+
+  test("POST /api/patient/appointments uses doctor-specific consultation fee", async () => {
+    await Doctor.findByIdAndUpdate(doctor._id, { consultationFee: 275000 });
+    await Wallet.findOneAndUpdate({ userId: patientUser._id }, { balance: 300000 });
+
+    const auth = await authHeaderFor(patientUser);
+    const previewRes = await fetch(
+      `${baseUrl}/api/patient/appointments/fee-preview?slotId=${availableSlot._id}`,
+      { headers: { Authorization: auth } }
+    );
+    assert.equal(previewRes.status, 200);
+    const preview = await previewRes.json();
+    assert.equal(preview.baseFee, 275000);
+
+    const res = await fetch(`${baseUrl}/api/patient/appointments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: auth },
+      body: JSON.stringify({ slotId: availableSlot._id.toString(), reason: "Specialist visit" }),
+    });
+    assert.equal(res.status, 201);
+    const body = await res.json();
+    assert.equal(body.appointment.fee, 275000);
+    assert.equal(body.wallet.balance, 25000);
   });
 
   test("POST /api/patient/appointments applies insurance coverage discount (UC-7.3)", async () => {

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import DatePicker from "../../components/DatePicker.jsx";
 import CloudinaryAvatarUpload from "../../components/CloudinaryAvatarUpload.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
@@ -167,10 +168,14 @@ export default function PatientEditPage() {
                 folder="orcaxcare/avatars/patients"
               />
               <div className="form-grid">
-                <label>
-                  Date of birth
-                  <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
-                </label>
+                <DatePicker
+                  label="Date of birth"
+                  name="dateOfBirth"
+                  value={form.dateOfBirth}
+                  onChange={onChange}
+                  max={new Date().toISOString().slice(0, 10)}
+                  placeholder="Select date of birth"
+                />
                 <CustomSelect
                   label="Gender"
                   value={form.gender}

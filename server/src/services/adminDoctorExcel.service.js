@@ -6,6 +6,7 @@ import { createStaffAccount } from "./admin.service.js";
 import { queryFilteredDoctors } from "./adminDoctor.service.js";
 import { invalidateSearchCache } from "./doctorSearch.service.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
+import { parseConsultationFeeInput } from "../utils/consultationFee.js";
 
 export const DOCTOR_IMPORT_HEADERS = [
   "email",
@@ -14,6 +15,7 @@ export const DOCTOR_IMPORT_HEADERS = [
   "licenseNo",
   "specialtyCode",
   "departmentName",
+  "consultationFee",
   "bio",
   "password",
 ];
@@ -65,6 +67,7 @@ function doctorExportRow(doctor) {
     licenseNo: doctor.licenseNo,
     specialtyCode: doctor.specialty?.code || "",
     departmentName: doctor.departmentName || "",
+    consultationFee: doctor.consultationFee ?? "",
     bio: doctor.bio || "",
     password: "",
   };
@@ -220,6 +223,7 @@ export async function importDoctors(payload = {}) {
       licenseNo: data.licenseNo,
       specialtyId: specialty._id.toString(),
       departmentId: department._id.toString(),
+      consultationFee: data.consultationFee,
       bio: data.bio,
     });
 

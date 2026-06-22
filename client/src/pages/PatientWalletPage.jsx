@@ -8,6 +8,8 @@ import {
 } from "../components/wallet/WalletShell.jsx";
 import WalletPaymentMethodPicker from "../components/wallet/WalletPaymentMethodPicker.jsx";
 import WalletTransactionList from "../components/wallet/WalletTransactionList.jsx";
+import DatePicker from "../components/DatePicker.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { IconWalletReceipt, IconWalletTopup, IconWalletTransactions } from "../components/wallet/WalletPanelIcons.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import {
@@ -465,45 +467,43 @@ export default function PatientWalletPage() {
             >
               <div className="wallet-txn-filters" aria-label="Transaction filters">
                 <div className="wallet-txn-filters-fields">
-                  <label className="wallet-txn-filter-field">
-                    <span>Type</span>
-                    <select
-                      value={txnFilterDraft.type}
-                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                  <CustomSelect
+                    label="Type"
+                    value={txnFilterDraft.type}
+                    onChange={(type) =>
+                      setTxnFilterDraft((prev) => ({
                         ...prev,
-                        type: event.target.value,
-                      }))}
-                    >
-                      {WALLET_TXN_TYPE_OPTIONS.map((option) => (
-                        <option key={option.value || "all"} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="wallet-txn-filter-field">
-                    <span>From</span>
-                    <input
-                      type="date"
-                      value={txnFilterDraft.from}
-                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                        type,
+                      }))
+                    }
+                    options={WALLET_TXN_TYPE_OPTIONS}
+                  />
+                  <DatePicker
+                    label="From"
+                    name="txnFrom"
+                    value={txnFilterDraft.from}
+                    onChange={(event) =>
+                      setTxnFilterDraft((prev) => ({
                         ...prev,
                         from: event.target.value,
-                      }))}
-                    />
-                  </label>
-                  <label className="wallet-txn-filter-field">
-                    <span>To</span>
-                    <input
-                      type="date"
-                      value={txnFilterDraft.to}
-                      min={txnFilterDraft.from || undefined}
-                      onChange={(event) => setTxnFilterDraft((prev) => ({
+                      }))
+                    }
+                    max={txnFilterDraft.to || undefined}
+                    placeholder="Start date"
+                  />
+                  <DatePicker
+                    label="To"
+                    name="txnTo"
+                    value={txnFilterDraft.to}
+                    onChange={(event) =>
+                      setTxnFilterDraft((prev) => ({
                         ...prev,
                         to: event.target.value,
-                      }))}
-                    />
-                  </label>
+                      }))
+                    }
+                    min={txnFilterDraft.from || undefined}
+                    placeholder="End date"
+                  />
                 </div>
                 <div className="wallet-txn-filters-actions">
                   <button
@@ -517,7 +517,7 @@ export default function PatientWalletPage() {
                   {hasActiveTxnFilters && (
                     <button
                       type="button"
-                      className="btn btn-ghost btn-sm"
+                      className="btn btn-outline btn-sm"
                       onClick={clearTxnFilters}
                       disabled={txnLoading}
                     >
@@ -527,19 +527,21 @@ export default function PatientWalletPage() {
                 </div>
               </div>
 
-              {txnLoading ? (
-                <WalletLoading label="Loading transactions…" />
-              ) : (
-                <WalletTransactionList
-                  transactions={wallet?.transactions}
-                  emptyText={
-                    hasActiveTxnFilters
-                      ? "No transactions match these filters."
-                      : "No transactions yet. Top up to get started."
-                  }
-                  onCancelPending={handleCancelPending}
-                />
-              )}
+              <div className="wallet-txn-scroll">
+                {txnLoading ? (
+                  <WalletLoading label="Loading transactions…" />
+                ) : (
+                  <WalletTransactionList
+                    transactions={wallet?.transactions}
+                    emptyText={
+                      hasActiveTxnFilters
+                        ? "No transactions match these filters."
+                        : "No transactions yet. Top up to get started."
+                    }
+                    onCancelPending={handleCancelPending}
+                  />
+                )}
+              </div>
             </WalletCard>
           </div>
         )}

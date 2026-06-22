@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
 import DoctorSearchCard from "../components/DoctorSearchCard.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../utils/booking.js";
 import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 import "../styles/patient.shared.css";
 import "./PatientBookAppointmentPage.css";
@@ -90,7 +92,7 @@ export default function PatientBookAppointmentPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const baseFee = feeSummary?.baseFee ?? doctor?.consultationFee ?? 200000;
+  const baseFee = feeSummary?.baseFee ?? doctor?.consultationFee ?? DEFAULT_CONSULTATION_FEE_VND;
   const finalFee = feeSummary?.finalFee ?? baseFee;
   const discountAmount = feeSummary?.discountAmount ?? 0;
   const balance = wallet?.balance ?? 0;
@@ -511,25 +513,23 @@ export default function PatientBookAppointmentPage() {
                       </div>
 
                       <p className="patient-section-label">Insurance (bảo lãnh)</p>
-                      <label className="patient-book-insurance-field">
-                        <span className="visually-hidden">Insurance card</span>
-                        <select
-                          value={selectedInsuranceCardId}
-                          onChange={(event) => {
-                            setSelectedInsuranceCardId(event.target.value);
-                            setError("");
-                          }}
-                          disabled={!selectedSlot?._id || feePreviewLoading}
-                        >
-                          <option value="">No insurance — pay full fee</option>
-                          {eligibleCards.map((card) => (
-                            <option key={card._id} value={card._id}>
-                              {card.providerName} · {card.coveragePercent}% coverage
-                              {card.isPrimary ? " (Primary)" : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      <CustomSelect
+                        label="Insurance card"
+                        value={selectedInsuranceCardId}
+                        onChange={(value) => {
+                          setSelectedInsuranceCardId(value);
+                          setError("");
+                        }}
+                        disabled={!selectedSlot?._id || feePreviewLoading}
+                        placeholder="No insurance — pay full fee"
+                        options={[
+                          { value: "", label: "No insurance — pay full fee" },
+                          ...eligibleCards.map((card) => ({
+                            value: card._id,
+                            label: `${card.providerName} · ${card.coveragePercent}% coverage${card.isPrimary ? " (Primary)" : ""}`,
+                          })),
+                        ]}
+                      />
                       {selectedSlot?._id && eligibleCards.length === 0 && (
                         <p className="patient-book-insurance-hint">
                           No eligible insurance card for this visit date.{" "}

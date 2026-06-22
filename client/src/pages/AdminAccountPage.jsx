@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import "./AdminAccountPage.css";
 
@@ -17,6 +17,7 @@ import AppPagination from "../components/AppPagination.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 
 import AppModal from "../components/AppModal.jsx";
+import AccountRecordForm from "../components/admin/forms/AccountRecordForm.jsx";
 
 import { AdminApiClient } from "../services/adminApi.js";
 
@@ -25,10 +26,14 @@ import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
 import { firstFormError, validateAdminCreateAccountForm } from "../utils/validation.js";
+import { getAdminAccountEditPath, getAdminAccountPath, getAdminDoctorEditPath } from "../utils/adminUrls.js";
+import { isMongoObjectId } from "../utils/doctorUrls.js";
 
 import { useAuth } from "../context/AuthContext.jsx";
 
 import { useDebouncedValue } from "../hooks/useDebouncedValue.js";
+
+import { DEFAULT_CONSULTATION_FEE_VND } from "../utils/booking.js";
 
 
 
@@ -163,6 +168,8 @@ const EMPTY_FORM = {
   departmentId: "",
 
   licenseNo: "",
+
+  consultationFee: String(DEFAULT_CONSULTATION_FEE_VND),
 
   bio: "",
 
@@ -316,6 +323,7 @@ function AccountStatus({ account }) {
 
 export default function AdminAccountPage() {
 
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [searchDraft, setSearchDraft] = useState("");
@@ -353,6 +361,14 @@ export default function AdminAccountPage() {
   const [statusLoading, setStatusLoading] = useState(false);
 
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
+
+  const [editId, setEditId] = useState("");
+  const [editAccount, setEditAccount] = useState(null);
+  const [editForm, setEditForm] = useState({ email: "", fullName: "", phone: "", isActive: true });
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
 
 
@@ -468,10 +484,9 @@ export default function AdminAccountPage() {
 
   useEffect(() => {
     if (searchParams.get("create") === "doctor") {
-      openCreateModal({ role: "doctor" });
-      setSearchParams({}, { replace: true });
+      navigate("/admin/doctors?create=doctor", { replace: true });
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, navigate]);
 
 
 
@@ -485,6 +500,83 @@ export default function AdminAccountPage() {
 
     setCreateSuccess("");
 
+  };
+
+  const closeEditModal = useCallback(() => {
+    setEditId("");
+    setEditAccount(null);
+    setEditForm({ email: "", fullName: "", phone: "", isActive: true });
+    setEditError("");
+    setEditSuccess("");
+    setEditLoading(false);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  const loadAccountForEdit = useCallback(async (accountKey) => {
+    setEditLoading(true);
+    setEditError("");
+    try {
+      const { data } = await AdminApiClient.getAccount(accountKey);
+      const slug = data.slug || data._id;
+      setEditId(slug);
+      setEditAccount(data);
+      setEditForm({
+        email: data.email || "",
+        fullName: data.fullName || "",
+        phone: data.phone || "",
+        isActive: Boolean(data.isActive),
+      });
+      if (data.slug && isMongoObjectId(accountKey) && data.slug !== accountKey) {
+        setSearchParams({ edit: data.slug }, { replace: true });
+      }
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+      setEditId("");
+      setEditAccount(null);
+    } finally {
+      setEditLoading(false);
+    }
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    const editKey = searchParams.get("edit");
+    if (!editKey) return;
+    setEditSuccess("");
+    loadAccountForEdit(editKey);
+  }, [searchParams, loadAccountForEdit]);
+
+  const onEditFormChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editId) return;
+    setSaving(true);
+    setEditError("");
+    setEditSuccess("");
+    try {
+      const { data } = await AdminApiClient.updateAccount(editId, editForm);
+      setEditAccount(data);
+      setEditForm({
+        email: data.email || "",
+        fullName: data.fullName || "",
+        phone: data.phone || "",
+        isActive: Boolean(data.isActive),
+      });
+      setEditSuccess("Account updated successfully.");
+      await loadAccounts({ ...filters, q: debouncedSearch });
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
 
@@ -560,6 +652,8 @@ export default function AdminAccountPage() {
         departmentId: form.departmentId,
 
         licenseNo: form.licenseNo.trim(),
+
+        consultationFee: Number(form.consultationFee),
 
         bio: form.bio.trim(),
 
@@ -651,13 +745,13 @@ export default function AdminAccountPage() {
 
       if (action === "deactivate") {
 
-        await AdminApiClient.deactivateUser(account._id);
+        await AdminApiClient.deactivateUser(account.slug || account._id);
 
         setStatusMessage({ type: "success", text: "Account deactivated. Active sessions terminated." });
 
       } else {
 
-        await AdminApiClient.reactivateUser(account._id);
+        await AdminApiClient.reactivateUser(account.slug || account._id);
 
         setStatusMessage({ type: "success", text: "Account reactivated successfully." });
 
@@ -679,7 +773,7 @@ export default function AdminAccountPage() {
 
   };
 
-
+  const editKey = searchParams.get("edit");
 
   return (
 
@@ -881,7 +975,7 @@ export default function AdminAccountPage() {
 
                           <div className="people-list-user-text">
 
-                            <Link to={`/admin/account/${account._id}`} className="people-list-name">
+                            <Link to={getAdminAccountPath(account)} className="people-list-name">
 
                               {account.fullName}
 
@@ -957,7 +1051,7 @@ export default function AdminAccountPage() {
 
                           <Link
 
-                            to={`/admin/account/${account._id}`}
+                            to={getAdminAccountPath(account)}
 
                             className="people-list-action people-list-action--view"
 
@@ -979,7 +1073,7 @@ export default function AdminAccountPage() {
 
                           <Link
 
-                            to={`/admin/account/${account._id}/edit`}
+                            to={getAdminAccountEditPath(account)}
 
                             className="people-list-action people-list-action--edit"
 
@@ -1003,7 +1097,7 @@ export default function AdminAccountPage() {
 
                             <Link
 
-                              to={`/admin/doctors/${account.doctorId}/edit`}
+                              to={getAdminDoctorEditPath(account.doctorSlug || account.doctorId)}
 
                               className="people-list-action people-list-action--profile"
 
@@ -1145,6 +1239,7 @@ export default function AdminAccountPage() {
 
       {showCreateModal && (
         <AppModal
+          wide
           title="Add new account"
           description="Create a patient, staff, doctor, or administrator account."
           titleId="create-account-title"
@@ -1256,7 +1351,7 @@ export default function AdminAccountPage() {
 
               {form.role === "doctor" && (
 
-                <>
+                <div className="form-grid">
 
                   <div>
 
@@ -1326,7 +1421,7 @@ export default function AdminAccountPage() {
 
 
 
-                  <label>
+                  <label className="form-grid-span-2">
 
                     License number
 
@@ -1356,6 +1451,40 @@ export default function AdminAccountPage() {
 
                   <label>
 
+                    Consultation fee (VND)
+
+                    <input
+
+                      type="number"
+
+                      name="consultationFee"
+
+                      value={form.consultationFee}
+
+                      onChange={onFormChange}
+
+                      min={0}
+
+                      step={1000}
+
+                      placeholder={String(DEFAULT_CONSULTATION_FEE_VND)}
+
+                      aria-invalid={Boolean(fieldError("consultationFee"))}
+
+                    />
+
+                    {fieldError("consultationFee") && (
+
+                      <span className="field-error">{fieldError("consultationFee")}</span>
+
+                    )}
+
+                  </label>
+
+
+
+                  <label className="form-grid-span-2">
+
                     Bio
 
                     <textarea
@@ -1366,7 +1495,9 @@ export default function AdminAccountPage() {
 
                       onChange={onFormChange}
 
-                      rows={3}
+                      rows={4}
+
+                      maxLength={1000}
 
                       placeholder="Short professional bio (optional)"
 
@@ -1374,7 +1505,7 @@ export default function AdminAccountPage() {
 
                   </label>
 
-                </>
+                </div>
 
               )}
 
@@ -1453,6 +1584,35 @@ export default function AdminAccountPage() {
               </div>
 
             </form>
+        </AppModal>
+      )}
+
+      {editKey && (
+        <AppModal
+          wide
+          title="Update account"
+          description="Edit contact details and account access."
+          titleId="edit-account-title"
+          onClose={closeEditModal}
+        >
+          {editLoading || !editId ? (
+            <div className="loading-state">
+              <div className="loading-spinner" />
+              Loading account…
+            </div>
+          ) : (
+            <AccountRecordForm
+              mode="edit"
+              form={editForm}
+              accountMeta={editAccount}
+              onChange={onEditFormChange}
+              onSubmit={onEditSubmit}
+              onCancel={closeEditModal}
+              error={editError}
+              success={editSuccess}
+              submitting={saving}
+            />
+          )}
         </AppModal>
       )}
 

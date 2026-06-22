@@ -4,6 +4,8 @@ import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
+import { useAdminSlugRedirect } from "../../hooks/useAdminSlugRedirect.js";
+import { getAdminAccountPath } from "../../utils/adminUrls.js";
 
 const emptyForm = {
   email: "",
@@ -51,6 +53,12 @@ export default function AccountEditPage() {
     };
   }, [id]);
 
+  useAdminSlugRedirect({
+    record: account,
+    paramKey: id,
+    buildPath: getAdminAccountPath,
+  });
+
   const onChange = (e) => {
     const { name, type, checked, value } = e.target;
     setForm((current) => ({
@@ -88,7 +96,7 @@ export default function AccountEditPage() {
       <AdminLayout
         title="Edit account"
         actions={
-          <Link to={`/admin/account/${id}`} className="btn btn-outline btn-sm">
+          <Link to={getAdminAccountPath(account || id)} className="btn btn-outline btn-sm">
             ← Back to details
           </Link>
         }
@@ -169,7 +177,7 @@ export default function AccountEditPage() {
               <button type="submit" className="btn btn-primary" disabled={saving}>
                 {saving ? "Saving..." : "Save changes"}
               </button>
-              <button type="button" className="btn btn-outline" onClick={() => navigate(`/admin/account/${id}`)}>
+              <button type="button" className="btn btn-outline" onClick={() => navigate(getAdminAccountPath(account || id))}>
                 Cancel
               </button>
               <Link to="/admin/account" className="btn btn-ghost">

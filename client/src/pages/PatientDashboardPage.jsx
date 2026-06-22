@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./PatientDashboardPage.css";
 import PageLayout from "../components/PageLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
+import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
+import AppIcon from "../components/icons/AppIcon.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -187,6 +189,7 @@ export default function PatientDashboardPage() {
   const firstName = fullName?.split(" ")[0] || "there";
   const [walletBalance, setWalletBalance] = useState(null);
   const [upcomingCount, setUpcomingCount] = useState(null);
+  const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
     let active = true;
@@ -201,8 +204,10 @@ export default function PatientDashboardPage() {
     PatientApiClient.listAppointments()
       .then(({ data }) => {
         if (!active) return;
+        const items = data.items || [];
+        setAppointments(items);
         const now = new Date();
-        const upcoming = (data.items || []).filter((app) => {
+        const upcoming = items.filter((app) => {
           if (app.status !== "confirmed") return false;
           const slot = app.slot;
           if (!slot?.date) return false;
@@ -212,13 +217,51 @@ export default function PatientDashboardPage() {
         setUpcomingCount(upcoming.length);
       })
       .catch(() => {
-        if (active) setUpcomingCount(null);
+        if (active) {
+          setUpcomingCount(null);
+          setAppointments([]);
+        }
       });
 
     return () => {
       active = false;
     };
   }, []);
+
+  const appointmentStatusChart = useMemo(() => {
+    const counts = {
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+    };
+    for (const appointment of appointments) {
+      if (counts[appointment.status] != null) {
+        counts[appointment.status] += 1;
+      }
+    }
+    return [
+      { key: "confirmed", label: "Confirmed", value: counts.confirmed, tone: "cyan" },
+      { key: "completed", label: "Completed", value: counts.completed, tone: "emerald" },
+      { key: "cancelled", label: "Cancelled", value: counts.cancelled, tone: "rose" },
+    ].filter((point) => point.value > 0);
+  }, [appointments]);
+
+  const visitTrendChart = useMemo(() => {
+    const buckets = {};
+    for (const appointment of appointments) {
+      const date = appointment.slot?.date;
+      if (!date) continue;
+      buckets[date] = (buckets[date] || 0) + 1;
+    }
+    return Object.entries(buckets)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-7)
+      .map(([date, value]) => ({
+        key: date,
+        label: date.slice(5),
+        value,
+      }));
+  }, [appointments]);
 
   return (
     <PageLayout>
@@ -251,10 +294,7 @@ export default function PatientDashboardPage() {
           <div className="patient-dashboard-quick">
             <Link to="/patient/wallet" className="patient-quick-card">
               <span className="patient-quick-icon patient-quick-icon--wallet" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M19 7V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-1" />
-                  <path d="M14 10h6v6h-6a3 3 0 0 1 0-6z" />
-                </svg>
+                <AppIcon name="wallet" />
               </span>
               <div className="patient-quick-body">
                 <span className="patient-quick-value">
@@ -267,11 +307,7 @@ export default function PatientDashboardPage() {
 
             <Link to="/patient/appointments" className="patient-quick-card">
               <span className="patient-quick-icon patient-quick-icon--care" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M8 2v4" />
-                  <path d="M16 2v4" />
-                  <rect x="3" y="4" width="18" height="18" rx="2" />
-                </svg>
+                <AppIcon name="calendar-check" />
               </span>
               <div className="patient-quick-body">
                 <span className="patient-quick-value">
@@ -284,10 +320,7 @@ export default function PatientDashboardPage() {
 
             <Link to="/patient/notifications" className="patient-quick-card">
               <span className="patient-quick-icon patient-quick-icon--notifications" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
+                <AppIcon name="bell" />
               </span>
               <div className="patient-quick-body">
                 <span className="patient-quick-value">Inbox</span>
@@ -298,10 +331,7 @@ export default function PatientDashboardPage() {
 
             <Link to="/search-doctors" className="patient-quick-card">
               <span className="patient-quick-icon patient-quick-icon--search" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
+                <AppIcon name="search" />
               </span>
               <div className="patient-quick-body">
                 <span className="patient-quick-value">Explore</span>
@@ -309,6 +339,24 @@ export default function PatientDashboardPage() {
                 <span className="patient-quick-hint">Search by specialty or department</span>
               </div>
             </Link>
+          </div>
+        </ScrollReveal>
+
+        <ScrollReveal variant="up" delay={50}>
+          <div className="dash-charts-row patient-dashboard-charts">
+            <DashboardBarChart
+              title="Appointments by status"
+              description="Your visit history at a glance"
+              data={appointmentStatusChart}
+              emptyMessage="No appointments yet — book your first visit."
+            />
+            <DashboardBarChart
+              title="Recent visit dates"
+              description="Appointments per day (last 7 dates)"
+              data={visitTrendChart}
+              emptyMessage="No dated appointments to chart yet."
+              barClassName="dash-chart-bar--cyan"
+            />
           </div>
         </ScrollReveal>
 

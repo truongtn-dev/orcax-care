@@ -5,7 +5,7 @@ import { Doctor } from "../models/Doctor.js";
 import { extractQueryEntities } from "./search/hmmExtractor.js";
 import { rankDoctors } from "./search/retrievalEngine.js";
 import { getAvailabilitySummariesForDoctors } from "./doctorAvailability.service.js";
-import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
+import { resolveConsultationFee } from "../utils/consultationFee.js";
 import { isMongoObjectId } from "../utils/doctorSlug.js";
 
 let catalogCache = null;
@@ -74,6 +74,7 @@ async function fetchDoctorRecords(matchStage = { isActive: true }) {
         bio: 1,
         photoUrl: { $ifNull: ["$photoUrl", "$user.photoUrl"] },
         licenseNo: 1,
+        consultationFee: 1,
         languages: 1,
         workplace: 1,
         reviewRating: { $ifNull: ["$ratingAverage", 0] },
@@ -123,7 +124,7 @@ export async function getDoctorBySlugOrId(identifier) {
   return {
     ...doctor,
     _id: doctor._id.toString(),
-    consultationFee: DEFAULT_CONSULTATION_FEE_VND,
+    consultationFee: resolveConsultationFee(doctor),
     availability,
   };
 }
@@ -220,7 +221,7 @@ export async function searchDoctors({ q, name, specialtyId, departmentId, page =
     };
     return {
       ...item,
-      consultationFee: DEFAULT_CONSULTATION_FEE_VND,
+      consultationFee: resolveConsultationFee(item),
       availability,
     };
   });

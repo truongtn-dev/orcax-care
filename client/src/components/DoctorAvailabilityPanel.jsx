@@ -4,6 +4,7 @@ import "./DoctorAvailabilityPanel.css";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../utils/booking.js";
 
 const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -97,7 +98,7 @@ export default function DoctorAvailabilityPanel({
     [availability, activeDate]
   );
 
-  const fee = consultationFee ?? availability?.consultationFee ?? 0;
+  const fee = consultationFee ?? availability?.consultationFee ?? DEFAULT_CONSULTATION_FEE_VND;
   const bookUrl = isAuthenticated
     ? `${bookBasePath}?doctorId=${doctorId}`
     : `${loginPath}?next=${encodeURIComponent(`${bookBasePath}?doctorId=${doctorId}`)}`;

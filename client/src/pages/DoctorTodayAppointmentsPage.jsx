@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { getApiErrorMessage } from "../services/api.js";
 import { DoctorApiClient } from "../services/doctorApi.js";
+
+const SORT_OPTIONS = [
+  { value: "asc", label: "Earliest first" },
+  { value: "desc", label: "Latest first" },
+];
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -77,40 +83,40 @@ export default function DoctorTodayAppointmentsPage() {
     }
   };
 
+  const appointmentSummary =
+    date || appointments.length > 0
+      ? `${date || "Today"} · ${appointments.length} appointment${appointments.length === 1 ? "" : "s"}`
+      : "Review and open visits scheduled for today.";
+
   return (
     <PageLayout dashboard>
-      <DoctorLayout title="Today appointments">
-        <div className="admin-toolbar">
-          <div>
-            <h2>Today appointments</h2>
-            <p className="muted">
-              {date || "Today"} · {appointments.length} appointment{appointments.length === 1 ? "" : "s"}
-            </p>
-          </div>
-          <button type="button" className="btn btn-outline" onClick={loadAppointments} disabled={loading}>
-            Refresh
-          </button>
-        </div>
-
+      <DoctorLayout
+        title="Today appointments"
+        description={loading ? "Loading today's schedule…" : appointmentSummary}
+      >
         <div className="card schedule-toolbar">
-          <div className="filters-row">
-            <label>
-              Status
-              <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                {STATUS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Sort
-              <select value={sort} onChange={(event) => setSort(event.target.value)}>
-                <option value="asc">Earliest first</option>
-                <option value="desc">Latest first</option>
-              </select>
-            </label>
+          <div className="filters-toolbar">
+            <div className="filters-toolbar-fields">
+              <CustomSelect
+                className="filter-field"
+                label="Status"
+                value={status}
+                onChange={setStatus}
+                options={STATUS_OPTIONS}
+              />
+              <CustomSelect
+                className="filter-field"
+                label="Sort"
+                value={sort}
+                onChange={setSort}
+                options={SORT_OPTIONS}
+              />
+            </div>
+            <div className="filters-toolbar-actions">
+              <button type="button" className="btn btn-outline" onClick={loadAppointments} disabled={loading}>
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
 

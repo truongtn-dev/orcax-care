@@ -1,6 +1,10 @@
 import { api } from "./api.js";
 
 export const StaffApiClient = {
+  getDashboard() {
+    return api.get("/api/staff/dashboard");
+  },
+
   getPharmacyDashboard() {
     return api.get("/api/staff/pharmacy/dashboard");
   },

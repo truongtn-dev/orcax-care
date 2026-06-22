@@ -28,7 +28,6 @@ import AdminPatientDetailPage from "./pages/AdminPatientDetailPage.jsx";
 import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
 import DoctorPublicProfilePage from "./pages/DoctorPublicProfilePage.jsx";
 import DoctorDashboardPage from "./pages/DoctorDashboardPage.jsx";
-import AccountEditPage from "./pages/admin/AccountEditPage.jsx";
 import CreateWorkShiftPage from "./pages/admin/CreateWorkShiftPage.jsx";
 import EditWorkShiftPage from "./pages/admin/EditWorkShiftPage.jsx";
 import GenerateAppointmentSlotsPage from "./pages/admin/GenerateAppointmentSlotsPage.jsx";
@@ -38,20 +37,20 @@ import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
-import DoctorEditPage from "./pages/admin/DoctorEditPage.jsx";
 import DoctorDetailPage from "./pages/admin/DoctorDetailPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
 import SpecialtyDetailPage from "./pages/admin/SpecialtyDetailPage.jsx";
 import CreatePatientPage from "./pages/admin/CreatePatientPage.jsx";
 import DepartmentCreatePage from "./pages/admin/DepartmentCreatePage.jsx";
 import DepartmentDetailPage from "./pages/admin/DepartmentDetailPage.jsx";
-import PatientEditPage from "./pages/admin/PatientEditPage.jsx";
 import PatientsListPage from "./pages/admin/PatientsListPage.jsx";
 import StaffListPage from "./pages/admin/StaffListPage.jsx";
 import SpecialtiesListPage from "./pages/admin/SpecialtiesListPage.jsx";
 import "./App.css";
 import "./glass.css";
 import "./styles/adminRecordPages.css";
+import "./styles/dashboard.shared.css";
+import "./components/icons/icons.css";
 import "./scroll-reveal.css";
 
 function LegacyAdminPatientRedirect() {
@@ -61,7 +60,17 @@ function LegacyAdminPatientRedirect() {
 
 function LegacyAdminPatientEditRedirect() {
   const { id } = useParams();
-  return <Navigate to={`/admin/patients/${id}/edit`} replace />;
+  return <Navigate to={`/admin/patients?edit=${encodeURIComponent(id)}`} replace />;
+}
+
+function AdminDoctorEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/admin/doctors?edit=${encodeURIComponent(id)}`} replace />;
+}
+
+function AdminAccountEditRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/admin/account?edit=${encodeURIComponent(id)}`} replace />;
 }
 
 export default function App() {
@@ -216,7 +225,7 @@ export default function App() {
             path="/admin/account/:id/edit"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <AccountEditPage />
+                <AdminAccountEditRedirect />
               </ProtectedRoute>
             }
           />
@@ -224,7 +233,7 @@ export default function App() {
             path="/admin/accounts/:id/edit"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <AccountEditPage />
+                <AdminAccountEditRedirect />
               </ProtectedRoute>
             }
           />
@@ -248,7 +257,7 @@ export default function App() {
             path="/admin/doctors/:id/edit"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <DoctorEditPage />
+                <AdminDoctorEditRedirect />
               </ProtectedRoute>
             }
           />
@@ -320,7 +329,7 @@ export default function App() {
             path="/admin/patients/:id/edit"
             element={
               <ProtectedRoute roles={["admin"]}>
-                <PatientEditPage />
+                <LegacyAdminPatientEditRedirect />
               </ProtectedRoute>
             }
           />

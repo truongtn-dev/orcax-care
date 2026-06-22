@@ -428,14 +428,10 @@
   color: #059669;
 }
 
-.patient-book-insurance-field select {
+.patient-book-insurance-field .custom-select,
+.patient-book-step-panel .custom-select {
   width: 100%;
   margin-bottom: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: var(--radius-md);
-  background: #fff;
-  font: inherit;
 }
 
 .patient-book-insurance-hint {
@@ -633,6 +629,7 @@
 .patient-book-wizard-intro h1 {
   margin: 0.35rem 0 0.5rem;
   font-size: clamp(1.5rem, 3vw, 2rem);
+  color: #fff;
 }
 
 .patient-book-wizard-lead {

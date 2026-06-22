@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { generateUniqueDoctorSlug } from "../utils/doctorSlug.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
 
 const doctorSchema = new mongoose.Schema(
   {
@@ -10,6 +11,11 @@ const doctorSchema = new mongoose.Schema(
     slug: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     bio: { type: String, default: "" },
     photoUrl: { type: String, default: "" },
+    consultationFee: {
+      type: Number,
+      min: 0,
+      default: DEFAULT_CONSULTATION_FEE_VND,
+    },
     isActive: { type: Boolean, default: true },
     ratingAverage: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },

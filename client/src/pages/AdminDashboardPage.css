@@ -73,12 +73,19 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.admin-overview-hero-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+}
+
 .admin-overview-hero-lead {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.92);
-  max-width: 52ch;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .admin-dashboard-kpis {
@@ -90,28 +97,26 @@
 
 .admin-dashboard-kpis-head {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
 }
 
 .admin-dashboard-kpis-head h2 {
-  margin: 0 0 0.25rem;
-  font-size: 1.15rem;
-}
-
-.admin-dashboard-kpis-sub {
   margin: 0;
-  color: var(--text-muted, #64748b);
-  font-size: 0.9rem;
+  font-size: 1.15rem;
+  flex-shrink: 0;
 }
 
 .admin-dashboard-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-end;
-  gap: 0.75rem;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .admin-dashboard-filters label {
@@ -123,14 +128,49 @@
   color: var(--text-muted, #64748b);
 }
 
-.admin-dashboard-filters input,
-.admin-dashboard-filters select {
-  min-width: 9rem;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: var(--radius-md);
-  font: inherit;
-  background: #fff;
+.admin-dashboard-filters .date-picker {
+  flex: 0 0 auto;
+  width: 10.5rem;
+  min-width: 10.5rem;
+}
+
+.admin-dashboard-filters .date-picker-trigger {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.875rem;
+  border-width: 1px;
+  width: 100%;
+}
+
+.admin-dashboard-filters .custom-select {
+  flex: 0 0 auto;
+  width: 11.5rem;
+  min-width: 11.5rem;
+}
+
+.admin-dashboard-filters .custom-select-trigger {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.875rem;
+  border-width: 1px;
+}
+
+.admin-dashboard-filters .btn {
+  flex-shrink: 0;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .admin-dashboard-kpis-head {
+    flex-wrap: wrap;
+  }
+
+  .admin-dashboard-filters {
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .admin-kpi-grid {

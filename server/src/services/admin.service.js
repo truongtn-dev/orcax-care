@@ -9,6 +9,14 @@ import { ClinicRoom } from "../models/ClinicRoom.js";
 import { revokeAllUserTokens } from "./token.service.js";
 import { invalidateSearchCache } from "./doctorSearch.service.js";
 import { validateEmail, validatePasswordStrength } from "../utils/validation.js";
+import { findUserByIdentifier } from "../utils/userSlug.js";
+import { parseConsultationFeeInput } from "../utils/consultationFee.js";
+
+async function resolveUser(identifier) {
+  const user = await findUserByIdentifier(identifier);
+  if (!user) return null;
+  return User.findById(user._id);
+}
 
 
 
@@ -24,6 +32,7 @@ export async function createStaffAccount({
   departmentId,
   licenseNo,
   bio,
+  consultationFee,
   dateOfBirth,
   gender,
   address,
@@ -88,12 +97,16 @@ export async function createStaffAccount({
   });
 
   if (role === "doctor") {
+    const feeResult = parseConsultationFeeInput(consultationFee);
+    if (feeResult.error) return { status: 400, body: { message: feeResult.error } };
+
     await Doctor.create({
       userId: user._id,
       specialtyId,
       departmentId,
       licenseNo: licenseNo.trim(),
       bio: bio?.trim() || "",
+      consultationFee: feeResult.value,
       isActive: true,
     });
   } else if (role === "patient") {
@@ -128,16 +141,18 @@ export async function listAllUsers() {
   return { status: 200, body: { items: users } };
 }
 
-export async function changeUserRole(userId, { role, specialtyId, departmentId, licenseNo, bio }) {
+export async function changeUserRole(identifier, { role, specialtyId, departmentId, licenseNo, bio }) {
   const validRoles = ["patient", "doctor", "admin", "staff"];
   if (!validRoles.includes(role)) {
     return { status: 400, body: { message: "Invalid role value" } };
   }
 
-  const user = await User.findById(userId);
+  const user = await resolveUser(identifier);
   if (!user) {
     return { status: 404, body: { message: "User not found" } };
   }
+
+  const userId = user._id;
 
   if (role === "doctor") {
     if (!specialtyId || !mongoose.Types.ObjectId.isValid(specialtyId)) {
@@ -176,6 +191,7 @@ export async function changeUserRole(userId, { role, specialtyId, departmentId, 
         departmentId,
         licenseNo: licenseNo.trim(),
         bio: bio?.trim() || "",
+        consultationFee: parseConsultationFeeInput().value,
         isActive: user.isActive,
       });
     }
@@ -209,38 +225,41 @@ export async function changeUserRole(userId, { role, specialtyId, departmentId, 
   };
 }
 
-export async function deactivateAccount(userId, adminUserId) {
-  if (adminUserId === userId) {
-    return { status: 400, body: { message: "You cannot deactivate your own account" } };
-  }
-
-  const user = await User.findById(userId);
+export async function deactivateAccount(identifier, adminUserId) {
+  const user = await resolveUser(identifier);
   if (!user) {
     return { status: 404, body: { message: "User not found" } };
+  }
+
+  const userId = user._id.toString();
+  if (adminUserId === userId) {
+    return { status: 400, body: { message: "You cannot deactivate your own account" } };
   }
 
   user.isActive = false;
   await user.save();
 
-  await Doctor.updateOne({ userId }, { $set: { isActive: false } });
-  await Patient.updateOne({ userId }, { $set: { isActive: false } });
+  await Doctor.updateOne({ userId: user._id }, { $set: { isActive: false } });
+  await Patient.updateOne({ userId: user._id }, { $set: { isActive: false } });
 
-  await revokeAllUserTokens(userId);
+  await revokeAllUserTokens(user._id);
 
   return { status: 200, body: { message: "Account deactivated successfully. Active sessions terminated." } };
 }
 
-export async function reactivateAccount(userId) {
-  const user = await User.findById(userId);
+export async function reactivateAccount(identifier) {
+  const user = await resolveUser(identifier);
   if (!user) {
     return { status: 404, body: { message: "User not found" } };
   }
 
+  const userId = user._id;
+
   user.isActive = true;
   await user.save();
 
-  await Doctor.updateOne({ userId }, { $set: { isActive: true } });
-  await Patient.updateOne({ userId }, { $set: { isActive: true } });
+  await Doctor.updateOne({ userId: user._id }, { $set: { isActive: true } });
+  await Patient.updateOne({ userId: user._id }, { $set: { isActive: true } });
 
   return { status: 200, body: { message: "Account reactivated successfully" } };
 }

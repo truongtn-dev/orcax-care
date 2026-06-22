@@ -3,26 +3,29 @@ import { Link, useParams } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
-import RecordAvatar from "../../components/RecordAvatar.jsx";
+import {
+  DetailItem,
+  RecordDetailHeader,
+  RecordDetailSection,
+  RecordIdChip,
+  StatusBadge,
+} from "../../components/admin/RecordDetailParts.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
+import { useAdminSlugRedirect } from "../../hooks/useAdminSlugRedirect.js";
+import {
+  getAdminAccountPath,
+  getAdminDoctorEditPath,
+  getAdminDoctorPath,
+} from "../../utils/adminUrls.js";
 import { getDoctorProfilePath } from "../../utils/doctorUrls.js";
 
-function StatusBadge({ active, label }) {
-  return (
-    <span className={`status-badge ${active ? "status-badge-active" : "status-badge-inactive"}`}>
-      {label}
-    </span>
-  );
-}
-
-function DetailItem({ label, value, children }) {
-  return (
-    <div className="detail-item">
-      <span className="detail-label">{label}</span>
-      <span className="detail-value">{children ?? value ?? "—"}</span>
-    </div>
-  );
+function formatCurrency(value) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
 }
 
 export default function DoctorDetailPage() {
@@ -46,6 +49,12 @@ export default function DoctorDetailPage() {
   useEffect(() => {
     loadDoctor();
   }, [id]);
+
+  useAdminSlugRedirect({
+    record: doctor,
+    paramKey: id,
+    buildPath: getAdminDoctorPath,
+  });
 
   const handleDeactivate = async () => {
     setStatusLoading(true);
@@ -82,15 +91,15 @@ export default function DoctorDetailPage() {
     <PageLayout dashboard>
       <AdminLayout
         title="Doctor details"
-        description="Read-only professional profile with schedule summary."
+        description="Professional profile, schedule summary, and linked account."
         actions={
           doctor && (
             <>
-              <Link to={`/admin/doctors/${id}/edit`} className="btn btn-primary">
+              <Link to={getAdminDoctorEditPath(doctor)} className="btn btn-primary">
                 Edit profile
               </Link>
               {doctor.userId && (
-                <Link to={`/admin/account/${doctor.userId}`} className="btn btn-outline">
+                <Link to={getAdminAccountPath(doctor.userSlug || doctor.userId)} className="btn btn-outline">
                   View account
                 </Link>
               )}
@@ -120,14 +129,6 @@ export default function DoctorDetailPage() {
           )
         }
       >
-        <nav className="breadcrumb" aria-label="Breadcrumb">
-          <Link to="/admin">Admin</Link>
-          <span aria-hidden="true">/</span>
-          <Link to="/admin/doctors">Doctors</Link>
-          <span aria-hidden="true">/</span>
-          <span>{doctor?.fullName || "Detail"}</span>
-        </nav>
-
         {loading && (
           <div className="loading-state">
             <div className="loading-spinner" />
@@ -139,45 +140,46 @@ export default function DoctorDetailPage() {
         {message && <div className="alert alert-success">{message}</div>}
 
         {!loading && doctor && (
-          <>
-            <div className="card account-detail-header">
-              <RecordAvatar name={doctor.fullName} imageUrl={doctor.photoUrl} />
-              <div>
-                <h2>{doctor.fullName}</h2>
-                <p>{doctor.email}</p>
-                <div className="status-badge-group">
-                  <StatusBadge active={isActive} label={isActive ? "Active" : "Inactive"} />
-                  <span className="role-badge">{doctor.specialtyName || "Specialty"}</span>
-                </div>
-              </div>
-            </div>
+          <div className="record-detail-page">
+            <RecordDetailHeader
+              name={doctor.fullName}
+              email={doctor.email}
+              imageUrl={doctor.photoUrl}
+              badges={[
+                <StatusBadge key="status" active={isActive} label={isActive ? "Active" : "Inactive"} />,
+                <span key="specialty" className="role-badge">
+                  {doctor.specialtyName || "Specialty"}
+                </span>,
+              ]}
+            />
 
             <div className="detail-grid">
-              <section className="card detail-section">
-                <h3>Professional profile</h3>
+              <RecordDetailSection title="Professional profile">
                 <div className="detail-list">
                   <DetailItem label="License number" value={doctor.licenseNo} />
+                  <DetailItem label="Consultation fee" value={formatCurrency(doctor.consultationFee)} />
                   <DetailItem label="Specialty" value={doctor.specialtyName} />
                   <DetailItem label="Department" value={doctor.departmentName} />
                   <DetailItem label="Phone" value={doctor.phone || "—"} />
                   <DetailItem label="Public profile">
                     {doctor.slug ? (
-                      <Link to={getDoctorProfilePath(doctor)} className="table-link" target="_blank" rel="noreferrer">
+                      <Link
+                        to={getDoctorProfilePath(doctor)}
+                        className="table-link"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
                         Open public page
                       </Link>
                     ) : (
                       "N/A"
                     )}
                   </DetailItem>
-                  <div className="detail-item detail-item-full">
-                    <span className="detail-label">Bio</span>
-                    <span className="detail-value">{doctor.bio || "—"}</span>
-                  </div>
+                  <DetailItem label="Bio" value={doctor.bio || "—"} fullWidth />
                 </div>
-              </section>
+              </RecordDetailSection>
 
-              <section className="card detail-section">
-                <h3>Schedule summary</h3>
+              <RecordDetailSection title="Schedule summary">
                 <div className="detail-list">
                   <DetailItem
                     label="Work-shift templates"
@@ -192,28 +194,36 @@ export default function DoctorDetailPage() {
                 <Link to="/admin/work-shifts" className="btn btn-outline btn-sm">
                   Manage work shifts
                 </Link>
-              </section>
+              </RecordDetailSection>
 
-              <section className="card detail-section">
-                <h3>Linked account</h3>
+              <RecordDetailSection title="Linked account">
                 <div className="detail-list">
-                  <DetailItem label="User ID" value={doctor.userId || "N/A"} />
-                  <DetailItem label="Doctor ID" value={doctor._id} />
+                  {doctor.userId && (
+                    <DetailItem label="Account">
+                      <Link to={getAdminAccountPath(doctor.userSlug || doctor.userId)} className="table-link">
+                        View linked account
+                      </Link>
+                    </DetailItem>
+                  )}
+                  <RecordIdChip label="User ID" value={doctor.userId} />
+                  <RecordIdChip label="Doctor ID" value={doctor._id} />
                   <DetailItem
                     label="Account status"
                     value={doctor.accountIsActive ? "Active" : "Inactive"}
                   />
                 </div>
-              </section>
+              </RecordDetailSection>
             </div>
-          </>
+          </div>
         )}
 
         <ConfirmDialog
           open={showDeactivate}
           title="Deactivate doctor?"
-          message="This doctor will be hidden from patient search. Historical appointments are retained."
-          confirmLabel={statusLoading ? "Processing…" : "Deactivate"}
+          description="This doctor will be hidden from patient search. Historical appointments are retained."
+          confirmText={statusLoading ? "Processing…" : "Deactivate"}
+          variant="danger"
+          loading={statusLoading}
           onConfirm={handleDeactivate}
           onCancel={() => setShowDeactivate(false)}
         />

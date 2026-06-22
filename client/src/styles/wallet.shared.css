@@ -351,6 +351,46 @@
   overflow-y: auto;
 }
 
+/* Transaction history — scrollable list (patient wallet + checkout layouts) */
+.wallet-card--transactions .wallet-card-body,
+.wallet-card--transactions .patient-panel-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.wallet-card--transactions .wallet-txn-filters {
+  flex-shrink: 0;
+}
+
+.wallet-txn-scroll {
+  flex: 1 1 auto;
+  min-height: 10rem;
+  max-height: min(520px, calc(100vh - 16rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin-top: 0.75rem;
+  padding-right: 0.2rem;
+  scrollbar-gutter: stable;
+}
+
+.wallet-txn-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wallet-txn-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wallet-txn-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.wallet-txn-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Top-up form blocks — use patient-form-block + patient-section-label */
 .wallet-form-block,
 .patient-form-block {
@@ -650,10 +690,6 @@
   border: 1px solid rgba(15, 23, 42, 0.05);
 }
 
-.wallet-txn-list {
-  padding-right: 0.25rem;
-}
-
 .wallet-txn-icon {
   flex-shrink: 0;
   width: 36px;
@@ -731,18 +767,47 @@
 .wallet-txn-filter-field input {
   height: 38px;
   padding: 0.45rem 0.65rem;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1.5px solid rgba(8, 145, 178, 0.32);
   border-radius: var(--radius-md);
   background: #fff;
   font: inherit;
   color: var(--color-navy);
+  box-shadow: 0 1px 2px rgba(8, 145, 178, 0.06);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.wallet-txn-filter-field select:hover,
+.wallet-txn-filter-field input:hover {
+  border-color: rgba(8, 145, 178, 0.52);
 }
 
 .wallet-txn-filter-field select:focus,
 .wallet-txn-filter-field input:focus {
   outline: none;
-  border-color: rgba(8, 145, 178, 0.45);
-  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.14);
+}
+
+.wallet-txn-filters-fields .date-picker {
+  min-width: 140px;
+}
+
+.wallet-txn-filters-fields .date-picker-trigger {
+  min-height: 38px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.875rem;
+  border-width: 1px;
+}
+
+.wallet-txn-filters-fields .custom-select {
+  min-width: 140px;
+}
+
+.wallet-txn-filters-fields .custom-select-trigger {
+  min-height: 38px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.875rem;
+  border-width: 1px;
 }
 
 .wallet-txn-filters-actions {

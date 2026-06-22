@@ -43,13 +43,14 @@ const STAFF_SECTIONS = [
   },
 ];
 
-export default function StaffLayout({ children, title, actions }) {
+export default function StaffLayout({ children, title, description, actions }) {
   return (
     <PortalShell
       portalLabel="Staff"
       homeLink="/staff"
       sections={STAFF_SECTIONS}
       title={title || "Staff overview"}
+      description={description}
       actions={actions}
     >
       {children}

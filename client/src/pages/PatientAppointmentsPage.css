@@ -482,11 +482,11 @@
 
   padding: 0.45rem 0.85rem;
 
-  border: 1px solid transparent;
+  border: 1.5px solid rgba(148, 163, 184, 0.45);
 
   border-radius: 999px;
 
-  background: transparent;
+  background: #fff;
 
   font-family: inherit;
 
@@ -507,6 +507,8 @@
 .patient-appt-tab:hover {
 
   background: rgba(8, 145, 178, 0.06);
+
+  border-color: rgba(8, 145, 178, 0.35);
 
   color: var(--color-primary-hover);
 
@@ -1410,22 +1412,17 @@
 
 
 
-.patient-modal-field textarea,
-
-.patient-modal-field select {
-
+.patient-modal-field textarea {
   width: 100%;
-
   padding: 0.625rem 0.875rem;
-
   border: 1.5px solid rgba(15, 23, 42, 0.12);
-
   border-radius: 0.625rem;
-
   font-family: inherit;
-
   resize: vertical;
+}
 
+.patient-modal-field .custom-select {
+  width: 100%;
 }
 
 

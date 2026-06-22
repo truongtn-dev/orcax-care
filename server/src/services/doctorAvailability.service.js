@@ -3,9 +3,9 @@ import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { Doctor } from "../models/Doctor.js";
 import {
   DEFAULT_AVAILABILITY_HORIZON_DAYS,
-  DEFAULT_CONSULTATION_FEE_VND,
   MAX_AVAILABILITY_RANGE_DAYS,
 } from "../config/booking.js";
+import { resolveConsultationFee } from "../utils/consultationFee.js";
 import {
   buildDayEntries,
   groupSlotsByDate,
@@ -71,9 +71,8 @@ function filterBookableSlots(rows) {
   );
 }
 
-export function getConsultationFee() {
-  return DEFAULT_CONSULTATION_FEE_VND;
-}
+
+export { resolveConsultationFee } from "../utils/consultationFee.js";
 
 export async function getDoctorAvailability(identifier, query = {}) {
   const doctor = await loadActiveDoctor(identifier);
@@ -107,7 +106,7 @@ export async function getDoctorAvailability(identifier, query = {}) {
         fullName: doctor.userId?.fullName || "",
         specialty: doctor.specialtyId?.name || "",
       },
-      consultationFee: getConsultationFee(),
+      consultationFee: resolveConsultationFee(doctor),
       currency: "VND",
       range: {
         startDate: formatDateOnly(rangeStart),

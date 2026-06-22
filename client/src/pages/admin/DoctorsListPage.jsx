@@ -6,14 +6,23 @@ import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
 import FilterSearchField from "../../components/FilterSearchField.jsx";
 import AppPagination from "../../components/AppPagination.jsx";
+import AppModal from "../../components/AppModal.jsx";
+import DoctorRecordForm from "../../components/admin/forms/DoctorRecordForm.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
+import { firstFormError, validateAdminCreateAccountForm } from "../../utils/validation.js";
 import {
   ACTION_ICONS,
   PersonCell,
   PersonStatus,
   formatDateOnly,
 } from "../../utils/peopleListUi.jsx";
+import {
+  getAdminAccountPath,
+  getAdminDoctorEditPath,
+  getAdminDoctorPath,
+} from "../../utils/adminUrls.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../../utils/booking.js";
 
 const PAGE_SIZE = 10;
 
@@ -50,8 +59,36 @@ const STATUS_OPTIONS = [
   { value: "false", label: "Inactive" },
 ];
 
+const EMPTY_DOCTOR_FORM = {
+  fullName: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+  role: "doctor",
+  specialtyId: "",
+  departmentId: "",
+  licenseNo: "",
+  consultationFee: String(DEFAULT_CONSULTATION_FEE_VND),
+  bio: "",
+};
+
+const EMPTY_DOCTOR_EDIT_FORM = {
+  email: "",
+  fullName: "",
+  phone: "",
+  specialtyId: "",
+  departmentId: "",
+  licenseNo: "",
+  consultationFee: String(DEFAULT_CONSULTATION_FEE_VND),
+  bio: "",
+  photoUrl: "",
+  isActive: true,
+  accountIsActive: true,
+};
+
 export default function DoctorsListPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({
     q: searchParams.get("q") || "",
     specialtyId: searchParams.get("specialtyId") || "",
@@ -70,6 +107,20 @@ export default function DoctorsListPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFileName, setImportFileName] = useState("");
   const [importResult, setImportResult] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState(EMPTY_DOCTOR_FORM);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [createError, setCreateError] = useState("");
+  const [createSuccess, setCreateSuccess] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [editId, setEditId] = useState("");
+  const [editForm, setEditForm] = useState(EMPTY_DOCTOR_EDIT_FORM);
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const fieldError = (name) => fieldErrors[name];
 
   const loadMasters = useCallback(async () => {
     const [specialtyRes, departmentRes] = await Promise.all([
@@ -101,6 +152,154 @@ export default function DoctorsListPage() {
   useEffect(() => {
     loadDoctors(filters);
   }, [filters, loadDoctors]);
+
+  useEffect(() => {
+    if (searchParams.get("create") === "doctor") {
+      setCreateForm(EMPTY_DOCTOR_FORM);
+      setFieldErrors({});
+      setCreateError("");
+      setCreateSuccess("");
+      setShowCreateModal(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const closeEditModal = useCallback(() => {
+    setEditId("");
+    setEditForm(EMPTY_DOCTOR_EDIT_FORM);
+    setEditError("");
+    setEditSuccess("");
+    setEditLoading(false);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete("edit");
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
+
+  const loadDoctorForEdit = useCallback(async (doctorKey) => {
+    setEditLoading(true);
+    setEditError("");
+    try {
+      const { data } = await AdminApiClient.getDoctor(doctorKey);
+      setEditId(data.slug || data._id);
+      setEditForm({
+        email: data.email || "",
+        fullName: data.fullName || "",
+        phone: data.phone || "",
+        specialtyId: data.specialtyId || "",
+        departmentId: data.departmentId || "",
+        licenseNo: data.licenseNo || "",
+        consultationFee: String(data.consultationFee ?? DEFAULT_CONSULTATION_FEE_VND),
+        bio: data.bio || "",
+        photoUrl: data.photoUrl || "",
+        isActive: Boolean(data.isActive),
+        accountIsActive: Boolean(data.accountIsActive),
+      });
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+      setEditId("");
+    } finally {
+      setEditLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const editKey = searchParams.get("edit");
+    if (!editKey) return;
+    setEditSuccess("");
+    loadDoctorForEdit(editKey);
+  }, [searchParams, loadDoctorForEdit]);
+
+  const openCreateModal = () => {
+    setCreateForm(EMPTY_DOCTOR_FORM);
+    setFieldErrors({});
+    setCreateError("");
+    setCreateSuccess("");
+    setShowCreateModal(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setFieldErrors({});
+    setCreateError("");
+    setCreateSuccess("");
+  };
+
+  const onCreateFormChange = (e) => {
+    const { name, value } = e.target;
+    setCreateForm((current) => ({ ...current, [name]: value }));
+    setFieldErrors((current) => ({ ...current, [name]: undefined }));
+    setCreateError("");
+    setCreateSuccess("");
+  };
+
+  const onEditFormChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editId) return;
+    setSaving(true);
+    setEditError("");
+    setEditSuccess("");
+    try {
+      await AdminApiClient.updateDoctor(editId, {
+        ...editForm,
+        consultationFee: Number(editForm.consultationFee),
+      });
+      setEditSuccess("Doctor updated successfully.");
+      await loadDoctors(filters);
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const onCreateSubmit = async (e) => {
+    e.preventDefault();
+    setCreateError("");
+    setCreateSuccess("");
+
+    const errors = validateAdminCreateAccountForm(createForm);
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setCreateError(firstFormError(errors));
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const { data } = await AdminApiClient.createAccount({
+        fullName: createForm.fullName.trim(),
+        email: createForm.email.trim(),
+        phone: createForm.phone.trim(),
+        password: createForm.password,
+        role: "doctor",
+        specialtyId: createForm.specialtyId,
+        departmentId: createForm.departmentId,
+        licenseNo: createForm.licenseNo.trim(),
+        consultationFee: Number(createForm.consultationFee),
+        bio: createForm.bio.trim(),
+      });
+      setCreateSuccess(data.message || "Doctor account created.");
+      setCreateForm(EMPTY_DOCTOR_FORM);
+      await loadDoctors(filters);
+      setTimeout(() => closeCreateModal(), 900);
+    } catch (err) {
+      setCreateError(getApiErrorMessage(err));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const applyFilters = (patch) => {
     setFilters((current) => ({ ...current, ...patch, page: patch.page ?? 1 }));
@@ -185,16 +384,13 @@ export default function DoctorsListPage() {
     }
   };
 
+  const editKey = searchParams.get("edit");
+
   return (
     <PageLayout dashboard>
       <AdminLayout
         title="Doctor list"
         description="Manage doctor profiles, specialties, and linked accounts."
-        actions={
-          <Link to="/admin/account?create=doctor" className="btn btn-primary btn-sm">
-            Create doctor
-          </Link>
-        }
       >
         <div className="people-list-page">
           <div className="card filters-card people-list-toolbar">
@@ -251,6 +447,16 @@ export default function DoctorsListPage() {
                 <button type="button" className="btn btn-outline" onClick={clearFilters}>
                   Clear
                 </button>
+                <button type="button" className="btn btn-primary" onClick={openCreateModal}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                    <path d="M11 2v2M5 2v2" />
+                    <path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" />
+                    <path d="M8 15a6 6 0 0 0 12 0v-2" />
+                    <line x1="19" y1="11" x2="19" y2="17" />
+                    <line x1="16" y1="14" x2="22" y2="14" />
+                  </svg>
+                  Add doctor
+                </button>
               </div>
             </div>
           </div>
@@ -296,7 +502,7 @@ export default function DoctorsListPage() {
                   <tbody>
                     {result.items.map((doctor) => {
                       const isActive = doctor.isActive && doctor.accountIsActive;
-                      const accountTo = doctor.userId ? `/admin/account/${doctor.userId}` : null;
+                      const accountTo = doctor.userId ? getAdminAccountPath(doctor.userSlug || doctor.userId) : null;
 
                       return (
                         <tr key={doctor._id}>
@@ -333,7 +539,7 @@ export default function DoctorsListPage() {
                           <td className="table-actions-col">
                             <div className="people-list-actions">
                               <Link
-                                to={`/admin/doctors/${doctor._id}`}
+                                to={getAdminDoctorPath(doctor)}
                                 className="people-list-action people-list-action--view"
                                 title="View doctor details"
                               >
@@ -351,7 +557,7 @@ export default function DoctorsListPage() {
                                 </Link>
                               )}
                               <Link
-                                to={`/admin/doctors/${doctor._id}/edit`}
+                                to={getAdminDoctorEditPath(doctor)}
                                 className="people-list-action people-list-action--edit"
                                 title="Edit professional profile"
                               >
@@ -380,6 +586,60 @@ export default function DoctorsListPage() {
             />
           )}
         </div>
+
+        {showCreateModal && (
+          <AppModal
+            wide
+            title="Add doctor account"
+            description="Create a doctor login and professional profile."
+            titleId="create-doctor-title"
+            onClose={closeCreateModal}
+          >
+            <DoctorRecordForm
+              mode="create"
+              form={createForm}
+              specialties={specialties}
+              departments={departments}
+              onChange={onCreateFormChange}
+              onSubmit={onCreateSubmit}
+              onCancel={closeCreateModal}
+              error={createError}
+              success={createSuccess}
+              submitting={creating}
+              fieldError={fieldError}
+            />
+          </AppModal>
+        )}
+
+        {editKey && (
+          <AppModal
+            wide
+            title="Update doctor profile"
+            description="Edit professional details and account access."
+            titleId="edit-doctor-title"
+            onClose={closeEditModal}
+          >
+            {editLoading || !editId ? (
+              <div className="loading-state">
+                <div className="loading-spinner" />
+                Loading doctor…
+              </div>
+            ) : (
+              <DoctorRecordForm
+                mode="edit"
+                form={editForm}
+                specialties={specialties}
+                departments={departments}
+                onChange={onEditFormChange}
+                onSubmit={onEditSubmit}
+                onCancel={closeEditModal}
+                error={editError}
+                success={editSuccess}
+                submitting={saving}
+              />
+            )}
+          </AppModal>
+        )}
 
         {showImportModal && (
           <div className="doctors-import-modal-backdrop" role="presentation" onClick={closeImportModal}>

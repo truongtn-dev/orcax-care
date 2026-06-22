@@ -48,13 +48,14 @@ const DOCTOR_SECTIONS = [
   },
 ];
 
-export default function DoctorLayout({ children, title, actions }) {
+export default function DoctorLayout({ children, title, description, actions }) {
   return (
     <PortalShell
       portalLabel="Doctor"
       homeLink="/doctor"
       sections={DOCTOR_SECTIONS}
       title={title || "Doctor dashboard"}
+      description={description}
       actions={actions}
     >
       {children}

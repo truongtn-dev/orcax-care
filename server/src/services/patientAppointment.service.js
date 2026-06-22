@@ -5,7 +5,7 @@ import { Doctor } from "../models/Doctor.js";
 import { InsuranceCard } from "../models/InsuranceCard.js";
 import { User } from "../models/User.js";
 import { DEFAULT_CONSULTATION_FEE_VND } from "../config/booking.js";
-import { getConsultationFee } from "./doctorAvailability.service.js";
+import { resolveConsultationFee } from "../utils/consultationFee.js";
 import { deductWalletBalance, getOrCreateWallet, refundWalletBalance } from "./wallet.service.js";
 import { WalletTransaction } from "../models/WalletTransaction.js";
 import { formatDateOnly, isSlotDatetimePast } from "../utils/shiftTime.js";
@@ -102,7 +102,12 @@ export async function previewBookingFee(userId, payload = {}) {
     return { status: 404, body: { message: "Appointment slot not found" } };
   }
 
-  const baseFee = getConsultationFee();
+  const doctor = await Doctor.findOne({ _id: slot.doctorId, isActive: true }).select("consultationFee").lean();
+  if (!doctor) {
+    return { status: 404, body: { message: "Doctor not found" } };
+  }
+
+  const baseFee = resolveConsultationFee(doctor);
   let card = null;
   if (insuranceCardId) {
     const insuranceResult = await validateInsuranceCard(userId, insuranceCardId, slot.date);
@@ -160,7 +165,7 @@ export async function createAppointment(userId, payload = {}) {
     return { status: 404, body: { message: "Doctor not found" } };
   }
 
-  const baseFee = getConsultationFee();
+  const baseFee = resolveConsultationFee(doctor);
   const insuranceCard = insuranceResult || null;
   const feeSummary = calculateInsuranceFee(baseFee, insuranceCard, slot.date);
   const { finalFee, discountAmount } = feeSummary;

@@ -22,12 +22,12 @@ const departments = [
 ];
 
 const doctors = [
-  { fullName: "Dr. Nguyen Van An", email: "doctor.an@orcaxcare.com", specialty: "CARD", department: "Internal Medicine", licenseNo: "LIC-001", bio: "15 years experience in cardiology." },
-  { fullName: "Dr. Tran Thi Binh", email: "doctor.binh@orcaxcare.com", specialty: "DERM", department: "Internal Medicine", licenseNo: "LIC-002", bio: "Specialist in dermatology and skin care." },
-  { fullName: "Dr. Le Minh Cuong", email: "doctor.cuong@orcaxcare.com", specialty: "PED", department: "Pediatrics Ward", licenseNo: "LIC-003", bio: "Pediatrician with focus on preventive care." },
-  { fullName: "Dr. Pham Hoai Duc", email: "doctor.duc@orcaxcare.com", specialty: "NEUR", department: "Surgery", licenseNo: "LIC-004", bio: "Neurology and neurosurgery consultant." },
-  { fullName: "Dr. Vo Thi Em", email: "doctor.em@orcaxcare.com", specialty: "ORTH", department: "Surgery", licenseNo: "LIC-005", bio: "Orthopedic surgeon — sports injuries." },
-  { fullName: "Dr. Hoang Quoc Giang", email: "doctor.giang@orcaxcare.com", specialty: "CARD", department: "Internal Medicine", licenseNo: "LIC-006", bio: "Interventional cardiology." },
+  { fullName: "Dr. Nguyen Van An", email: "doctor.an@orcaxcare.com", specialty: "CARD", department: "Internal Medicine", licenseNo: "LIC-001", bio: "15 years experience in cardiology.", consultationFee: 250000 },
+  { fullName: "Dr. Tran Thi Binh", email: "doctor.binh@orcaxcare.com", specialty: "DERM", department: "Internal Medicine", licenseNo: "LIC-002", bio: "Specialist in dermatology and skin care.", consultationFee: 180000 },
+  { fullName: "Dr. Le Minh Cuong", email: "doctor.cuong@orcaxcare.com", specialty: "PED", department: "Pediatrics Ward", licenseNo: "LIC-003", bio: "Pediatrician with focus on preventive care.", consultationFee: 220000 },
+  { fullName: "Dr. Pham Hoai Duc", email: "doctor.duc@orcaxcare.com", specialty: "NEUR", department: "Surgery", licenseNo: "LIC-004", bio: "Neurology and neurosurgery consultant.", consultationFee: 300000 },
+  { fullName: "Dr. Vo Thi Em", email: "doctor.em@orcaxcare.com", specialty: "ORTH", department: "Surgery", licenseNo: "LIC-005", bio: "Orthopedic surgeon — sports injuries.", consultationFee: 280000 },
+  { fullName: "Dr. Hoang Quoc Giang", email: "doctor.giang@orcaxcare.com", specialty: "CARD", department: "Internal Medicine", licenseNo: "LIC-006", bio: "Interventional cardiology.", consultationFee: 260000 },
 ];
 
 export async function runSeed() {
@@ -97,6 +97,21 @@ export async function runSeed() {
     console.log("Created patient: patient@orcaxcare.com / Patient@123");
   }
 
+  const staffHash = await bcrypt.hash("Staff@123", 10);
+  let staffUser = await User.findOne({ email: "staff@orcaxcare.com" });
+  if (!staffUser) {
+    await User.create({
+      email: "staff@orcaxcare.com",
+      passwordHash: staffHash,
+      role: "staff",
+      fullName: "Demo Reception Staff",
+      phone: "0987654321",
+      isActive: true,
+      isEmailVerified: true,
+    });
+    console.log("Created staff: staff@orcaxcare.com / Staff@123");
+  }
+
   for (const doc of doctors) {
     let user = await User.findOne({ email: doc.email });
     if (!user) {
@@ -118,6 +133,7 @@ export async function runSeed() {
         departmentId: deptMap[doc.department],
         licenseNo: doc.licenseNo,
         bio: doc.bio,
+        consultationFee: doc.consultationFee,
         isActive: true,
       },
       { upsert: true, new: true }
@@ -135,5 +151,5 @@ export async function runSeed() {
     await Medicine.findOneAndUpdate({ code: med.code }, med, { upsert: true, new: true });
   }
 
-  console.log("Seed data ready (admin + doctors + master data).");
+  console.log("Seed data ready (admin + staff + doctors + master data).");
 }

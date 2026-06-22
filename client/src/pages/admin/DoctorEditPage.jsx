@@ -6,6 +6,7 @@ import CustomSelect from "../../components/CustomSelect.jsx";
 import CloudinaryAvatarUpload from "../../components/CloudinaryAvatarUpload.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../../utils/booking.js";
 
 const emptyForm = {
   email: "",
@@ -14,6 +15,7 @@ const emptyForm = {
   specialtyId: "",
   departmentId: "",
   licenseNo: "",
+  consultationFee: String(DEFAULT_CONSULTATION_FEE_VND),
   bio: "",
   photoUrl: "",
   isActive: true,
@@ -52,6 +54,7 @@ export default function DoctorEditPage() {
           specialtyId: doctor.specialtyId || "",
           departmentId: doctor.departmentId || "",
           licenseNo: doctor.licenseNo || "",
+          consultationFee: String(doctor.consultationFee ?? DEFAULT_CONSULTATION_FEE_VND),
           bio: doctor.bio || "",
           photoUrl: doctor.photoUrl || "",
           isActive: Boolean(doctor.isActive),
@@ -88,7 +91,10 @@ export default function DoctorEditPage() {
     setSuccess("");
     setSaving(true);
     try {
-      const { data } = await AdminApiClient.updateDoctor(id, form);
+      const { data } = await AdminApiClient.updateDoctor(id, {
+        ...form,
+        consultationFee: Number(form.consultationFee),
+      });
       setForm({
         email: data.email || "",
         fullName: data.fullName || "",
@@ -96,6 +102,7 @@ export default function DoctorEditPage() {
         specialtyId: data.specialtyId || "",
         departmentId: data.departmentId || "",
         licenseNo: data.licenseNo || "",
+        consultationFee: String(data.consultationFee ?? DEFAULT_CONSULTATION_FEE_VND),
         bio: data.bio || "",
         photoUrl: data.photoUrl || "",
         isActive: Boolean(data.isActive),
@@ -189,6 +196,18 @@ export default function DoctorEditPage() {
                 <label>
                   License number
                   <input type="text" name="licenseNo" value={form.licenseNo} onChange={onChange} minLength={3} required />
+                </label>
+                <label>
+                  Consultation fee (VND)
+                  <input
+                    type="number"
+                    name="consultationFee"
+                    value={form.consultationFee}
+                    onChange={onChange}
+                    min={0}
+                    step={1000}
+                    required
+                  />
                 </label>
                 <label className="checkbox-row">
                   <input type="checkbox" name="isActive" checked={form.isActive} onChange={onChange} />

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { Patient } from "../models/Patient.js";
 import { User } from "../models/User.js";
 import { validatePhoneOptional, validateRequired, normalizeEmail, validateEmail, validatePasswordStrength } from "../utils/validation.js";
+import { findUserByIdentifier } from "../utils/userSlug.js";
 
 const GENDERS = ["", "male", "female", "other"];
 const PROFILE_GENDERS = ["male", "female", "other"];
@@ -10,6 +11,7 @@ const PROFILE_GENDERS = ["male", "female", "other"];
 function toPatientListItem(user, patient) {
   return {
     _id: user._id.toString(),
+    slug: user.slug || "",
     userId: user._id.toString(),
     patientId: patient?._id?.toString() || "",
     fullName: user.fullName,
@@ -31,6 +33,7 @@ function toPatientListItem(user, patient) {
 function toPatientDetail(user, patient) {
   return {
     _id: user._id.toString(),
+    slug: user.slug || "",
     role: user.role,
     fullName: user.fullName,
     email: user.email,
@@ -65,6 +68,7 @@ function mapPatient(patient) {
   const user = patient.userId || {};
   return {
     _id: patient._id.toString(),
+    slug: user.slug || "",
     userId: user._id?.toString() || "",
     email: user.email || "",
     fullName: user.fullName || "",
@@ -91,13 +95,38 @@ function mapPatient(patient) {
 function populatePatient(query) {
   return query.populate(
     "userId",
-    "email fullName phone isActive isEmailVerified isLocked lastLoginAt passwordChangedAt createdAt"
+    "email fullName phone slug isActive isEmailVerified isLocked lastLoginAt passwordChangedAt createdAt"
   );
 }
 
 function findPatient(id) {
   if (!isValidObjectId(id)) return null;
   return populatePatient(Patient.findById(id));
+}
+
+async function resolvePatientUser(identifier) {
+  if (!identifier) return null;
+
+  const key = String(identifier).trim();
+  if (isValidObjectId(key)) {
+    const byRecord = await populatePatient(Patient.findById(key)).lean();
+    if (byRecord?.userId) {
+      const user = byRecord.userId;
+      return { user: typeof user === "object" ? user : await User.findById(user), patient: byRecord };
+    }
+
+    const user = await User.findById(key);
+    if (user?.role === "patient") {
+      let patientProfile = await Patient.findOne({ userId: user._id }).lean();
+      return { user, patient: patientProfile };
+    }
+    return null;
+  }
+
+  const user = await findUserByIdentifier(key);
+  if (!user || user.role !== "patient") return null;
+  const patientProfile = await Patient.findOne({ userId: user._id }).lean();
+  return { user, patient: patientProfile };
 }
 
 export async function listPatients(params = {}) {
@@ -187,40 +216,37 @@ async function listPatientsByRecord({ q = "", activeOnly = false, page = 1, limi
   };
 }
 
-export async function getPatient(id) {
-  const query = findPatient(id);
+export async function getPatient(identifier) {
+  const query = findPatient(identifier);
   const patient = query ? await query.lean() : null;
   if (patient) {
     return { status: 200, body: mapPatient(patient) };
   }
 
-  if (!id || !isValidObjectId(id)) {
+  const resolved = await resolvePatientUser(identifier);
+  if (resolved?.user) {
+    let patientProfile = resolved.patient;
+    if (!patientProfile) {
+      patientProfile = await Patient.create({ userId: resolved.user._id });
+    }
+    return { status: 200, body: toPatientDetail(resolved.user, patientProfile) };
+  }
+
+  if (!identifier || (isValidObjectId(identifier) === false && !String(identifier).trim())) {
     return { status: 400, body: { message: "Invalid patient id" } };
   }
 
-  const user = await User.findById(id);
-  if (!user) return { status: 404, body: { message: "Patient account not found" } };
-  if (user.role !== "patient") {
-    return { status: 400, body: { message: "This account is not a patient account" } };
-  }
-
-  let patientProfile = await Patient.findOne({ userId: user._id });
-  if (!patientProfile) patientProfile = await Patient.create({ userId: user._id });
-
-  return { status: 200, body: toPatientDetail(user, patientProfile) };
+  return { status: 404, body: { message: "Patient account not found" } };
 }
 
-export async function updatePatient(id, dto) {
-  const query = findPatient(id);
-  const patient = query ? await query : null;
-
-  if (!patient && isValidObjectId(id)) {
-    const user = await User.findById(id);
-    if (user && user.role === "patient") {
-      return updatePatientByUserAccount(id, dto);
-    }
+export async function updatePatient(identifier, dto) {
+  const resolved = await resolvePatientUser(identifier);
+  if (resolved?.user) {
+    return updatePatientByUserAccount(resolved.user._id.toString(), dto);
   }
 
+  const query = findPatient(identifier);
+  const patient = query ? await query : null;
   if (!patient) return { status: 404, body: { message: "Patient profile not found" } };
 
   const user = await User.findById(patient.userId._id);

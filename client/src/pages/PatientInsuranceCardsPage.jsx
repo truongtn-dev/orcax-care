@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "../styles/patient.shared.css";
@@ -415,14 +416,22 @@ export default function PatientInsuranceCardsPage() {
                             placeholder="e.g. 30"
                           />
                         </label>
-                        <label>
-                          <span className="patient-insurance-field-label">Valid from</span>
-                          <input type="date" name="validFrom" value={form.validFrom} onChange={onChange} />
-                        </label>
-                        <label>
-                          <span className="patient-insurance-field-label">Valid to</span>
-                          <input type="date" name="validTo" value={form.validTo} onChange={onChange} />
-                        </label>
+                        <DatePicker
+                          label="Valid from"
+                          name="validFrom"
+                          value={form.validFrom}
+                          onChange={onChange}
+                          max={form.validTo || undefined}
+                          placeholder="Select start date"
+                        />
+                        <DatePicker
+                          label="Valid to"
+                          name="validTo"
+                          value={form.validTo}
+                          onChange={onChange}
+                          min={form.validFrom || undefined}
+                          placeholder="Select end date"
+                        />
                         <label className="patient-insurance-checkbox field-span-2">
                           <input
                             type="checkbox"

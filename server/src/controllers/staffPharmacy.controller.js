@@ -10,6 +10,16 @@ export async function getPharmacyDashboard(req, res) {
   }
 }
 
+export async function getStaffDashboard(req, res) {
+  try {
+    const result = await StaffPharmacyService.getStaffDashboard();
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function listMedicines(req, res) {
   try {
     const result = await StaffPharmacyService.listMedicines(req.query);

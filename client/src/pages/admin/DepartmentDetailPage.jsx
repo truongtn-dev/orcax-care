@@ -123,12 +123,6 @@ export default function DepartmentDetailPage() {
           )
         }
       >
-        <nav className="breadcrumb-nav" aria-label="Breadcrumb">
-          <Link to="/admin?tab=departments">Departments</Link>
-          <span aria-hidden="true">/</span>
-          <span>{detail?.department?.name || "Department"}</span>
-        </nav>
-
         {loading && (
           <div className="loading-state">
             <div className="loading-spinner" />

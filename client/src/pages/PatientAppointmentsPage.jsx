@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import PageLayout from "../components/PageLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import AppPagination from "../components/AppPagination.jsx";
 import DoctorAvailabilityPanel from "../components/DoctorAvailabilityPanel.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
@@ -10,6 +11,13 @@ import { formatWalletCurrency } from "../utils/walletUtils.js";
 import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 import "../styles/patient.shared.css";
 import "./PatientAppointmentsPage.css";
+
+const CANCEL_REASON_OPTIONS = [
+  { value: "Change of plans", label: "Change of plans" },
+  { value: "Schedule conflict", label: "Schedule conflict" },
+  { value: "Illness", label: "Illness" },
+  { value: "Other", label: "Other" },
+];
 
 const PAGE_SIZE = 10;
 
@@ -581,17 +589,13 @@ export default function PatientAppointmentsPage() {
             </div>
 
             <div className="patient-modal-field">
-              <label htmlFor="cancel-reason">Reason for cancellation</label>
-              <select
+              <CustomSelect
                 id="cancel-reason"
+                label="Reason for cancellation"
                 value={cancelReason}
-                onChange={(event) => setCancelReason(event.target.value)}
-              >
-                <option value="Change of plans">Change of plans</option>
-                <option value="Schedule conflict">Schedule conflict</option>
-                <option value="Illness">Illness</option>
-                <option value="Other">Other</option>
-              </select>
+                onChange={setCancelReason}
+                options={CANCEL_REASON_OPTIONS}
+              />
             </div>
 
             {modalError && <div className="alert alert-error">{modalError}</div>}

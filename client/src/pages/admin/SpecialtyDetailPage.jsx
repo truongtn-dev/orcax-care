@@ -54,14 +54,6 @@ export default function SpecialtyDetailPage() {
           </>
         }
       >
-        <nav className="breadcrumb" aria-label="Breadcrumb">
-          <Link to="/admin">Admin</Link>
-          <span aria-hidden="true">/</span>
-          <Link to="/admin/specialty">Specialties</Link>
-          <span aria-hidden="true">/</span>
-          <span>{specialty?.name || "Detail"}</span>
-        </nav>
-
         {loading && (
           <div className="loading-state">
             <div className="loading-spinner" />

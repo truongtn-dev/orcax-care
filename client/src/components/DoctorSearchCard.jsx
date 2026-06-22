@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { formatWalletCurrency } from "../utils/walletUtils.js";
+import { DEFAULT_CONSULTATION_FEE_VND } from "../utils/booking.js";
 import { getDoctorProfilePath } from "../utils/doctorUrls.js";
 
 function getInitials(name) {
@@ -72,7 +73,7 @@ export default function DoctorSearchCard({ doctor }) {
       {openSlots > 0 && (
         <p className="doctor-card-availability">
           {openSlots} open slot{openSlots === 1 ? "" : "s"} · from{" "}
-          {formatWalletCurrency(consultationFee || 200000)}
+          {formatWalletCurrency(consultationFee ?? DEFAULT_CONSULTATION_FEE_VND)}
         </p>
       )}
 

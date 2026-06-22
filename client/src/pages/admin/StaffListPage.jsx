@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./StaffListPage.css";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
@@ -8,6 +8,7 @@ import FilterSearchField from "../../components/FilterSearchField.jsx";
 import AppPagination from "../../components/AppPagination.jsx";
 import ConfirmDialog from "../../components/ConfirmDialog.jsx";
 import AppModal from "../../components/AppModal.jsx";
+import StaffAccountForm from "../../components/admin/forms/StaffAccountForm.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 import { firstFormError, validateAdminCreateAccountForm } from "../../utils/validation.js";
@@ -19,6 +20,15 @@ import {
   formatDateOnly,
   formatDateShort,
 } from "../../utils/peopleListUi.jsx";
+import { getStaffDetailPath, getStaffEditPath } from "../../utils/adminUrls.js";
+import { isMongoObjectId } from "../../utils/doctorUrls.js";
+
+const EMPTY_EDIT_FORM = {
+  fullName: "",
+  email: "",
+  phone: "",
+  isActive: true,
+};
 
 const PAGE_SIZE = 10;
 
@@ -38,6 +48,7 @@ const EMPTY_FORM = {
 };
 
 export default function StaffListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filters, setFilters] = useState({ q: "", isActive: "", page: 1, limit: PAGE_SIZE });
   const [result, setResult] = useState({ items: [], total: 0, page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -52,6 +63,12 @@ export default function StaffListPage() {
   const [statusConfirm, setStatusConfirm] = useState({ open: false, account: null, action: null });
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ type: "", text: "" });
+  const [editId, setEditId] = useState("");
+  const [editForm, setEditForm] = useState(EMPTY_EDIT_FORM);
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const loadStaff = useCallback(async (params) => {
     setLoading(true);
@@ -84,6 +101,46 @@ export default function StaffListPage() {
   const clearFilters = () => {
     setFilters({ q: "", isActive: "", page: 1, limit: PAGE_SIZE });
   };
+
+  const closeEditModal = useCallback(() => {
+    setEditId("");
+    setEditForm(EMPTY_EDIT_FORM);
+    setEditError("");
+    setEditSuccess("");
+    setEditLoading(false);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  const loadStaffForEdit = useCallback(async (accountKey) => {
+    setEditLoading(true);
+    setEditError("");
+    try {
+      const { data } = await AdminApiClient.getAccount(accountKey);
+      const slug = data.slug || data._id;
+      setEditId(slug);
+      setEditForm({
+        fullName: data.fullName || "",
+        email: data.email || "",
+        phone: data.phone || "",
+        isActive: Boolean(data.isActive),
+      });
+      if (data.slug && isMongoObjectId(accountKey) && data.slug !== accountKey) {
+        setSearchParams({ edit: data.slug }, { replace: true });
+      }
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+      setEditId("");
+    } finally {
+      setEditLoading(false);
+    }
+  }, [setSearchParams]);
+
+  useEffect(() => {
+    const editKey = searchParams.get("edit");
+    if (!editKey) return;
+    setEditSuccess("");
+    loadStaffForEdit(editKey);
+  }, [searchParams, loadStaffForEdit]);
 
   const openCreateModal = () => {
     setForm(EMPTY_FORM);
@@ -143,6 +200,33 @@ export default function StaffListPage() {
 
   const fieldError = (name) => fieldErrors[name];
 
+  const onEditFormChange = (e) => {
+    const { name, type, checked, value } = e.target;
+    setEditForm((current) => ({
+      ...current,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editId) return;
+    setSaving(true);
+    setEditError("");
+    setEditSuccess("");
+    try {
+      await AdminApiClient.updateAccount(editId, editForm);
+      setEditSuccess("Staff account updated successfully.");
+      await loadStaff(filters);
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const requestStatusChange = (account) => {
     setStatusMessage({ type: "", text: "" });
     const action = account.isActive ? "deactivate" : "reactivate";
@@ -160,10 +244,10 @@ export default function StaffListPage() {
     setStatusMessage({ type: "", text: "" });
     try {
       if (action === "deactivate") {
-        await AdminApiClient.deactivateUser(account._id);
+        await AdminApiClient.deactivateUser(account.slug || account._id);
         setStatusMessage({ type: "success", text: "Staff account deactivated." });
       } else {
-        await AdminApiClient.reactivateUser(account._id);
+        await AdminApiClient.reactivateUser(account.slug || account._id);
         setStatusMessage({ type: "success", text: "Staff account reactivated." });
       }
       await loadStaff(filters);
@@ -174,6 +258,8 @@ export default function StaffListPage() {
       setStatusLoading(false);
     }
   };
+
+  const editKey = searchParams.get("edit");
 
   return (
     <PageLayout dashboard>
@@ -268,7 +354,7 @@ export default function StaffListPage() {
                           <PersonCell
                             name={staff.fullName}
                             email={staff.email}
-                            to={`/admin/account/${staff._id}`}
+                            to={getStaffDetailPath(staff)}
                           />
                         </td>
                         <td>
@@ -303,7 +389,7 @@ export default function StaffListPage() {
                         <td className="table-actions-col">
                           <div className="people-list-actions">
                             <Link
-                              to={`/admin/account/${staff._id}`}
+                              to={getStaffDetailPath(staff)}
                               className="people-list-action people-list-action--view"
                               title="View account details"
                             >
@@ -311,7 +397,7 @@ export default function StaffListPage() {
                               Details
                             </Link>
                             <Link
-                              to={`/admin/account/${staff._id}/edit`}
+                              to={getStaffEditPath(staff)}
                               className="people-list-action people-list-action--edit"
                               title="Edit account"
                             >
@@ -383,84 +469,44 @@ export default function StaffListPage() {
             titleId="create-staff-title"
             onClose={closeCreateModal}
           >
-              <form onSubmit={onCreateSubmit} className="form form-compact">
-                {createError && <div className="alert alert-error">{createError}</div>}
-                {createSuccess && <div className="alert alert-success">{createSuccess}</div>}
+            <StaffAccountForm
+              mode="create"
+              form={form}
+              onChange={onFormChange}
+              onSubmit={onCreateSubmit}
+              onCancel={closeCreateModal}
+              error={createError}
+              success={createSuccess}
+              submitting={creating}
+              fieldError={fieldError}
+            />
+          </AppModal>
+        )}
 
-                <label>
-                  Full name
-                  <input
-                    name="fullName"
-                    value={form.fullName}
-                    onChange={onFormChange}
-                    placeholder="Jane Doe"
-                    aria-invalid={Boolean(fieldError("fullName"))}
-                  />
-                  {fieldError("fullName") && <span className="field-error">{fieldError("fullName")}</span>}
-                </label>
-
-                <label>
-                  Email address
-                  <input
-                    type="email"
-                    name="email"
-                    value={form.email}
-                    onChange={onFormChange}
-                    placeholder="staff@example.com"
-                    aria-invalid={Boolean(fieldError("email"))}
-                  />
-                  {fieldError("email") && <span className="field-error">{fieldError("email")}</span>}
-                </label>
-
-                <label>
-                  Phone number
-                  <input
-                    name="phone"
-                    value={form.phone}
-                    onChange={onFormChange}
-                    placeholder="0901234567"
-                    aria-invalid={Boolean(fieldError("phone"))}
-                  />
-                  {fieldError("phone") && <span className="field-error">{fieldError("phone")}</span>}
-                </label>
-
-                <label>
-                  Password
-                  <input
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={onFormChange}
-                    autoComplete="new-password"
-                    aria-invalid={Boolean(fieldError("password"))}
-                  />
-                  {fieldError("password") && <span className="field-error">{fieldError("password")}</span>}
-                </label>
-
-                <label>
-                  Re-enter password
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={form.confirmPassword}
-                    onChange={onFormChange}
-                    autoComplete="new-password"
-                    aria-invalid={Boolean(fieldError("confirmPassword"))}
-                  />
-                  {fieldError("confirmPassword") && (
-                    <span className="field-error">{fieldError("confirmPassword")}</span>
-                  )}
-                </label>
-
-                <div className="form-actions">
-                  <button type="button" className="btn btn-outline" onClick={closeCreateModal}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary" disabled={creating}>
-                    {creating ? "Creating…" : "Create staff"}
-                  </button>
-                </div>
-              </form>
+        {editKey && (
+          <AppModal
+            title="Update staff account"
+            description="Edit staff contact details and access status."
+            titleId="edit-staff-title"
+            onClose={closeEditModal}
+          >
+            {editLoading || !editId ? (
+              <div className="loading-state">
+                <div className="loading-spinner" />
+                Loading staff account…
+              </div>
+            ) : (
+              <StaffAccountForm
+                mode="edit"
+                form={editForm}
+                onChange={onEditFormChange}
+                onSubmit={onEditSubmit}
+                onCancel={closeEditModal}
+                error={editError}
+                success={editSuccess}
+                submitting={saving}
+              />
+            )}
           </AppModal>
         )}
       </AdminLayout>

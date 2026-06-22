@@ -2,10 +2,22 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import AdminLayout from "../components/AdminLayout.jsx";
-import RecordAvatar from "../components/RecordAvatar.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import {
+  DetailItem,
+  RecordDetailHeader,
+  RecordDetailSection,
+  RecordIdChip,
+  StatusBadge,
+} from "../components/admin/RecordDetailParts.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import { useAdminSlugRedirect } from "../hooks/useAdminSlugRedirect.js";
+import {
+  getAdminAccountPath,
+  getAdminPatientEditPath,
+  getAdminPatientPath,
+} from "../utils/adminUrls.js";
 
 const GENDER_LABELS = {
   male: "Male",
@@ -27,23 +39,6 @@ function formatDate(value) {
 function formatDateOnly(value) {
   if (!value) return "—";
   return new Date(value).toLocaleDateString();
-}
-
-function StatusBadge({ active, label }) {
-  return (
-    <span className={`status-badge ${active ? "status-badge-active" : "status-badge-inactive"}`}>
-      {label}
-    </span>
-  );
-}
-
-function DetailItem({ label, value }) {
-  return (
-    <div className="detail-item">
-      <span className="detail-label">{label}</span>
-      <span className="detail-value">{value ?? "—"}</span>
-    </div>
-  );
 }
 
 export default function AdminPatientDetailPage() {
@@ -70,6 +65,12 @@ export default function AdminPatientDetailPage() {
   useEffect(() => {
     loadPatient();
   }, [id]);
+
+  useAdminSlugRedirect({
+    record: patient,
+    paramKey: id,
+    buildPath: getAdminPatientPath,
+  });
 
   const handleDeactivate = async () => {
     if (!accountId || !patient) return;
@@ -128,11 +129,11 @@ export default function AdminPatientDetailPage() {
     <PageLayout dashboard>
       <AdminLayout
         title="Patient details"
-        description="View and manage patient information."
+        description="Demographics, linked account, and access status."
         actions={
           patient ? (
             <>
-              <Link to={`/admin/patients/${id}/edit`} className="btn btn-primary">
+              <Link to={getAdminPatientEditPath(patient)} className="btn btn-primary">
                 Edit patient
               </Link>
               {accountIsActive ? (
@@ -154,130 +155,155 @@ export default function AdminPatientDetailPage() {
                   Reactivate
                 </button>
               )}
+              <Link to="/admin/patients" className="btn btn-secondary">
+                Back to list
+              </Link>
             </>
           ) : null
         }
       >
+        {loading && (
+          <div className="loading-state">
+            <div className="loading-spinner" />
+            Loading patient…
+          </div>
+        )}
 
-      {loading && (
-        <div className="loading-state">
-          <div className="loading-spinner" />
-          Loading patient…
-        </div>
-      )}
+        {error && !loading && <div className="alert alert-error">{error}</div>}
+        {message && <div className="alert alert-success">{message}</div>}
 
-      {error && !loading && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      {!loading && patient && (
-        <>
-          <div className="card account-detail-header">
-            <RecordAvatar name={patient.fullName} imageUrl={patient.profile?.avatarUrl} />
-            <div>
-              <h2>{patient.fullName}</h2>
-              <p>{patient.email}</p>
-              <p>
-                <Link to={`/admin/account/${accountId}`} className="table-link">
-                  Open linked account →
-                </Link>
-              </p>
-              <div className="status-badge-group">
-                <StatusBadge active={accountIsActive} label={accountIsActive ? "Active" : "Inactive"} />
-                {profileIsActive != null && (
+        {!loading && patient && (
+          <div className="record-detail-page">
+            <RecordDetailHeader
+              name={patient.fullName}
+              email={patient.email}
+              imageUrl={patient.profile?.avatarUrl}
+              meta={
+                accountId ? (
+                  <p className="record-detail-meta-link">
+                    <Link to={getAdminAccountPath(patient)} className="table-link">
+                      Open linked account →
+                    </Link>
+                  </p>
+                ) : null
+              }
+              badges={[
+                <StatusBadge
+                  key="account"
+                  active={accountIsActive}
+                  label={accountIsActive ? "Active" : "Inactive"}
+                />,
+                profileIsActive != null && (
                   <StatusBadge
+                    key="profile"
                     active={profileIsActive}
                     label={profileIsActive ? "Profile active" : "Profile inactive"}
                   />
-                )}
+                ),
                 <StatusBadge
+                  key="email"
                   active={patient.isEmailVerified}
                   label={patient.isEmailVerified ? "Email verified" : "Email not verified"}
-                />
-                {patient.isLocked && <span className="status-badge status-badge-locked">Locked</span>}
-              </div>
-            </div>
-          </div>
+                />,
+                patient.isLocked && (
+                  <span key="locked" className="status-badge status-badge-locked">
+                    Locked
+                  </span>
+                ),
+              ].filter(Boolean)}
+            />
 
-          <div className="detail-grid">
-            <section className="card detail-section">
-              <h3>Linked account</h3>
-              <div className="detail-list">
-                <DetailItem label="Patient record ID" value={patient._id} />
-                <DetailItem label="Linked account ID" value={accountId || "N/A"} />
-                <DetailItem label="Full name" value={patient.fullName} />
-                <DetailItem label="Email" value={patient.email} />
-                <DetailItem label="Phone number" value={patient.phone || "—"} />
-                <DetailItem label="Registered" value={formatDate(patient.createdAt)} />
-                <DetailItem label="Last login" value={formatDate(patient.lastLoginAt)} />
-                <DetailItem label="Last password change" value={formatDate(patient.passwordChangedAt)} />
-              </div>
-            </section>
+            <div className="detail-grid">
+              <RecordDetailSection title="Linked account">
+                <div className="detail-list">
+                  <DetailItem label="Full name" value={patient.fullName} />
+                  <DetailItem label="Email" value={patient.email} />
+                  <DetailItem label="Phone number" value={patient.phone || "—"} />
+                  <DetailItem label="Registered" value={formatDate(patient.createdAt)} />
+                  <DetailItem label="Last login" value={formatDate(patient.lastLoginAt)} />
+                  <DetailItem label="Last password change" value={formatDate(patient.passwordChangedAt)} />
+                  <RecordIdChip label="Patient record ID" value={patient._id} />
+                  <RecordIdChip label="Linked account ID" value={accountId} />
+                </div>
+              </RecordDetailSection>
 
-            <section className="card detail-section">
-              <h3>Demographics</h3>
-              <div className="detail-list">
-                <DetailItem label="Date of birth" value={formatDateOnly(patient.profile.dateOfBirth)} />
-                <DetailItem
-                  label="Gender"
-                  value={GENDER_LABELS[patient.profile.gender] || patient.profile.gender || "—"}
-                />
-                <DetailItem label="Address" value={patient.profile.address || "—"} />
-                <DetailItem label="Emergency contact name" value={patient.profile.emergencyContactName || "—"} />
-                <DetailItem label="Emergency contact phone" value={patient.profile.emergencyContactPhone || "—"} />
-              </div>
-            </section>
-
-            <section className="card detail-section">
-              <h3>Account status</h3>
-              <div className="detail-list">
-                <DetailItem
-                  label="Account status"
-                  value={
-                    <StatusBadge
-                      active={accountIsActive}
-                      label={accountIsActive ? "Active" : "Inactive"}
-                    />
-                  }
-                />
-                {profileIsActive != null && (
+              <RecordDetailSection title="Demographics">
+                <div className="detail-list">
+                  <DetailItem label="Date of birth" value={formatDateOnly(patient.profile?.dateOfBirth)} />
                   <DetailItem
-                    label="Profile status"
+                    label="Gender"
+                    value={GENDER_LABELS[patient.profile?.gender] || patient.profile?.gender || "—"}
+                  />
+                  <DetailItem label="Address" value={patient.profile?.address || "—"} />
+                  <DetailItem
+                    label="Emergency contact name"
+                    value={patient.profile?.emergencyContactName || "—"}
+                  />
+                  <DetailItem
+                    label="Emergency contact phone"
+                    value={patient.profile?.emergencyContactPhone || "—"}
+                  />
+                </div>
+              </RecordDetailSection>
+
+              <RecordDetailSection title="Account status">
+                <div className="detail-list">
+                  <DetailItem
+                    label="Account status"
                     value={
                       <StatusBadge
-                        active={profileIsActive}
-                        label={profileIsActive ? "Active" : "Inactive"}
+                        active={accountIsActive}
+                        label={accountIsActive ? "Active" : "Inactive"}
                       />
                     }
                   />
-                )}
-                <DetailItem
-                  label="Email verification"
-                  value={
-                    <StatusBadge
-                      active={patient.isEmailVerified}
-                      label={patient.isEmailVerified ? "Verified" : "Not verified"}
+                  {profileIsActive != null && (
+                    <DetailItem
+                      label="Profile status"
+                      value={
+                        <StatusBadge
+                          active={profileIsActive}
+                          label={profileIsActive ? "Active" : "Inactive"}
+                        />
+                      }
                     />
-                  }
-                />
-                <DetailItem
-                  label="Account locked"
-                  value={patient.isLocked ? <span className="status-badge status-badge-locked">Locked</span> : "No"}
-                />
-                <DetailItem label="Last updated" value={formatDate(patient.updatedAt)} />
-              </div>
-            </section>
+                  )}
+                  <DetailItem
+                    label="Email verification"
+                    value={
+                      <StatusBadge
+                        active={patient.isEmailVerified}
+                        label={patient.isEmailVerified ? "Verified" : "Not verified"}
+                      />
+                    }
+                  />
+                  <DetailItem
+                    label="Account locked"
+                    value={
+                      patient.isLocked ? (
+                        <span className="status-badge status-badge-locked">Locked</span>
+                      ) : (
+                        "No"
+                      )
+                    }
+                  />
+                  <DetailItem label="Last updated" value={formatDate(patient.updatedAt)} />
+                </div>
+              </RecordDetailSection>
+            </div>
           </div>
-        </>
-      )}
+        )}
 
-      <ConfirmDialog
-        open={showDeactivate}
-        title="Deactivate patient?"
-        message="The patient account will be disabled and cannot book appointments. Data is retained."
-        confirmLabel={statusLoading ? "Processing…" : "Deactivate"}
-        onConfirm={handleDeactivate}
-        onCancel={() => setShowDeactivate(false)}
-      />
+        <ConfirmDialog
+          open={showDeactivate}
+          title="Deactivate patient?"
+          description="The patient account will be disabled and cannot book appointments. Data is retained."
+          confirmText={statusLoading ? "Processing…" : "Deactivate"}
+          variant="danger"
+          loading={statusLoading}
+          onConfirm={handleDeactivate}
+          onCancel={() => setShowDeactivate(false)}
+        />
       </AdminLayout>
     </PageLayout>
   );

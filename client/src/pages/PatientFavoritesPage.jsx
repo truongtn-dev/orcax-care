@@ -5,6 +5,8 @@ import ScrollReveal from "../components/ScrollReveal.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { getDoctorProfilePath } from "../utils/doctorUrls.js";
+import "./PatientDashboardPage.css";
+import "./PatientFavoritesPage.css";
 
 function getInitials(name) {
   if (!name) return "D";
@@ -151,68 +153,87 @@ export default function PatientFavoritesPage() {
           </div>
         )}
 
-        <section className="patient-dashboard-section">
-          <div className="patient-section-pill patient-section-pill--cyan">Favorite doctors</div>
-          <div className="doctor-grid-premium">
-            {loading && <div className="card empty-state">Loading favorites...</div>}
+        <section className="patient-dashboard-section patient-favorites-section">
+          <div className="patient-favorites-panel">
+            <header className="patient-favorites-panel-head">
+              <div className="patient-section-pill patient-section-pill--cyan">Favorite doctors</div>
+              {!loading && items.length > 0 && (
+                <span className="patient-favorites-count">
+                  {items.length} saved doctor{items.length === 1 ? "" : "s"}
+                </span>
+              )}
+            </header>
 
-            {!loading && items.length === 0 && (
-              <div className="card empty-state">
-                <h3>No favorite doctors yet</h3>
-                <p>Save doctors from profile pages to access them quickly later.</p>
-                <div className="form-actions">
-                  <Link to="/search-doctors" className="btn btn-primary">
-                    Browse doctors
-                  </Link>
-                </div>
+            {loading && (
+              <div className="patient-favorites-loading" aria-busy="true">
+                <div className="loading-spinner" aria-hidden="true" />
+                <span>Loading favorites…</span>
               </div>
             )}
 
-            {!loading &&
-              items.map((item) => {
-                const doctor = item.doctor;
-                const initials = getInitials(doctor.fullName);
+            {!loading && items.length === 0 && (
+              <div className="patient-favorites-empty">
+                <div className="empty-state-icon patient-favorites-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78Z" />
+                  </svg>
+                </div>
+                <h3>No favorite doctors yet</h3>
+                <p>Save doctors from profile pages to access them quickly later.</p>
+                <Link to="/search-doctors" className="btn btn-primary">
+                  Browse doctors
+                </Link>
+              </div>
+            )}
 
-                return (
-                  <article key={item.doctorId} className="doctor-card-premium">
-                    <div className="doctor-card-premium-accent" aria-hidden="true" />
-                    <div className="doctor-card-premium-header">
-                      <div className="doctor-card-avatar-ring">
-                        {doctor.photoUrl ? (
-                          <img src={doctor.photoUrl} alt="" className="doctor-card-photo" loading="lazy" />
-                        ) : null}
-                        <span className={`doctor-card-initials ${doctor.photoUrl ? "doctor-card-initials-hidden" : ""}`}>
-                          {initials}
-                        </span>
+            {!loading && items.length > 0 && (
+              <div className="patient-favorites-grid">
+                {items.map((item) => {
+                  const doctor = item.doctor;
+                  const initials = getInitials(doctor.fullName);
+
+                  return (
+                    <article key={item.doctorId} className="doctor-card-premium">
+                      <div className="doctor-card-premium-accent" aria-hidden="true" />
+                      <div className="doctor-card-premium-header">
+                        <div className="doctor-card-avatar-ring">
+                          {doctor.photoUrl ? (
+                            <img src={doctor.photoUrl} alt="" className="doctor-card-photo" loading="lazy" />
+                          ) : null}
+                          <span className={`doctor-card-initials ${doctor.photoUrl ? "doctor-card-initials-hidden" : ""}`}>
+                            {initials}
+                          </span>
+                        </div>
+                        <div className="doctor-card-premium-titles">
+                          <h3>{doctor.fullName}</h3>
+                          {doctor.specialty?.name && (
+                            <span className="doctor-card-specialty-pill">{doctor.specialty.name}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className="doctor-card-premium-titles">
-                        <h3>{doctor.fullName}</h3>
-                        {doctor.specialty?.name && (
-                          <span className="doctor-card-specialty-pill">{doctor.specialty.name}</span>
-                        )}
+
+                      <p className="doctor-card-premium-bio">
+                        {doctor.bio || "Experienced physician dedicated to patient care."}
+                      </p>
+
+                      <div className="doctor-card-premium-footer">
+                        <Link to={getDoctorProfilePath(doctor)} className="btn btn-primary btn-sm doctor-card-cta">
+                          View profile
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          onClick={() => handleRemove(item)}
+                          disabled={removingId === item.doctorId}
+                        >
+                          {removingId === item.doctorId ? "Removing..." : "Remove"}
+                        </button>
                       </div>
-                    </div>
-
-                    <p className="doctor-card-premium-bio">
-                      {doctor.bio || "Experienced physician dedicated to patient care."}
-                    </p>
-
-                    <div className="doctor-card-premium-footer">
-                      <Link to={getDoctorProfilePath(doctor)} className="btn btn-primary btn-sm doctor-card-cta">
-                        View profile
-                      </Link>
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-sm"
-                        onClick={() => handleRemove(item)}
-                        disabled={removingId === item.doctorId}
-                      >
-                        {removingId === item.doctorId ? "Removing..." : "Remove"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </div>

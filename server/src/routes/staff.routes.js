@@ -7,6 +7,7 @@ export const staffRouter = Router();
 
 staffRouter.use(requireDatabase, authMiddleware, requireRole("staff", "admin"));
 
+staffRouter.get("/dashboard", StaffPharmacyController.getStaffDashboard);
 staffRouter.get("/pharmacy/dashboard", StaffPharmacyController.getPharmacyDashboard);
 staffRouter.get("/pharmacy/medicines", StaffPharmacyController.listMedicines);
 staffRouter.get("/pharmacy/stock-movements", StaffPharmacyController.listStockMovements);

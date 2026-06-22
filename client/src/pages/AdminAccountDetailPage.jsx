@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Link, useParams } from "react-router-dom";
 
@@ -9,6 +9,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import RecordAvatar from "../components/RecordAvatar.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import { DetailItem } from "../components/admin/RecordDetailParts.jsx";
 
 import { AdminApiClient } from "../services/adminApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
@@ -16,6 +17,15 @@ import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 
 import { useAuth } from "../context/AuthContext.jsx";
+import { useAdminSlugRedirect } from "../hooks/useAdminSlugRedirect.js";
+import {
+  getAdminAccountEditPath,
+  getStaffEditPath,
+  getAdminAccountPath,
+  getAdminDoctorEditPath,
+  getAdminDoctorPath,
+  getAdminPatientPath,
+} from "../utils/adminUrls.js";
 
 
 
@@ -119,24 +129,6 @@ function StatusBadge({ active, label }) {
 
 
 
-function DetailItem({ label, value }) {
-
-  return (
-
-    <div className="detail-item">
-
-      <span className="detail-label">{label}</span>
-
-      <span className="detail-value">{value ?? "—"}</span>
-
-    </div>
-
-  );
-
-}
-
-
-
 export default function AdminAccountDetailPage() {
 
   const { id } = useParams();
@@ -202,6 +194,45 @@ export default function AdminAccountDetailPage() {
     loadAccount();
 
   }, [loadAccount]);
+
+  useAdminSlugRedirect({
+    record: account,
+    paramKey: id,
+    buildPath: getAdminAccountPath,
+  });
+
+  const pageMeta = useMemo(() => {
+    if (account?.role === "staff") {
+      return {
+        title: "Staff details",
+        description: "Staff account access and role settings.",
+        backTo: "/admin/staff",
+        backLabel: "Back to staff",
+      };
+    }
+    if (account?.role === "patient") {
+      return {
+        title: "Patient account",
+        description: "Sign-in account linked to the patient profile.",
+        backTo: "/admin/account",
+        backLabel: "Back to accounts",
+      };
+    }
+    if (account?.role === "doctor") {
+      return {
+        title: "Doctor account",
+        description: "Sign-in account linked to the doctor profile.",
+        backTo: "/admin/account",
+        backLabel: "Back to accounts",
+      };
+    }
+    return {
+      title: "Account details",
+      description: "User account, role, and linked profile information.",
+      backTo: "/admin/account",
+      backLabel: "Back to list",
+    };
+  }, [account?.role]);
 
 
 
@@ -397,7 +428,9 @@ export default function AdminAccountDetailPage() {
 
       <AdminLayout
 
-        title="Account details"
+        title={pageMeta.title}
+
+        description={pageMeta.description}
 
         actions={
 
@@ -405,7 +438,10 @@ export default function AdminAccountDetailPage() {
 
             <>
 
-              <Link to={`/admin/account/${id}/edit`} className="btn btn-primary">
+              <Link
+                to={account.role === "staff" ? getStaffEditPath(account) : getAdminAccountEditPath(account)}
+                className="btn btn-primary"
+              >
 
                 Edit account
 
@@ -449,9 +485,9 @@ export default function AdminAccountDetailPage() {
 
               )}
 
-              <Link to="/admin/account" className="btn btn-secondary">
+              <Link to={pageMeta.backTo} className="btn btn-secondary">
 
-                Back to list
+                {pageMeta.backLabel}
 
               </Link>
 
@@ -550,31 +586,25 @@ export default function AdminAccountDetailPage() {
 
                 <DetailItem label="Role" value={formatRoleLabel(account.role)} />
 
-                <DetailItem
-                  label="Linked patient ID"
-                  value={
-                    account.patientId ? (
-                      <Link to={`/admin/patients/${account.patientId}`} className="table-link">
-                        {account.patientId}
-                      </Link>
-                    ) : (
-                      "N/A"
-                    )
-                  }
-                />
+                <DetailItem label="Linked patient ID">
+                  {account.patientId ? (
+                    <Link to={getAdminPatientPath(account.patientSlug || account)} className="table-link">
+                      View patient profile
+                    </Link>
+                  ) : (
+                    "N/A"
+                  )}
+                </DetailItem>
 
-                <DetailItem
-                  label="Linked doctor ID"
-                  value={
-                    account.doctorId ? (
-                      <Link to={`/admin/doctors/${account.doctorId}`} className="table-link">
-                        {account.doctorId}
-                      </Link>
-                    ) : (
-                      "N/A"
-                    )
-                  }
-                />
+                <DetailItem label="Linked doctor ID">
+                  {account.doctorId ? (
+                    <Link to={getAdminDoctorPath(account.doctorSlug || account.doctorId)} className="table-link">
+                      View doctor profile
+                    </Link>
+                  ) : (
+                    "N/A"
+                  )}
+                </DetailItem>
 
                 <DetailItem label="Last login" value={formatDate(account.lastLoginAt)} />
 
@@ -640,7 +670,7 @@ export default function AdminAccountDetailPage() {
 
                   {account.doctorId && (
 
-                    <Link to={`/admin/doctors/${account.doctorId}`} className="btn btn-outline btn-sm">
+                    <Link to={getAdminDoctorPath(account.doctorSlug || account.doctorId)} className="btn btn-outline btn-sm">
 
                       View doctor profile
 
@@ -650,7 +680,7 @@ export default function AdminAccountDetailPage() {
 
                   {account.doctorId && (
 
-                    <Link to={`/admin/doctors/${account.doctorId}/edit`} className="btn btn-outline btn-sm">
+                    <Link to={getAdminDoctorEditPath(account.doctorSlug || account.doctorId)} className="btn btn-outline btn-sm">
 
                       Edit professional profile
 
@@ -670,13 +700,7 @@ export default function AdminAccountDetailPage() {
 
                   <DetailItem label="Profile status" value={account.profile.isActive ? "Active" : "Inactive"} />
 
-                  <div className="detail-item detail-item-full">
-
-                    <span className="detail-label">Bio</span>
-
-                    <span className="detail-value">{account.profile.bio || "—"}</span>
-
-                  </div>
+                  <DetailItem label="Bio" value={account.profile.bio || "—"} fullWidth />
 
                 </div>
 
@@ -693,6 +717,24 @@ export default function AdminAccountDetailPage() {
                 <h3>Administrator</h3>
 
                 <p className="detail-note">This account has system administrator privileges.</p>
+
+              </section>
+
+            )}
+
+
+
+            {account.role === "staff" && (
+
+              <section className="card detail-section record-detail-section">
+
+                <h3>Staff access</h3>
+
+                <p className="detail-note">
+
+                  Staff accounts support pharmacy and operational workflows. Manage permissions via role changes below.
+
+                </p>
 
               </section>
 
@@ -720,112 +762,74 @@ export default function AdminAccountDetailPage() {
 
               {roleError && <div className="alert alert-error">{roleError}</div>}
 
-              <div className="form-grid">
-
-                <CustomSelect
-
-                  label="New role"
-
-                  value={roleForm.role}
-
-                  onChange={(role) => setRoleForm((current) => ({ ...current, role }))}
-
-                  options={CHANGE_ROLE_OPTIONS}
-
-                  disabled={isSelf || roleLoading}
-
-                />
-
-                {roleForm.role === "doctor" && (
-
-                  <>
-
+              <div className="form form-compact account-role-form">
+                <div className="form-grid">
+                  <div className="form-grid-span-2">
                     <CustomSelect
-
-                      label="Specialty"
-
-                      value={roleForm.specialtyId}
-
-                      onChange={(specialtyId) => setRoleForm((current) => ({ ...current, specialtyId }))}
-
-                      options={[
-
-                        { value: "", label: "Select specialty" },
-
-                        ...specialties.map((item) => ({ value: item._id, label: item.name })),
-
-                      ]}
-
+                      label="New role"
+                      value={roleForm.role}
+                      onChange={(role) => setRoleForm((current) => ({ ...current, role }))}
+                      options={CHANGE_ROLE_OPTIONS}
                       disabled={isSelf || roleLoading}
-
                     />
+                  </div>
 
-                    <CustomSelect
+                  {roleForm.role === "doctor" && (
+                    <>
+                      <div>
+                        <CustomSelect
+                          label="Specialty"
+                          value={roleForm.specialtyId}
+                          onChange={(specialtyId) => setRoleForm((current) => ({ ...current, specialtyId }))}
+                          options={[
+                            { value: "", label: "Select specialty" },
+                            ...specialties.map((item) => ({ value: item._id, label: item.name })),
+                          ]}
+                          disabled={isSelf || roleLoading}
+                        />
+                      </div>
 
-                      label="Department"
+                      <div>
+                        <CustomSelect
+                          label="Department"
+                          value={roleForm.departmentId}
+                          onChange={(departmentId) => setRoleForm((current) => ({ ...current, departmentId }))}
+                          options={[
+                            { value: "", label: "Select department" },
+                            ...departments.map((item) => ({ value: item._id, label: item.name })),
+                          ]}
+                          disabled={isSelf || roleLoading}
+                        />
+                      </div>
 
-                      value={roleForm.departmentId}
+                      <label className="form-grid-span-2">
+                        License number
+                        <input
+                          type="text"
+                          name="licenseNo"
+                          value={roleForm.licenseNo}
+                          onChange={onRoleFieldChange}
+                          placeholder="DOC-001"
+                          disabled={isSelf || roleLoading}
+                          required
+                        />
+                      </label>
 
-                      onChange={(departmentId) => setRoleForm((current) => ({ ...current, departmentId }))}
-
-                      options={[
-
-                        { value: "", label: "Select department" },
-
-                        ...departments.map((item) => ({ value: item._id, label: item.name })),
-
-                      ]}
-
-                      disabled={isSelf || roleLoading}
-
-                    />
-
-                    <label>
-
-                      License number
-
-                      <input
-
-                        type="text"
-
-                        name="licenseNo"
-
-                        value={roleForm.licenseNo}
-
-                        onChange={onRoleFieldChange}
-
-                        disabled={isSelf || roleLoading}
-
-                        required
-
-                      />
-
-                    </label>
-
-                    <label className="form-grid-full">
-
-                      Bio
-
-                      <textarea
-
-                        name="bio"
-
-                        value={roleForm.bio}
-
-                        onChange={onRoleFieldChange}
-
-                        rows={3}
-
-                        disabled={isSelf || roleLoading}
-
-                      />
-
-                    </label>
-
-                  </>
-
-                )}
-
+                      <label className="form-grid-span-2">
+                        Bio
+                        <textarea
+                          name="bio"
+                          value={roleForm.bio}
+                          onChange={onRoleFieldChange}
+                          rows={4}
+                          maxLength={1000}
+                          placeholder="Short professional bio (optional)"
+                          disabled={isSelf || roleLoading}
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="form-actions">

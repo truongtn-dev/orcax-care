@@ -184,7 +184,7 @@ const ADMIN_SECTIONS = [
 
 
 
-export default function AdminLayout({ children, title, actions }) {
+export default function AdminLayout({ children, title, description, actions }) {
 
   const location = useLocation();
 
@@ -213,6 +213,8 @@ export default function AdminLayout({ children, title, actions }) {
       sections={ADMIN_SECTIONS}
 
       title={pageTitle}
+
+      description={description}
 
       actions={actions}
 

@@ -4,6 +4,9 @@ import "./AdminDashboardPage.css";
 import PageLayout from "../components/PageLayout.jsx";
 import AdminLayout from "../components/AdminLayout.jsx";
 import ScrollReveal from "../components/ScrollReveal.jsx";
+import DatePicker from "../components/DatePicker.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
+import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
 import { AdminApiClient } from "../services/adminApi.js";
 import { PublicApiClient } from "../services/publicApi.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -485,9 +488,12 @@ export default function AdminDashboardPage() {
                   </svg>
                 </div>
                 <div className="admin-overview-hero-copy">
-                  <p className="admin-overview-hero-eyebrow">OrcaXCare control center</p>
+                  <p className="admin-overview-hero-eyebrow">Control center</p>
+                  <h2 className="admin-overview-hero-title">
+                    {fullName ? `Welcome back, ${fullName.split(" ")[0]}` : "Welcome back"}
+                  </h2>
                   <p className="admin-overview-hero-lead">
-                    {fullName ? `Welcome back, ${fullName.split(" ")[0]}.` : "Welcome back."} Monitor clinic operations and jump into any module below.
+                    Monitor clinic operations and jump into any module below.
                   </p>
                 </div>
               </div>
@@ -497,15 +503,7 @@ export default function AdminDashboardPage() {
           <ScrollReveal variant="up" delay={30}>
             <section className="admin-dashboard-kpis card" aria-labelledby="admin-dashboard-kpis-title">
               <div className="admin-dashboard-kpis-head">
-                <div>
-                  <h2 id="admin-dashboard-kpis-title">Clinic KPIs</h2>
-                  <p className="admin-dashboard-kpis-sub">
-                    Revenue and activity for the selected period
-                    {dashboardData?.period?.from && dashboardData?.period?.to
-                      ? ` (${dashboardData.period.from} → ${dashboardData.period.to})`
-                      : ""}
-                  </p>
-                </div>
+                <h2 id="admin-dashboard-kpis-title">Clinic KPIs</h2>
                 <form
                   className="admin-dashboard-filters"
                   onSubmit={(event) => {
@@ -513,36 +511,35 @@ export default function AdminDashboardPage() {
                     loadDashboard();
                   }}
                 >
-                  <label>
-                    <span>From</span>
-                    <input
-                      type="date"
-                      value={dashboardFrom}
-                      onChange={(event) => setDashboardFrom(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>To</span>
-                    <input
-                      type="date"
-                      value={dashboardTo}
-                      onChange={(event) => setDashboardTo(event.target.value)}
-                    />
-                  </label>
-                  <label>
-                    <span>Doctor</span>
-                    <select
-                      value={dashboardDoctorId}
-                      onChange={(event) => setDashboardDoctorId(event.target.value)}
-                    >
-                      <option value="">All doctors</option>
-                      {doctorFilterOptions.map((item) => (
-                        <option key={item._id} value={item._id}>
-                          {item.fullName || item.licenseNo || item._id}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <DatePicker
+                    label="From"
+                    name="dashboardFrom"
+                    value={dashboardFrom}
+                    onChange={(event) => setDashboardFrom(event.target.value)}
+                    max={dashboardTo || undefined}
+                    required
+                  />
+                  <DatePicker
+                    label="To"
+                    name="dashboardTo"
+                    value={dashboardTo}
+                    onChange={(event) => setDashboardTo(event.target.value)}
+                    min={dashboardFrom || undefined}
+                    required
+                  />
+                  <CustomSelect
+                    label="Doctor"
+                    value={dashboardDoctorId}
+                    onChange={setDashboardDoctorId}
+                    placeholder="All doctors"
+                    options={[
+                      { value: "", label: "All doctors" },
+                      ...doctorFilterOptions.map((item) => ({
+                        value: item._id,
+                        label: item.fullName || item.licenseNo || item._id,
+                      })),
+                    ]}
+                  />
                   <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
                     {dashboardLoading ? "Loading…" : "Apply"}
                   </button>
@@ -588,34 +585,19 @@ export default function AdminDashboardPage() {
                 </article>
               </div>
 
-              <div className="admin-revenue-chart" aria-label="Revenue by day">
-                <div className="admin-revenue-chart-head">
-                  <h3>Revenue by day</h3>
-                  {!dashboardLoading && dashboardData?.revenueChart?.length === 0 && (
-                    <p>No bookings in this period.</p>
-                  )}
-                </div>
-                {!dashboardLoading && dashboardData?.revenueChart?.length > 0 && (
-                  <div className="admin-revenue-chart-bars">
-                    {(() => {
-                      const maxRevenue = Math.max(
-                        ...dashboardData.revenueChart.map((point) => point.revenue || 0),
-                        1
-                      );
-                      return dashboardData.revenueChart.map((point) => (
-                        <div key={point.date} className="admin-revenue-bar-wrap">
-                          <div
-                            className="admin-revenue-bar"
-                            style={{ height: `${Math.max(6, (point.revenue / maxRevenue) * 100)}%` }}
-                            title={`${point.date}: ${formatCurrency(point.revenue)} (${point.appointments} appts)`}
-                          />
-                          <span className="admin-revenue-bar-label">{point.date.slice(5)}</span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                )}
-              </div>
+              <DashboardBarChart
+                embedded
+                title="Revenue by day"
+                description="Bookings in the selected period"
+                data={(dashboardData?.revenueChart || []).map((point) => ({
+                  key: point.date,
+                  label: point.date.slice(5),
+                  value: point.revenue || 0,
+                  title: `${point.date}: ${formatCurrency(point.revenue)} (${point.appointments} appts)`,
+                }))}
+                loading={dashboardLoading}
+                emptyMessage="No bookings in this period."
+              />
             </section>
           </ScrollReveal>
 

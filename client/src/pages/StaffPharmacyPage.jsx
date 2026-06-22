@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import StaffLayout from "../components/StaffLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import DatePicker from "../components/DatePicker.jsx";
+import DashboardKpiGrid from "../components/dashboard/DashboardKpiGrid.jsx";
+import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
 import { StaffApiClient } from "../services/staffApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./StaffPharmacyPage.css";
@@ -77,57 +80,97 @@ export default function StaffPharmacyPage() {
     }
   };
 
+  const kpiItems = dashboard
+    ? [
+        {
+          key: "medicines",
+          tone: "cyan",
+          label: "Medicines",
+          value: dashboard.medicineCount ?? 0,
+          hint: "Active SKUs",
+        },
+        {
+          key: "low-stock",
+          tone: dashboard.lowStockCount > 0 ? "amber" : "emerald",
+          label: "Low stock",
+          value: dashboard.lowStockCount ?? 0,
+          hint: "At or below minimum",
+        },
+        {
+          key: "inbound",
+          tone: "teal",
+          label: "Inbound today",
+          value: dashboard.inboundToday ?? 0,
+          hint: "Movements recorded",
+        },
+      ]
+    : [];
+
   return (
     <PageLayout dashboard>
       <StaffLayout
         title="Pharmacy inventory"
         description="Record stock inbound and monitor on-hand quantities."
-        actions={
-          <Link to="/staff" className="btn btn-secondary btn-sm">
-            Back to overview
-          </Link>
-        }
       >
-        {loading && (
-          <div className="loading-state">
-            <div className="loading-spinner" />
-            Loading pharmacy…
+        <div className="staff-pharmacy-page dash-page-stack">
+          <div className="staff-pharmacy-toolbar card">
+            <p className="staff-pharmacy-toolbar-lead">Manage deliveries, stock levels, and movement history.</p>
+            <Link to="/staff" className="btn btn-outline btn-sm">
+              Back to overview
+            </Link>
           </div>
-        )}
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {message && <div className="alert alert-success">{message}</div>}
-
-        {!loading && (
-          <>
-            <div className="staff-pharmacy-stats">
-              <div className="card staff-pharmacy-stat">
-                <span className="staff-pharmacy-stat-label">Medicines</span>
-                <strong>{dashboard?.medicineCount ?? 0}</strong>
-              </div>
-              <div className="card staff-pharmacy-stat">
-                <span className="staff-pharmacy-stat-label">Low stock</span>
-                <strong>{dashboard?.lowStockCount ?? 0}</strong>
-              </div>
-              <div className="card staff-pharmacy-stat">
-                <span className="staff-pharmacy-stat-label">Inbound today</span>
-                <strong>{dashboard?.inboundToday ?? 0}</strong>
-              </div>
+          {loading && (
+            <div className="loading-state">
+              <div className="loading-spinner" />
+              Loading pharmacy…
             </div>
+          )}
 
-            <div className="staff-pharmacy-grid">
-              <form className="card form-card staff-pharmacy-form" onSubmit={onSubmit}>
-                <h3>Stock inbound</h3>
-                <p className="form-help">Increase on-hand quantity with batch and supplier reference.</p>
-                <div className="form-grid">
+          {error && <div className="alert alert-error">{error}</div>}
+          {message && <div className="alert alert-success">{message}</div>}
+
+          {!loading && (
+            <>
+              <DashboardKpiGrid items={kpiItems} loading={false} columns={3} />
+
+              <div className="dash-charts-row staff-pharmacy-charts">
+                <DashboardBarChart
+                  title="Stock on hand"
+                  description="Current quantity by medicine code"
+                  data={dashboard?.stockChart || []}
+                  emptyMessage="No medicines in inventory."
+                  valueFormatter={(value, point) => point.title || `${point.label}: ${value}`}
+                />
+                <DashboardBarChart
+                  title="Inbound trend (7 days)"
+                  description="Units received per day"
+                  data={(dashboard?.inboundTrend || []).map((point) => ({
+                    ...point,
+                    title: `${point.date}: ${point.value} units`,
+                  }))}
+                  emptyMessage="No inbound deliveries in the last 7 days."
+                  barClassName="dash-chart-bar--cyan"
+                />
+              </div>
+
+              <form className="card form staff-pharmacy-form" onSubmit={onSubmit}>
+                <div className="staff-pharmacy-form-head">
+                  <div>
+                    <h3>Stock inbound</h3>
+                    <p className="form-help">Increase on-hand quantity with batch and supplier reference.</p>
+                  </div>
+                </div>
+                <div className="form-grid staff-pharmacy-form-grid">
                   <CustomSelect
+                    className="filter-field form-grid-span-2"
                     label="Medicine *"
                     value={form.medicineId}
                     onChange={(medicineId) => setForm((current) => ({ ...current, medicineId }))}
                     options={medicineOptions}
                   />
-                  <label className="form-field">
-                    <span>Quantity *</span>
+                  <label>
+                    Quantity *
                     <input
                       name="quantity"
                       type="number"
@@ -137,8 +180,8 @@ export default function StaffPharmacyPage() {
                       required
                     />
                   </label>
-                  <label className="form-field">
-                    <span>Batch number *</span>
+                  <label>
+                    Batch number *
                     <input
                       name="batchNo"
                       value={form.batchNo}
@@ -146,25 +189,24 @@ export default function StaffPharmacyPage() {
                       required
                     />
                   </label>
-                  <label className="form-field">
-                    <span>Expiry date</span>
-                    <input
-                      name="expiryDate"
-                      type="date"
-                      value={form.expiryDate}
-                      onChange={(e) => setForm((current) => ({ ...current, expiryDate: e.target.value }))}
-                    />
-                  </label>
-                  <label className="form-field">
-                    <span>Supplier reference</span>
+                  <DatePicker
+                    label="Expiry date"
+                    name="expiryDate"
+                    value={form.expiryDate}
+                    onChange={(e) => setForm((current) => ({ ...current, expiryDate: e.target.value }))}
+                    min={new Date().toISOString().slice(0, 10)}
+                    placeholder="Select expiry date"
+                  />
+                  <label>
+                    Supplier reference
                     <input
                       name="supplierRef"
                       value={form.supplierRef}
                       onChange={(e) => setForm((current) => ({ ...current, supplierRef: e.target.value }))}
                     />
                   </label>
-                  <label className="form-field form-field-full">
-                    <span>Note</span>
+                  <label className="form-grid-span-2">
+                    Note
                     <input
                       name="note"
                       value={form.note}
@@ -217,43 +259,43 @@ export default function StaffPharmacyPage() {
                   </table>
                 </div>
               </section>
-            </div>
 
-            <section className="card staff-pharmacy-ledger">
-              <h3>Recent stock movements</h3>
-              {movements.length === 0 ? (
-                <p className="text-muted">No stock movements yet.</p>
-              ) : (
-                <div className="table-wrap">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Medicine</th>
-                        <th>Type</th>
-                        <th>Qty</th>
-                        <th>Batch</th>
-                        <th>Supplier</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {movements.map((row) => (
-                        <tr key={row._id}>
-                          <td>{new Date(row.createdAt).toLocaleString()}</td>
-                          <td>{row.medicine?.name || "—"}</td>
-                          <td>{row.type}</td>
-                          <td>{row.quantity}</td>
-                          <td>{row.batchNo || "—"}</td>
-                          <td>{row.supplierRef || "—"}</td>
+              <section className="card staff-pharmacy-ledger">
+                <h3>Recent stock movements</h3>
+                {movements.length === 0 ? (
+                  <p className="text-muted">No stock movements yet.</p>
+                ) : (
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Medicine</th>
+                          <th>Type</th>
+                          <th>Qty</th>
+                          <th>Batch</th>
+                          <th>Supplier</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          </>
-        )}
+                      </thead>
+                      <tbody>
+                        {movements.map((row) => (
+                          <tr key={row._id}>
+                            <td>{new Date(row.createdAt).toLocaleString()}</td>
+                            <td>{row.medicine?.name || "—"}</td>
+                            <td>{row.type}</td>
+                            <td>{row.quantity}</td>
+                            <td>{row.batchNo || "—"}</td>
+                            <td>{row.supplierRef || "—"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
+        </div>
       </StaffLayout>
     </PageLayout>
   );

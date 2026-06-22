@@ -1,0 +1,16 @@
+.app-icon {
+  flex-shrink: 0;
+  display: block;
+}
+
+.portal-nav-icon .app-icon,
+.portal-nav-icon.app-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.dash-kpi-icon .app-icon,
+.patient-quick-icon .app-icon {
+  width: 20px;
+  height: 20px;
+}

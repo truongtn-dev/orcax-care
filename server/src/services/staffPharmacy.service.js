@@ -125,25 +125,79 @@ export async function stockInbound(userId, payload = {}) {
   };
 }
 
-export async function getPharmacyDashboard() {
-  const [medicines, lowStockCount, recentInbound] = await Promise.all([
-    Medicine.countDocuments({ isActive: true }),
-    Medicine.countDocuments({
-      isActive: true,
-      $expr: { $lte: ["$stockQty", "$minStockLevel"] },
-    }),
+function dateKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function buildPharmacyDashboardBody() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const trendStart = new Date(today);
+  trendStart.setDate(today.getDate() - 6);
+
+  const [medicineRows, recentInbound, inboundRows] = await Promise.all([
+    Medicine.find({ isActive: true }).sort({ name: 1 }).lean(),
     StockMovement.countDocuments({
       type: "inbound",
-      createdAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+      createdAt: { $gte: today },
     }),
+    StockMovement.find({
+      type: "inbound",
+      createdAt: { $gte: trendStart },
+    })
+      .select("createdAt quantity")
+      .lean(),
   ]);
 
+  const lowStockItems = medicineRows.filter((item) => item.stockQty <= item.minStockLevel);
+  const trendDays = [];
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - offset);
+    trendDays.push(dateKey(day));
+  }
+
+  const inboundByDay = Object.fromEntries(
+    trendDays.map((day) => [day, { movements: 0, quantity: 0 }])
+  );
+  for (const row of inboundRows) {
+    const key = dateKey(new Date(row.createdAt));
+    if (!inboundByDay[key]) continue;
+    inboundByDay[key].movements += 1;
+    inboundByDay[key].quantity += row.quantity || 0;
+  }
+
+  return {
+    medicineCount: medicineRows.length,
+    lowStockCount: lowStockItems.length,
+    inboundToday: recentInbound,
+    stockChart: medicineRows.map((medicine) => ({
+      key: medicine._id.toString(),
+      label: medicine.code,
+      value: medicine.stockQty,
+      tone: medicine.stockQty <= medicine.minStockLevel ? "warn" : undefined,
+      title: `${medicine.name}: ${medicine.stockQty} ${medicine.unit} (min ${medicine.minStockLevel})`,
+    })),
+    inboundTrend: trendDays.map((day) => ({
+      date: day,
+      label: day.slice(5),
+      value: inboundByDay[day].quantity,
+      movements: inboundByDay[day].movements,
+    })),
+    lowStockItems: lowStockItems.map((medicine) => serializeMedicine(medicine)),
+  };
+}
+
+export async function getPharmacyDashboard() {
   return {
     status: 200,
-    body: {
-      medicineCount: medicines,
-      lowStockCount,
-      inboundToday: recentInbound,
-    },
+    body: await buildPharmacyDashboardBody(),
+  };
+}
+
+export async function getStaffDashboard() {
+  return {
+    status: 200,
+    body: await buildPharmacyDashboardBody(),
   };
 }

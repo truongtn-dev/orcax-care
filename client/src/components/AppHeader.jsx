@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import LogoIcon from "./LogoIcon.jsx";
+import AppIcon from "./icons/AppIcon.jsx";
 import { formatRoleLabel } from "../utils/roleLabels.js";
 import { NotificationApiClient } from "../services/notificationApi.js";
 
@@ -153,12 +154,10 @@ export default function AppHeader() {
             {isAuthenticated && role === "patient" && (
               <Link
                 to="/patient/notifications"
-                className={`nav-link nav-link-notifications ${isActive("/patient/notifications") ? "nav-link-active" : ""}`}
+                className={`nav-link nav-link-mobile-only ${isActive("/patient/notifications") ? "nav-link-active" : ""}`}
               >
                 Notifications
-                {unreadNotifications > 0 && (
-                  <span className="nav-notification-badge">{unreadNotifications > 99 ? "99+" : unreadNotifications}</span>
-                )}
+                {unreadNotifications > 0 ? ` (${unreadNotifications > 99 ? "99+" : unreadNotifications})` : ""}
               </Link>
             )}
           </div>
@@ -192,7 +191,27 @@ export default function AppHeader() {
               </Link>
             </>
           ) : (
-            <div className="avatar-menu">
+            <div className="header-user-cluster">
+              {role === "patient" && (
+                <Link
+                  to="/patient/notifications"
+                  className={`header-notification-btn ${isActive("/patient/notifications") ? "is-active" : ""}`}
+                  aria-label={
+                    unreadNotifications > 0
+                      ? `Notifications, ${unreadNotifications} unread`
+                      : "Notifications"
+                  }
+                  title="Notifications"
+                >
+                  <AppIcon name="bell" size={22} />
+                  {unreadNotifications > 0 && (
+                    <span className="header-notification-badge">
+                      {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                    </span>
+                  )}
+                </Link>
+              )}
+              <div className="avatar-menu">
               <button
                 type="button"
                 className="avatar-btn"
@@ -249,6 +268,7 @@ export default function AppHeader() {
                   </div>
                 </>
               )}
+            </div>
             </div>
           )}
 

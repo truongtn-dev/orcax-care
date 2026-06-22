@@ -5,6 +5,7 @@ import AdminLayout from "../components/AdminLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import StaffLayout from "../components/StaffLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 import CloudinaryAvatarUpload from "../components/CloudinaryAvatarUpload.jsx";
 import RecordAvatar from "../components/RecordAvatar.jsx";
 import AppModal from "../components/AppModal.jsx";
@@ -314,10 +315,14 @@ export default function EditProfilePage() {
                     folder="orcaxcare/avatars/patients"
                   />
                   <div className="form-grid">
-                    <label>
-                      Date of birth
-                      <input type="date" name="dateOfBirth" value={form.dateOfBirth} onChange={onChange} />
-                    </label>
+                    <DatePicker
+                      label="Date of birth"
+                      name="dateOfBirth"
+                      value={form.dateOfBirth}
+                      onChange={onChange}
+                      max={new Date().toISOString().slice(0, 10)}
+                      placeholder="Select date of birth"
+                    />
                     <CustomSelect
                       label="Gender"
                       value={form.gender}

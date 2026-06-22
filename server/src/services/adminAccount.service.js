@@ -13,10 +13,13 @@ import {
   validateRequired,
 } from "../utils/validation.js";
 import { invalidateSearchCache } from "./doctorSearch.service.js";
+import { findUserByIdentifier } from "../utils/userSlug.js";
+import { parseConsultationFeeInput, resolveConsultationFee } from "../utils/consultationFee.js";
 
 function mapAccount(user, { patientId = null, doctorId = null } = {}) {
   return {
     _id: user._id.toString(),
+    slug: user.slug || "",
     email: user.email,
     role: user.role,
     fullName: user.fullName,
@@ -67,7 +70,7 @@ export async function listAccounts({ q, role, isActive, page = 1, limit = 20 } =
 
   const [items, total] = await Promise.all([
     User.find(filter)
-      .select("email role fullName phone isActive isEmailVerified isLocked lastLoginAt createdAt updatedAt")
+      .select("email role fullName phone slug isActive isEmailVerified isLocked lastLoginAt createdAt updatedAt")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
@@ -82,17 +85,21 @@ export async function listAccounts({ q, role, isActive, page = 1, limit = 20 } =
   if (userIds.length > 0) {
     const [patients, doctors] = await Promise.all([
       Patient.find({ userId: { $in: userIds } }).select("userId").lean(),
-      Doctor.find({ userId: { $in: userIds } }).select("userId").lean(),
+      Doctor.find({ userId: { $in: userIds } }).select("userId slug").lean(),
     ]);
     patientByUser = Object.fromEntries(patients.map((p) => [p.userId.toString(), p._id]));
-    doctorByUser = Object.fromEntries(doctors.map((d) => [d.userId.toString(), d._id]));
+    doctorByUser = Object.fromEntries(
+      doctors.map((d) => [d.userId.toString(), { _id: d._id, slug: d.slug || "" }]),
+    );
   }
 
   return {
     items: items.map((user) => {
       const id = user._id.toString();
+      const doctorLink = doctorByUser[id];
       return {
         _id: id,
+        slug: user.slug || "",
         email: user.email,
         role: user.role,
         fullName: user.fullName,
@@ -104,7 +111,9 @@ export async function listAccounts({ q, role, isActive, page = 1, limit = 20 } =
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
         patientId: patientByUser[id]?.toString() ?? null,
-        doctorId: doctorByUser[id]?.toString() ?? null,
+        patientSlug: user.slug || "",
+        doctorId: doctorLink?._id?.toString() ?? null,
+        doctorSlug: doctorLink?.slug || "",
       };
     }),
     page: pageNum,
@@ -115,7 +124,18 @@ export async function listAccounts({ q, role, isActive, page = 1, limit = 20 } =
 }
 
 export async function createAccount(payload) {
-  const { email, password, fullName, phone, role, specialtyId, departmentId, licenseNo, bio } = payload;
+  const {
+    email,
+    password,
+    fullName,
+    phone,
+    role,
+    specialtyId,
+    departmentId,
+    licenseNo,
+    bio,
+    consultationFee,
+  } = payload;
 
   const emailError = validateEmail(email);
   if (emailError) return { status: 400, body: { message: emailError } };
@@ -177,12 +197,16 @@ export async function createAccount(payload) {
   }
 
   if (role === "doctor") {
+    const feeResult = parseConsultationFeeInput(consultationFee);
+    if (feeResult.error) return { status: 400, body: { message: feeResult.error } };
+
     await Doctor.create({
       userId: user._id,
       specialtyId,
       departmentId,
       licenseNo: licenseNo.trim(),
       bio: bio?.trim()?.slice(0, 1000) || "",
+      consultationFee: feeResult.value,
       isActive: true,
     });
     invalidateSearchCache();
@@ -198,14 +222,13 @@ export async function createAccount(payload) {
   };
 }
 
-export async function getAccount(userId) {
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    return { status: 400, body: { message: "Invalid account id" } };
-  }
+export async function getAccount(identifier) {
+  const userRef = await findUserByIdentifier(identifier);
+  if (!userRef) return { status: 404, body: { message: "Account not found" } };
 
-  const user = await User.findById(userId)
+  const user = await User.findById(userRef._id)
     .select(
-      "email role fullName phone isActive isEmailVerified isLocked lastLoginAt passwordChangedAt lastVerificationSentAt createdAt updatedAt",
+      "email role fullName phone slug isActive isEmailVerified isLocked lastLoginAt passwordChangedAt lastVerificationSentAt createdAt updatedAt",
     )
     .lean();
 
@@ -218,6 +241,8 @@ export async function getAccount(userId) {
     lastVerificationSentAt: user.lastVerificationSentAt,
     updatedAt: user.updatedAt?.toISOString?.() || user.updatedAt,
     profile: {},
+    patientSlug: user.role === "patient" ? user.slug || "" : "",
+    doctorSlug: "",
   };
 
   if (user.role === "patient") {
@@ -242,9 +267,11 @@ export async function getAccount(userId) {
       .lean();
 
     if (doctor) {
+      account.doctorSlug = doctor.slug || "";
       account.profile = {
         bio: doctor.bio || "",
         licenseNo: doctor.licenseNo,
+        consultationFee: resolveConsultationFee(doctor),
         photoUrl: doctor.photoUrl || "",
         isActive: doctor.isActive,
         specialty: doctor.specialtyId
@@ -264,8 +291,11 @@ export async function getAccount(userId) {
   return { status: 200, body: account };
 }
 
-export async function updateAccount(userId, dto) {
-  const user = await User.findById(userId);
+export async function updateAccount(identifier, dto) {
+  const userRef = await findUserByIdentifier(identifier);
+  if (!userRef) return { status: 404, body: { message: "Account not found" } };
+
+  const user = await User.findById(userRef._id);
   if (!user) return { status: 404, body: { message: "Account not found" } };
 
   const nextEmail = normalizeEmail(dto.email ?? user.email);

@@ -11,6 +11,8 @@ import {
   validatePhoneOptional,
   validateRequired,
 } from "../utils/validation.js";
+import { isMongoObjectId } from "../utils/doctorSlug.js";
+import { parseConsultationFeeInput, resolveConsultationFee } from "../utils/consultationFee.js";
 
 function mapDoctor(doctor) {
   const user = doctor.userId || {};
@@ -20,6 +22,7 @@ function mapDoctor(doctor) {
   return {
     _id: doctor._id.toString(),
     userId: user._id?.toString() || "",
+    userSlug: user.slug || "",
     email: user.email || "",
     fullName: user.fullName || "",
     phone: user.phone || "",
@@ -33,8 +36,10 @@ function mapDoctor(doctor) {
       : null,
     department: department._id ? { _id: department._id.toString(), name: department.name || "" } : null,
     licenseNo: doctor.licenseNo,
+    consultationFee: resolveConsultationFee(doctor),
     bio: doctor.bio || "",
     photoUrl: doctor.photoUrl || "",
+    slug: doctor.slug || "",
     isActive: doctor.isActive,
     createdAt: doctor.createdAt.toISOString(),
     updatedAt: doctor.updatedAt.toISOString(),
@@ -43,13 +48,22 @@ function mapDoctor(doctor) {
 
 function doctorPopulate(query) {
   return query
-    .populate("userId", "email fullName phone isActive")
+    .populate("userId", "email fullName phone isActive slug")
     .populate("specialtyId", "name code")
     .populate("departmentId", "name");
 }
 
 function isValidObjectId(id) {
   return mongoose.Types.ObjectId.isValid(id);
+}
+
+function resolveDoctorQuery(identifier) {
+  if (!identifier) return null;
+  const key = String(identifier).trim();
+  if (isValidObjectId(key) && isMongoObjectId(key)) {
+    return doctorPopulate(Doctor.findById(key));
+  }
+  return doctorPopulate(Doctor.findOne({ slug: key.toLowerCase() }));
 }
 
 function isTrue(value) {
@@ -133,14 +147,17 @@ export async function listDoctors({
   };
 }
 
-export async function getDoctor(id) {
-  if (!isValidObjectId(id)) {
-    return { status: 404, body: { message: "Doctor not found" } };
-  }
+export async function getDoctor(identifier) {
+  const query = resolveDoctorQuery(identifier);
+  if (!query) return { status: 404, body: { message: "Doctor not found" } };
 
-  const doctor = await doctorPopulate(Doctor.findById(id)).lean();
+  const doctor = await query.lean();
   if (!doctor) return { status: 404, body: { message: "Doctor not found" } };
 
+  return buildDoctorDetailResponse(doctor);
+}
+
+async function buildDoctorDetailResponse(doctor) {
   const [workShiftCount, upcomingAppointments] = await Promise.all([
     WorkShift.countDocuments({ doctorId: doctor._id }),
     Appointment.countDocuments({ doctorId: doctor._id, status: "confirmed" }),
@@ -160,15 +177,19 @@ export async function getDoctor(id) {
   };
 }
 
-export async function updateDoctor(id, dto) {
-  if (!isValidObjectId(id)) {
-    return { status: 404, body: { message: "Doctor not found" } };
-  }
+function refId(value) {
+  if (!value) return null;
+  return value._id ?? value;
+}
 
-  const doctor = await Doctor.findById(id);
+export async function updateDoctor(identifier, dto) {
+  const query = resolveDoctorQuery(identifier);
+  if (!query) return { status: 404, body: { message: "Doctor not found" } };
+
+  const doctor = await query;
   if (!doctor) return { status: 404, body: { message: "Doctor not found" } };
 
-  const user = await User.findById(doctor.userId);
+  const user = await User.findById(refId(doctor.userId));
   if (!user) return { status: 404, body: { message: "Doctor account not found" } };
 
   const email = normalizeEmail(dto.email || user.email);
@@ -198,8 +219,8 @@ export async function updateDoctor(id, dto) {
   const departmentCheck = await requireReference(Department, departmentId, "Department");
   if (departmentCheck.error) return departmentCheck.error;
 
-  const specialtyChanged = doctor.specialtyId.toString() !== specialtyId;
-  const departmentChanged = doctor.departmentId.toString() !== departmentId;
+  const specialtyChanged = String(refId(doctor.specialtyId)) !== specialtyId;
+  const departmentChanged = String(refId(doctor.departmentId)) !== departmentId;
 
   user.email = email;
   user.fullName = fullName;
@@ -212,6 +233,12 @@ export async function updateDoctor(id, dto) {
   doctor.bio = String(dto.bio || "").trim().slice(0, 1000);
   doctor.photoUrl = String(dto.photoUrl || "").trim();
   if (typeof dto.isActive === "boolean") doctor.isActive = dto.isActive;
+
+  if (dto.consultationFee !== undefined) {
+    const feeResult = parseConsultationFeeInput(dto.consultationFee);
+    if (feeResult.error) return { status: 400, body: { message: feeResult.error } };
+    doctor.consultationFee = feeResult.value;
+  }
 
   await Promise.all([user.save(), doctor.save()]);
   if (specialtyChanged || departmentChanged || typeof dto.isActive === "boolean" || typeof dto.accountIsActive === "boolean") {

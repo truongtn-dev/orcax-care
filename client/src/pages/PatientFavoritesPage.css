@@ -1,0 +1,94 @@
+/* Patient favorites — full-width panel + centered empty state */
+
+.patient-favorites-section {
+  margin-top: 0.15rem;
+}
+
+.patient-favorites-panel {
+  border-radius: var(--radius-xl);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.05);
+  padding: 1.15rem 1.35rem 1.5rem;
+}
+
+.patient-favorites-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.15rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.patient-favorites-count {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.patient-favorites-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  padding: clamp(2.75rem, 7vw, 4.25rem) 1.5rem;
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed rgba(8, 145, 178, 0.22);
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 55%);
+}
+
+.patient-favorites-empty-icon {
+  background: #ecfeff;
+  color: var(--color-primary);
+  border: 1px solid rgba(8, 145, 178, 0.14);
+}
+
+.patient-favorites-empty h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+  color: var(--color-navy);
+}
+
+.patient-favorites-empty p {
+  margin: 0 0 1.35rem;
+  max-width: 36ch;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.patient-favorites-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 220px;
+  color: var(--color-text-secondary);
+}
+
+.patient-favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .patient-favorites-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-favorites-panel {
+    padding: 1rem 1rem 1.25rem;
+  }
+
+  .patient-favorites-grid {
+    grid-template-columns: 1fr;
+  }
+}

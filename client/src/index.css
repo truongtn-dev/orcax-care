@@ -184,6 +184,24 @@ h6 {
   letter-spacing: -0.025em;
 }
 
+/* Gradient heroes set color: #fff on the section, but heading rules above still win */
+:is(
+  .hero-section,
+  .search-hero,
+  .wallet-hero,
+  .patient-dashboard-hero,
+  .patient-wallet-hero,
+  .patient-appointments-hero,
+  .patient-notifications-hero,
+  .patient-insurance-hero,
+  .patient-book-hero,
+  .doctor-profile-hero,
+  .doctor-dashboard-hero,
+  .admin-overview-hero
+) :is(h1, h2, h3) {
+  color: #fff;
+}
+
 p {
   margin: 0;
 }
