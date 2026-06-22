@@ -1,0 +1,130 @@
+.doctor-encounter-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.doctor-encounter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+}
+
+.doctor-encounter-main,
+.doctor-encounter-side,
+.doctor-encounter-state {
+  padding: 1.25rem;
+}
+
+.doctor-encounter-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.doctor-encounter-head h2 {
+  margin: 0.25rem 0 0;
+  color: var(--color-navy);
+  font-size: 1.35rem;
+}
+
+.doctor-encounter-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.doctor-encounter-facts--stacked {
+  grid-template-columns: 1fr;
+  margin-bottom: 1rem;
+}
+
+.doctor-encounter-facts div {
+  padding: 0.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+}
+
+.doctor-encounter-facts dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.doctor-encounter-facts dd {
+  margin: 0.25rem 0 0;
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.doctor-encounter-section {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.doctor-encounter-section h3,
+.doctor-encounter-side h3 {
+  margin: 0 0 0.75rem;
+  color: var(--color-navy);
+  font-size: 1rem;
+}
+
+.doctor-encounter-section p,
+.doctor-encounter-warning {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.doctor-encounter-diagnoses {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doctor-encounter-diagnoses li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+}
+
+.doctor-encounter-diagnoses strong {
+  color: var(--color-primary);
+  min-width: 3rem;
+}
+
+.doctor-encounter-warning {
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  color: #92400e;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+  .doctor-encounter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .doctor-encounter-toolbar,
+  .doctor-encounter-head {
+    flex-direction: column;
+  }
+
+  .doctor-encounter-facts {
+    grid-template-columns: 1fr;
+  }
+}

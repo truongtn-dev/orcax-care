@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Appointment } from "../models/Appointment.js";
 import { Doctor } from "../models/Doctor.js";
+import { Encounter } from "../models/Encounter.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
 const VALID_STATUSES = new Set(["confirmed", "completed", "cancelled"]);
@@ -41,7 +42,7 @@ function formatReferenceCode(appointmentId) {
   return `APT-${value.slice(-6).toUpperCase()}`;
 }
 
-function serializeAppointment(appointment) {
+function serializeAppointment(appointment, encounterId = null) {
   const patient = appointment.patientUserId;
   const slot = appointment.slotId;
   const room = slot?.roomId;
@@ -51,6 +52,7 @@ function serializeAppointment(appointment) {
     _id: id,
     referenceCode: formatReferenceCode(id),
     status: appointment.status,
+    encounterId: encounterId ? encounterId.toString() : null,
     reason: appointment.reason || "",
     fee: appointment.fee,
     patientName: patient?.fullName || "",
@@ -101,7 +103,20 @@ export async function listTodayAppointments(userId, query = {}) {
     return slotDate && slotDate >= start && slotDate < end;
   });
   const sort = String(query.sort || "asc").toLowerCase() === "desc" ? "desc" : "asc";
-  const items = sortBySlotTime(todayRows.map(serializeAppointment), sort);
+  const encounterRows = await Encounter.find({
+    appointmentId: { $in: todayRows.map((appointment) => appointment._id) },
+  })
+    .select("appointmentId")
+    .lean();
+  const encounterByAppointment = new Map(
+    encounterRows.map((row) => [row.appointmentId.toString(), row._id.toString()])
+  );
+  const items = sortBySlotTime(
+    todayRows.map((appointment) =>
+      serializeAppointment(appointment, encounterByAppointment.get(appointment._id.toString()))
+    ),
+    sort
+  );
 
   return {
     status: 200,
@@ -131,5 +146,10 @@ export async function getAppointment(userId, appointmentId) {
     return { status: 404, body: { message: "Appointment not found" } };
   }
 
-  return { status: 200, body: serializeAppointment(appointment) };
+  const encounter = await Encounter.findOne({ appointmentId: appointment._id }).select("_id").lean();
+
+  return {
+    status: 200,
+    body: serializeAppointment(appointment, encounter?._id || null),
+  };
 }
