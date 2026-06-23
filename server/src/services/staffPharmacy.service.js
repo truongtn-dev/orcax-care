@@ -34,6 +34,22 @@ function serializeMovement(row) {
   };
 }
 
+function formatDateOnly(value) {
+  return value ? new Date(value).toISOString().slice(0, 10) : "";
+}
+
+function serializeBatch(batch) {
+  return {
+    batchNo: batch.batchNo,
+    inboundQty: batch.inboundQty,
+    outboundQty: batch.outboundQty,
+    onHandQty: batch.inboundQty - batch.outboundQty,
+    expiryDate: formatDateOnly(batch.expiryDate),
+    supplierRefs: [...batch.supplierRefs],
+    lastMovementAt: batch.lastMovementAt,
+  };
+}
+
 export async function listMedicines({ q = "", lowStockOnly = false } = {}) {
   const filter = { isActive: true };
   const search = String(q || "").trim();
@@ -68,6 +84,65 @@ export async function listStockMovements({ limit = 50 } = {}) {
   return {
     status: 200,
     body: { items: rows.map(serializeMovement) },
+  };
+}
+
+export async function getMedicineDetail(id) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return { status: 400, body: { message: "Invalid medicine" } };
+  }
+
+  const medicine = await Medicine.findById(id).lean();
+  if (!medicine) {
+    return { status: 404, body: { message: "Medicine not found" } };
+  }
+
+  const movementRows = await StockMovement.find({ medicineId: medicine._id })
+    .populate("medicineId", "name code unit")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const batchMap = new Map();
+  for (const row of movementRows) {
+    const batchNo = row.batchNo || "Unbatched";
+    const current =
+      batchMap.get(batchNo) ||
+      {
+        batchNo,
+        inboundQty: 0,
+        outboundQty: 0,
+        expiryDate: null,
+        supplierRefs: new Set(),
+        lastMovementAt: row.createdAt,
+      };
+
+    if (row.type === "inbound") {
+      current.inboundQty += row.quantity || 0;
+    } else {
+      current.outboundQty += row.quantity || 0;
+    }
+    if (row.expiryDate && (!current.expiryDate || row.expiryDate < current.expiryDate)) {
+      current.expiryDate = row.expiryDate;
+    }
+    if (row.supplierRef) {
+      current.supplierRefs.add(row.supplierRef);
+    }
+    if (!current.lastMovementAt || row.createdAt > current.lastMovementAt) {
+      current.lastMovementAt = row.createdAt;
+    }
+
+    batchMap.set(batchNo, current);
+  }
+
+  return {
+    status: 200,
+    body: {
+      medicine: serializeMedicine(medicine),
+      batches: [...batchMap.values()]
+        .map(serializeBatch)
+        .sort((a, b) => new Date(b.lastMovementAt) - new Date(a.lastMovementAt)),
+      movements: movementRows.slice(0, 100).map(serializeMovement),
+    },
   };
 }
 

@@ -1,0 +1,128 @@
+.staff-medicine-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.staff-medicine-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.staff-medicine-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.staff-medicine-summary div {
+  padding: 1rem 1.15rem;
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.staff-medicine-summary div:last-child {
+  border-right: 0;
+}
+
+.staff-medicine-summary span,
+.staff-medicine-summary strong {
+  display: block;
+}
+
+.staff-medicine-summary span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.staff-medicine-summary strong {
+  margin-top: 0.3rem;
+  color: var(--color-navy);
+  font-size: 1.05rem;
+}
+
+.staff-medicine-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.staff-medicine-tab {
+  padding: 0.6rem 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text-secondary);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.staff-medicine-tab.is-active {
+  border-color: rgba(14, 116, 144, 0.28);
+  background: #ecfeff;
+  color: #155e75;
+}
+
+.staff-medicine-panel {
+  padding: 1.2rem;
+}
+
+.staff-medicine-panel h3 {
+  margin: 0 0 1rem;
+  color: var(--color-navy);
+}
+
+.staff-medicine-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.staff-medicine-facts div {
+  padding: 0.9rem;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.staff-medicine-facts dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.staff-medicine-facts dd {
+  margin: 0.25rem 0 0;
+  color: var(--color-navy);
+  font-weight: 800;
+}
+
+@media (max-width: 820px) {
+  .staff-medicine-summary,
+  .staff-medicine-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-medicine-summary div {
+    border-right: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .staff-medicine-summary div:last-child {
+    border-bottom: 0;
+  }
+
+  .staff-medicine-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

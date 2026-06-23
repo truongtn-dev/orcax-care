@@ -237,7 +237,9 @@ export default function StaffPharmacyPage() {
                       {medicines.map((med) => (
                         <tr key={med._id}>
                           <td>
-                            <strong>{med.name}</strong>
+                            <Link to={`/staff/pharmacy/medicines/${med._id}`} className="table-link">
+                              <strong>{med.name}</strong>
+                            </Link>
                             <div className="text-muted">{med.code}</div>
                           </td>
                           <td>
@@ -281,7 +283,18 @@ export default function StaffPharmacyPage() {
                         {movements.map((row) => (
                           <tr key={row._id}>
                             <td>{new Date(row.createdAt).toLocaleString()}</td>
-                            <td>{row.medicine?.name || "—"}</td>
+                            <td>
+                              {row.medicine?._id ? (
+                                <Link
+                                  to={`/staff/pharmacy/medicines/${row.medicine._id}?tab=movements`}
+                                  className="table-link"
+                                >
+                                  {row.medicine.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                             <td>{row.type}</td>
                             <td>{row.quantity}</td>
                             <td>{row.batchNo || "—"}</td>

@@ -98,4 +98,52 @@ describe("Staff pharmacy — stock inbound", () => {
     assert.equal(stored.stockQty, 25);
     assert.equal(await StockMovement.countDocuments({ medicineId: medicine._id, type: "inbound" }), 1);
   });
+
+  test("GET /api/staff/pharmacy/medicines/:id returns read-only batches and movements", async () => {
+    const auth = await authHeaderFor(staffUser);
+    await StockMovement.create([
+      {
+        medicineId: medicine._id,
+        type: "inbound",
+        quantity: 20,
+        batchNo: "BATCH-A",
+        expiryDate: new Date("2027-01-15T00:00:00.000Z"),
+        supplierRef: "SUP-A",
+        performedBy: staffUser._id,
+      },
+      {
+        medicineId: medicine._id,
+        type: "outbound",
+        quantity: 5,
+        batchNo: "BATCH-A",
+        performedBy: staffUser._id,
+      },
+      {
+        medicineId: medicine._id,
+        type: "inbound",
+        quantity: 8,
+        batchNo: "BATCH-B",
+        expiryDate: new Date("2027-03-20T00:00:00.000Z"),
+        supplierRef: "SUP-B",
+        performedBy: staffUser._id,
+      },
+    ]);
+
+    const res = await fetch(`${baseUrl}/api/staff/pharmacy/medicines/${medicine._id}`, {
+      headers: { Authorization: auth },
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.medicine.code, "TESTMED");
+    assert.equal(body.batches.length, 2);
+    const batchA = body.batches.find((batch) => batch.batchNo === "BATCH-A");
+    const batchB = body.batches.find((batch) => batch.batchNo === "BATCH-B");
+    assert.equal(batchB.onHandQty, 8);
+    assert.equal(batchA.inboundQty, 20);
+    assert.equal(batchA.outboundQty, 5);
+    assert.equal(batchA.onHandQty, 15);
+    assert.equal(body.movements.length, 3);
+    assert.equal(body.movements[0].medicine.code, "TESTMED");
+  });
 });

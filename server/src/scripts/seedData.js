@@ -13,6 +13,7 @@ import { Appointment } from "../models/Appointment.js";
 import { Encounter } from "../models/Encounter.js";
 import { MedicalImage } from "../models/MedicalImage.js";
 import { Prescription } from "../models/Prescription.js";
+import { StockMovement } from "../models/StockMovement.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -286,7 +287,7 @@ export async function runSeed() {
   const staffHash = await bcrypt.hash("Staff@123", 10);
   let staffUser = await User.findOne({ email: "staff@orcaxcare.com" });
   if (!staffUser) {
-    await User.create({
+    staffUser = await User.create({
       email: "staff@orcaxcare.com",
       passwordHash: staffHash,
       role: "staff",
@@ -335,6 +336,33 @@ export async function runSeed() {
   ];
   for (const med of defaultMedicines) {
     await Medicine.findOneAndUpdate({ code: med.code }, med, { upsert: true, new: true });
+  }
+
+  if (staffUser) {
+    const demoBatches = [
+      { code: "PARA500", batchNo: "PARA-LOT-01", quantity: 120, expiryDate: "2027-08-31", supplierRef: "SUP-PARA" },
+      { code: "AMOX500", batchNo: "AMOX-LOT-02", quantity: 45, expiryDate: "2027-03-15", supplierRef: "SUP-AMOX" },
+      { code: "VITC1000", batchNo: "VITC-LOT-01", quantity: 80, expiryDate: "2028-01-20", supplierRef: "SUP-VITC" },
+    ];
+
+    for (const batch of demoBatches) {
+      const medicine = await Medicine.findOne({ code: batch.code });
+      if (!medicine) continue;
+      await StockMovement.findOneAndUpdate(
+        { medicineId: medicine._id, type: "inbound", batchNo: batch.batchNo },
+        {
+          medicineId: medicine._id,
+          type: "inbound",
+          quantity: batch.quantity,
+          batchNo: batch.batchNo,
+          expiryDate: new Date(`${batch.expiryDate}T00:00:00.000Z`),
+          supplierRef: batch.supplierRef,
+          note: "Seed inventory batch",
+          performedBy: staffUser._id,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
   }
 
   const demoDoctor = await Doctor.findOne({ licenseNo: "LIC-001" }).populate("userId", "fullName email");

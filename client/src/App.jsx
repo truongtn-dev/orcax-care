@@ -40,6 +40,7 @@ import DoctorPrescriptionCreatePage from "./pages/DoctorPrescriptionCreatePage.j
 import PrescriptionDetailPage from "./pages/PrescriptionDetailPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
+import StaffMedicineDetailPage from "./pages/StaffMedicineDetailPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorDetailPage from "./pages/admin/DoctorDetailPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
@@ -214,6 +215,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["staff", "admin"]}>
                 <StaffPharmacyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/pharmacy/medicines/:id"
+            element={
+              <ProtectedRoute roles={["staff", "admin"]}>
+                <StaffMedicineDetailPage />
               </ProtectedRoute>
             }
           />
