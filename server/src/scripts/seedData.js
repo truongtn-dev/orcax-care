@@ -12,6 +12,7 @@ import { AppointmentSlot } from "../models/AppointmentSlot.js";
 import { Appointment } from "../models/Appointment.js";
 import { Encounter } from "../models/Encounter.js";
 import { MedicalImage } from "../models/MedicalImage.js";
+import { Prescription } from "../models/Prescription.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -172,6 +173,41 @@ async function upsertEncounterDemoData({ patientUser, doctor, departmentId, sign
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+
+    const demoMedicine = await Medicine.findOne({ code: "PARA500" });
+    if (demoMedicine) {
+      const quantity = 10;
+      const lineTotal = (demoMedicine.price || 0) * quantity;
+      await Prescription.findOneAndUpdate(
+        { encounterId: draftEncounter._id, "lineItems.medicineCode": demoMedicine.code },
+        {
+          encounterId: draftEncounter._id,
+          patientUserId: patientUser._id,
+          doctorId: doctor._id,
+          status: "draft",
+          notes: "Take medicine only if fever or pain continues.",
+          lineItems: [
+            {
+              medicineId: demoMedicine._id,
+              medicineName: demoMedicine.name,
+              medicineCode: demoMedicine.code,
+              unit: demoMedicine.unit,
+              quantity,
+              durationDays: 5,
+              dosage: "1 tablet twice daily",
+              instructions: "After meals",
+              unitPrice: demoMedicine.price || 0,
+              lineTotal,
+              stockSnapshot: demoMedicine.stockQty || 0,
+              stockWarning: quantity > (demoMedicine.stockQty || 0),
+            },
+          ],
+          totalAmount: lineTotal,
+          createdBy: signedOffBy,
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
   }
 }
 

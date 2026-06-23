@@ -41,6 +41,61 @@ function serializePrescription(row) {
   };
 }
 
+function serializeUser(user) {
+  if (!user) return null;
+  return {
+    userId: user._id?.toString() || "",
+    fullName: user.fullName || "",
+    email: user.email || "",
+    phone: user.phone || "",
+  };
+}
+
+function serializeDoctorProfile(doctor) {
+  if (!doctor) return null;
+  return {
+    _id: doctor._id?.toString() || "",
+    fullName: doctor.userId?.fullName || "",
+    email: doctor.userId?.email || "",
+    licenseNo: doctor.licenseNo || "",
+  };
+}
+
+function serializeEncounterSummary(encounter) {
+  if (!encounter) return null;
+  return {
+    _id: encounter._id?.toString() || "",
+    visitDate: encounter.visitDate,
+    status: encounter.status,
+    chiefComplaint: encounter.chiefComplaint || "",
+    diagnoses: (encounter.diagnoses || []).map((diagnosis) => ({
+      code: diagnosis.code || "",
+      text: diagnosis.text || "",
+      note: diagnosis.note || "",
+    })),
+  };
+}
+
+function serializePrescriptionDetail(row) {
+  return {
+    ...serializePrescription(row),
+    patient: serializeUser(row.patientUserId),
+    doctor: serializeDoctorProfile(row.doctorId),
+    encounter: serializeEncounterSummary(row.encounterId),
+  };
+}
+
+function populatePrescriptionDetail(query) {
+  return query
+    .populate("patientUserId", "fullName email phone")
+    .populate({
+      path: "doctorId",
+      select: "userId licenseNo",
+      populate: { path: "userId", select: "fullName email" },
+    })
+    .populate("encounterId", "visitDate status chiefComplaint diagnoses");
+}
+
 function parsePositiveInt(value, fallback = null) {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 1) return fallback;
@@ -152,4 +207,38 @@ export async function createPrescription(userId, encounterId, payload = {}) {
   });
 
   return { status: 201, body: serializePrescription(prescription.toObject()) };
+}
+
+export async function getDoctorPrescription(userId, prescriptionId) {
+  const doctor = await resolveDoctorForUser(userId);
+  if (!doctor) {
+    return { status: 404, body: { message: "Doctor profile not found" } };
+  }
+  if (!prescriptionId || !mongoose.Types.ObjectId.isValid(prescriptionId)) {
+    return { status: 400, body: { message: "Invalid prescription" } };
+  }
+
+  const prescription = await populatePrescriptionDetail(
+    Prescription.findOne({ _id: prescriptionId, doctorId: doctor._id })
+  ).lean();
+  if (!prescription) {
+    return { status: 404, body: { message: "Prescription not found" } };
+  }
+
+  return { status: 200, body: serializePrescriptionDetail(prescription) };
+}
+
+export async function getPatientPrescription(userId, prescriptionId) {
+  if (!prescriptionId || !mongoose.Types.ObjectId.isValid(prescriptionId)) {
+    return { status: 400, body: { message: "Invalid prescription" } };
+  }
+
+  const prescription = await populatePrescriptionDetail(
+    Prescription.findOne({ _id: prescriptionId, patientUserId: userId })
+  ).lean();
+  if (!prescription) {
+    return { status: 404, body: { message: "Prescription not found" } };
+  }
+
+  return { status: 200, body: serializePrescriptionDetail(prescription) };
 }

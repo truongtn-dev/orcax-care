@@ -81,6 +81,10 @@ export const PatientApiClient = {
     return api.get("/api/patient/emr/timeline", { params });
   },
 
+  getPrescription(id) {
+    return api.get(`/api/patient/prescriptions/${id}`);
+  },
+
   listInsuranceCards() {
     return api.get("/api/patient/insurance-cards");
   },

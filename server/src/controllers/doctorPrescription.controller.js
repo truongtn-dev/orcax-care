@@ -23,3 +23,16 @@ export async function createPrescription(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function getPrescription(req, res) {
+  try {
+    const result = await DoctorPrescriptionService.getDoctorPrescription(
+      req.user.userId,
+      req.params.id
+    );
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
