@@ -17,6 +17,7 @@ doctorRouter.get("/schedule", DoctorScheduleController.getScheduleCalendar);
 doctorRouter.get("/appointments/today", DoctorAppointmentController.listTodayAppointments);
 doctorRouter.get("/medicines", DoctorPrescriptionController.listMedicines);
 doctorRouter.get("/prescriptions/:id", DoctorPrescriptionController.getPrescription);
+doctorRouter.delete("/prescriptions/:id/items/:itemId", DoctorPrescriptionController.removeLineItem);
 doctorRouter.get("/appointments/:id", DoctorAppointmentController.getAppointment);
 doctorRouter.get("/encounters/:id", DoctorEncounterController.getEncounter);
 doctorRouter.post("/encounters/:id/sign-off", DoctorEncounterController.signOffEncounter);

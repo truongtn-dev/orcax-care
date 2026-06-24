@@ -41,6 +41,10 @@ export const DoctorApiClient = {
     return api.get(`/api/doctor/prescriptions/${id}`);
   },
 
+  removePrescriptionLineItem(prescriptionId, itemId) {
+    return api.delete(`/api/doctor/prescriptions/${prescriptionId}/items/${itemId}`);
+  },
+
   getAppointmentSlot(id) {
     return api.get(`/api/doctor/appointment-slots/${id}`);
   },
