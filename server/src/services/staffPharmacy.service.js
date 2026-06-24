@@ -242,6 +242,25 @@ async function buildPharmacyDashboardBody() {
     inboundByDay[key].quantity += row.quantity || 0;
   }
 
+  const expiringLimit = new Date(today);
+  expiringLimit.setDate(today.getDate() + 60);
+  
+  const expiringInbound = await StockMovement.find({
+    type: "inbound",
+    expiryDate: { $gte: today, $lte: expiringLimit }
+  }).populate("medicineId", "name code stockQty minStockLevel unit").lean();
+  
+  const expiringMap = new Map();
+  for (const mov of expiringInbound) {
+    if (mov.medicineId && mov.medicineId.stockQty > 0) {
+      expiringMap.set(`${mov.medicineId._id}-${mov.batchNo}`, {
+        medicine: serializeMedicine(mov.medicineId),
+        batchNo: mov.batchNo,
+        expiryDate: formatDateOnly(mov.expiryDate),
+      });
+    }
+  }
+
   return {
     medicineCount: medicineRows.length,
     lowStockCount: lowStockItems.length,
@@ -260,6 +279,7 @@ async function buildPharmacyDashboardBody() {
       movements: inboundByDay[day].movements,
     })),
     lowStockItems: lowStockItems.map((medicine) => serializeMedicine(medicine)),
+    expiringBatches: Array.from(expiringMap.values()).sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)),
   };
 }
 
