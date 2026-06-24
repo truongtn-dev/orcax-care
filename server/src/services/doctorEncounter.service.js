@@ -150,3 +150,40 @@ export async function signOffEncounter(userId, encounterId) {
     body: serializeEncounter(signed, imageMap.get(signed._id.toString()) || []),
   };
 }
+
+export async function updateEncounter(userId, encounterId, payload) {
+  const doctor = await resolveDoctorForUser(userId);
+  if (!doctor) {
+    return { status: 404, body: { message: "Doctor profile not found" } };
+  }
+  if (!encounterId || !mongoose.Types.ObjectId.isValid(encounterId)) {
+    return { status: 400, body: { message: "Invalid encounter" } };
+  }
+
+  const encounter = await Encounter.findOne({ _id: encounterId, doctorId: doctor._id });
+  if (!encounter) {
+    return { status: 404, body: { message: "Encounter not found" } };
+  }
+  if (encounter.status === "signed") {
+    return { status: 409, body: { message: "Encounter is already signed off and cannot be edited" } };
+  }
+
+  if (payload.chiefComplaint !== undefined) encounter.chiefComplaint = payload.chiefComplaint;
+  if (payload.clinicalNotes !== undefined) encounter.clinicalNotes = payload.clinicalNotes;
+  
+  if (payload.vitals) {
+    encounter.vitals = encounter.vitals || {};
+    if (payload.vitals.temperatureC !== undefined) encounter.vitals.temperatureC = payload.vitals.temperatureC;
+    if (payload.vitals.bloodPressure !== undefined) encounter.vitals.bloodPressure = payload.vitals.bloodPressure;
+    if (payload.vitals.pulse !== undefined) encounter.vitals.pulse = payload.vitals.pulse;
+  }
+
+  await encounter.save();
+
+  const updated = await populateEncounter(Encounter.findById(encounter._id)).lean();
+  const imageMap = await listActiveImagesByEncounterIds([updated._id]);
+  return {
+    status: 200,
+    body: serializeEncounter(updated, imageMap.get(updated._id.toString()) || []),
+  };
+}

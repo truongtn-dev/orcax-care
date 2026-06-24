@@ -23,6 +23,14 @@ export default function DoctorEncounterDetailPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    chiefComplaint: "",
+    clinicalNotes: "",
+    temperatureC: "",
+    bloodPressure: "",
+    pulse: "",
+  });
 
   const loadEncounter = useCallback(async () => {
     setLoading(true);
@@ -41,6 +49,47 @@ export default function DoctorEncounterDetailPage() {
   useEffect(() => {
     loadEncounter();
   }, [loadEncounter]);
+
+  const handleEditClick = () => {
+    setEditForm({
+      chiefComplaint: encounter.chiefComplaint || "",
+      clinicalNotes: encounter.clinicalNotes || "",
+      temperatureC: encounter.vitals?.temperatureC || "",
+      bloodPressure: encounter.vitals?.bloodPressure || "",
+      pulse: encounter.vitals?.pulse || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!encounter || submitting) return;
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      const payload = {
+        chiefComplaint: editForm.chiefComplaint,
+        clinicalNotes: editForm.clinicalNotes,
+        vitals: {
+          temperatureC: editForm.temperatureC ? Number(editForm.temperatureC) : null,
+          bloodPressure: editForm.bloodPressure,
+          pulse: editForm.pulse ? Number(editForm.pulse) : null,
+        },
+      };
+      const { data } = await DoctorApiClient.updateEncounter(encounter._id, payload);
+      setEncounter(data);
+      setIsEditing(false);
+      setMessage("Encounter updated successfully.");
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSignOff = async () => {
     if (!encounter || submitting) return;
@@ -102,9 +151,40 @@ export default function DoctorEncounterDetailPage() {
           {encounter && (
             <div className="doctor-encounter-toolbar-actions">
               {encounter.canSignOff && (
-                <Link to={`/doctor/encounters/${encounter._id}/prescriptions/new`} className="btn btn-outline btn-sm">
-                  Create prescription
-                </Link>
+                <>
+                  {!isEditing ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={handleEditClick}
+                      disabled={submitting}
+                    >
+                      Edit details
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={handleCancelEdit}
+                        disabled={submitting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={handleSaveEdit}
+                        disabled={submitting}
+                      >
+                        Save changes
+                      </button>
+                    </>
+                  )}
+                  <Link to={`/doctor/encounters/${encounter._id}/prescriptions/new`} className="btn btn-outline btn-sm">
+                    Create prescription
+                  </Link>
+                </>
               )}
               <button
                 type="button"
@@ -140,7 +220,17 @@ export default function DoctorEncounterDetailPage() {
               <div className="doctor-encounter-head">
                 <div>
                   <p className="muted">Chief complaint</p>
-                  <h2>{encounter.chiefComplaint || "Clinical encounter"}</h2>
+                  {isEditing ? (
+                    <input
+                      className="form-input"
+                      value={editForm.chiefComplaint}
+                      onChange={(e) => setEditForm({ ...editForm, chiefComplaint: e.target.value })}
+                      placeholder="Chief complaint"
+                      style={{ fontSize: "1.25rem", padding: "0.25rem 0.5rem" }}
+                    />
+                  ) : (
+                    <h2>{encounter.chiefComplaint || "Clinical encounter"}</h2>
+                  )}
                 </div>
                 <span className={`status-pill ${encounter.status === "signed" ? "status-completed" : "status-active"}`}>
                   {encounter.status}
@@ -168,7 +258,18 @@ export default function DoctorEncounterDetailPage() {
 
               <section className="doctor-encounter-section">
                 <h3>Clinical notes</h3>
-                <p>{encounter.clinicalNotes || "No notes recorded."}</p>
+                {isEditing ? (
+                  <textarea
+                    className="form-input"
+                    rows={4}
+                    value={editForm.clinicalNotes}
+                    onChange={(e) => setEditForm({ ...editForm, clinicalNotes: e.target.value })}
+                    placeholder="Enter clinical notes"
+                    style={{ width: "100%", marginTop: "0.5rem" }}
+                  />
+                ) : (
+                  <p>{encounter.clinicalNotes || "No notes recorded."}</p>
+                )}
               </section>
 
               <section className="doctor-encounter-section">
@@ -242,15 +343,53 @@ export default function DoctorEncounterDetailPage() {
               <dl className="doctor-encounter-facts doctor-encounter-facts--stacked">
                 <div>
                   <dt>Temperature</dt>
-                  <dd>{encounter.vitals?.temperatureC ?? "-"}</dd>
+                  <dd>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={editForm.temperatureC}
+                        onChange={(e) => setEditForm({ ...editForm, temperatureC: e.target.value })}
+                        placeholder="Ex: 37"
+                        style={{ width: "100%", marginTop: "0.25rem" }}
+                      />
+                    ) : (
+                      encounter.vitals?.temperatureC ?? "-"
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt>Blood pressure</dt>
-                  <dd>{encounter.vitals?.bloodPressure || "-"}</dd>
+                  <dd>
+                    {isEditing ? (
+                      <input
+                        className="form-input"
+                        value={editForm.bloodPressure}
+                        onChange={(e) => setEditForm({ ...editForm, bloodPressure: e.target.value })}
+                        placeholder="Ex: 120/80"
+                        style={{ width: "100%", marginTop: "0.25rem" }}
+                      />
+                    ) : (
+                      encounter.vitals?.bloodPressure || "-"
+                    )}
+                  </dd>
                 </div>
                 <div>
                   <dt>Pulse</dt>
-                  <dd>{encounter.vitals?.pulse ?? "-"}</dd>
+                  <dd>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={editForm.pulse}
+                        onChange={(e) => setEditForm({ ...editForm, pulse: e.target.value })}
+                        placeholder="Ex: 80"
+                        style={{ width: "100%", marginTop: "0.25rem" }}
+                      />
+                    ) : (
+                      encounter.vitals?.pulse ?? "-"
+                    )}
+                  </dd>
                 </div>
               </dl>
             </aside>
