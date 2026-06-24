@@ -222,11 +222,10 @@ export default function DoctorEncounterDetailPage() {
                   <p className="muted">Chief complaint</p>
                   {isEditing ? (
                     <input
-                      className="form-input"
+                      className="encounter-edit-input encounter-edit-title"
                       value={editForm.chiefComplaint}
                       onChange={(e) => setEditForm({ ...editForm, chiefComplaint: e.target.value })}
-                      placeholder="Chief complaint"
-                      style={{ fontSize: "1.25rem", padding: "0.25rem 0.5rem" }}
+                      placeholder="Enter chief complaint..."
                     />
                   ) : (
                     <h2>{encounter.chiefComplaint || "Clinical encounter"}</h2>
@@ -260,12 +259,10 @@ export default function DoctorEncounterDetailPage() {
                 <h3>Clinical notes</h3>
                 {isEditing ? (
                   <textarea
-                    className="form-input"
-                    rows={4}
+                    className="encounter-edit-textarea"
                     value={editForm.clinicalNotes}
                     onChange={(e) => setEditForm({ ...editForm, clinicalNotes: e.target.value })}
-                    placeholder="Enter clinical notes"
-                    style={{ width: "100%", marginTop: "0.5rem" }}
+                    placeholder="Enter detailed clinical notes here..."
                   />
                 ) : (
                   <p>{encounter.clinicalNotes || "No notes recorded."}</p>
@@ -347,11 +344,10 @@ export default function DoctorEncounterDetailPage() {
                     {isEditing ? (
                       <input
                         type="number"
-                        className="form-input"
+                        className="encounter-edit-input encounter-edit-vital"
                         value={editForm.temperatureC}
                         onChange={(e) => setEditForm({ ...editForm, temperatureC: e.target.value })}
                         placeholder="Ex: 37"
-                        style={{ width: "100%", marginTop: "0.25rem" }}
                       />
                     ) : (
                       encounter.vitals?.temperatureC ?? "-"
@@ -363,11 +359,10 @@ export default function DoctorEncounterDetailPage() {
                   <dd>
                     {isEditing ? (
                       <input
-                        className="form-input"
+                        className="encounter-edit-input encounter-edit-vital"
                         value={editForm.bloodPressure}
                         onChange={(e) => setEditForm({ ...editForm, bloodPressure: e.target.value })}
                         placeholder="Ex: 120/80"
-                        style={{ width: "100%", marginTop: "0.25rem" }}
                       />
                     ) : (
                       encounter.vitals?.bloodPressure || "-"
@@ -380,11 +375,10 @@ export default function DoctorEncounterDetailPage() {
                     {isEditing ? (
                       <input
                         type="number"
-                        className="form-input"
+                        className="encounter-edit-input encounter-edit-vital"
                         value={editForm.pulse}
                         onChange={(e) => setEditForm({ ...editForm, pulse: e.target.value })}
                         placeholder="Ex: 80"
-                        style={{ width: "100%", marginTop: "0.25rem" }}
                       />
                     ) : (
                       encounter.vitals?.pulse ?? "-"
