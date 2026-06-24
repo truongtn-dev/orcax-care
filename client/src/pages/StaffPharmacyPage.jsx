@@ -19,11 +19,24 @@ const EMPTY_INBOUND = {
   note: "",
 };
 
+const EMPTY_MEDICINE = {
+  code: "",
+  name: "",
+  unit: "",
+  price: "",
+  minStockLevel: "",
+  initialQuantity: "",
+  batchNo: "",
+};
+
 export default function StaffPharmacyPage() {
   const [dashboard, setDashboard] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState(EMPTY_INBOUND);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState(EMPTY_MEDICINE);
+  const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -77,6 +90,25 @@ export default function StaffPharmacyPage() {
       setError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const onCreateMedicine = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data } = await StaffApiClient.createMedicine(createForm);
+      setMessage(`Medicine ${data.name} created successfully.`);
+      setShowCreateModal(false);
+      setCreateForm(EMPTY_MEDICINE);
+      await loadData();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+      setShowCreateModal(false); // Close to see error, or show error inside modal
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -222,7 +254,12 @@ export default function StaffPharmacyPage() {
               </form>
 
               <section className="card staff-pharmacy-inventory">
-                <h3>Inventory</h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                  <h3 style={{ margin: 0 }}>Inventory</h3>
+                  <button className="btn btn-outline btn-sm" onClick={() => setShowCreateModal(true)}>
+                    + New medicine
+                  </button>
+                </div>
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead>
@@ -307,6 +344,52 @@ export default function StaffPharmacyPage() {
                 )}
               </section>
             </>
+          )}
+
+          {showCreateModal && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h3>Add New Medicine</h3>
+                <form className="form" onSubmit={onCreateMedicine}>
+                  <div className="form-grid">
+                    <label>
+                      Code *
+                      <input required value={createForm.code} onChange={(e) => setCreateForm(c => ({...c, code: e.target.value}))} placeholder="e.g. PARA500" />
+                    </label>
+                    <label>
+                      Name *
+                      <input required value={createForm.name} onChange={(e) => setCreateForm(c => ({...c, name: e.target.value}))} placeholder="e.g. Paracetamol 500mg" />
+                    </label>
+                    <label>
+                      Unit *
+                      <input required value={createForm.unit} onChange={(e) => setCreateForm(c => ({...c, unit: e.target.value}))} placeholder="e.g. tablet" />
+                    </label>
+                    <label>
+                      Price *
+                      <input type="number" min="0" required value={createForm.price} onChange={(e) => setCreateForm(c => ({...c, price: e.target.value}))} />
+                    </label>
+                    <label className="form-grid-span-2">
+                      Minimum Stock Level *
+                      <input type="number" min="0" required value={createForm.minStockLevel} onChange={(e) => setCreateForm(c => ({...c, minStockLevel: e.target.value}))} />
+                    </label>
+                    <label>
+                      Initial Quantity (Optional)
+                      <input type="number" min="0" value={createForm.initialQuantity} onChange={(e) => setCreateForm(c => ({...c, initialQuantity: e.target.value}))} placeholder="e.g. 100" />
+                    </label>
+                    <label>
+                      Initial Batch No (Optional)
+                      <input value={createForm.batchNo} onChange={(e) => setCreateForm(c => ({...c, batchNo: e.target.value}))} placeholder="e.g. BATCH-01" disabled={!createForm.initialQuantity || createForm.initialQuantity === "0"} />
+                    </label>
+                  </div>
+                  <div className="form-actions" style={{ marginTop: "1.5rem", justifyContent: "flex-end" }}>
+                    <button type="button" className="btn btn-outline" onClick={() => setShowCreateModal(false)}>Cancel</button>
+                    <button type="submit" className="btn btn-primary" disabled={creating}>
+                      {creating ? "Saving..." : "Create Medicine"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
           )}
         </div>
       </StaffLayout>

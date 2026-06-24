@@ -263,6 +263,55 @@ async function buildPharmacyDashboardBody() {
   };
 }
 
+export async function createMedicine(userId, payload = {}) {
+  const code = String(payload.code || "").trim().toUpperCase();
+  const name = String(payload.name || "").trim();
+  const unit = String(payload.unit || "").trim();
+  const price = Number(payload.price);
+  const minStockLevel = Number(payload.minStockLevel);
+  const initialQuantity = parseInt(payload.initialQuantity, 10);
+
+  if (!code || !name || !unit) {
+    return { status: 400, body: { message: "Code, name, and unit are required" } };
+  }
+  if (!Number.isFinite(price) || price < 0) {
+    return { status: 400, body: { message: "Price must be a valid positive number" } };
+  }
+  if (!Number.isFinite(minStockLevel) || minStockLevel < 0) {
+    return { status: 400, body: { message: "Min stock level must be a valid positive number" } };
+  }
+
+  const existing = await Medicine.findOne({ code });
+  if (existing) {
+    return { status: 409, body: { message: "Medicine code already exists" } };
+  }
+
+  const startStock = !Number.isNaN(initialQuantity) && initialQuantity > 0 ? initialQuantity : 0;
+
+  const medicine = await Medicine.create({
+    code,
+    name,
+    unit,
+    price,
+    minStockLevel,
+    stockQty: startStock,
+    isActive: true,
+  });
+
+  if (startStock > 0) {
+    await StockMovement.create({
+      medicineId: medicine._id,
+      type: "inbound",
+      quantity: startStock,
+      batchNo: payload.batchNo || "INITIAL",
+      note: "Initial stock from creation",
+      performedBy: userId,
+    });
+  }
+
+  return { status: 201, body: serializeMedicine(medicine) };
+}
+
 export async function getPharmacyDashboard() {
   return {
     status: 200,
