@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { QRCodeSVG } from "qrcode.react";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import PageLayout from "../components/PageLayout.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -27,7 +28,7 @@ function formatVisitDate(value) {
   return new Date(value).toLocaleDateString();
 }
 
-function PrescriptionDetailContent({ prescription, loading, error, backTo, backLabel }) {
+function PrescriptionDetailContent({ prescription, loading, error, backTo, backLabel, role }) {
   return (
     <div className="prescription-detail-page">
       <div className="prescription-detail-toolbar">
@@ -58,9 +59,19 @@ function PrescriptionDetailContent({ prescription, loading, error, backTo, backL
               <h1>Prescription Detail</h1>
               <p>Issued from encounter {prescription.encounter?.chiefComplaint || "Clinical encounter"}</p>
             </div>
-            <span className={`prescription-detail-status prescription-detail-status--${prescription.status}`}>
-              {prescription.status}
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+              {(prescription.status === "issued" || prescription.status === "dispensed") && role !== "doctor" && (
+                <div style={{ textAlign: "center" }}>
+                  <QRCodeSVG value={prescription._id} size={80} level="M" />
+                  <div style={{ fontSize: "0.75rem", marginTop: "0.25rem", color: "var(--text-secondary)" }}>
+                    Show at pharmacy
+                  </div>
+                </div>
+              )}
+              <span className={`prescription-detail-status prescription-detail-status--${prescription.status}`}>
+                {prescription.status}
+              </span>
+            </div>
           </div>
 
           <div className="prescription-detail-facts">
@@ -174,6 +185,7 @@ export default function PrescriptionDetailPage() {
       error={error}
       backTo={backTarget}
       backLabel={role === "doctor" ? "Back to encounter" : "Back to EMR"}
+      role={role}
     />
   );
 

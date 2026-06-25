@@ -12,6 +12,7 @@ import {
   List,
   Package,
   Pill,
+  Scan,
   Search,
   Sparkles,
   Stethoscope,
@@ -44,6 +45,7 @@ const ICON_MAP = {
   layers: Layers,
   list: List,
   sparkles: Sparkles,
+  scan: Scan,
 };
 
 export default function AppIcon({

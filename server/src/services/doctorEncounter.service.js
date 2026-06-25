@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Doctor } from "../models/Doctor.js";
 import { Encounter } from "../models/Encounter.js";
+import { Prescription } from "../models/Prescription.js";
 import { listActiveImagesByEncounterIds } from "./doctorMedicalImage.service.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
@@ -142,6 +143,11 @@ export async function signOffEncounter(userId, encounterId) {
   encounter.signedOffAt = new Date();
   encounter.signedOffBy = userId;
   await encounter.save();
+
+  await Prescription.updateMany(
+    { encounterId: encounter._id, status: "draft" },
+    { $set: { status: "issued", issuedAt: new Date() } }
+  );
 
   const signed = await populateEncounter(Encounter.findById(encounter._id)).lean();
   const imageMap = await listActiveImagesByEncounterIds([signed._id]);

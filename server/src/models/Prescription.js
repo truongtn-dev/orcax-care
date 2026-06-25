@@ -38,12 +38,14 @@ const prescriptionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    status: { type: String, enum: ["draft", "issued", "cancelled"], default: "draft", index: true },
+    status: { type: String, enum: ["draft", "issued", "dispensed", "cancelled"], default: "draft", index: true },
     notes: { type: String, default: "", trim: true },
     lineItems: { type: [prescriptionLineItemSchema], default: [] },
     totalAmount: { type: Number, default: 0, min: 0 },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     issuedAt: { type: Date, default: null },
+    dispensedAt: { type: Date, default: null },
+    dispensedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 );

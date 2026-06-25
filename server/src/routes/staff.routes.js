@@ -13,3 +13,4 @@ staffRouter.get("/pharmacy/medicines", StaffPharmacyController.listMedicines);
 staffRouter.get("/pharmacy/medicines/:id", StaffPharmacyController.getMedicineDetail);
 staffRouter.get("/pharmacy/stock-movements", StaffPharmacyController.listStockMovements);
 staffRouter.post("/pharmacy/stock-inbound", StaffPharmacyController.stockInbound);
+staffRouter.post("/pharmacy/prescriptions/verify", StaffPharmacyController.verifyPrescription);
