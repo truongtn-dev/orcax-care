@@ -100,18 +100,25 @@ export default function DoctorEncounterDetailPage() {
             Today appointments
           </Link>
           {encounter && (
-            <button
-              type="button"
-              className="btn btn-primary btn-sm"
-              disabled={!encounter.canSignOff || submitting}
-              onClick={handleSignOff}
-            >
-              {encounter.status === "signed"
-                ? "Signed off"
-                : submitting
-                  ? "Signing off..."
-                  : "Sign off encounter"}
-            </button>
+            <div className="doctor-encounter-toolbar-actions">
+              {encounter.canSignOff && (
+                <Link to={`/doctor/encounters/${encounter._id}/prescriptions/new`} className="btn btn-outline btn-sm">
+                  Create prescription
+                </Link>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!encounter.canSignOff || submitting}
+                onClick={handleSignOff}
+              >
+                {encounter.status === "signed"
+                  ? "Signed off"
+                  : submitting
+                    ? "Signing off..."
+                    : "Sign off encounter"}
+              </button>
+            </div>
           )}
         </div>
 
