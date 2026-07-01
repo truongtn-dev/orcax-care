@@ -13,6 +13,10 @@ export const StaffApiClient = {
     return api.get("/api/staff/pharmacy/medicines", { params });
   },
 
+  getMedicine(id) {
+    return api.get(`/api/staff/pharmacy/medicines/${id}`);
+  },
+
   listStockMovements(params) {
     return api.get("/api/staff/pharmacy/stock-movements", { params });
   },

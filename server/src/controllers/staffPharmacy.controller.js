@@ -40,6 +40,16 @@ export async function listStockMovements(req, res) {
   }
 }
 
+export async function getMedicineDetail(req, res) {
+  try {
+    const result = await StaffPharmacyService.getMedicineDetail(req.params.id);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function stockInbound(req, res) {
   try {
     const result = await StaffPharmacyService.stockInbound(req.user.userId, req.body);

@@ -10,5 +10,6 @@ staffRouter.use(requireDatabase, authMiddleware, requireRole("staff", "admin"));
 staffRouter.get("/dashboard", StaffPharmacyController.getStaffDashboard);
 staffRouter.get("/pharmacy/dashboard", StaffPharmacyController.getPharmacyDashboard);
 staffRouter.get("/pharmacy/medicines", StaffPharmacyController.listMedicines);
+staffRouter.get("/pharmacy/medicines/:id", StaffPharmacyController.getMedicineDetail);
 staffRouter.get("/pharmacy/stock-movements", StaffPharmacyController.listStockMovements);
 staffRouter.post("/pharmacy/stock-inbound", StaffPharmacyController.stockInbound);
