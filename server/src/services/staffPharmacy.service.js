@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Medicine } from "../models/Medicine.js";
 import { StockMovement } from "../models/StockMovement.js";
+import { Prescription } from "../models/Prescription.js";
 
 function serializeMedicine(medicine) {
   return {
@@ -343,5 +344,89 @@ export async function getStaffDashboard() {
   return {
     status: 200,
     body: await buildPharmacyDashboardBody(),
+  };
+}
+
+export async function verifyPrescription(userId, payload) {
+  const prescriptionId = payload.prescriptionId;
+  if (!prescriptionId || !mongoose.Types.ObjectId.isValid(prescriptionId)) {
+    return { status: 400, body: { message: "Invalid prescription ID" } };
+  }
+
+  const prescription = await Prescription.findById(prescriptionId)
+    .populate("patientUserId", "fullName phone email")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId", select: "fullName" }
+    })
+    .populate("encounterId", "visitDate diagnoses");
+
+  if (!prescription) {
+    return { status: 404, body: { message: "Prescription not found" } };
+  }
+
+  if (prescription.status === "dispensed") {
+    return { status: 400, body: { message: "This prescription has already been dispensed" } };
+  }
+
+  if (prescription.status !== "issued") {
+    return { status: 400, body: { message: `Prescription cannot be dispensed because its status is ${prescription.status}` } };
+  }
+
+  // Check stock for all medicines
+  const medicineIds = prescription.lineItems.map(item => item.medicineId);
+  const medicines = await Medicine.find({ _id: { $in: medicineIds } });
+  const medicineMap = new Map(medicines.map(m => [m._id.toString(), m]));
+
+  const outOfStockItems = [];
+  for (const item of prescription.lineItems) {
+    const med = medicineMap.get(item.medicineId.toString());
+    if (!med || med.stockQty < item.quantity) {
+      outOfStockItems.push({
+        medicineCode: item.medicineCode,
+        medicineName: item.medicineName,
+        requested: item.quantity,
+        available: med ? med.stockQty : 0
+      });
+    }
+  }
+
+  if (outOfStockItems.length > 0) {
+    return { 
+      status: 400, 
+      body: { 
+        message: "Insufficient stock for some medicines", 
+        details: outOfStockItems 
+      } 
+    };
+  }
+
+  // Deduct stock and create stock movements
+  for (const item of prescription.lineItems) {
+    const med = medicineMap.get(item.medicineId.toString());
+    med.stockQty -= item.quantity;
+    await med.save();
+
+    await StockMovement.create({
+      medicineId: med._id,
+      type: "outbound",
+      quantity: item.quantity,
+      note: `Dispensed for prescription ${prescription._id}`,
+      performedBy: userId,
+    });
+  }
+
+  // Update prescription status
+  prescription.status = "dispensed";
+  prescription.dispensedAt = new Date();
+  prescription.dispensedBy = userId;
+  await prescription.save();
+
+  return { 
+    status: 200, 
+    body: { 
+      message: "Prescription verified and medicines dispensed successfully",
+      prescription: prescription.toObject()
+    } 
   };
 }

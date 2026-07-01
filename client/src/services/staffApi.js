@@ -25,6 +25,10 @@ export const StaffApiClient = {
     return api.post("/api/staff/pharmacy/stock-inbound", payload);
   },
 
+  verifyPrescription(payload) {
+    return api.post("/api/staff/pharmacy/prescriptions/verify", payload);
+  },
+
   createMedicine(payload) {
     return api.post("/api/staff/pharmacy/medicines", payload);
   },
