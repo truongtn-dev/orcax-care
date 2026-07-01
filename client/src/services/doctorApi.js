@@ -37,6 +37,10 @@ export const DoctorApiClient = {
     return api.post(`/api/doctor/encounters/${encounterId}/prescriptions`, payload);
   },
 
+  getPrescription(id) {
+    return api.get(`/api/doctor/prescriptions/${id}`);
+  },
+
   getAppointmentSlot(id) {
     return api.get(`/api/doctor/appointment-slots/${id}`);
   },

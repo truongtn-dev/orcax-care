@@ -13,6 +13,7 @@ import { ClinicRoom } from "../models/ClinicRoom.js";
 import { Doctor } from "../models/Doctor.js";
 import { Encounter } from "../models/Encounter.js";
 import { Patient } from "../models/Patient.js";
+import { Prescription } from "../models/Prescription.js";
 import { User } from "../models/User.js";
 import { issueAuthToken } from "../services/token.service.js";
 
@@ -114,6 +115,7 @@ describe("UC-21 Patient EMR Timeline", () => {
   beforeEach(async () => {
     await AuthToken.deleteMany({});
     await Encounter.deleteMany({});
+    await Prescription.deleteMany({});
     await Appointment.deleteMany({});
     await AppointmentSlot.deleteMany({});
     await ClinicRoom.deleteMany({});
@@ -156,7 +158,7 @@ describe("UC-21 Patient EMR Timeline", () => {
       startTime: "11:00",
     });
 
-    await Encounter.create([
+    const createdEncounters = await Encounter.create([
       {
         patientUserId: patientUser._id,
         doctorId: doctor._id,
@@ -185,6 +187,27 @@ describe("UC-21 Patient EMR Timeline", () => {
         chiefComplaint: "Private other patient",
       },
     ]);
+
+    await Prescription.create({
+      encounterId: createdEncounters[1]._id,
+      patientUserId: patientUser._id,
+      doctorId: doctor._id,
+      status: "draft",
+      totalAmount: 5000,
+      lineItems: [
+        {
+          medicineId: new mongoose.Types.ObjectId(),
+          medicineName: "Timeline Medicine",
+          medicineCode: "TLMED",
+          unit: "tablet",
+          quantity: 2,
+          durationDays: 3,
+          unitPrice: 2500,
+          lineTotal: 5000,
+        },
+      ],
+      createdBy: doctor.userId,
+    });
   });
 
   after(async () => {
@@ -208,6 +231,9 @@ describe("UC-21 Patient EMR Timeline", () => {
     assert.equal(body.items[0].diagnoses[0].code, "R05");
     assert.equal(body.items[0].appointment.roomName, "Timeline Room");
     assert.equal(body.items[0].vitals.temperatureC, 37.8);
+    assert.equal(body.items[0].prescriptions.length, 1);
+    assert.equal(body.items[0].prescriptions[0].lineItemCount, 1);
+    assert.equal(body.items[0].prescriptions[0].totalAmount, 5000);
   });
 
   test("filters the timeline by visit date range", async () => {

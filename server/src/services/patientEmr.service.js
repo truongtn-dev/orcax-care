@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Encounter } from "../models/Encounter.js";
+import { Prescription } from "../models/Prescription.js";
 import { listActiveImagesByEncounterIds } from "./doctorMedicalImage.service.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
@@ -38,7 +39,17 @@ function serializeAppointment(appointment) {
   };
 }
 
-function serializeEncounter(row, images = []) {
+function serializePrescriptionSummary(row) {
+  return {
+    _id: row._id.toString(),
+    status: row.status,
+    totalAmount: row.totalAmount || 0,
+    createdAt: row.createdAt,
+    lineItemCount: row.lineItems?.length || 0,
+  };
+}
+
+function serializeEncounter(row, images = [], prescriptions = []) {
   return {
     _id: row._id.toString(),
     status: row.status,
@@ -54,9 +65,28 @@ function serializeEncounter(row, images = []) {
     doctor: serializeDoctor(row.doctorId),
     appointment: serializeAppointment(row.appointmentId),
     images,
+    prescriptions: prescriptions.map(serializePrescriptionSummary),
     signedOffAt: row.signedOffAt,
     updatedAt: row.updatedAt,
   };
+}
+
+async function listPrescriptionsByEncounterIds(encounterIds) {
+  if (!encounterIds.length) return new Map();
+
+  const rows = await Prescription.find({ encounterId: { $in: encounterIds } })
+    .select("encounterId status totalAmount lineItems createdAt")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const map = new Map();
+  for (const row of rows) {
+    const key = row.encounterId.toString();
+    const current = map.get(key) || [];
+    current.push(row);
+    map.set(key, current);
+  }
+  return map;
 }
 
 export async function listTimeline(userId, query = {}) {
@@ -98,13 +128,23 @@ export async function listTimeline(userId, query = {}) {
     .sort({ visitDate: -1, createdAt: -1 })
     .lean();
 
-  const imageMap = await listActiveImagesByEncounterIds(rows.map((row) => row._id));
+  const encounterIds = rows.map((row) => row._id);
+  const [imageMap, prescriptionMap] = await Promise.all([
+    listActiveImagesByEncounterIds(encounterIds),
+    listPrescriptionsByEncounterIds(encounterIds),
+  ]);
 
   return {
     status: 200,
     body: {
       total: rows.length,
-      items: rows.map((row) => serializeEncounter(row, imageMap.get(row._id.toString()) || [])),
+      items: rows.map((row) =>
+        serializeEncounter(
+          row,
+          imageMap.get(row._id.toString()) || [],
+          prescriptionMap.get(row._id.toString()) || []
+        )
+      ),
     },
   };
 }

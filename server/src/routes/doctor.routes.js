@@ -16,6 +16,7 @@ doctorRouter.get("/work-shifts", DoctorWorkShiftController.listMyWorkShifts);
 doctorRouter.get("/schedule", DoctorScheduleController.getScheduleCalendar);
 doctorRouter.get("/appointments/today", DoctorAppointmentController.listTodayAppointments);
 doctorRouter.get("/medicines", DoctorPrescriptionController.listMedicines);
+doctorRouter.get("/prescriptions/:id", DoctorPrescriptionController.getPrescription);
 doctorRouter.get("/appointments/:id", DoctorAppointmentController.getAppointment);
 doctorRouter.get("/encounters/:id", DoctorEncounterController.getEncounter);
 doctorRouter.post("/encounters/:id/sign-off", DoctorEncounterController.signOffEncounter);

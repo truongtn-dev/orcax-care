@@ -37,6 +37,7 @@ import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
 import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx";
 import DoctorEncounterDetailPage from "./pages/DoctorEncounterDetailPage.jsx";
 import DoctorPrescriptionCreatePage from "./pages/DoctorPrescriptionCreatePage.jsx";
+import PrescriptionDetailPage from "./pages/PrescriptionDetailPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
@@ -165,6 +166,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientEmrTimelinePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/prescriptions/:id"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PrescriptionDetailPage />
               </ProtectedRoute>
             }
           />
@@ -438,6 +447,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["doctor"]}>
                 <DoctorPrescriptionCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/prescriptions/:id"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <PrescriptionDetailPage />
               </ProtectedRoute>
             }
           />

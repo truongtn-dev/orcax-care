@@ -132,6 +132,9 @@ export default function DoctorPrescriptionCreatePage() {
         {createdPrescription && (
           <div className="alert alert-success">
             Prescription created. Total: {formatCurrency(createdPrescription.totalAmount)}
+            <Link to={`/doctor/prescriptions/${createdPrescription._id}`} className="doctor-rx-created-link">
+              Open detail
+            </Link>
           </div>
         )}
 

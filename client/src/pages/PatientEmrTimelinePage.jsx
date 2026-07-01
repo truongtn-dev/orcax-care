@@ -23,6 +23,14 @@ function formatVisitTime(appointment) {
   return appointment.endTime ? `${appointment.startTime} - ${appointment.endTime}` : appointment.startTime;
 }
 
+function formatCurrency(value) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
+
 export default function PatientEmrTimelinePage() {
   const [items, setItems] = useState([]);
   const [from, setFrom] = useState("");
@@ -161,6 +169,24 @@ export default function PatientEmrTimelinePage() {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  )}
+
+                  {item.prescriptions?.length > 0 && (
+                    <div className="patient-emr-prescriptions">
+                      <p className="patient-section-label">Prescriptions</p>
+                      <div className="patient-emr-prescription-list">
+                        {item.prescriptions.map((prescription) => (
+                          <Link
+                            key={prescription._id}
+                            to={`/patient/prescriptions/${prescription._id}`}
+                            className="patient-emr-prescription-link"
+                          >
+                            <span>{prescription.lineItemCount} medicines</span>
+                            <strong>{formatCurrency(prescription.totalAmount)}</strong>
+                          </Link>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
