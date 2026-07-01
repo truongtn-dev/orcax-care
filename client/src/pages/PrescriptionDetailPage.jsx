@@ -28,7 +28,17 @@ function formatVisitDate(value) {
   return new Date(value).toLocaleDateString();
 }
 
-function PrescriptionDetailContent({ prescription, loading, error, backTo, backLabel, role }) {
+function PrescriptionDetailContent({
+  prescription,
+  loading,
+  error,
+  backTo,
+  backLabel,
+  role,
+  canEdit,
+  onRemoveItem,
+  submitting,
+}) {
   return (
     <div className="prescription-detail-page">
       <div className="prescription-detail-toolbar">
@@ -105,6 +115,7 @@ function PrescriptionDetailContent({ prescription, loading, error, backTo, backL
                   <th>Dosage</th>
                   <th>Instructions</th>
                   <th className="prescription-detail-money">Line total</th>
+                  {canEdit && <th style={{ width: "80px", textAlign: "right" }}>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -121,6 +132,18 @@ function PrescriptionDetailContent({ prescription, loading, error, backTo, backL
                     <td>{item.dosage || "-"}</td>
                     <td>{item.instructions || "-"}</td>
                     <td className="prescription-detail-money">{formatCurrency(item.lineTotal)}</td>
+                    {canEdit && (
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-sm"
+                          disabled={submitting || prescription.lineItems.length === 1}
+                          onClick={() => onRemoveItem(item.medicineId)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -148,6 +171,7 @@ export default function PrescriptionDetailPage() {
   const { role } = useAuth();
   const [prescription, setPrescription] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   const apiClient = role === "doctor" ? DoctorApiClient : PatientApiClient;
@@ -178,6 +202,20 @@ export default function PrescriptionDetailPage() {
     loadPrescription();
   }, [loadPrescription]);
 
+  const handleRemoveItem = async (itemId) => {
+    if (!window.confirm("Are you sure you want to remove this medicine line item?")) return;
+    setSubmitting(true);
+    setError("");
+    try {
+      const { data } = await DoctorApiClient.removePrescriptionLineItem(prescription._id, itemId);
+      setPrescription(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const content = (
     <PrescriptionDetailContent
       prescription={prescription}
@@ -186,6 +224,9 @@ export default function PrescriptionDetailPage() {
       backTo={backTarget}
       backLabel={role === "doctor" ? "Back to encounter" : "Back to EMR"}
       role={role}
+      canEdit={role === "doctor" && prescription?.status === "draft"}
+      onRemoveItem={handleRemoveItem}
+      submitting={submitting}
     />
   );
 

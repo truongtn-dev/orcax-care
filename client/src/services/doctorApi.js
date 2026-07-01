@@ -21,6 +21,10 @@ export const DoctorApiClient = {
     return api.get(`/api/doctor/encounters/${id}`);
   },
 
+  updateEncounter(id, payload) {
+    return api.put(`/api/doctor/encounters/${id}`, payload);
+  },
+
   signOffEncounter(id) {
     return api.post(`/api/doctor/encounters/${id}/sign-off`);
   },
@@ -39,6 +43,10 @@ export const DoctorApiClient = {
 
   getPrescription(id) {
     return api.get(`/api/doctor/prescriptions/${id}`);
+  },
+
+  removePrescriptionLineItem(prescriptionId, itemId) {
+    return api.delete(`/api/doctor/prescriptions/${prescriptionId}/items/${itemId}`);
   },
 
   getAppointmentSlot(id) {

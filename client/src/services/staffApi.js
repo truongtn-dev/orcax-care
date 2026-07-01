@@ -28,4 +28,8 @@ export const StaffApiClient = {
   verifyPrescription(payload) {
     return api.post("/api/staff/pharmacy/prescriptions/verify", payload);
   },
+
+  createMedicine(payload) {
+    return api.post("/api/staff/pharmacy/medicines", payload);
+  },
 };

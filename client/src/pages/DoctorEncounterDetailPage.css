@@ -175,3 +175,45 @@
     grid-template-columns: 1fr;
   }
 }
+
+.encounter-edit-input,
+.encounter-edit-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--color-navy);
+  background-color: #fff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) inset;
+}
+
+.encounter-edit-input:focus,
+.encounter-edit-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.encounter-edit-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.encounter-edit-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.encounter-edit-vital {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 0.4rem;
+}
