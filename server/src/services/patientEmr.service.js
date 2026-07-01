@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Encounter } from "../models/Encounter.js";
+import { listActiveImagesByEncounterIds } from "./doctorMedicalImage.service.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
 function parseDateBoundary(value, boundary) {
@@ -37,7 +38,7 @@ function serializeAppointment(appointment) {
   };
 }
 
-function serializeEncounter(row) {
+function serializeEncounter(row, images = []) {
   return {
     _id: row._id.toString(),
     status: row.status,
@@ -52,6 +53,7 @@ function serializeEncounter(row) {
     })),
     doctor: serializeDoctor(row.doctorId),
     appointment: serializeAppointment(row.appointmentId),
+    images,
     signedOffAt: row.signedOffAt,
     updatedAt: row.updatedAt,
   };
@@ -96,11 +98,13 @@ export async function listTimeline(userId, query = {}) {
     .sort({ visitDate: -1, createdAt: -1 })
     .lean();
 
+  const imageMap = await listActiveImagesByEncounterIds(rows.map((row) => row._id));
+
   return {
     status: 200,
     body: {
       total: rows.length,
-      items: rows.map(serializeEncounter),
+      items: rows.map((row) => serializeEncounter(row, imageMap.get(row._id.toString()) || [])),
     },
   };
 }

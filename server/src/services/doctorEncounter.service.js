@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Doctor } from "../models/Doctor.js";
 import { Encounter } from "../models/Encounter.js";
+import { listActiveImagesByEncounterIds } from "./doctorMedicalImage.service.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
 async function resolveDoctorForUser(userId) {
@@ -50,7 +51,7 @@ function serializeSignedOffBy(user) {
   };
 }
 
-function serializeEncounter(row) {
+function serializeEncounter(row, images = []) {
   return {
     _id: row._id.toString(),
     status: row.status,
@@ -68,6 +69,7 @@ function serializeEncounter(row) {
     appointment: serializeAppointment(row.appointmentId),
     signedOffAt: row.signedOffAt,
     signedOffBy: serializeSignedOffBy(row.signedOffBy),
+    images,
     canSignOff: row.status === "draft",
     updatedAt: row.updatedAt,
   };
@@ -109,7 +111,11 @@ export async function getEncounter(userId, encounterId) {
     return { status: 404, body: { message: "Encounter not found" } };
   }
 
-  return { status: 200, body: serializeEncounter(encounter) };
+  const imageMap = await listActiveImagesByEncounterIds([encounter._id]);
+  return {
+    status: 200,
+    body: serializeEncounter(encounter, imageMap.get(encounter._id.toString()) || []),
+  };
 }
 
 export async function signOffEncounter(userId, encounterId) {
@@ -138,5 +144,9 @@ export async function signOffEncounter(userId, encounterId) {
   await encounter.save();
 
   const signed = await populateEncounter(Encounter.findById(encounter._id)).lean();
-  return { status: 200, body: serializeEncounter(signed) };
+  const imageMap = await listActiveImagesByEncounterIds([signed._id]);
+  return {
+    status: 200,
+    body: serializeEncounter(signed, imageMap.get(signed._id.toString()) || []),
+  };
 }
