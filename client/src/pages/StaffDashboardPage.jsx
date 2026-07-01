@@ -151,6 +151,34 @@ export default function StaffDashboardPage() {
               )}
             </section>
 
+            <section className="card staff-dashboard-panel">
+              <header className="staff-dashboard-panel-head">
+                <div>
+                  <h2>Expiring soon</h2>
+                  <p>Batches expiring within the next 60 days.</p>
+                </div>
+              </header>
+              {loading ? (
+                <p className="staff-dashboard-empty">Loading expiry alerts…</p>
+              ) : dashboard?.expiringBatches?.length ? (
+                <ul className="staff-dashboard-alert-list">
+                  {dashboard.expiringBatches.map((item) => (
+                    <li key={`${item.medicine._id}-${item.batchNo}`}>
+                      <div>
+                        <strong>{item.medicine.name}</strong>
+                        <span>{item.medicine.code} - Batch: {item.batchNo}</span>
+                      </div>
+                      <span className="staff-dashboard-alert-qty" style={{ color: "#b91c1c" }}>
+                        Exp: {new Date(item.expiryDate).toLocaleDateString()}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="staff-dashboard-empty">No batches expiring soon.</p>
+              )}
+            </section>
+
             <section className="card staff-dashboard-panel staff-dashboard-quick">
               <h2>Quick links</h2>
               <nav className="staff-dashboard-quick-nav" aria-label="Staff quick links">

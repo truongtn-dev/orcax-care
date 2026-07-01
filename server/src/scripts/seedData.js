@@ -333,16 +333,23 @@ export async function runSeed() {
     { code: "PARA500", name: "Paracetamol 500mg", unit: "tablet", price: 1200, stockQty: 120, minStockLevel: 30 },
     { code: "AMOX500", name: "Amoxicillin 500mg", unit: "capsule", price: 2500, stockQty: 45, minStockLevel: 40 },
     { code: "VITC1000", name: "Vitamin C 1000mg", unit: "tablet", price: 1800, stockQty: 80, minStockLevel: 25 },
+    { code: "ASP81", name: "Aspirin 81mg", unit: "tablet", price: 800, stockQty: 100, minStockLevel: 20 },
+    { code: "IBU400", name: "Ibuprofen 400mg", unit: "tablet", price: 1500, stockQty: 15, minStockLevel: 50 },
   ];
   for (const med of defaultMedicines) {
     await Medicine.findOneAndUpdate({ code: med.code }, med, { upsert: true, new: true });
   }
 
   if (staffUser) {
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 15);
+    const expiringDateStr = soon.toISOString().slice(0, 10);
+
     const demoBatches = [
       { code: "PARA500", batchNo: "PARA-LOT-01", quantity: 120, expiryDate: "2027-08-31", supplierRef: "SUP-PARA" },
       { code: "AMOX500", batchNo: "AMOX-LOT-02", quantity: 45, expiryDate: "2027-03-15", supplierRef: "SUP-AMOX" },
       { code: "VITC1000", batchNo: "VITC-LOT-01", quantity: 80, expiryDate: "2028-01-20", supplierRef: "SUP-VITC" },
+      { code: "ASP81", batchNo: "ASP-EXP-01", quantity: 100, expiryDate: expiringDateStr, supplierRef: "SUP-ASP" },
     ];
 
     for (const batch of demoBatches) {
