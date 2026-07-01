@@ -87,6 +87,22 @@ const DASHBOARD_SECTIONS = [
         ),
       },
       {
+        to: "/patient/queue",
+        title: "Queue status",
+        description: "See your ticket number and how many people are ahead.",
+        badge: "Queue",
+        theme: "amber",
+        cta: "View queue",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M7 4h10" />
+            <path d="M7 8h10" />
+            <path d="M7 12h6" />
+            <rect x="3" y="2" width="18" height="20" rx="2" />
+          </svg>
+        ),
+      },
+      {
         to: "/patient/emr",
         title: "Medical records",
         description: "Review your encounter timeline, notes, vitals, and diagnoses.",

@@ -25,7 +25,7 @@ const appointmentSchema = new mongoose.Schema(
     discountAmount: { type: Number, default: 0, min: 0 },
     status: {
       type: String,
-      enum: ["confirmed", "completed", "cancelled"],
+      enum: ["confirmed", "checked-in", "completed", "cancelled"],
       default: "confirmed",
       index: true,
     },

@@ -1,11 +1,15 @@
 import { Router } from "express";
 import * as StaffPharmacyController from "../controllers/staffPharmacy.controller.js";
+import * as QueueCheckinController from "../controllers/queueCheckin.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
 
 export const staffRouter = Router();
 
 staffRouter.use(requireDatabase, authMiddleware, requireRole("staff", "admin"));
+
+staffRouter.get("/checkin/search", QueueCheckinController.searchCheckinAppointments);
+staffRouter.post("/checkin/:appointmentId/issue-ticket", QueueCheckinController.issueTicket);
 
 staffRouter.get("/dashboard", StaffPharmacyController.getStaffDashboard);
 staffRouter.get("/pharmacy/dashboard", StaffPharmacyController.getPharmacyDashboard);

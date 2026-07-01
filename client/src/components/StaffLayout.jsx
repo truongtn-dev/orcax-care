@@ -23,6 +23,12 @@ const STAFF_SECTIONS = [
         match: ["/staff/prescriptions/verify"],
       },
       {
+        to: "/staff/checkin",
+        label: "Queue check-in",
+        icon: "list",
+        match: ["/staff/checkin"],
+      },
+      {
         to: "/search-doctors",
         label: "Find doctors",
         icon: "doctor",

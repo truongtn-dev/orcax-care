@@ -1,0 +1,128 @@
+.doctor-queue-page {
+  gap: 1.25rem;
+}
+
+.doctor-queue-open-head h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.doctor-queue-open-head p {
+  margin: 0 0 1rem;
+  color: var(--text-muted, #64748b);
+}
+
+.doctor-queue-loading,
+.doctor-queue-empty {
+  color: var(--text-muted, #64748b);
+  margin: 0;
+}
+
+.doctor-queue-hero {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.doctor-queue-hero-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.doctor-queue-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.doctor-queue-current {
+  margin: 0.25rem 0 0;
+  font-size: clamp(3rem, 8vw, 5rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--brand-teal, #0d9488);
+}
+
+.doctor-queue-room-block {
+  text-align: right;
+}
+
+.doctor-queue-room-block p {
+  margin: 0.35rem 0 0;
+}
+
+.doctor-queue-room-code {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.doctor-queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.doctor-queue-waiting {
+  padding: 1.25rem 1.5rem;
+}
+
+.doctor-queue-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.doctor-queue-panel-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.doctor-queue-ticket-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.doctor-queue-ticket-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(13, 148, 136, 0.06);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+}
+
+.doctor-queue-ticket-list strong {
+  font-size: 1.25rem;
+}
+
+.doctor-queue-board-link {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-muted, #64748b);
+}
+
+.doctor-queue-board-link a {
+  color: var(--brand-teal, #0d9488);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .doctor-queue-room-block {
+    text-align: left;
+  }
+
+  .doctor-queue-actions .btn-lg {
+    width: 100%;
+  }
+}

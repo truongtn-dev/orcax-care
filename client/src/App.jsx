@@ -42,6 +42,10 @@ import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
 import StaffVerifyPrescriptionPage from "./pages/StaffVerifyPrescriptionPage.jsx";
 import StaffMedicineDetailPage from "./pages/StaffMedicineDetailPage.jsx";
+import StaffQueueCheckinPage from "./pages/StaffQueueCheckinPage.jsx";
+import DoctorQueueSessionPage from "./pages/DoctorQueueSessionPage.jsx";
+import PatientQueueStatusPage from "./pages/PatientQueueStatusPage.jsx";
+import QueueBoardPage from "./pages/QueueBoardPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
 import DoctorDetailPage from "./pages/admin/DoctorDetailPage.jsx";
 import DoctorsListPage from "./pages/admin/DoctorsListPage.jsx";
@@ -163,6 +167,15 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/queue-board/:roomId" element={<QueueBoardPage />} />
+          <Route
+            path="/patient/queue"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientQueueStatusPage />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/patient/emr"
             element={
@@ -224,6 +237,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["staff", "admin"]}>
                 <StaffVerifyPrescriptionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/checkin"
+            element={
+              <ProtectedRoute roles={["staff", "admin"]}>
+                <StaffQueueCheckinPage />
               </ProtectedRoute>
             }
           />
@@ -473,6 +494,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["doctor"]}>
                 <PrescriptionDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/queue"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorQueueSessionPage />
               </ProtectedRoute>
             }
           />

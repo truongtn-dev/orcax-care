@@ -8,6 +8,7 @@ import { patientRouter } from "./patient.routes.js";
 import { paymentsRouter } from "./payments.routes.js";
 import { uploadRouter } from "./upload.routes.js";
 import { staffRouter } from "./staff.routes.js";
+import { queueRouter, doctorQueueRouter } from "./queue.routes.js";
 
 export const apiRouter = Router();
 
@@ -24,3 +25,5 @@ apiRouter.use("/payments", paymentsRouter);
 apiRouter.use("/public", publicRouter);
 apiRouter.use("/upload", uploadRouter);
 apiRouter.use("/staff", staffRouter);
+apiRouter.use("/queue", queueRouter);
+apiRouter.use("/doctor/queue", doctorQueueRouter);

@@ -1,0 +1,105 @@
+.patient-queue-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.patient-queue-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.patient-queue-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.patient-queue-head h1 {
+  margin: 0.25rem 0;
+}
+
+.patient-queue-lead,
+.patient-queue-loading,
+.patient-queue-empty p {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+}
+
+.patient-queue-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.patient-queue-grid.is-called .patient-queue-ticket-card {
+  border-color: rgba(13, 148, 136, 0.35);
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.12);
+}
+
+.patient-queue-ticket-card,
+.patient-queue-stats,
+.patient-queue-empty {
+  padding: 1.5rem;
+}
+
+.patient-queue-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.patient-queue-number {
+  margin: 0.35rem 0 0.75rem;
+  font-size: clamp(4rem, 16vw, 6.5rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--brand-teal, #0d9488);
+}
+
+.patient-queue-called {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f766e;
+}
+
+.patient-queue-waiting {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+}
+
+.patient-queue-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.patient-queue-stat-value {
+  margin: 0.35rem 0 0;
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1;
+  font-weight: 800;
+}
+
+.patient-queue-room {
+  margin: 0.35rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .patient-queue-stats {
+    grid-template-columns: 1fr;
+  }
+}
