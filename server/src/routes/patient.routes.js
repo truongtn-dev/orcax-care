@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as PatientFavoriteDoctorController from "../controllers/patientFavoriteDoctor.controller.js";
 import * as PatientInsuranceCardController from "../controllers/patientInsuranceCard.controller.js";
 import * as PatientAppointmentController from "../controllers/patientAppointment.controller.js";
+import * as PatientEmrController from "../controllers/patientEmr.controller.js";
 import * as PatientNotificationController from "../controllers/patientNotification.controller.js";
 import * as PatientPushSubscriptionController from "../controllers/patientPushSubscription.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
@@ -55,6 +56,8 @@ patientRouter.put(
 );
 patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.cancelAppointment);
 patientRouter.post("/appointments/:id/rate", PatientAppointmentController.rateAppointment);
+
+patientRouter.get("/emr/timeline", PatientEmrController.listTimeline);
 
 patientRouter.get("/notifications", PatientNotificationController.listNotifications);
 patientRouter.put("/notifications/:id/read", PatientNotificationController.markNotificationRead);

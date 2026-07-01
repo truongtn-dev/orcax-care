@@ -108,14 +108,13 @@
 
 .patient-dashboard-quick {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1rem;
   margin-bottom: 1.25rem;
 }
 
 .patient-dashboard-charts {
   margin-bottom: 1.5rem;
-}
 }
 
 .patient-quick-card {
@@ -250,6 +249,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.patient-shortcut-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .patient-shortcut-grid--2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -289,6 +292,7 @@
 .patient-shortcut--emerald::before { background: linear-gradient(90deg, #34d399, #059669); }
 .patient-shortcut--amber::before { background: linear-gradient(90deg, #fbbf24, #d97706); }
 .patient-shortcut--violet::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.patient-shortcut--indigo::before { background: linear-gradient(90deg, #818cf8, #4f46e5); }
 
 .patient-shortcut:hover {
   transform: translateY(-3px);
@@ -316,6 +320,7 @@
 .patient-shortcut-icon--emerald { background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #059669; }
 .patient-shortcut-icon--amber { background: linear-gradient(135deg, #fffbeb, #fef3c7); color: #d97706; }
 .patient-shortcut-icon--violet { background: linear-gradient(135deg, #f5f3ff, #ede9fe); color: #7c3aed; }
+.patient-shortcut-icon--indigo { background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: #4f46e5; }
 
 .patient-shortcut-badge {
   width: fit-content;
@@ -332,6 +337,7 @@
 .patient-shortcut-badge--emerald { background: #ecfdf5; color: #047857; }
 .patient-shortcut-badge--amber { background: #fffbeb; color: #b45309; }
 .patient-shortcut-badge--violet { background: #f5f3ff; color: #6d28d9; }
+.patient-shortcut-badge--indigo { background: #eef2ff; color: #4338ca; }
 
 .patient-shortcut h3 {
   margin: 0;
@@ -369,6 +375,7 @@
 .patient-shortcut--emerald .patient-shortcut-arrow { color: #059669; }
 .patient-shortcut--amber .patient-shortcut-arrow { color: #d97706; }
 .patient-shortcut--violet .patient-shortcut-arrow { color: #7c3aed; }
+.patient-shortcut--indigo .patient-shortcut-arrow { color: #4f46e5; }
 
 .patient-shortcut:hover .patient-shortcut-arrow svg {
   transform: translateX(3px);
@@ -393,6 +400,7 @@
 }
 
 @media (max-width: 960px) {
+  .patient-shortcut-grid--4,
   .patient-shortcut-grid--3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -408,6 +416,7 @@
   }
 
   .patient-shortcut-grid--3,
+  .patient-shortcut-grid--4,
   .patient-shortcut-grid--2 {
     grid-template-columns: 1fr;
   }

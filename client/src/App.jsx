@@ -18,6 +18,7 @@ import PatientWalletCheckoutPage from "./pages/PatientWalletCheckoutPage.jsx";
 import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage.jsx";
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
 import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
+import PatientEmrTimelinePage from "./pages/PatientEmrTimelinePage.jsx";
 import PatientFavoritesPage from "./pages/PatientFavoritesPage.jsx";
 import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
@@ -154,6 +155,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientWalletSepayMockCheckoutPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/emr"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientEmrTimelinePage />
               </ProtectedRoute>
             }
           />

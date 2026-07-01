@@ -1,0 +1,285 @@
+.patient-emr-page {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.patient-emr-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.patient-emr-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.patient-emr-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.patient-emr-back:hover {
+  color: var(--color-primary);
+}
+
+.patient-emr-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.patient-emr-header h1 {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.patient-emr-header p:not(.patient-section-label) {
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.patient-emr-count {
+  min-width: 132px;
+  padding: 14px 18px;
+  border: 1px solid rgba(14, 116, 144, 0.14);
+  background: #ecfeff;
+  border-radius: 8px;
+  text-align: right;
+}
+
+.patient-emr-count strong,
+.patient-emr-count span {
+  display: block;
+}
+
+.patient-emr-count strong {
+  color: #0e7490;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.patient-emr-count span {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.patient-emr-filter-panel {
+  margin-bottom: 18px;
+}
+
+.patient-emr-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr)) auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.patient-emr-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.patient-emr-filters input {
+  height: 40px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 8px;
+  padding: 0 12px;
+  font: inherit;
+}
+
+.patient-emr-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+
+.patient-emr-card {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+}
+
+.patient-emr-date {
+  padding: 18px;
+  border-right: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+}
+
+.patient-emr-date strong,
+.patient-emr-date span {
+  display: block;
+}
+
+.patient-emr-date strong {
+  color: var(--color-navy);
+  line-height: 1.35;
+}
+
+.patient-emr-date span {
+  margin-top: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.86rem;
+}
+
+.patient-emr-card-body {
+  padding: 18px;
+}
+
+.patient-emr-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.patient-emr-card-head h2 {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 1.15rem;
+}
+
+.patient-emr-card-head p {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.patient-emr-status {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.patient-emr-status--signed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.patient-emr-vitals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 16px 0 0;
+}
+
+.patient-emr-vitals div {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.patient-emr-vitals dt {
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.patient-emr-vitals dd {
+  margin: 4px 0 0;
+  color: var(--color-navy);
+  font-weight: 800;
+}
+
+.patient-emr-notes {
+  margin: 16px 0 0;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+}
+
+.patient-emr-diagnoses {
+  margin-top: 18px;
+}
+
+.patient-emr-diagnoses ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.patient-emr-diagnoses li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.patient-emr-diagnoses strong {
+  color: #0e7490;
+  font-size: 0.82rem;
+}
+
+.patient-emr-state {
+  padding: 32px;
+  text-align: center;
+}
+
+.patient-emr-state h2 {
+  margin: 0;
+  color: var(--color-navy);
+}
+
+.patient-emr-state p {
+  margin: 8px 0 0;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 720px) {
+  .patient-emr-page {
+    width: min(100% - 24px, 1120px);
+    padding-top: 24px;
+  }
+
+  .patient-emr-header,
+  .patient-emr-toolbar,
+  .patient-emr-card-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .patient-emr-count {
+    text-align: left;
+  }
+
+  .patient-emr-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-emr-card {
+    grid-template-columns: 1fr;
+  }
+
+  .patient-emr-date {
+    border-right: 0;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  }
+
+  .patient-emr-vitals {
+    grid-template-columns: 1fr;
+  }
+}
