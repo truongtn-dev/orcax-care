@@ -11,6 +11,7 @@ async function resolveDoctorForUser(userId) {
 
 function serializeLineItem(item) {
   return {
+    _id: item._id?.toString() || "",
     medicineId: item.medicineId?.toString() || "",
     medicineName: item.medicineName || "",
     medicineCode: item.medicineCode || "",
@@ -241,4 +242,35 @@ export async function getPatientPrescription(userId, prescriptionId) {
   }
 
   return { status: 200, body: serializePrescriptionDetail(prescription) };
+}
+
+export async function removeLineItem(userId, prescriptionId, itemId) {
+  const doctor = await resolveDoctorForUser(userId);
+  if (!doctor) {
+    return { status: 404, body: { message: "Doctor profile not found" } };
+  }
+  if (!prescriptionId || !mongoose.Types.ObjectId.isValid(prescriptionId)) {
+    return { status: 400, body: { message: "Invalid prescription" } };
+  }
+
+  const prescription = await Prescription.findOne({ _id: prescriptionId, doctorId: doctor._id });
+  if (!prescription) {
+    return { status: 404, body: { message: "Prescription not found" } };
+  }
+  if (prescription.status !== "draft") {
+    return { status: 409, body: { message: "Only draft prescriptions can be modified" } };
+  }
+
+  const initialCount = prescription.lineItems.length;
+  prescription.lineItems = prescription.lineItems.filter(item => item.medicineId.toString() !== itemId);
+
+  if (prescription.lineItems.length === initialCount) {
+    return { status: 404, body: { message: "Line item not found" } };
+  }
+
+  prescription.totalAmount = prescription.lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
+  await prescription.save();
+
+  const updated = await populatePrescriptionDetail(Prescription.findById(prescription._id)).lean();
+  return { status: 200, body: serializePrescriptionDetail(updated) };
 }

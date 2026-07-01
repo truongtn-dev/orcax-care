@@ -69,30 +69,40 @@
 }
 
 .prescription-detail-facts div {
-  padding: 0.85rem;
+  padding: 1rem 1.25rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: #f8fafc;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.prescription-detail-facts div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  background: #ffffff;
 }
 
 .prescription-detail-facts dt {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.35rem;
   color: var(--color-text-muted);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .prescription-detail-facts dd {
   margin: 0;
   color: var(--color-navy);
   font-weight: 800;
+  font-size: 1.05rem;
 }
 
 .prescription-detail-table-wrap {
   overflow-x: auto;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--radius-lg);
+  background: #ffffff;
 }
 
 .prescription-detail-table {
@@ -103,7 +113,7 @@
 
 .prescription-detail-table th,
 .prescription-detail-table td {
-  padding: 0.9rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
   text-align: left;
   vertical-align: top;
@@ -112,13 +122,15 @@
 .prescription-detail-table th {
   background: #f8fafc;
   color: var(--color-text-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .prescription-detail-table td {
   color: var(--color-text-secondary);
+  font-size: 0.95rem;
 }
 
 .prescription-detail-table td strong,
@@ -128,12 +140,13 @@
 
 .prescription-detail-table td strong {
   color: var(--color-navy);
+  font-weight: 700;
 }
 
 .prescription-detail-table td span {
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
 .prescription-detail-money {
@@ -144,28 +157,30 @@
 .prescription-detail-bottom {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 .prescription-detail-bottom h2 {
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.5rem;
   color: var(--color-navy);
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 
 .prescription-detail-bottom p {
   margin: 0;
   color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .prescription-detail-total {
-  min-width: 220px;
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  background: #f0fdfa;
-  color: #115e59;
+  min-width: 240px;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-lg);
+  background: #f8fafc;
+  color: var(--color-primary);
   text-align: right;
+  border: 1px solid rgba(15, 23, 42, 0.08);
 }
 
 .prescription-detail-total span,
@@ -174,14 +189,17 @@
 }
 
 .prescription-detail-total span {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
 }
 
 .prescription-detail-total strong {
-  margin-top: 0.2rem;
-  font-size: 1.25rem;
+  margin-top: 0.35rem;
+  font-size: 1.6rem;
+  line-height: 1;
 }
 
 .doctor-rx-created-link {

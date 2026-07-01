@@ -36,3 +36,17 @@ export async function getPrescription(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function removeLineItem(req, res) {
+  try {
+    const result = await DoctorPrescriptionService.removeLineItem(
+      req.user.userId,
+      req.params.id,
+      req.params.itemId
+    );
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
