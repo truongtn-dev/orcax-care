@@ -35,6 +35,7 @@ import GenerateAppointmentSlotsPage from "./pages/admin/GenerateAppointmentSlots
 import WorkShiftsListPage from "./pages/admin/WorkShiftsListPage.jsx";
 import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
 import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx";
+import DoctorEncounterDetailPage from "./pages/DoctorEncounterDetailPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
 import DoctorWorkShiftsPage from "./pages/DoctorWorkShiftsPage.jsx";
@@ -420,6 +421,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["doctor"]}>
                 <DoctorTodayAppointmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/encounters/:id"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorEncounterDetailPage />
               </ProtectedRoute>
             }
           />

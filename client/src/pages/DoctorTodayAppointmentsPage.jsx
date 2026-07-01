@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
@@ -182,6 +183,7 @@ export default function DoctorTodayAppointmentsPage() {
             {!selectedAppointment ? (
               <p className="detail-note">Select an appointment to review visit context.</p>
             ) : (
+              <>
               <dl className="detail-list">
                 <div>
                   <dt>Reference</dt>
@@ -234,6 +236,17 @@ export default function DoctorTodayAppointmentsPage() {
                   </div>
                 )}
               </dl>
+              {selectedAppointment.encounterId && (
+                <div className="form-actions">
+                  <Link
+                    to={`/doctor/encounters/${selectedAppointment.encounterId}`}
+                    className="btn btn-primary btn-sm"
+                  >
+                    Open encounter
+                  </Link>
+                </div>
+              )}
+              </>
             )}
           </aside>
         </div>
