@@ -24,4 +24,8 @@ export const StaffApiClient = {
   stockInbound(payload) {
     return api.post("/api/staff/pharmacy/stock-inbound", payload);
   },
+
+  createMedicine(payload) {
+    return api.post("/api/staff/pharmacy/medicines", payload);
+  },
 };

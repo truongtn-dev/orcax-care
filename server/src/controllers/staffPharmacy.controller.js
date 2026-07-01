@@ -59,3 +59,13 @@ export async function stockInbound(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function createMedicine(req, res) {
+  try {
+    const result = await StaffPharmacyService.createMedicine(req.user.userId, req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
