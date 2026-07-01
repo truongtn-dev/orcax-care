@@ -1045,7 +1045,9 @@
   gap: 1.125rem 1.5rem;
 }
 
-.form-grid .date-picker {
+.form-grid .date-picker,
+.form-grid .filter-field,
+.form-grid .custom-select {
   min-width: 0;
 }
 

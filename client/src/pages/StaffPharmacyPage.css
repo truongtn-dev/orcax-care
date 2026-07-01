@@ -45,63 +45,12 @@
 
 .staff-pharmacy-form-grid .custom-select,
 .staff-pharmacy-form-grid .date-picker,
-.staff-pharmacy-form-grid label {
+.staff-pharmacy-form-grid .filter-field {
   min-width: 0;
-}
-
-.staff-pharmacy-form .form-grid label input {
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .portal-shell .staff-pharmacy-form-grid {
   gap: 1rem 1.25rem;
-}
-
-@media (max-width: 720px) {
-  .staff-pharmacy-charts {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(2px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: #ffffff;
-  border-radius: var(--radius-xl);
-  padding: 1.5rem 2rem;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  animation: modalIn 0.2s ease-out forwards;
-}
-
-.modal-content h3 {
-  margin: 0 0 1.25rem;
-  font-size: 1.25rem;
-  color: var(--color-navy);
-}
-
-@keyframes modalIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
 }
 
 @media (max-width: 720px) {

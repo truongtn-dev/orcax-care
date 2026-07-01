@@ -1,6 +1,6 @@
 .staff-dashboard-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(220px, 0.6fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
   gap: 1rem;
 }
 

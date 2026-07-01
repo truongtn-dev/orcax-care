@@ -8,6 +8,7 @@ import DashboardKpiGrid from "../components/dashboard/DashboardKpiGrid.jsx";
 import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
 import { StaffApiClient } from "../services/staffApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import FilterFormField from "../components/FilterFormField.jsx";
 import "./StaffPharmacyPage.css";
 
 const EMPTY_INBOUND = {
@@ -19,24 +20,11 @@ const EMPTY_INBOUND = {
   note: "",
 };
 
-const EMPTY_MEDICINE = {
-  code: "",
-  name: "",
-  unit: "",
-  price: "",
-  minStockLevel: "",
-  initialQuantity: "",
-  batchNo: "",
-};
-
 export default function StaffPharmacyPage() {
   const [dashboard, setDashboard] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState(EMPTY_INBOUND);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState(EMPTY_MEDICINE);
-  const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -90,25 +78,6 @@ export default function StaffPharmacyPage() {
       setError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const onCreateMedicine = async (e) => {
-    e.preventDefault();
-    setCreating(true);
-    setError("");
-    setMessage("");
-    try {
-      const { data } = await StaffApiClient.createMedicine(createForm);
-      setMessage(`Medicine ${data.name} created successfully.`);
-      setShowCreateModal(false);
-      setCreateForm(EMPTY_MEDICINE);
-      await loadData();
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-      setShowCreateModal(false); // Close to see error, or show error inside modal
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -196,32 +165,31 @@ export default function StaffPharmacyPage() {
                 <div className="form-grid staff-pharmacy-form-grid">
                   <CustomSelect
                     className="filter-field form-grid-span-2"
-                    label="Medicine *"
+                    label="Medicine"
                     value={form.medicineId}
                     onChange={(medicineId) => setForm((current) => ({ ...current, medicineId }))}
                     options={medicineOptions}
                   />
-                  <label>
-                    Quantity *
-                    <input
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      value={form.quantity}
-                      onChange={(e) => setForm((current) => ({ ...current, quantity: e.target.value }))}
-                      required
-                    />
-                  </label>
-                  <label>
-                    Batch number *
-                    <input
-                      name="batchNo"
-                      value={form.batchNo}
-                      onChange={(e) => setForm((current) => ({ ...current, batchNo: e.target.value }))}
-                      required
-                    />
-                  </label>
+                  <FilterFormField
+                    id="pharmacy-inbound-qty"
+                    label="Quantity"
+                    name="quantity"
+                    type="number"
+                    min="1"
+                    value={form.quantity}
+                    onChange={(e) => setForm((current) => ({ ...current, quantity: e.target.value }))}
+                    required
+                  />
+                  <FilterFormField
+                    id="pharmacy-inbound-batch"
+                    label="Batch number"
+                    name="batchNo"
+                    value={form.batchNo}
+                    onChange={(e) => setForm((current) => ({ ...current, batchNo: e.target.value }))}
+                    required
+                  />
                   <DatePicker
+                    className="filter-field"
                     label="Expiry date"
                     name="expiryDate"
                     value={form.expiryDate}
@@ -229,22 +197,21 @@ export default function StaffPharmacyPage() {
                     min={new Date().toISOString().slice(0, 10)}
                     placeholder="Select expiry date"
                   />
-                  <label>
-                    Supplier reference
-                    <input
-                      name="supplierRef"
-                      value={form.supplierRef}
-                      onChange={(e) => setForm((current) => ({ ...current, supplierRef: e.target.value }))}
-                    />
-                  </label>
-                  <label className="form-grid-span-2">
-                    Note
-                    <input
-                      name="note"
-                      value={form.note}
-                      onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))}
-                    />
-                  </label>
+                  <FilterFormField
+                    id="pharmacy-inbound-supplier"
+                    label="Supplier reference"
+                    name="supplierRef"
+                    value={form.supplierRef}
+                    onChange={(e) => setForm((current) => ({ ...current, supplierRef: e.target.value }))}
+                  />
+                  <FilterFormField
+                    id="pharmacy-inbound-note"
+                    className="form-grid-span-2"
+                    label="Note"
+                    name="note"
+                    value={form.note}
+                    onChange={(e) => setForm((current) => ({ ...current, note: e.target.value }))}
+                  />
                 </div>
                 <div className="form-actions">
                   <button type="submit" className="btn btn-primary" disabled={submitting}>
@@ -254,12 +221,7 @@ export default function StaffPharmacyPage() {
               </form>
 
               <section className="card staff-pharmacy-inventory">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                  <h3 style={{ margin: 0 }}>Inventory</h3>
-                  <button className="btn btn-outline btn-sm" onClick={() => setShowCreateModal(true)}>
-                    + New medicine
-                  </button>
-                </div>
+                <h3>Inventory</h3>
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead>
@@ -274,9 +236,7 @@ export default function StaffPharmacyPage() {
                       {medicines.map((med) => (
                         <tr key={med._id}>
                           <td>
-                            <Link to={`/staff/pharmacy/medicines/${med._id}`} className="table-link">
-                              <strong>{med.name}</strong>
-                            </Link>
+                            <strong>{med.name}</strong>
                             <div className="text-muted">{med.code}</div>
                           </td>
                           <td>
@@ -320,18 +280,7 @@ export default function StaffPharmacyPage() {
                         {movements.map((row) => (
                           <tr key={row._id}>
                             <td>{new Date(row.createdAt).toLocaleString()}</td>
-                            <td>
-                              {row.medicine?._id ? (
-                                <Link
-                                  to={`/staff/pharmacy/medicines/${row.medicine._id}?tab=movements`}
-                                  className="table-link"
-                                >
-                                  {row.medicine.name}
-                                </Link>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
+                            <td>{row.medicine?.name || "—"}</td>
                             <td>{row.type}</td>
                             <td>{row.quantity}</td>
                             <td>{row.batchNo || "—"}</td>
@@ -344,52 +293,6 @@ export default function StaffPharmacyPage() {
                 )}
               </section>
             </>
-          )}
-
-          {showCreateModal && (
-            <div className="modal-overlay">
-              <div className="modal-content">
-                <h3>Add New Medicine</h3>
-                <form className="form" onSubmit={onCreateMedicine}>
-                  <div className="form-grid">
-                    <label>
-                      Code *
-                      <input required value={createForm.code} onChange={(e) => setCreateForm(c => ({...c, code: e.target.value}))} placeholder="e.g. PARA500" />
-                    </label>
-                    <label>
-                      Name *
-                      <input required value={createForm.name} onChange={(e) => setCreateForm(c => ({...c, name: e.target.value}))} placeholder="e.g. Paracetamol 500mg" />
-                    </label>
-                    <label>
-                      Unit *
-                      <input required value={createForm.unit} onChange={(e) => setCreateForm(c => ({...c, unit: e.target.value}))} placeholder="e.g. tablet" />
-                    </label>
-                    <label>
-                      Price *
-                      <input type="number" min="0" required value={createForm.price} onChange={(e) => setCreateForm(c => ({...c, price: e.target.value}))} />
-                    </label>
-                    <label className="form-grid-span-2">
-                      Minimum Stock Level *
-                      <input type="number" min="0" required value={createForm.minStockLevel} onChange={(e) => setCreateForm(c => ({...c, minStockLevel: e.target.value}))} />
-                    </label>
-                    <label>
-                      Initial Quantity (Optional)
-                      <input type="number" min="0" value={createForm.initialQuantity} onChange={(e) => setCreateForm(c => ({...c, initialQuantity: e.target.value}))} placeholder="e.g. 100" />
-                    </label>
-                    <label>
-                      Initial Batch No (Optional)
-                      <input value={createForm.batchNo} onChange={(e) => setCreateForm(c => ({...c, batchNo: e.target.value}))} placeholder="e.g. BATCH-01" disabled={!createForm.initialQuantity || createForm.initialQuantity === "0"} />
-                    </label>
-                  </div>
-                  <div className="form-actions" style={{ marginTop: "1.5rem", justifyContent: "flex-end" }}>
-                    <button type="button" className="btn btn-outline" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                    <button type="submit" className="btn btn-primary" disabled={creating}>
-                      {creating ? "Saving..." : "Create Medicine"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
           )}
         </div>
       </StaffLayout>

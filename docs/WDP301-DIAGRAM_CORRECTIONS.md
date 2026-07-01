@@ -7,6 +7,47 @@
 
 ---
 
+## 0. SDS Class / Sequence — Web Service (đã chuẩn hóa trong repo)
+
+**Nguồn PlantUML:** `docs/sds/CD_*.puml`, `docs/sds/SQ_*.puml`  
+**Regenerate:** `python scripts/generate_sds_diagrams.py` — **89 features** (34 UC cha + **55 UC con** trong `scripts/sds_sub_specs.py`)  
+**Export PNG:** `python scripts/render_sds_diagrams.py` → `docs/sds/export/`  
+**Merge vào Word:** `python scripts/build_sds_document.py` → chèn **Section V** (89 UC × Class+SQ + overview) vào `docs/WDP301-SE1816-GROUP4_Document.docx` (xóa Section V cũ trước khi merge). Mở Word → **F9** để cập nhật số Figure và mục lục.
+
+### Class Diagram (backend only — không có Page / ApiClient)
+
+```
+Router → Middleware* → Controller → Service → Model (Mongoose)
+```
+
+Ví dụ UC Pharmacy: `StaffRouter` → `RequireDatabaseMiddleware` + `AuthMiddleware` → `StaffPharmacyController` → `StaffPharmacyService` → `Medicine`, `StockMovement`.
+
+### Sequence Diagram
+
+```
+Actor → Page → Router → Middleware* → Controller → Service → Model → MongoDB
+```
+
+- **Page** = component React (vd. `RegisterPage`, `AccountEditPage`) — trùng tên file trong `client/src/pages/`.
+- **Bước 1** = hành động cụ thể trên UI (vd. *Enter email, password… and click Register*), lấy từ Requirement normal flow — **không** dùng chung *Submit request from UI*.
+- **Bước cuối** = phản hồi UI cụ thể (vd. *Show Check your email notice*), không dùng chung *render result*.
+- **Không** dùng `"Register Page"` có khoảng trắng hay lifeline `Client`.
+- Dùng `activate` / `deactivate` tường minh … **MongoDB (`DB`)** cũng cần `activate DB` / `deactivate DB`.
+
+### Caption & Table of Figures (Word)
+
+Mọi ảnh diagram/UI dùng **style Caption** + field **`SEQ Figure \* ARABIC`** (không `\r` reset) — script `python scripts/fix_figure_fields.py` chuẩn hóa lại 1..N sau merge.
+
+Trong Word:
+1. **Ctrl+A** → **F9** (cập nhật số Figure + mục lục heading).
+2. **References → Insert Table of Figures** — Label: **Figure**, giữ định dạng Caption.
+3. Table of Contents: **References → Table of Contents** (Heading 1–3 đã dùng style Heading).
+- Auth middleware: `ref over Router, AuthMW` — Authentication and Authorization Flow (giống mẫu Create Category).
+
+Thay toàn bộ Figure Class/Sequence cũ (có `XxxPage`, `XxxApiClient`) bằng PNG mới từ `docs/sds/export/`.
+
+---
+
 ## 1. Danh sách Figure cần sửa hình
 
 | Figure | Tên | Việc cần làm |

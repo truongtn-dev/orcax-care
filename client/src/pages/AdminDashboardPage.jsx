@@ -505,44 +505,51 @@ export default function AdminDashboardPage() {
               <div className="admin-dashboard-kpis-head">
                 <h2 id="admin-dashboard-kpis-title">Clinic KPIs</h2>
                 <form
-                  className="admin-dashboard-filters"
+                  className="filters-toolbar admin-dashboard-filters"
                   onSubmit={(event) => {
                     event.preventDefault();
                     loadDashboard();
                   }}
                 >
-                  <DatePicker
-                    label="From"
-                    name="dashboardFrom"
-                    value={dashboardFrom}
-                    onChange={(event) => setDashboardFrom(event.target.value)}
-                    max={dashboardTo || undefined}
-                    required
-                  />
-                  <DatePicker
-                    label="To"
-                    name="dashboardTo"
-                    value={dashboardTo}
-                    onChange={(event) => setDashboardTo(event.target.value)}
-                    min={dashboardFrom || undefined}
-                    required
-                  />
-                  <CustomSelect
-                    label="Doctor"
-                    value={dashboardDoctorId}
-                    onChange={setDashboardDoctorId}
-                    placeholder="All doctors"
-                    options={[
-                      { value: "", label: "All doctors" },
-                      ...doctorFilterOptions.map((item) => ({
-                        value: item._id,
-                        label: item.fullName || item.licenseNo || item._id,
-                      })),
-                    ]}
-                  />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
-                    {dashboardLoading ? "Loading…" : "Apply"}
-                  </button>
+                  <div className="filters-toolbar-fields admin-filters-fields">
+                    <DatePicker
+                      className="filter-field"
+                      label="From"
+                      name="dashboardFrom"
+                      value={dashboardFrom}
+                      onChange={(event) => setDashboardFrom(event.target.value)}
+                      max={dashboardTo || undefined}
+                      required
+                    />
+                    <DatePicker
+                      className="filter-field"
+                      label="To"
+                      name="dashboardTo"
+                      value={dashboardTo}
+                      onChange={(event) => setDashboardTo(event.target.value)}
+                      min={dashboardFrom || undefined}
+                      required
+                    />
+                    <CustomSelect
+                      className="filter-field"
+                      label="Doctor"
+                      value={dashboardDoctorId}
+                      onChange={setDashboardDoctorId}
+                      placeholder="All doctors"
+                      options={[
+                        { value: "", label: "All doctors" },
+                        ...doctorFilterOptions.map((item) => ({
+                          value: item._id,
+                          label: item.fullName || item.licenseNo || item._id,
+                        })),
+                      ]}
+                    />
+                  </div>
+                  <div className="filters-toolbar-actions admin-filters-actions">
+                    <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
+                      {dashboardLoading ? "Loading…" : "Apply"}
+                    </button>
+                  </div>
                 </form>
               </div>
 

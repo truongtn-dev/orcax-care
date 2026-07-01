@@ -110,55 +110,19 @@
 }
 
 .admin-dashboard-filters {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 0.65rem;
   flex: 1 1 auto;
   min-width: 0;
+  margin-bottom: 0;
 }
 
-.admin-dashboard-filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-muted, #64748b);
+.admin-dashboard-filters .filter-field {
+  flex: 0 1 11rem;
+  min-width: 9.5rem;
 }
 
-.admin-dashboard-filters .date-picker {
-  flex: 0 0 auto;
-  width: 10.5rem;
-  min-width: 10.5rem;
-}
-
-.admin-dashboard-filters .date-picker-trigger {
-  min-height: 2.35rem;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.875rem;
-  border-width: 1px;
-  width: 100%;
-}
-
-.admin-dashboard-filters .custom-select {
-  flex: 0 0 auto;
-  width: 11.5rem;
-  min-width: 11.5rem;
-}
-
+.admin-dashboard-filters .date-picker-trigger,
 .admin-dashboard-filters .custom-select-trigger {
-  min-height: 2.35rem;
-  padding: 0.45rem 0.65rem;
-  font-size: 0.875rem;
-  border-width: 1px;
-}
-
-.admin-dashboard-filters .btn {
-  flex-shrink: 0;
-  align-self: flex-end;
-  white-space: nowrap;
+  min-height: 2.75rem;
 }
 
 @media (max-width: 900px) {
@@ -167,9 +131,7 @@
   }
 
   .admin-dashboard-filters {
-    flex-wrap: wrap;
     width: 100%;
-    justify-content: flex-start;
   }
 }
 

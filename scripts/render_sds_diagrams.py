@@ -53,7 +53,7 @@ def patch_puml_files():
 
 
 def is_crash_png(path: Path) -> bool:
-    """PlantUML OOM crash pages are narrow (~450-550px wide)."""
+    """PlantUML OOM crash pages are narrow (~450-550px wide) with tiny file size."""
     if not path.exists() or path.stat().st_size < 5000:
         return True
     try:
@@ -61,7 +61,7 @@ def is_crash_png(path: Path) -> bool:
 
         with Image.open(path) as im:
             w, h = im.size
-            return w < 800
+            return w < 450 or h < 200
     except Exception:
         return True
 

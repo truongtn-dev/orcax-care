@@ -214,6 +214,14 @@ SPECS = {
     "StaffDashboardService": [
         ("getDashboardSummary(staffUserId : ObjectId)", "Aggregates queue, complaints, and stock alerts."),
     ],
+    "StaffPharmacyController": [
+        ("getStaffDashboard(req : Request, res : Response)", "Returns staff dashboard KPI summary for the logged-in staff user."),
+        ("getPharmacyDashboard(req : Request, res : Response)", "Returns pharmacy inventory and stock-alert metrics."),
+    ],
+    "StaffPharmacyService": [
+        ("getStaffDashboard(...)", "Aggregates queue tickets, open complaints, and pharmacy alerts for the staff dashboard."),
+        ("getPharmacyDashboard(...)", "Summarizes medicine stock levels and recent stock movements."),
+    ],
     "AdminDashboardPage": [
         ("loadDashboard()", "Loads admin KPI cards and charts."),
         ("loadRecentActivity()", "Loads recent appointments and registrations."),
@@ -318,6 +326,8 @@ def get_specs(class_name: str) -> list[tuple[str, str]]:
     key = normalize(class_name)
     if key in SPECS:
         return SPECS[key]
+    if f"{key}Model" in SPECS:
+        return SPECS[f"{key}Model"]
     if key.endswith("Page"):
         return generic_page_specs(key)
     if key.endswith("ApiClient"):

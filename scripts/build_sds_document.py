@@ -22,10 +22,15 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from build_design_specs import SECTIONS  # noqa: E402
 from fix_figure_fields import fix_figure_captions  # noqa: E402
-from sds_functions_data import FEATURE_KEYS  # noqa: E402
+from sds_functions_data import (  # noqa: E402
+    FEATURE_KEYS,
+    queries_for_key,
+    uc_id_and_name,
+    uc_sort_key,
+)
 
-MAIN_DOC = Path(r"e:/SU26/WDP301/WDP301-SE1816-GROUP4_Document.docx")
-STANDALONE_OUT = Path(r"e:/SU26/WDP301/WDP301-SE1816-GROUP4_SDSDocument.docx")
+MAIN_DOC = ROOT / "docs" / "WDP301-SE1816-GROUP4_Document.docx"
+STANDALONE_OUT = ROOT / "docs" / "WDP301-SE1816-GROUP4_SDSDocument.docx"
 SDS_EXPORT = ROOT / "docs" / "sds" / "export"
 SDS_PUML = ROOT / "docs" / "sds"
 DB_EXPORT = ROOT / "docs" / "database" / "export"
@@ -38,9 +43,7 @@ LEGACY_SDS_TITLES = (
     "V. Software Design Specifications",
 )
 
-CAPTION_RE = re.compile(r"^Figure\s+(\d+)", re.I)
-CLASS_RE = re.compile(r"^class\s+(\w+)\s*\{", re.M)
-METHOD_RE = re.compile(r"^\s*\+(\w+)\([^)]*\)\s*:\s*(.+)$", re.M)
+from class_spec_from_puml import parse_puml_file  # noqa: E402
 
 
 def shade(cell, hex_color):
@@ -87,6 +90,7 @@ def detect_last_figure_number(doc: Document) -> int:
 
 
 def add_caption(w: DocWriter, text: str, fig: dict) -> None:
+    """Word auto-caption: Caption style + SEQ Figure field (Table of Figures)."""
     fig["n"] += 1
     p = w.doc.add_paragraph(style="Caption")
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -155,50 +159,46 @@ def add_code(w: DocWriter, text: str):
         w._commit(p._element)
 
 
+CAPTION_RE = re.compile(r"^Figure\s+(\d+)", re.I)
+
+
 def parse_puml_classes(key: str) -> list[tuple[str, list[tuple[str, str]]]]:
-    path = SDS_PUML / f"CD_{key}.puml"
-    if not path.exists():
-        return []
-    text = path.read_text(encoding="utf-8")
-    classes = []
-    for m in CLASS_RE.finditer(text):
-        name = m.group(1)
-        start = m.end()
-        end = text.find("}", start)
-        body = text[start:end] if end != -1 else ""
-        methods = []
-        for mm in METHOD_RE.finditer(body):
-            sig = f"{mm.group(1)}(...)"
-            ret = mm.group(2).strip()
-            methods.append((sig, f"Returns {ret}."))
-        if not methods:
-            methods.append(("(see class diagram)", "Public operations shown in the class diagram."))
-        label = name
-        if "Model" in name and "(Mongoose)" not in label:
-            label += " (Mongoose)"
-        classes.append((label, methods))
-    return classes
+    return parse_puml_file(SDS_PUML / f"CD_{key}.puml")
 
 
 def build_functions_list() -> list[dict]:
-    functions = []
+    import generate_sds_diagrams as gen
+
+    parent_queries: dict[str, str] = {}
     for sec in SECTIONS:
-        feature = sec["feature"]
-        key = FEATURE_KEYS.get(feature)
-        if not key:
-            continue
-        cd = SDS_PUML / f"CD_{key}.puml"
-        sq = SDS_PUML / f"SQ_{key}.puml"
+        key = FEATURE_KEYS.get(sec["feature"])
+        if key:
+            parent_queries[key] = sec.get("queries", "").strip()
+
+    all_specs = gen.SPECS + gen.expand_sub_specs()
+    all_specs.sort(key=lambda s: uc_sort_key(s.uc))
+
+    functions: list[dict] = []
+    for spec in all_specs:
+        cd = SDS_PUML / f"CD_{spec.key}.puml"
+        sq = SDS_PUML / f"SQ_{spec.key}.puml"
         if not cd.exists() or not sq.exists():
             continue
-        classes = parse_puml_classes(key)
+        uc_id, display_name = uc_id_and_name(spec.uc)
+        classes = parse_puml_classes(spec.key)
         functions.append(
             {
-                "name": sec.get("name") or feature,
-                "key": key,
-                "uc": sec.get("uc", ""),
+                "name": display_name,
+                "key": spec.key,
+                "uc": uc_id,
                 "classes": classes,
-                "queries": sec.get("queries", "").strip(),
+                "queries": queries_for_key(
+                    spec.key,
+                    spec.uc,
+                    spec.sq_http,
+                    spec.sq_service_call,
+                    parent_queries,
+                ),
             }
         )
     return functions
@@ -263,6 +263,14 @@ def build_standalone():
         print(f"Standalone locked. Saved: {alt}")
 
 
+def _schema_png() -> Path:
+    for name in ("DB_Schema_NoPkg.png", "DB_Schema.png"):
+        p = DB_EXPORT / name
+        if p.exists():
+            return p
+    return DB_EXPORT / "DB_Schema.png"
+
+
 def _add_overview(w: DocWriter, fig, h_packages=2, h_schema=2, h_table=3, h_schema_sub=3):
     add_heading(w, "1. Code Packages", h_packages)
     p = w.doc.add_paragraph(
@@ -275,7 +283,7 @@ def _add_overview(w: DocWriter, fig, h_packages=2, h_schema=2, h_table=3, h_sche
     add_image(w, DB_EXPORT / "CodePackages.png", fig, 5.8, "Code Package Diagram of OrcaXCare")
     add_heading(w, "2. Database Design", h_schema)
     add_heading(w, "a. Database Schema", h_schema_sub)
-    add_image(w, DB_EXPORT / "DB_Schema_NoPkg.png", fig, 6.2, "Database Schema of OrcaXCare")
+    add_image(w, _schema_png(), fig, 6.2, "Database Schema of OrcaXCare")
     add_heading(w, "b. Table Description", h_schema_sub)
     p = w.doc.add_paragraph(
         "The detailed description of all collections (primary keys, foreign keys, "
@@ -294,12 +302,12 @@ def _add_code_designs(w: DocWriter, fig, h_fn=3, h_sub=4, prefix=""):
         uc = fn.get("uc", "")
         uc_label = f"{uc}: " if uc else ""
         add_heading(w, "a. Class Diagram", h_sub)
-        add_image(w, SDS_EXPORT / f"CD_{fn['key']}.png", fig, 5.4, f"Class Diagram \u2013 {uc_label}{fn['name']}")
+        add_image(w, SDS_EXPORT / f"CD_{fn['key']}.png", fig, 5.4, f"Class Diagram - {uc_label}{fn['name']}")
         add_heading(w, "b. Class Specifications", h_sub)
         for class_name, methods in fn["classes"]:
             add_method_table(w, class_name, methods)
         add_heading(w, "c. Sequence Diagram(s)", h_sub)
-        add_image(w, SDS_EXPORT / f"SQ_{fn['key']}.png", fig, 6.2, f"Sequence Diagram \u2013 {uc_label}{fn['name']}")
+        add_image(w, SDS_EXPORT / f"SQ_{fn['key']}.png", fig, 6.2, f"Sequence Diagram - {uc_label}{fn['name']}")
         add_heading(w, "d. Database Queries", h_sub)
         if fn["queries"]:
             add_code(w, fn["queries"])
@@ -394,18 +402,17 @@ def merge_into_main():
     print(f"Embedded images: {imgs_after - imgs_before} new (total {imgs_after})")
 
     converted, reset_fixed = fix_figure_captions(main)
-    if converted or reset_fixed:
-        print(
-            f"Figure fields fixed: {len(converted)} plain captions converted, "
-            f"{reset_fixed} reset flags removed"
-        )
+    if converted:
+        print(f"Figure captions normalized: {len(converted)} (SEQ Figure, continuous 1..{len(converted)})")
+    if reset_fixed:
+        print(f"Reset flags removed: {reset_fixed}")
 
     try:
         main.save(MAIN_DOC)
         print(f"Merged SDS into: {MAIN_DOC}")
         print(f"Section order: ... III Design Specs -> IV Appendix -> V SDS")
         print(f"Functions: {len(functions)} | Figures added: {len(functions)*2 + 2}")
-        print(f"Next figure number after merge: {fig['n']} (update fields in Word with F9)")
+        print(f"Next figure number after merge: {fig['n']} (run fix_figure_fields.py or F9 in Word)")
     except PermissionError:
         alt = MAIN_DOC.with_name(MAIN_DOC.stem + "_merged.docx")
         main.save(alt)

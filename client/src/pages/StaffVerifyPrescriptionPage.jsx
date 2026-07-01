@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import StaffLayout from "../components/StaffLayout.jsx";
+import FilterFormField from "../components/FilterFormField.jsx";
 import { StaffApiClient } from "../services/staffApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./StaffVerifyPrescriptionPage.css";
@@ -66,19 +67,18 @@ export default function StaffVerifyPrescriptionPage() {
             </div>
             
             <div className="form-grid">
-              <label className="form-grid-span-2">
-                Prescription ID
-                <input
-                  ref={inputRef}
-                  type="text"
-                  required
-                  placeholder="Scan QR or type ID..."
-                  value={prescriptionId}
-                  onChange={(e) => setPrescriptionId(e.target.value)}
-                  disabled={submitting}
-                  className="staff-verify-input"
-                />
-              </label>
+              <FilterFormField
+                id="staff-verify-prescription-id"
+                className="form-grid-span-2"
+                label="Prescription ID"
+                ref={inputRef}
+                type="text"
+                required
+                placeholder="Scan QR or type ID…"
+                value={prescriptionId}
+                onChange={(e) => setPrescriptionId(e.target.value)}
+                disabled={submitting}
+              />
             </div>
             
             <div className="form-actions" style={{ marginTop: "1rem" }}>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "../styles/patient.shared.css";
@@ -92,22 +93,34 @@ export default function PatientEmrTimelinePage() {
           </div>
         </header>
 
-        <section className="patient-panel patient-emr-filter-panel">
-          <div className="patient-panel-body patient-emr-filters">
-            <label>
-              <span>From</span>
-              <input type="date" value={from} onChange={(event) => setFrom(event.target.value)} />
-            </label>
-            <label>
-              <span>To</span>
-              <input type="date" value={to} onChange={(event) => setTo(event.target.value)} />
-            </label>
-            <button type="button" className="btn btn-primary btn-sm" onClick={loadTimeline}>
-              Filter
-            </button>
-            <button type="button" className="btn btn-outline btn-sm" onClick={clearFilters}>
-              Clear
-            </button>
+        <section className="card filters-card patient-emr-filter-panel">
+          <div className="filters-toolbar">
+            <div className="filters-toolbar-fields">
+              <DatePicker
+                className="filter-field"
+                label="From"
+                name="emrFrom"
+                value={from}
+                onChange={(event) => setFrom(event.target.value)}
+                max={to || undefined}
+              />
+              <DatePicker
+                className="filter-field"
+                label="To"
+                name="emrTo"
+                value={to}
+                onChange={(event) => setTo(event.target.value)}
+                min={from || undefined}
+              />
+            </div>
+            <div className="filters-toolbar-actions">
+              <button type="button" className="btn btn-primary btn-sm" onClick={loadTimeline}>
+                Filter
+              </button>
+              <button type="button" className="btn btn-outline btn-sm" onClick={clearFilters}>
+                Clear
+              </button>
+            </div>
           </div>
         </section>
 
