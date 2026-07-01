@@ -4,7 +4,7 @@ import { Doctor } from "../models/Doctor.js";
 import { Encounter } from "../models/Encounter.js";
 import { formatDateOnly } from "../utils/shiftTime.js";
 
-const VALID_STATUSES = new Set(["confirmed", "completed", "cancelled"]);
+const VALID_STATUSES = new Set(["confirmed", "checked-in", "completed", "cancelled"]);
 
 async function resolveDoctorForUser(userId) {
   const doctor = await Doctor.findOne({ userId, isActive: true })

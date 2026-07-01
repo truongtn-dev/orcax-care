@@ -1,3 +1,4 @@
+import http from "http";
 import "dotenv/config";
 import { createApp } from "./app.js";
 import { connectDatabase, isUsingMemoryDb } from "./config/database.js";
@@ -5,6 +6,7 @@ import { runSeed } from "./scripts/seedData.js";
 import { ensureAllDoctorSlugs } from "./utils/doctorSlug.js";
 import { ensureAllUserSlugs } from "./utils/userSlug.js";
 import { verifyMailConnection } from "./services/mail.service.js";
+import { initSocket } from "./realtime/socket.js";
 
 const port = Number(process.env.PORT) || 5000;
 
@@ -18,7 +20,10 @@ if (connected && (isUsingMemoryDb() || process.env.AUTO_SEED === "true")) {
 }
 
 const app = createApp();
-app.listen(port, async () => {
+const server = http.createServer(app);
+initSocket(server);
+
+server.listen(port, async () => {
   console.log(`API listening on http://localhost:${port}`);
   console.log(`Health check: http://localhost:${port}/health`);
   if (!connected) {

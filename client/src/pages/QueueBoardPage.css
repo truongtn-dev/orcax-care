@@ -1,0 +1,121 @@
+.queue-board-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #134e4a 55%, #0f766e 100%);
+  color: #f8fafc;
+  padding: clamp(1.5rem, 3vw, 3rem);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 2rem;
+}
+
+.queue-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.queue-board-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+.queue-board-header h1 {
+  margin: 0.35rem 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.queue-board-header p {
+  margin: 0;
+  opacity: 0.8;
+}
+
+.queue-board-connection {
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.queue-board-connection.is-live {
+  background: rgba(16, 185, 129, 0.25);
+}
+
+.queue-board-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: stretch;
+}
+
+.queue-board-current,
+.queue-board-next {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.queue-board-current p:first-child,
+.queue-board-next h2 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  opacity: 0.8;
+}
+
+.queue-board-current-number {
+  margin: 0.5rem 0;
+  font-size: clamp(6rem, 18vw, 12rem);
+  line-height: 0.95;
+  font-weight: 900;
+  color: #99f6e4;
+}
+
+.queue-board-message {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+  opacity: 0.9;
+}
+
+.queue-board-next ul {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.queue-board-next li {
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.queue-board-next-empty {
+  margin: 1rem 0 0;
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.queue-board-page.state-paused .queue-board-current-number,
+.queue-board-page.state-closed .queue-board-current-number {
+  color: #cbd5e1;
+}
+
+@media (max-width: 900px) {
+  .queue-board-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (orientation: portrait) {
+  .queue-board-page {
+    min-height: 100dvh;
+  }
+}

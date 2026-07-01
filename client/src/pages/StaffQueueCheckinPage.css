@@ -1,0 +1,81 @@
+.staff-checkin-page {
+  gap: 1.25rem;
+}
+
+.staff-checkin-results h2 {
+  margin: 0 0 1rem;
+  font-size: 1.05rem;
+}
+
+.staff-checkin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.staff-checkin-card {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.staff-checkin-card.is-selected {
+  border-color: rgba(13, 148, 136, 0.45);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+}
+
+.staff-checkin-card strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.staff-checkin-card span {
+  display: block;
+  color: var(--text-muted, #64748b);
+  font-size: 0.92rem;
+}
+
+.staff-checkin-detail {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 1rem;
+}
+
+.staff-checkin-ticket {
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.staff-checkin-ticket-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+}
+
+.staff-checkin-ticket-number {
+  margin: 0.5rem 0;
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  line-height: 1;
+  font-weight: 800;
+  color: var(--brand-teal, #0d9488);
+}
+
+.staff-checkin-ticket p:last-child {
+  margin: 0;
+  color: var(--text-muted, #64748b);
+}
