@@ -1,0 +1,70 @@
+.admin-complaints-page {
+  gap: 1rem;
+}
+
+.admin-complaints-loading,
+.admin-complaints-empty {
+  margin: 0;
+  color: #64748b;
+}
+
+.admin-complaints-toolbar {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.admin-complaint-thread,
+.admin-complaint-patient,
+.admin-complaint-reply {
+  padding: 1.25rem 1.5rem;
+}
+
+.admin-complaint-thread-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.admin-complaint-thread-head h2 {
+  margin: 0 0 0.25rem;
+}
+
+.admin-complaint-thread-head p {
+  margin: 0;
+  color: #64748b;
+}
+
+.admin-complaint-message {
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.03);
+  margin-bottom: 0.85rem;
+}
+
+.admin-complaint-message.is-original {
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+}
+
+.admin-complaint-message strong {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.admin-complaint-message p {
+  margin: 0;
+}
+
+.admin-complaint-message span {
+  display: block;
+  margin-top: 0.5rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.admin-complaint-patient h3,
+.admin-complaint-reply h3 {
+  margin: 0 0 1rem;
+}

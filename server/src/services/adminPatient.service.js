@@ -368,6 +368,17 @@ async function updatePatientByUserAccount(userId, payload) {
   let patient = await Patient.findOne({ userId: user._id });
   if (!patient) patient = await Patient.create({ userId: user._id });
 
+  const fullName = String(payload.fullName || "").trim();
+  if (fullName) {
+    const fullNameError = validateRequired(fullName, "Full name");
+    if (fullNameError) return { status: 400, body: { message: fullNameError } };
+    user.fullName = fullName;
+  }
+
+  const phone = String(payload.phone || "").trim();
+  const phoneError = validatePhoneOptional(phone);
+  if (phoneError) return { status: 400, body: { message: phoneError } };
+
   const gender = payload.gender?.trim() || "";
   if (gender && !PROFILE_GENDERS.includes(gender)) {
     return { status: 400, body: { message: "Invalid gender value" } };
@@ -379,7 +390,7 @@ async function updatePatientByUserAccount(userId, payload) {
       return { status: 400, body: { message: "Invalid date of birth" } };
     }
     patient.dateOfBirth = dob;
-  } else {
+  } else if ("dateOfBirth" in payload) {
     patient.dateOfBirth = null;
   }
 
@@ -398,17 +409,17 @@ async function updatePatientByUserAccount(userId, payload) {
     return { status: 400, body: { message: "Invalid emergency contact phone number" } };
   }
 
+  user.phone = phone;
+  if (typeof payload.isActive === "boolean") user.isActive = payload.isActive;
+  if (typeof payload.accountIsActive === "boolean") user.isActive = payload.accountIsActive;
+
   patient.gender = gender;
   patient.address = address;
   patient.emergencyContactName = emergencyContactName;
   patient.emergencyContactPhone = emergencyContactPhone;
-  await patient.save();
+  if (typeof payload.isActive === "boolean") patient.isActive = payload.isActive;
 
-  return {
-    status: 200,
-    body: {
-      message: "Patient details updated successfully.",
-      patient: toPatientDetail(user, patient),
-    },
-  };
+  await Promise.all([user.save(), patient.save()]);
+
+  return getPatient(patient._id);
 }

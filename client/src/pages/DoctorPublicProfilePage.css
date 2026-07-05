@@ -488,3 +488,64 @@
     gap: 0.15rem;
   }
 }
+
+.doctor-profile-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  margin-bottom: 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.doctor-profile-tabs button {
+  border: none;
+  background: transparent;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.doctor-profile-tabs button.is-active {
+  background: #0d9488;
+  color: #fff;
+}
+
+.doctor-profile-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.doctor-profile-review-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.doctor-profile-review-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.doctor-profile-review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.doctor-profile-review-item p {
+  margin: 0;
+}
+
+.doctor-profile-review-item span {
+  display: block;
+  margin-top: 0.45rem;
+  color: #64748b;
+  font-size: 0.85rem;
+}

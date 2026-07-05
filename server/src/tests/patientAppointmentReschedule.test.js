@@ -41,6 +41,22 @@ function dateOnly(value) {
   return date;
 }
 
+function startOfToday() {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function formatDateOnly(date) {
+  return date.toISOString().slice(0, 10);
+}
+
 async function createSlot({ doctorId, roomId, date, startTime, endTime, status }) {
   return AppointmentSlot.create({
     doctorId,
@@ -122,10 +138,12 @@ describe("UC-8.1.1 Reschedule Appointment", () => {
       capacity: 1,
     });
 
+    const slotBase = startOfToday();
+
     oldSlot = await createSlot({
       doctorId: doctor._id,
       roomId: room._id,
-      date: "2026-06-20",
+      date: formatDateOnly(addDays(slotBase, 1)),
       startTime: "09:00",
       endTime: "09:30",
       status: "booked",
@@ -133,7 +151,7 @@ describe("UC-8.1.1 Reschedule Appointment", () => {
     newSlot = await createSlot({
       doctorId: doctor._id,
       roomId: room._id,
-      date: "2026-06-21",
+      date: formatDateOnly(addDays(slotBase, 2)),
       startTime: "10:00",
       endTime: "10:30",
       status: "available",
@@ -141,7 +159,7 @@ describe("UC-8.1.1 Reschedule Appointment", () => {
     blockedSlot = await createSlot({
       doctorId: doctor._id,
       roomId: room._id,
-      date: "2026-06-22",
+      date: formatDateOnly(addDays(slotBase, 3)),
       startTime: "11:00",
       endTime: "11:30",
       status: "blocked",

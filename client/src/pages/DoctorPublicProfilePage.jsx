@@ -29,6 +29,8 @@ export default function DoctorPublicProfilePage() {
   const navigate = useNavigate();
   const { isAuthenticated, role } = useAuth();
   const [doctor, setDoctor] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [profileTab, setProfileTab] = useState("info");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -42,6 +44,13 @@ export default function DoctorPublicProfilePage() {
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [slugParam]);
+
+  useEffect(() => {
+    if (!doctor?._id) return;
+    PublicApiClient.listDoctorReviews(doctor._id, { limit: 20 })
+      .then(({ data }) => setReviews(data.items || []))
+      .catch(() => setReviews([]));
+  }, [doctor?._id]);
 
   useEffect(() => {
     if (!doctor?.slug) return;
@@ -228,6 +237,29 @@ export default function DoctorPublicProfilePage() {
             <div className="doctor-profile-page-body">
               <div className="doctor-profile-body">
                 <div className="doctor-profile-main">
+                  <div className="doctor-profile-tabs" role="tablist" aria-label="Doctor profile sections">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={profileTab === "info"}
+                      className={profileTab === "info" ? "is-active" : ""}
+                      onClick={() => setProfileTab("info")}
+                    >
+                      Information
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={profileTab === "reviews"}
+                      className={profileTab === "reviews" ? "is-active" : ""}
+                      onClick={() => setProfileTab("reviews")}
+                    >
+                      Reviews ({doctor.reviewCount || reviews.length})
+                    </button>
+                  </div>
+
+                  {profileTab === "info" && (
+                  <>
                   <ScrollReveal variant="up" delay={40}>
                     <section className="doctor-profile-panel doctor-profile-panel--compact">
                       <div className="doctor-profile-panel-head">
@@ -259,6 +291,37 @@ export default function DoctorPublicProfilePage() {
                       />
                     </section>
                   </ScrollReveal>
+                  </>
+                  )}
+
+                  {profileTab === "reviews" && (
+                    <ScrollReveal variant="up" delay={40}>
+                      <section className="doctor-profile-panel doctor-profile-panel--compact">
+                        <div className="doctor-profile-panel-head">
+                          <span className="doctor-profile-panel-icon" aria-hidden="true">
+                            <IconReview />
+                          </span>
+                          <h2>Patient reviews</h2>
+                        </div>
+                        {reviews.length === 0 ? (
+                          <p className="doctor-profile-about-text">No public reviews yet.</p>
+                        ) : (
+                          <ul className="doctor-profile-review-list">
+                            {reviews.map((review) => (
+                              <li key={review._id} className="doctor-profile-review-item">
+                                <div className="doctor-profile-review-head">
+                                  <strong>{review.patientDisplayName}</strong>
+                                  <DoctorRatingDisplay rating={review.rating} reviewCount={0} compact />
+                                </div>
+                                <p>{review.comment || "No written comment."}</p>
+                                <span>{new Date(review.reviewedAt).toLocaleDateString()}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </section>
+                    </ScrollReveal>
+                  )}
                 </div>
 
                 <aside className="doctor-profile-sidebar">

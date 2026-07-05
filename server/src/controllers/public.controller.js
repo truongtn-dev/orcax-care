@@ -1,5 +1,7 @@
 import * as DoctorSearchService from "../services/doctorSearch.service.js";
 import * as DoctorAvailabilityService from "../services/doctorAvailability.service.js";
+import * as BranchService from "../services/branch.service.js";
+import * as DoctorReviewService from "../services/doctorReview.service.js";
 
 export async function listSpecialties(req, res) {
   try {
@@ -49,6 +51,36 @@ export async function listFeaturedDoctors(req, res) {
     const { limit } = req.query;
     const items = await DoctorSearchService.getFeaturedDoctors(limit);
     return res.json({ items });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function listDoctorReviews(req, res) {
+  try {
+    const result = await DoctorReviewService.listDoctorReviews(req.params.id, req.query);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function listBranches(req, res) {
+  try {
+    const result = await BranchService.listActiveBranches();
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function getBranch(req, res) {
+  try {
+    const result = await BranchService.getBranchById(req.params.id);
+    return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "System error" });

@@ -3,7 +3,7 @@ import { Medicine } from "../models/Medicine.js";
 import { StockMovement } from "../models/StockMovement.js";
 import { Prescription } from "../models/Prescription.js";
 
-function serializeMedicine(medicine) {
+function serializeMedicine(medicine, extras = {}) {
   return {
     _id: medicine._id.toString(),
     name: medicine.name,
@@ -14,6 +14,7 @@ function serializeMedicine(medicine) {
     minStockLevel: medicine.minStockLevel,
     isActive: medicine.isActive,
     isLowStock: medicine.stockQty <= medicine.minStockLevel,
+    nearestExpiry: extras.nearestExpiry || null,
     updatedAt: medicine.updatedAt,
   };
 }
@@ -28,11 +29,36 @@ function serializeMovement(row) {
     expiryDate: row.expiryDate ? row.expiryDate.toISOString().slice(0, 10) : "",
     supplierRef: row.supplierRef || "",
     note: row.note || "",
+    prescriptionId: row.prescriptionId ? row.prescriptionId.toString() : null,
     createdAt: row.createdAt,
     medicine: medicine._id
       ? { _id: medicine._id.toString(), name: medicine.name, code: medicine.code, unit: medicine.unit }
       : null,
   };
+}
+
+async function loadNearestExpiries(medicineIds) {
+  if (!medicineIds.length) return new Map();
+
+  const rows = await StockMovement.aggregate([
+    {
+      $match: {
+        medicineId: { $in: medicineIds },
+        type: "inbound",
+        expiryDate: { $ne: null },
+      },
+    },
+    {
+      $group: {
+        _id: "$medicineId",
+        nearestExpiry: { $min: "$expiryDate" },
+      },
+    },
+  ]);
+
+  return new Map(
+    rows.map((row) => [row._id.toString(), row.nearestExpiry ? row.nearestExpiry.toISOString().slice(0, 10) : null])
+  );
 }
 
 function formatDateOnly(value) {
@@ -64,10 +90,14 @@ export async function listMedicines({ q = "", lowStockOnly = false } = {}) {
     items = items.filter((item) => item.stockQty <= item.minStockLevel);
   }
 
+  const expiryMap = await loadNearestExpiries(items.map((item) => item._id));
+
   return {
     status: 200,
     body: {
-      items: items.map(serializeMedicine),
+      items: items.map((item) =>
+        serializeMedicine(item, { nearestExpiry: expiryMap.get(item._id.toString()) || null })
+      ),
       total: items.length,
       lowStockCount: items.filter((item) => item.stockQty <= item.minStockLevel).length,
     },
@@ -195,6 +225,70 @@ export async function stockInbound(userId, payload = {}) {
     status: 201,
     body: {
       message: "Stock inbound recorded",
+      movement: serializeMovement({ ...movement.toObject(), medicineId: medicine }),
+      medicine: serializeMedicine(medicine.toObject()),
+    },
+  };
+}
+
+export async function stockOutbound(userId, payload = {}) {
+  const medicineId = String(payload.medicineId || "").trim();
+  const quantity = parseInt(payload.quantity, 10);
+  const reason = String(payload.reason || payload.note || "").trim();
+  const prescriptionId = String(payload.prescriptionId || "").trim();
+
+  if (!medicineId || !mongoose.Types.ObjectId.isValid(medicineId)) {
+    return { status: 400, body: { message: "Valid medicine is required." } };
+  }
+  if (!Number.isFinite(quantity) || quantity < 1) {
+    return { status: 400, body: { message: "Quantity must be at least 1." } };
+  }
+  if (!reason) {
+    return { status: 400, body: { message: "Reason is required for stock outbound." } };
+  }
+
+  const medicine = await Medicine.findById(medicineId);
+  if (!medicine || !medicine.isActive) {
+    return { status: 404, body: { message: "Medicine not found." } };
+  }
+
+  if (medicine.stockQty < quantity) {
+    return {
+      status: 409,
+      body: {
+        message: `Cannot exceed on-hand stock. Available: ${medicine.stockQty} ${medicine.unit}.`,
+      },
+    };
+  }
+
+  let linkedPrescriptionId = null;
+  if (prescriptionId) {
+    if (!mongoose.Types.ObjectId.isValid(prescriptionId)) {
+      return { status: 400, body: { message: "Invalid prescription id." } };
+    }
+    const prescription = await Prescription.findById(prescriptionId).select("_id status").lean();
+    if (!prescription) {
+      return { status: 404, body: { message: "Prescription not found." } };
+    }
+    linkedPrescriptionId = prescription._id;
+  }
+
+  const movement = await StockMovement.create({
+    medicineId: medicine._id,
+    type: "outbound",
+    quantity,
+    note: reason,
+    prescriptionId: linkedPrescriptionId,
+    performedBy: userId,
+  });
+
+  medicine.stockQty -= quantity;
+  await medicine.save();
+
+  return {
+    status: 201,
+    body: {
+      message: "Stock outbound recorded",
       movement: serializeMovement({ ...movement.toObject(), medicineId: medicine }),
       medicine: serializeMedicine(medicine.toObject()),
     },
