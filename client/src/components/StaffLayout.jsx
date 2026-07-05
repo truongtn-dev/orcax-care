@@ -29,6 +29,12 @@ const STAFF_SECTIONS = [
         match: ["/staff/checkin"],
       },
       {
+        to: "/staff/branch",
+        label: "My branch",
+        icon: "building",
+        match: ["/staff/branch"],
+      },
+      {
         to: "/search-doctors",
         label: "Find doctors",
         icon: "doctor",

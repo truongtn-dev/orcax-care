@@ -1,0 +1,61 @@
+.staff-branch-page {
+  gap: 1.25rem;
+}
+
+.staff-branch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+}
+
+.staff-branch-toolbar-lead {
+  margin: 0;
+  color: var(--color-text-secondary);
+  max-width: 52rem;
+  line-height: 1.55;
+}
+
+.staff-branch-grid {
+  margin-bottom: 0;
+}
+
+.staff-branch-form-head {
+  margin-bottom: 1rem;
+}
+
+.staff-branch-form-head h3,
+.staff-branch-map-card h3,
+.staff-branch-profile h3,
+.staff-branch-readonly h3 {
+  margin: 0;
+}
+
+.staff-branch-readonly-copy {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.staff-branch-map-card {
+  padding: 1.25rem 1.5rem 1.5rem;
+  overflow: hidden;
+}
+
+.staff-branch-map-card .detail-section-header {
+  margin-bottom: 1rem;
+}
+
+.staff-branch-map-card .branch-map {
+  border: none;
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .staff-branch-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -142,6 +142,18 @@ const ADMIN_SECTIONS = [
 
       {
 
+        to: "/admin/branches",
+
+        label: "Branches",
+
+        icon: "building",
+
+        match: ["/admin/branches"],
+
+      },
+
+      {
+
         to: "/admin?tab=departments",
 
         label: "Departments",

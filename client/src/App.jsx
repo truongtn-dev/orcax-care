@@ -24,6 +24,7 @@ import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
+import AdminBranchesPage from "./pages/AdminBranchesPage.jsx";
 import AdminComplaintsListPage from "./pages/admin/AdminComplaintsListPage.jsx";
 import AdminComplaintDetailPage from "./pages/admin/AdminComplaintDetailPage.jsx";
 import BranchLocatorPage from "./pages/BranchLocatorPage.jsx";
@@ -44,6 +45,7 @@ import DoctorPrescriptionCreatePage from "./pages/DoctorPrescriptionCreatePage.j
 import PrescriptionDetailPage from "./pages/PrescriptionDetailPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
+import StaffBranchPage from "./pages/StaffBranchPage.jsx";
 import StaffVerifyPrescriptionPage from "./pages/StaffVerifyPrescriptionPage.jsx";
 import StaffMedicineDetailPage from "./pages/StaffMedicineDetailPage.jsx";
 import StaffQueueCheckinPage from "./pages/StaffQueueCheckinPage.jsx";
@@ -249,6 +251,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["staff", "admin"]}>
                 <StaffQueueCheckinPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/branch"
+            element={
+              <ProtectedRoute roles={["staff", "admin"]}>
+                <StaffBranchPage />
               </ProtectedRoute>
             }
           />
@@ -474,6 +484,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["admin"]}>
                 <AdminClinicRoomPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/branches"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminBranchesPage />
               </ProtectedRoute>
             }
           />

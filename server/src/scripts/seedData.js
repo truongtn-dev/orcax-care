@@ -453,6 +453,15 @@ export async function runSeed() {
 
   await ensureAllBranchSlugs();
 
+  if (staffUser) {
+    const district1 = await Branch.findOne({ slug: "orcax-care-district-1" });
+    if (district1) {
+      const { syncBranchManager } = await import("../services/staffProfile.service.js");
+      await syncBranchManager(district1._id, staffUser._id);
+      console.log("Assigned staff@orcaxcare.com as branch manager for OrcaX Care District 1.");
+    }
+  }
+
   if (patientUser) {
     const adminUser = await User.findOne({ role: "admin" });
     const complaint = await Complaint.findOneAndUpdate(

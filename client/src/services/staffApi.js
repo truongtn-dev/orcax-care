@@ -36,4 +36,12 @@ export const StaffApiClient = {
   stockOutbound(payload) {
     return api.post("/api/staff/pharmacy/stock-outbound", payload);
   },
+
+  getMyBranch() {
+    return api.get("/api/staff/branch");
+  },
+
+  updateMyBranch(payload) {
+    return api.put("/api/staff/branch", payload);
+  },
 };
