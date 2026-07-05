@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import BranchMap from "../components/BranchMap.jsx";
+import ClinicBranchCard from "../components/ClinicBranchCard.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
-import { getBranchPath } from "../utils/branchUrls.js";
 import "./BranchLocatorPage.css";
 
 export default function BranchLocatorPage() {
   const [branches, setBranches] = useState([]);
-  const [tab, setTab] = useState("map");
+  const [activeBranchId, setActiveBranchId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,78 +19,104 @@ export default function BranchLocatorPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  function highlightBranch(branch) {
+    setActiveBranchId(branch.slug || branch._id);
+  }
+
   return (
     <PageLayout>
-      <div className="branch-locator-page">
-        <header className="branch-locator-head">
-          <div>
-            <p className="branch-locator-kicker">Branch locator</p>
-            <h1>Find an OrcaX Care clinic</h1>
-            <p className="branch-locator-lead">Browse locations, view contact details, and get directions.</p>
+      <div className="branch-locator">
+        <section className="branch-locator-hero">
+          <div className="branch-locator-hero-shapes" aria-hidden="true">
+            <div className="branch-locator-hero-shape branch-locator-hero-shape-1" />
+            <div className="branch-locator-hero-shape branch-locator-hero-shape-2" />
           </div>
-          <div className="branch-locator-tabs" role="tablist" aria-label="Branch view">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "list"}
-              className={tab === "list" ? "is-active" : ""}
-              onClick={() => setTab("list")}
-            >
-              List
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === "map"}
-              className={tab === "map" ? "is-active" : ""}
-              onClick={() => setTab("map")}
-            >
-              Map
-            </button>
+
+          <div className="branch-locator-hero-content">
+            <span className="branch-locator-hero-label">Branch locator</span>
+            <h1>Find an OrcaX Care clinic near you</h1>
+            <p>
+              Explore our Ho Chi Minh City locations on the map, compare hours and contact details,
+              then open a clinic page for directions.
+            </p>
+
+            {!loading && branches.length > 0 && (
+              <div className="branch-locator-hero-stats">
+                <div className="branch-locator-stat">
+                  <span className="branch-locator-stat-value">{branches.length}</span>
+                  <span className="branch-locator-stat-label">Active clinics</span>
+                </div>
+                <div className="branch-locator-stat">
+                  <span className="branch-locator-stat-value">HCM</span>
+                  <span className="branch-locator-stat-label">City coverage</span>
+                </div>
+                <div className="branch-locator-stat">
+                  <span className="branch-locator-stat-value">7 days</span>
+                  <span className="branch-locator-stat-label">Flexible hours</span>
+                </div>
+              </div>
+            )}
           </div>
-        </header>
+        </section>
 
-        {error && <div className="alert alert-error">{error}</div>}
-        {loading && <p className="branch-locator-loading">Loading branches…</p>}
+        <section className="branch-locator-body">
+          {error && <div className="alert alert-error">{error}</div>}
 
-        {!loading && !error && branches.length === 0 && (
-          <p className="branch-locator-empty">No clinic branches are available right now.</p>
-        )}
+          {loading && (
+            <div className="branch-locator-loading-grid" aria-busy="true" aria-label="Loading branches">
+              <div className="branch-locator-map-skeleton" />
+              <div className="branch-locator-cards">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="clinic-branch-card clinic-branch-card--skeleton" aria-hidden="true" />
+                ))}
+              </div>
+            </div>
+          )}
 
-        {!loading && tab === "map" && branches.length > 0 && (
-          <section className="branch-locator-map-panel">
-            <BranchMap branches={branches} />
-          </section>
-        )}
+          {!loading && !error && branches.length === 0 && (
+            <p className="branch-locator-empty">No clinic branches are available right now.</p>
+          )}
 
-        {!loading && tab === "list" && (
-          <section className="branch-locator-list">
-            {branches.map((branch) => (
-              <Link key={branch._id} to={getBranchPath(branch)} className="card branch-card">
-                <div>
-                  <h2>{branch.name}</h2>
-                  <p>{branch.address}</p>
-                  <p className="branch-card-meta">{branch.phone} · {branch.workingHours}</p>
+          {!loading && branches.length > 0 && (
+            <>
+              <div className="branch-locator-map-stage">
+                <div className="branch-locator-map-head">
+                  <h2>Clinic map</h2>
+                  <p>Click a pin for quick info, or select a card below to view full details.</p>
                 </div>
-                <span className="branch-card-cta">View details</span>
-              </Link>
-            ))}
-          </section>
-        )}
+                <BranchMap
+                  branches={branches}
+                  selectedId={activeBranchId}
+                  className="branch-map--locator"
+                  onBranchSelect={highlightBranch}
+                />
+              </div>
 
-        {!loading && tab === "map" && branches.length > 0 && (
-          <section className="branch-locator-list branch-locator-list--compact" aria-label="Branch list">
-            {branches.map((branch) => (
-              <Link key={branch._id} to={getBranchPath(branch)} className="card branch-card branch-card--compact">
-                <div>
-                  <h2>{branch.name}</h2>
-                  <p className="branch-card-meta">{branch.workingHours}</p>
+              <div className="branch-locator-cards-section">
+                <div className="branch-locator-cards-head">
+                  <h2>All locations</h2>
+                  <p>{branches.length} clinics across Ho Chi Minh City</p>
                 </div>
-                <span className="branch-card-cta">Details</span>
-              </Link>
-            ))}
-          </section>
-        )}
+
+                <div className="branch-locator-cards">
+                  {branches.map((branch, index) => (
+                    <div
+                      key={branch._id}
+                      className={
+                        activeBranchId === (branch.slug || branch._id)
+                          ? "branch-locator-card-wrap is-active"
+                          : "branch-locator-card-wrap"
+                      }
+                      onMouseEnter={() => highlightBranch(branch)}
+                    >
+                      <ClinicBranchCard branch={branch} index={index} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </section>
       </div>
     </PageLayout>
   );

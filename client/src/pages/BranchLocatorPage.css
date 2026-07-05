@@ -1,13 +1,203 @@
-.branch-locator-page,
-.branch-detail-page {
-  max-width: 1080px;
+.branch-locator {
+  margin-top: -2rem;
+  margin-left: calc(-1 * var(--page-gutter));
+  margin-right: calc(-1 * var(--page-gutter));
+  width: calc(100% + 2 * var(--page-gutter));
+}
+
+.branch-locator-hero {
+  position: relative;
+  padding: 3.5rem var(--page-gutter) 4rem;
+  background: var(--gradient-hero);
+  color: #fff;
+  overflow: hidden;
+  text-align: center;
+}
+
+.branch-locator-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.branch-locator-hero-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.branch-locator-hero-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.branch-locator-hero-shape-1 {
+  width: 320px;
+  height: 320px;
+  top: -120px;
+  right: -80px;
+}
+
+.branch-locator-hero-shape-2 {
+  width: 240px;
+  height: 240px;
+  bottom: -100px;
+  left: -60px;
+}
+
+.branch-locator-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+}
+
+.branch-locator-hero-label {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.branch-locator-hero h1 {
+  margin: 0 0 1rem;
+  color: #fff;
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.branch-locator-hero-content > p {
+  margin: 0 auto;
+  max-width: 580px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+.branch-locator-hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  margin-top: 2.25rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.branch-locator-stat {
+  text-align: center;
+}
+
+.branch-locator-stat-value {
+  display: block;
+  font-size: 1.625rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.branch-locator-stat-label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.branch-locator-body {
+  padding: 3rem var(--page-gutter) 4.5rem;
+  background: var(--color-bg-alt);
   display: grid;
+  gap: 2.5rem;
+}
+
+.branch-locator-map-stage,
+.branch-locator-cards-section {
+  width: 100%;
+}
+
+.branch-locator-map-head,
+.branch-locator-cards-head {
+  margin-bottom: 1.25rem;
+}
+
+.branch-locator-map-head h2,
+.branch-locator-cards-head h2 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  letter-spacing: -0.02em;
+}
+
+.branch-locator-map-head p,
+.branch-locator-cards-head p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.branch-locator-map-skeleton {
+  min-height: 480px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(110deg, rgba(226, 232, 240, 0.6) 8%, rgba(241, 245, 249, 0.9) 18%, rgba(226, 232, 240, 0.6) 33%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  box-shadow: var(--shadow-sm);
+}
+
+.branch-locator-loading-grid {
+  display: grid;
+  gap: 2rem;
+}
+
+.branch-locator-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
 }
 
-.branch-locator-head,
+.branch-locator-card-wrap {
+  height: 100%;
+}
+
+.branch-locator-card-wrap.is-active .clinic-branch-card {
+  transform: translateY(-4px);
+  border-color: var(--color-primary-muted);
+  box-shadow: var(--shadow-glow);
+}
+
+.branch-locator-card-wrap.is-active .clinic-branch-card-accent {
+  opacity: 1;
+}
+
+.branch-locator-empty {
+  margin: 0;
+  padding: 2rem 1.5rem;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* Detail page */
+.branch-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem var(--page-gutter) 3rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
 .branch-detail-head {
   display: flex;
   justify-content: space-between;
@@ -16,100 +206,30 @@
   align-items: flex-start;
 }
 
-.branch-locator-kicker,
 .branch-detail-kicker {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 
-.branch-locator-head h1,
 .branch-detail-head h1 {
   margin: 0.25rem 0;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
 }
 
-.branch-locator-lead,
-.branch-locator-loading,
-.branch-locator-empty,
-.branch-detail-lead {
+.branch-detail-lead,
+.branch-locator-loading {
   margin: 0;
-  color: #64748b;
-}
-
-.branch-locator-empty {
-  padding: 1.25rem 1.5rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px dashed rgba(15, 23, 42, 0.12);
-  text-align: center;
-}
-
-.branch-locator-tabs {
-  display: inline-flex;
-  gap: 0.35rem;
-  padding: 0.25rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.branch-locator-tabs button {
-  border: none;
-  background: transparent;
-  padding: 0.55rem 1rem;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.branch-locator-tabs button.is-active {
-  background: #0d9488;
-  color: #fff;
-}
-
-.branch-locator-list {
-  display: grid;
-  gap: 1rem;
-}
-
-.branch-card {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  text-decoration: none;
-  color: inherit;
-}
-
-.branch-card h2 {
-  margin: 0 0 0.35rem;
-  font-size: 1.1rem;
-}
-
-.branch-card p {
-  margin: 0;
-}
-
-.branch-card-meta {
-  margin-top: 0.35rem !important;
-  color: #64748b;
-  font-size: 0.92rem;
-}
-
-.branch-card-cta {
-  color: #0d9488;
-  font-weight: 700;
-  white-space: nowrap;
+  color: var(--color-text-secondary);
 }
 
 .branch-detail-grid {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .branch-detail-map {
@@ -121,6 +241,7 @@
   padding: 1.5rem;
   display: grid;
   gap: 1rem;
+  align-content: start;
 }
 
 .branch-detail-info dl {
@@ -133,7 +254,7 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--color-text-muted);
 }
 
 .branch-detail-info dd {
@@ -141,26 +262,36 @@
   font-weight: 600;
 }
 
-.branch-locator-list--compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 0.85rem;
-}
-
-.branch-card--compact {
-  padding: 1rem 1.15rem;
-}
-
-.branch-card--compact h2 {
-  font-size: 1rem;
-}
-
-.branch-locator-map-panel {
-  margin-bottom: 0.5rem;
+@media (max-width: 1024px) {
+  .branch-locator-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 860px) {
   .branch-detail-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .branch-locator-hero {
+    padding: 2.5rem var(--page-gutter) 3rem;
+  }
+
+  .branch-locator-hero-stats {
+    gap: 1.5rem;
+  }
+
+  .branch-locator-body {
+    padding: 2rem var(--page-gutter) 3rem;
+  }
+
+  .branch-locator-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .branch-locator-map-skeleton {
+    min-height: 320px;
   }
 }
