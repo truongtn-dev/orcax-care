@@ -33,7 +33,7 @@ export const PublicApiClient = {
     return api.get("/api/public/branches");
   },
 
-  getBranch(id) {
-    return api.get(`/api/public/branches/${id}`);
+  getBranch(slugOrId) {
+    return api.get(`/api/public/branches/${slugOrId}`);
   },
 };

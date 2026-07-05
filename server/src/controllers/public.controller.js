@@ -79,7 +79,7 @@ export async function listBranches(req, res) {
 
 export async function getBranch(req, res) {
   try {
-    const result = await BranchService.getBranchById(req.params.id);
+    const result = await BranchService.getBranchByIdentifier(req.params.slug);
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);

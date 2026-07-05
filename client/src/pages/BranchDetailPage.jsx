@@ -1,33 +1,36 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import BranchMap from "../components/BranchMap.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import { getBranchPath, isMongoObjectId } from "../utils/branchUrls.js";
 import "./BranchLocatorPage.css";
 
 function directionsUrl(lat, lng) {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 }
 
-function mapEmbedUrl(lat, lng) {
-  const delta = 0.01;
-  const bbox = [lng - delta, lat - delta, lng + delta, lat + delta].join("%2C");
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lng}`;
-}
-
 export default function BranchDetailPage() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const navigate = useNavigate();
   const [branch, setBranch] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
-    PublicApiClient.getBranch(id)
-      .then(({ data }) => setBranch(data.branch))
+    setError("");
+    PublicApiClient.getBranch(slug)
+      .then(({ data }) => {
+        setBranch(data.branch);
+        if (isMongoObjectId(slug) && data.branch?.slug && data.branch.slug !== slug) {
+          navigate(getBranchPath(data.branch), { replace: true });
+        }
+      })
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [slug, navigate]);
 
   const directionsHref = useMemo(() => {
     if (!branch) return "#";
@@ -52,11 +55,10 @@ export default function BranchDetailPage() {
         {branch && (
           <div className="branch-detail-grid">
             <section className="card branch-detail-map">
-              <iframe
-                title={`Map for ${branch.name}`}
-                src={mapEmbedUrl(branch.lat, branch.lng)}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
+              <BranchMap
+                branches={[branch]}
+                selectedId={branch.slug || branch._id}
+                className="branch-map--detail"
               />
             </section>
 

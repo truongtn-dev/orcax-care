@@ -6,6 +6,7 @@ import { Department } from "../models/Department.js";
 import { Doctor } from "../models/Doctor.js";
 import { Patient } from "../models/Patient.js";
 import { ensureAllDoctorSlugs } from "../utils/doctorSlug.js";
+import { ensureAllBranchSlugs, slugifyBranchName } from "../utils/branchSlug.js";
 import { Medicine } from "../models/Medicine.js";
 import { ClinicRoom } from "../models/ClinicRoom.js";
 import { AppointmentSlot } from "../models/AppointmentSlot.js";
@@ -414,6 +415,7 @@ export async function runSeed() {
   const branchSeeds = [
     {
       name: "OrcaX Care District 1",
+      slug: "orcax-care-district-1",
       address: "12 Nguyen Hue, District 1, Ho Chi Minh City",
       phone: "028-1234-2001",
       workingHours: "Mon–Sat 7:30–20:00",
@@ -422,6 +424,7 @@ export async function runSeed() {
     },
     {
       name: "OrcaX Care Thu Duc",
+      slug: "orcax-care-thu-duc",
       address: "88 Vo Van Ngan, Thu Duc City, Ho Chi Minh City",
       phone: "028-1234-2002",
       workingHours: "Mon–Fri 8:00–17:30",
@@ -430,6 +433,7 @@ export async function runSeed() {
     },
     {
       name: "OrcaX Care Tan Binh",
+      slug: "orcax-care-tan-binh",
       address: "45 Cong Hoa, Tan Binh, Ho Chi Minh City",
       phone: "028-1234-2003",
       workingHours: "Mon–Sun 8:00–18:00",
@@ -439,8 +443,15 @@ export async function runSeed() {
   ];
 
   for (const branch of branchSeeds) {
-    await Branch.findOneAndUpdate({ name: branch.name }, { ...branch, isActive: true }, { upsert: true, new: true });
+    const slug = branch.slug || slugifyBranchName(branch.name);
+    await Branch.findOneAndUpdate(
+      { name: branch.name },
+      { ...branch, slug, isActive: true },
+      { upsert: true, new: true }
+    );
   }
+
+  await ensureAllBranchSlugs();
 
   if (patientUser) {
     const adminUser = await User.findOne({ role: "admin" });

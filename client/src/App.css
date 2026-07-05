@@ -1630,6 +1630,8 @@
 .section-alt .section-header,
 .section-alt .steps-grid,
 .section-alt .doctor-grid-premium,
+.section-alt .home-branches-map-stage,
+.section-alt .home-branches-grid,
 .section-alt .section-footer-actions {
   width: 100%;
   margin-left: auto;
@@ -1691,6 +1693,198 @@
   margin: 0;
   color: var(--color-text-secondary);
   line-height: 1.55;
+}
+
+.home-branches .section-header {
+  margin-bottom: 2.5rem;
+}
+
+.home-branches-map-stage {
+  margin-bottom: 2rem;
+}
+
+.home-branches-map-skeleton {
+  min-height: 420px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(110deg, rgba(226, 232, 240, 0.6) 8%, rgba(241, 245, 249, 0.9) 18%, rgba(226, 232, 240, 0.6) 33%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  box-shadow: var(--shadow-sm);
+}
+
+.home-branches-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.home-branches-grid .scroll-reveal {
+  height: 100%;
+}
+
+.home-branch-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+}
+
+.home-branch-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-primary-muted);
+  box-shadow: var(--shadow-glow);
+}
+
+.home-branch-card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-brand);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.home-branch-card:hover .home-branch-card-accent {
+  opacity: 1;
+}
+
+.home-branch-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.home-branch-card-index {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.home-branch-card-head h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.home-branch-card-address {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.home-branch-card-address svg {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.15rem;
+  color: var(--color-primary);
+}
+
+.home-branch-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.home-branch-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-alt);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.home-branch-chip svg {
+  flex-shrink: 0;
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--color-primary);
+}
+
+.home-branch-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  transition: gap var(--transition);
+}
+
+.home-branch-card-action svg {
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--transition);
+}
+
+.home-branch-card:hover .home-branch-card-action svg {
+  transform: translateX(3px);
+}
+
+.home-branch-card--skeleton {
+  min-height: 260px;
+  background: linear-gradient(110deg, rgba(226, 232, 240, 0.6) 8%, rgba(241, 245, 249, 0.9) 18%, rgba(226, 232, 240, 0.6) 33%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  border: none;
+  box-shadow: none;
+}
+
+.branch-map--home {
+  min-height: 420px;
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 1024px) {
+  .home-branches-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .home-branches-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-branches-map-skeleton,
+  .branch-map--home {
+    min-height: 320px;
+  }
 }
 
 @media (max-width: 900px) {

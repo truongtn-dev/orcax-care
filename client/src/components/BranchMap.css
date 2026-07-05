@@ -3,54 +3,121 @@
   min-height: 420px;
   border-radius: 20px;
   overflow: hidden;
-  background: linear-gradient(180deg, #dbeafe 0%, #ecfdf5 55%, #f8fafc 100%);
   border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #e2e8f0;
+  z-index: 0;
 }
 
-.branch-map-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-  background-size: 48px 48px;
+.branch-map--home {
+  min-height: 420px;
+  box-shadow: var(--shadow-md);
 }
 
-.branch-map-pin {
-  position: absolute;
-  transform: translate(-50%, -100%);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  padding: 0;
-  z-index: 1;
+.branch-map--locator {
+  min-height: 480px;
+  box-shadow: var(--shadow-md);
 }
 
-.branch-map-pin::before {
-  content: "";
+.branch-map--detail {
+  min-height: 360px;
+  width: 100%;
+}
+
+.branch-leaflet-marker {
   display: block;
-  width: 18px;
-  height: 18px;
-  margin: 0 auto;
+  width: 28px;
+  height: 36px;
+  background: #0d9488;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
-  background: #0d9488;
-  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.35);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.45);
+  border: 2px solid #fff;
 }
 
-.branch-map-pin span {
-  display: block;
-  margin-top: 0.35rem;
-  padding: 0.25rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
-}
-
-.branch-map-pin.is-selected::before {
+.branch-leaflet-marker.is-selected {
   background: #f59e0b;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.45);
+}
+
+.branch-map .leaflet-control-attribution {
+  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.branch-map-popup {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.branch-map-popup strong {
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.branch-map-popup p {
+  margin: 0;
+}
+
+.branch-map-popup-phone,
+.branch-map-popup-hours {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.branch-map-popup-hint {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0d9488;
+}
+
+.branch-map-popup-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.branch-map-popup-link,
+.branch-map-popup-directions {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.branch-map-popup-link {
+  border: none;
+  background: #0d9488;
+  color: #fff;
+}
+
+.branch-map-popup-directions {
+  background: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+}
+
+.branch-detail-map {
+  padding: 0;
+  overflow: hidden;
+}
+
+.branch-detail-map .branch-map {
+  border: none;
+  border-radius: 18px;
+  min-height: 360px;
+}
+
+@media (max-width: 960px) {
+  .branch-map--home,
+  .branch-map--locator {
+    min-height: 300px;
+  }
 }

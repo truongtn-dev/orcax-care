@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const branchSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
+    slug: { type: String, unique: true, sparse: true, trim: true, lowercase: true },
     address: { type: String, default: "", trim: true },
     phone: { type: String, default: "", trim: true },
     workingHours: { type: String, default: "Mon–Fri 8:00–17:00", trim: true },
@@ -12,6 +13,12 @@ const branchSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+branchSchema.pre("save", async function () {
+  if (this.slug) return;
+  const { generateUniqueBranchSlug } = await import("../utils/branchSlug.js");
+  this.slug = await generateUniqueBranchSlug(this.name, this._id);
+});
 
 branchSchema.index({ isActive: 1, name: 1 });
 
