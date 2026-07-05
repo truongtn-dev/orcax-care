@@ -196,4 +196,24 @@ export const AdminApiClient = {
   replyToComplaint(id, content) {
     return api.post(`/api/admin/complaints/${id}/replies`, { content });
   },
+
+  listBranches(params) {
+    return api.get("/api/admin/branches", { params });
+  },
+
+  getBranch(id) {
+    return api.get(`/api/admin/branches/${id}`);
+  },
+
+  createBranch(payload) {
+    return api.post("/api/admin/branches", payload);
+  },
+
+  updateBranch(id, payload) {
+    return api.put(`/api/admin/branches/${id}`, payload);
+  },
+
+  listBranchStaffOptions() {
+    return api.get("/api/admin/branches/staff-options");
+  },
 };

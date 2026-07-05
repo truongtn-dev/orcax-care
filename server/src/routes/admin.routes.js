@@ -10,6 +10,7 @@ import * as AdminWorkShiftController from "../controllers/adminWorkShift.control
 import * as AdminController from "../controllers/admin.controller.js";
 import * as AdminDashboardController from "../controllers/adminDashboard.controller.js";
 import * as AdminComplaintController from "../controllers/adminComplaint.controller.js";
+import * as AdminBranchController from "../controllers/adminBranch.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
 
@@ -73,6 +74,12 @@ adminRouter.get("/clinic-rooms/departments", AdminClinicRoomController.listDepar
 adminRouter.get("/clinic-rooms", AdminClinicRoomController.listClinicRooms);
 adminRouter.post("/clinic-rooms", AdminClinicRoomController.createClinicRoom);
 adminRouter.put("/clinic-rooms/:roomId", AdminClinicRoomController.updateClinicRoom);
+
+adminRouter.get("/branches/staff-options", AdminBranchController.listStaffOptions);
+adminRouter.get("/branches", AdminBranchController.listBranches);
+adminRouter.post("/branches", AdminBranchController.createBranch);
+adminRouter.get("/branches/:id", AdminBranchController.getBranch);
+adminRouter.put("/branches/:id", AdminBranchController.updateBranch);
 
 adminRouter.post("/work-shifts/preview", AdminWorkShiftController.previewWorkShift);
 adminRouter.get("/work-shifts", AdminWorkShiftController.listWorkShifts);
