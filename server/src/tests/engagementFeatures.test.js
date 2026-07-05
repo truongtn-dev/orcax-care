@@ -129,6 +129,7 @@ describe("Engagement, pharmacy, and branch features", () => {
 
     branch = await Branch.create({
       name: "Test Branch",
+      slug: "test-branch",
       address: "1 Test Street",
       phone: "028-0000-0000",
       workingHours: "Mon–Fri 8:00–17:00",
@@ -217,8 +218,11 @@ describe("Engagement, pharmacy, and branch features", () => {
     const body = await res.json();
     assert.equal(body.items.length, 1);
     assert.equal(body.items[0].name, "Test Branch");
+    assert.equal(body.items[0].slug, "test-branch");
 
-    const detailRes = await fetch(`${baseUrl}/api/public/branches/${branch._id}`);
+    const detailRes = await fetch(`${baseUrl}/api/public/branches/${branch.slug}`);
     assert.equal(detailRes.status, 200);
+    const detailBody = await detailRes.json();
+    assert.equal(detailBody.branch.slug, "test-branch");
   });
 });

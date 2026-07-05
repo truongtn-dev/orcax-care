@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import PageLayout from "../components/PageLayout.jsx";
-import AdminLayout from "../components/AdminLayout.jsx";
-import CustomSelect from "../components/CustomSelect.jsx";
-import { AdminApiClient } from "../services/adminApi.js";
-import { getApiErrorMessage } from "../services/api.js";
+import PageLayout from "../../components/PageLayout.jsx";
+import AdminLayout from "../../components/AdminLayout.jsx";
+import CustomSelect from "../../components/CustomSelect.jsx";
+import { AdminApiClient } from "../../services/adminApi.js";
+import { getApiErrorMessage } from "../../services/api.js";
 import "./AdminComplaintsPage.css";
 
 const STATUS_OPTIONS = [

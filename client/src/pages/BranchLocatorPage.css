@@ -33,9 +33,18 @@
 
 .branch-locator-lead,
 .branch-locator-loading,
+.branch-locator-empty,
 .branch-detail-lead {
   margin: 0;
   color: #64748b;
+}
+
+.branch-locator-empty {
+  padding: 1.25rem 1.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  text-align: center;
 }
 
 .branch-locator-tabs {
@@ -103,11 +112,9 @@
   gap: 1rem;
 }
 
-.branch-detail-map iframe {
-  width: 100%;
-  min-height: 320px;
-  border: 0;
-  border-radius: 18px;
+.branch-detail-map {
+  padding: 0;
+  overflow: hidden;
 }
 
 .branch-detail-info {
@@ -132,6 +139,24 @@
 .branch-detail-info dd {
   margin: 0.15rem 0 0;
   font-weight: 600;
+}
+
+.branch-locator-list--compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+
+.branch-card--compact {
+  padding: 1rem 1.15rem;
+}
+
+.branch-card--compact h2 {
+  font-size: 1rem;
+}
+
+.branch-locator-map-panel {
+  margin-bottom: 0.5rem;
 }
 
 @media (max-width: 860px) {

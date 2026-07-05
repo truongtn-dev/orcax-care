@@ -10,7 +10,10 @@ import DoctorSearchCard from "../components/DoctorSearchCard.jsx";
 
 import DoctorCardSkeleton from "../components/DoctorCardSkeleton.jsx";
 
+import BranchMap from "../components/BranchMap.jsx";
+
 import { PublicApiClient } from "../services/publicApi.js";
+import { getBranchPath } from "../utils/branchUrls.js";
 
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -207,6 +210,10 @@ export default function HomePage() {
 
   const [featuredLoading, setFeaturedLoading] = useState(true);
 
+  const [branches, setBranches] = useState([]);
+
+  const [branchesLoading, setBranchesLoading] = useState(true);
+
   useHeroParallax(heroRef);
 
   useEffect(() => {
@@ -230,6 +237,40 @@ export default function HomePage() {
       .finally(() => {
 
         if (active) setFeaturedLoading(false);
+
+      });
+
+    return () => {
+
+      active = false;
+
+    };
+
+  }, []);
+
+
+
+  useEffect(() => {
+
+    let active = true;
+
+    PublicApiClient.listBranches()
+
+      .then(({ data }) => {
+
+        if (active) setBranches(data.items || []);
+
+      })
+
+      .catch(() => {
+
+        if (active) setBranches([]);
+
+      })
+
+      .finally(() => {
+
+        if (active) setBranchesLoading(false);
 
       });
 
@@ -359,9 +400,9 @@ export default function HomePage() {
 
               <div className="hero-stat">
 
-                <span className="hero-stat-value">20+</span>
+                <span className="hero-stat-value">{branchesLoading ? "…" : `${branches.length || 3}+`}</span>
 
-                <span className="hero-stat-label">Specialties</span>
+                <span className="hero-stat-label">Clinic branches</span>
 
               </div>
 
@@ -448,6 +489,160 @@ export default function HomePage() {
                 </div>
 
               </>
+
+            )}
+
+          </section>
+
+        )}
+
+        {(branchesLoading || branches.length > 0) && (
+
+          <section className="section section-alt home-branches">
+
+            <ScrollReveal className="section-header" variant="up">
+
+              <span className="section-label">Our clinics</span>
+
+              <h2>Find OrcaX Care near you</h2>
+
+              <p>
+
+                Visit us across Ho Chi Minh City — explore the map, then choose a clinic for directions, hours, and contact details.
+
+              </p>
+
+            </ScrollReveal>
+
+
+
+            <ScrollReveal className="home-branches-map-stage" variant="up">
+
+              {branchesLoading ? (
+
+                <div className="home-branches-map-skeleton" aria-busy="true" aria-label="Loading branch map" />
+
+              ) : (
+
+                <BranchMap branches={branches} className="branch-map--home" />
+
+              )}
+
+            </ScrollReveal>
+
+
+
+            <div className="home-branches-grid scroll-stagger-grid">
+
+                {branchesLoading &&
+
+                  Array.from({ length: 3 }).map((_, index) => (
+
+                    <div key={index} className="home-branch-card home-branch-card--skeleton" aria-hidden="true" />
+
+                  ))}
+
+
+
+                {!branchesLoading &&
+
+                  branches.map((branch, index) => (
+
+                    <ScrollReveal key={branch._id} variant="float" delay={index * 90}>
+
+                      <Link to={getBranchPath(branch)} className="home-branch-card">
+
+                        <span className="home-branch-card-accent" aria-hidden="true" />
+
+                        <div className="home-branch-card-head">
+
+                          <span className="home-branch-card-index">{String(index + 1).padStart(2, "0")}</span>
+
+                          <h3>{branch.name}</h3>
+
+                        </div>
+
+                        <p className="home-branch-card-address">
+
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+
+                            <circle cx="12" cy="10" r="3" />
+
+                          </svg>
+
+                          <span>{branch.address}</span>
+
+                        </p>
+
+                        <div className="home-branch-card-meta">
+
+                          <span className="home-branch-chip">
+
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+
+                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+
+                            </svg>
+
+                            {branch.phone}
+
+                          </span>
+
+                          {branch.workingHours && (
+
+                            <span className="home-branch-chip">
+
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+
+                                <circle cx="12" cy="12" r="10" />
+
+                                <path d="M12 6v6l4 2" />
+
+                              </svg>
+
+                              {branch.workingHours}
+
+                            </span>
+
+                          )}
+
+                        </div>
+
+                        <span className="home-branch-card-action">
+
+                          View clinic details
+
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+
+                            <path d="M5 12h14M13 5l7 7-7 7" />
+
+                          </svg>
+
+                        </span>
+
+                      </Link>
+
+                    </ScrollReveal>
+
+                  ))}
+
+            </div>
+
+
+
+            {!branchesLoading && branches.length > 0 && (
+
+              <div className="section-footer-actions">
+
+                <Link to="/branches" className="btn btn-primary">
+
+                  View all locations
+
+                </Link>
+
+              </div>
 
             )}
 

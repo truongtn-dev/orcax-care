@@ -542,7 +542,7 @@ export default function App() {
             }
           />
           <Route path="/branches" element={<BranchLocatorPage />} />
-          <Route path="/branches/:id" element={<BranchDetailPage />} />
+          <Route path="/branches/:slug" element={<BranchDetailPage />} />
           <Route path="/doctor/:slug" element={<DoctorPublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

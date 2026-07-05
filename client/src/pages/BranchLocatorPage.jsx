@@ -4,11 +4,12 @@ import PageLayout from "../components/PageLayout.jsx";
 import BranchMap from "../components/BranchMap.jsx";
 import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import { getBranchPath } from "../utils/branchUrls.js";
 import "./BranchLocatorPage.css";
 
 export default function BranchLocatorPage() {
   const [branches, setBranches] = useState([]);
-  const [tab, setTab] = useState("list");
+  const [tab, setTab] = useState("map");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -53,7 +54,11 @@ export default function BranchLocatorPage() {
         {error && <div className="alert alert-error">{error}</div>}
         {loading && <p className="branch-locator-loading">Loading branches…</p>}
 
-        {!loading && tab === "map" && (
+        {!loading && !error && branches.length === 0 && (
+          <p className="branch-locator-empty">No clinic branches are available right now.</p>
+        )}
+
+        {!loading && tab === "map" && branches.length > 0 && (
           <section className="branch-locator-map-panel">
             <BranchMap branches={branches} />
           </section>
@@ -62,13 +67,27 @@ export default function BranchLocatorPage() {
         {!loading && tab === "list" && (
           <section className="branch-locator-list">
             {branches.map((branch) => (
-              <Link key={branch._id} to={`/branches/${branch._id}`} className="card branch-card">
+              <Link key={branch._id} to={getBranchPath(branch)} className="card branch-card">
                 <div>
                   <h2>{branch.name}</h2>
                   <p>{branch.address}</p>
                   <p className="branch-card-meta">{branch.phone} · {branch.workingHours}</p>
                 </div>
                 <span className="branch-card-cta">View details</span>
+              </Link>
+            ))}
+          </section>
+        )}
+
+        {!loading && tab === "map" && branches.length > 0 && (
+          <section className="branch-locator-list branch-locator-list--compact" aria-label="Branch list">
+            {branches.map((branch) => (
+              <Link key={branch._id} to={getBranchPath(branch)} className="card branch-card branch-card--compact">
+                <div>
+                  <h2>{branch.name}</h2>
+                  <p className="branch-card-meta">{branch.workingHours}</p>
+                </div>
+                <span className="branch-card-cta">Details</span>
               </Link>
             ))}
           </section>
