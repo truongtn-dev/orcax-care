@@ -24,6 +24,10 @@ import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
+import AdminComplaintsListPage from "./pages/admin/AdminComplaintsListPage.jsx";
+import AdminComplaintDetailPage from "./pages/admin/AdminComplaintDetailPage.jsx";
+import BranchLocatorPage from "./pages/BranchLocatorPage.jsx";
+import BranchDetailPage from "./pages/BranchDetailPage.jsx";
 import AdminDashboardPage from "./pages/AdminDashboardPage.jsx";
 import AdminPatientDetailPage from "./pages/AdminPatientDetailPage.jsx";
 import AdminSpecialtyPage from "./pages/AdminSpecialtyPage.jsx";
@@ -450,6 +454,22 @@ export default function App() {
             }
           />
           <Route
+            path="/admin/complaints"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminComplaintsListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/complaints/:id"
+            element={
+              <ProtectedRoute roles={["admin"]}>
+                <AdminComplaintDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin/clinic-room"
             element={
               <ProtectedRoute roles={["admin"]}>
@@ -521,6 +541,8 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/branches" element={<BranchLocatorPage />} />
+          <Route path="/branches/:id" element={<BranchDetailPage />} />
           <Route path="/doctor/:slug" element={<DoctorPublicProfilePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

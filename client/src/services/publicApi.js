@@ -24,4 +24,16 @@ export const PublicApiClient = {
   getDoctorAvailability(id, params) {
     return api.get(`/api/public/doctors/${id}/availability`, { params });
   },
+
+  listDoctorReviews(id, params) {
+    return api.get(`/api/public/doctors/${id}/reviews`, { params });
+  },
+
+  listBranches() {
+    return api.get("/api/public/branches");
+  },
+
+  getBranch(id) {
+    return api.get(`/api/public/branches/${id}`);
+  },
 };

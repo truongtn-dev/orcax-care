@@ -84,6 +84,18 @@ const ADMIN_SECTIONS = [
 
       {
 
+        to: "/admin/complaints",
+
+        label: "Complaints",
+
+        icon: "list",
+
+        match: ["/admin/complaints"],
+
+      },
+
+      {
+
         to: "/admin/doctors",
 
         label: "Doctors",

@@ -9,6 +9,11 @@ const stockMovementSchema = new mongoose.Schema(
     expiryDate: { type: Date, default: null },
     supplierRef: { type: String, default: "", trim: true },
     note: { type: String, default: "", trim: true },
+    prescriptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Prescription",
+      default: null,
+    },
     performedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }

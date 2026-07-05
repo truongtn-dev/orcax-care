@@ -32,4 +32,8 @@ export const StaffApiClient = {
   createMedicine(payload) {
     return api.post("/api/staff/pharmacy/medicines", payload);
   },
+
+  stockOutbound(payload) {
+    return api.post("/api/staff/pharmacy/stock-outbound", payload);
+  },
 };

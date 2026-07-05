@@ -180,4 +180,20 @@ export const AdminApiClient = {
   generateAppointmentSlots(payload) {
     return api.post("/api/admin/appointment-slots/generate", payload);
   },
+
+  listComplaints(params) {
+    return api.get("/api/admin/complaints", { params });
+  },
+
+  getComplaint(id) {
+    return api.get(`/api/admin/complaints/${id}`);
+  },
+
+  updateComplaintStatus(id, status) {
+    return api.patch(`/api/admin/complaints/${id}/status`, { status });
+  },
+
+  replyToComplaint(id, content) {
+    return api.post(`/api/admin/complaints/${id}/replies`, { content });
+  },
 };

@@ -79,3 +79,13 @@ export async function verifyPrescription(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function stockOutbound(req, res) {
+  try {
+    const result = await StaffPharmacyService.stockOutbound(req.user.userId, req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}

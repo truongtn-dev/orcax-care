@@ -63,3 +63,28 @@
     align-items: stretch;
   }
 }
+
+.staff-pharmacy-inventory-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.staff-pharmacy-inventory-head h3 {
+  margin: 0;
+}
+
+.staff-pharmacy-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  color: #64748b;
+}
+
+.staff-pharmacy-row-low {
+  background: rgba(245, 158, 11, 0.08);
+}
+

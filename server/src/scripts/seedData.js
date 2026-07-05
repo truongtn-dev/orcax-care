@@ -14,6 +14,9 @@ import { Encounter } from "../models/Encounter.js";
 import { MedicalImage } from "../models/MedicalImage.js";
 import { Prescription } from "../models/Prescription.js";
 import { StockMovement } from "../models/StockMovement.js";
+import { Branch } from "../models/Branch.js";
+import { Complaint } from "../models/Complaint.js";
+import { ComplaintReply } from "../models/ComplaintReply.js";
 
 const specialties = [
   { code: "CARD", name: "Cardiology", description: "Heart and cardiovascular system" },
@@ -381,6 +384,89 @@ export async function runSeed() {
       signedOffBy: demoDoctor.userId?._id,
     });
     console.log("Created EMR demo encounters for patient@orcaxcare.com and doctor.an@orcaxcare.com.");
+
+    const reviewedAppointment = await Appointment.findOne({
+      patientUserId: patientUser._id,
+      doctorId: demoDoctor._id,
+      status: "completed",
+    }).sort({ updatedAt: -1 });
+
+    if (reviewedAppointment && !reviewedAppointment.rating) {
+      reviewedAppointment.rating = 5;
+      reviewedAppointment.reviewComment = "Very attentive and explained the treatment clearly.";
+      reviewedAppointment.reviewedAt = new Date();
+      await reviewedAppointment.save();
+      const ratedCount = await Appointment.countDocuments({
+        doctorId: demoDoctor._id,
+        rating: { $ne: null },
+      });
+      const avg = await Appointment.aggregate([
+        { $match: { doctorId: demoDoctor._id, rating: { $ne: null } } },
+        { $group: { _id: null, avg: { $avg: "$rating" } } },
+      ]);
+      await Doctor.updateOne(
+        { _id: demoDoctor._id },
+        { ratingCount: ratedCount, ratingAverage: avg[0]?.avg || 5 }
+      );
+    }
+  }
+
+  const branchSeeds = [
+    {
+      name: "OrcaX Care District 1",
+      address: "12 Nguyen Hue, District 1, Ho Chi Minh City",
+      phone: "028-1234-2001",
+      workingHours: "Mon–Sat 7:30–20:00",
+      lat: 10.7769,
+      lng: 106.7009,
+    },
+    {
+      name: "OrcaX Care Thu Duc",
+      address: "88 Vo Van Ngan, Thu Duc City, Ho Chi Minh City",
+      phone: "028-1234-2002",
+      workingHours: "Mon–Fri 8:00–17:30",
+      lat: 10.8505,
+      lng: 106.7717,
+    },
+    {
+      name: "OrcaX Care Tan Binh",
+      address: "45 Cong Hoa, Tan Binh, Ho Chi Minh City",
+      phone: "028-1234-2003",
+      workingHours: "Mon–Sun 8:00–18:00",
+      lat: 10.8014,
+      lng: 106.6526,
+    },
+  ];
+
+  for (const branch of branchSeeds) {
+    await Branch.findOneAndUpdate({ name: branch.name }, { ...branch, isActive: true }, { upsert: true, new: true });
+  }
+
+  if (patientUser) {
+    const adminUser = await User.findOne({ role: "admin" });
+    const complaint = await Complaint.findOneAndUpdate(
+      { patientUserId: patientUser._id, subject: "Long waiting time at reception" },
+      {
+        patientUserId: patientUser._id,
+        subject: "Long waiting time at reception",
+        content:
+          "I waited more than 40 minutes past my appointment time even though I checked in on time.",
+        status: "open",
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    if (adminUser) {
+      await ComplaintReply.findOneAndUpdate(
+        { complaintId: complaint._id, content: "Thank you for reporting this. We are reviewing queue staffing." },
+        {
+          complaintId: complaint._id,
+          repliedBy: adminUser._id,
+          content: "Thank you for reporting this. We are reviewing queue staffing for peak hours.",
+        },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+    }
   }
 
   console.log("Seed data ready (admin + staff + doctors + master data).");

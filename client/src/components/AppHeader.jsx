@@ -9,6 +9,7 @@ import { NotificationApiClient } from "../services/notificationApi.js";
 const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/search-doctors", label: "Find doctors" },
+  { to: "/branches", label: "Branches" },
 ];
 
 function UserAvatarStack({ name, imageUrl, className = "" }) {

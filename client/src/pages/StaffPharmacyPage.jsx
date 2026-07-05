@@ -20,11 +20,20 @@ const EMPTY_INBOUND = {
   note: "",
 };
 
+const EMPTY_OUTBOUND = {
+  medicineId: "",
+  quantity: "",
+  reason: "",
+  prescriptionId: "",
+};
+
 export default function StaffPharmacyPage() {
   const [dashboard, setDashboard] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState(EMPTY_INBOUND);
+  const [outboundForm, setOutboundForm] = useState(EMPTY_OUTBOUND);
+  const [lowStockOnly, setLowStockOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +45,7 @@ export default function StaffPharmacyPage() {
     try {
       const [dashRes, medRes, moveRes] = await Promise.all([
         StaffApiClient.getPharmacyDashboard(),
-        StaffApiClient.listMedicines(),
+        StaffApiClient.listMedicines({ lowStockOnly: lowStockOnly || undefined }),
         StaffApiClient.listStockMovements({ limit: 20 }),
       ]);
       setDashboard(dashRes.data);
@@ -47,11 +56,32 @@ export default function StaffPharmacyPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [lowStockOnly]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const onSubmitOutbound = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data } = await StaffApiClient.stockOutbound({
+        ...outboundForm,
+        quantity: Number(outboundForm.quantity),
+        prescriptionId: outboundForm.prescriptionId || undefined,
+      });
+      setMessage(data.message || "Stock outbound recorded.");
+      setOutboundForm(EMPTY_OUTBOUND);
+      await loadData();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const medicineOptions = [
     { value: "", label: "Select medicine" },
@@ -220,29 +250,90 @@ export default function StaffPharmacyPage() {
                 </div>
               </form>
 
+              <form className="card form staff-pharmacy-form" onSubmit={onSubmitOutbound}>
+                <div className="staff-pharmacy-form-head">
+                  <div>
+                    <h3>Stock outbound</h3>
+                    <p className="form-help">Decrease on-hand stock with reason and optional prescription link.</p>
+                  </div>
+                </div>
+                <div className="form-grid staff-pharmacy-form-grid">
+                  <CustomSelect
+                    className="filter-field form-grid-span-2"
+                    label="Medicine"
+                    value={outboundForm.medicineId}
+                    onChange={(medicineId) => setOutboundForm((current) => ({ ...current, medicineId }))}
+                    options={medicineOptions}
+                  />
+                  <FilterFormField
+                    id="pharmacy-outbound-qty"
+                    label="Quantity"
+                    name="quantity"
+                    type="number"
+                    min="1"
+                    value={outboundForm.quantity}
+                    onChange={(e) => setOutboundForm((current) => ({ ...current, quantity: e.target.value }))}
+                    required
+                  />
+                  <FilterFormField
+                    id="pharmacy-outbound-reason"
+                    label="Reason"
+                    name="reason"
+                    value={outboundForm.reason}
+                    onChange={(e) => setOutboundForm((current) => ({ ...current, reason: e.target.value }))}
+                    required
+                  />
+                  <FilterFormField
+                    id="pharmacy-outbound-rx"
+                    className="form-grid-span-2"
+                    label="Prescription ID (optional)"
+                    name="prescriptionId"
+                    value={outboundForm.prescriptionId}
+                    onChange={(e) => setOutboundForm((current) => ({ ...current, prescriptionId: e.target.value }))}
+                  />
+                </div>
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? "Saving…" : "Record outbound"}
+                  </button>
+                </div>
+              </form>
+
               <section className="card staff-pharmacy-inventory">
-                <h3>Inventory</h3>
+                <div className="staff-pharmacy-inventory-head">
+                  <h3>Inventory</h3>
+                  <label className="staff-pharmacy-filter-toggle">
+                    <input
+                      type="checkbox"
+                      checked={lowStockOnly}
+                      onChange={(event) => setLowStockOnly(event.target.checked)}
+                    />
+                    Low stock only
+                  </label>
+                </div>
                 <div className="table-wrap">
                   <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Medicine</th>
-                        <th>On hand</th>
-                        <th>Min level</th>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Qty</th>
+                        <th>Nearest expiry</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {medicines.map((med) => (
-                        <tr key={med._id}>
+                        <tr key={med._id} className={med.isLowStock ? "staff-pharmacy-row-low" : ""}>
+                          <td>{med.code}</td>
                           <td>
                             <strong>{med.name}</strong>
-                            <div className="text-muted">{med.code}</div>
+                            <div className="text-muted">Min {med.minStockLevel} {med.unit}</div>
                           </td>
                           <td>
                             {med.stockQty} {med.unit}
                           </td>
-                          <td>{med.minStockLevel}</td>
+                          <td>{med.nearestExpiry || "—"}</td>
                           <td>
                             <span
                               className={`status-badge ${

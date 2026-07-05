@@ -1,0 +1,141 @@
+.branch-locator-page,
+.branch-detail-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.branch-locator-head,
+.branch-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.branch-locator-kicker,
+.branch-detail-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.branch-locator-head h1,
+.branch-detail-head h1 {
+  margin: 0.25rem 0;
+}
+
+.branch-locator-lead,
+.branch-locator-loading,
+.branch-detail-lead {
+  margin: 0;
+  color: #64748b;
+}
+
+.branch-locator-tabs {
+  display: inline-flex;
+  gap: 0.35rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.branch-locator-tabs button {
+  border: none;
+  background: transparent;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.branch-locator-tabs button.is-active {
+  background: #0d9488;
+  color: #fff;
+}
+
+.branch-locator-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.branch-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.branch-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+}
+
+.branch-card p {
+  margin: 0;
+}
+
+.branch-card-meta {
+  margin-top: 0.35rem !important;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+.branch-card-cta {
+  color: #0d9488;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.branch-detail-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1rem;
+}
+
+.branch-detail-map iframe {
+  width: 100%;
+  min-height: 320px;
+  border: 0;
+  border-radius: 18px;
+}
+
+.branch-detail-info {
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.branch-detail-info dl {
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.branch-detail-info dt {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.branch-detail-info dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+}
+
+@media (max-width: 860px) {
+  .branch-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
