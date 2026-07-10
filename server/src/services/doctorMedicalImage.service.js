@@ -82,7 +82,7 @@ export async function uploadMedicalImage(userId, encounterId, payload) {
     thumbnailUrl: thumbnailUrl || url,
     mimeType: mimeType || "",
     sizeBytes: sizeBytes || 0,
-    createdBy: userId,
+    uploadedBy: userId,
   });
 
   return { status: 201, body: serializeMedicalImage(image) };
