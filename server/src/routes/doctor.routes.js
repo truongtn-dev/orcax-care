@@ -23,6 +23,7 @@ doctorRouter.get("/encounters/:id", DoctorEncounterController.getEncounter);
 doctorRouter.put("/encounters/:id", DoctorEncounterController.updateEncounter);
 doctorRouter.post("/encounters/:id/sign-off", DoctorEncounterController.signOffEncounter);
 doctorRouter.post("/encounters/:id/prescriptions", DoctorPrescriptionController.createPrescription);
+doctorRouter.post("/encounters/:id/medical-images", DoctorMedicalImageController.uploadMedicalImage);
 doctorRouter.delete("/medical-images/:id", DoctorMedicalImageController.deleteMedicalImage);
 doctorRouter.get("/appointment-slots/:id", DoctorScheduleController.getAppointmentSlotDetail);
 doctorRouter.put("/appointment-slots/:id/block", DoctorScheduleController.blockAppointmentSlot);

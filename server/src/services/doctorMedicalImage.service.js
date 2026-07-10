@@ -42,6 +42,52 @@ export async function listActiveImagesByEncounterIds(encounterIds = []) {
   return map;
 }
 
+export async function uploadMedicalImage(userId, encounterId, payload) {
+  const doctor = await resolveDoctorForUser(userId);
+  if (!doctor) {
+    return { status: 404, body: { message: "Doctor profile not found" } };
+  }
+  if (!encounterId || !mongoose.Types.ObjectId.isValid(encounterId)) {
+    return { status: 400, body: { message: "Invalid encounter" } };
+  }
+
+  const encounter = await Encounter.findOne({ _id: encounterId, doctorId: doctor._id }).lean();
+  if (!encounter) {
+    return { status: 404, body: { message: "Encounter not found" } };
+  }
+  if (encounter.status === "signed") {
+    return { status: 409, body: { message: "Encounter is signed off" } };
+  }
+
+  const { title, type, url, thumbnailUrl, mimeType, sizeBytes } = payload;
+  if (!url) {
+    return { status: 400, body: { message: "Image URL is required" } };
+  }
+  
+  if (sizeBytes && sizeBytes > 10 * 1024 * 1024) {
+    return { status: 400, body: { message: "Image size exceeds 10MB limit" } };
+  }
+
+  const validTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf"];
+  if (mimeType && !validTypes.includes(mimeType)) {
+    return { status: 400, body: { message: "Invalid file type. Only JPEG, PNG, GIF, WEBP and PDF are allowed." } };
+  }
+
+  const image = await MedicalImage.create({
+    encounterId: encounter._id,
+    patientUserId: encounter.patientUserId,
+    title: title || "Untitled Image",
+    type: type || "image",
+    url,
+    thumbnailUrl: thumbnailUrl || url,
+    mimeType: mimeType || "",
+    sizeBytes: sizeBytes || 0,
+    createdBy: userId,
+  });
+
+  return { status: 201, body: serializeMedicalImage(image) };
+}
+
 export async function deleteMedicalImage(userId, imageId) {
   const doctor = await resolveDoctorForUser(userId);
   if (!doctor) {
