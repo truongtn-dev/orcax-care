@@ -140,9 +140,13 @@ describe("Engagement, pharmacy, and branch features", () => {
 
     complaint = await Complaint.create({
       patientUserId: patientUser._id,
+      ticketId: "CMP-ENGAGE-TEST-001",
+      category: "billing",
+      ticketType: "complaint",
       subject: "Billing issue",
       content: "Invoice amount was incorrect.",
       status: "open",
+      statusUpdatedAt: new Date(),
     });
 
     adminAuth = await authHeaderFor(adminUser);

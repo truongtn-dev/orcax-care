@@ -7,6 +7,7 @@ import * as PatientNotificationController from "../controllers/patientNotificati
 import * as PatientPrescriptionController from "../controllers/patientPrescription.controller.js";
 import * as PatientPushSubscriptionController from "../controllers/patientPushSubscription.controller.js";
 import * as PatientWalletController from "../controllers/patientWallet.controller.js";
+import * as PatientComplaintController from "../controllers/patientComplaint.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
 
@@ -59,6 +60,9 @@ patientRouter.post("/appointments/:id/cancel", PatientAppointmentController.canc
 patientRouter.post("/appointments/:id/rate", PatientAppointmentController.rateAppointment);
 
 patientRouter.get("/emr/timeline", PatientEmrController.listTimeline);
+
+patientRouter.get("/complaints", PatientComplaintController.listComplaints);
+patientRouter.post("/complaints", PatientComplaintController.createComplaint);
 
 patientRouter.get("/prescriptions/:id", PatientPrescriptionController.getPrescription);
 

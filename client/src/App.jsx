@@ -21,6 +21,8 @@ import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
 import PatientEmrTimelinePage from "./pages/PatientEmrTimelinePage.jsx";
 import PatientFavoritesPage from "./pages/PatientFavoritesPage.jsx";
 import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
+import PatientSubmitComplaintPage from "./pages/PatientSubmitComplaintPage.jsx";
+import PatientComplaintsPage from "./pages/PatientComplaintsPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
@@ -211,6 +213,22 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientFavoritesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/complaints"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientComplaintsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/complaints/new"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientSubmitComplaintPage />
               </ProtectedRoute>
             }
           />

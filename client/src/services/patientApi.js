@@ -26,15 +26,19 @@ export const PatientApiClient = {
   },
 
   confirmMockPayosTopup(payload) {
-    return api.post("/api/patient/wallet/topups/payos/mock-confirm", payload);
+    return api.post("/api/patient/wallet/payos/mock-confirm", payload);
   },
 
   confirmMockSepayTopup(payload) {
-    return api.post("/api/patient/wallet/topups/sepay/mock-confirm", payload);
+    return api.post("/api/patient/wallet/sepay/mock-confirm", payload);
   },
 
   getTopupCheckout(provider, ref) {
     return api.get(`/api/patient/wallet/topups/${provider}/${ref}/checkout`);
+  },
+
+  cancelTopup(provider, ref) {
+    return api.post(`/api/patient/wallet/topups/${provider}/${ref}/cancel`);
   },
 
   getTopupStatus(provider, ref) {
