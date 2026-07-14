@@ -55,7 +55,13 @@ export default function DoctorQueueSessionPage() {
 
     joinQueueSession(session._id);
     const socket = getQueueSocket();
-    const onUpdate = (payload) => setSession(payload);
+    const onUpdate = (payload) => {
+      if (payload.status === "closed") {
+        setSession(null);
+        return;
+      }
+      setSession(payload);
+    };
 
     socket.on("queue:update", onUpdate);
     return () => {
@@ -69,8 +75,15 @@ export default function DoctorQueueSessionPage() {
     setMessage("");
     try {
       const { data } = await action();
-      if (data.session) setSession(data.session);
-      if (data.message) setMessage(data.message);
+      if (data.session?.status === "closed") {
+        setSession(null);
+        setMessage(data.message || "Queue session closed. You can open a new session when ready.");
+      } else if (data.session) {
+        setSession(data.session);
+      }
+      if (data.message && data.session?.status !== "closed") {
+        setMessage(data.message);
+      }
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -192,6 +205,33 @@ export default function DoctorQueueSessionPage() {
                   </button>
                 </div>
               </section>
+
+              {session.calledTicket && session.status === "open" && (
+                <section className="card doctor-queue-called">
+                  <header className="doctor-queue-panel-head">
+                    <h2>Currently called</h2>
+                    <span>Skip if patient is absent</span>
+                  </header>
+                  <div className="doctor-queue-called-row">
+                    <div>
+                      <strong>#{session.calledTicket.number}</strong>
+                      <span className="status-pill status-active">Called</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      disabled={submitting}
+                      onClick={() => {
+                        if (window.confirm(`Skip ticket #${session.calledTicket.number}? You can recall it later.`)) {
+                          runAction(() => QueueApiClient.markSkipped(session._id, session.calledTicket._id));
+                        }
+                      }}
+                    >
+                      Skip patient
+                    </button>
+                  </div>
+                </section>
+              )}
 
               <section className="card doctor-queue-waiting">
                 <header className="doctor-queue-panel-head">
