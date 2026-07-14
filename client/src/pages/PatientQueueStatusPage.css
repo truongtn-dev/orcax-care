@@ -74,6 +74,13 @@
   color: #0f766e;
 }
 
+.patient-queue-skipped {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
 .patient-queue-waiting {
   margin: 0;
   color: var(--text-muted, #64748b);

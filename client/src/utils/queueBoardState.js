@@ -1,7 +1,7 @@
-export function deriveQueueBoardState(sessionStatus, currentNumber, waitingCount) {
+export function deriveQueueBoardState(sessionStatus, currentNumber, waitingCount, skippedCount = 0) {
   if (sessionStatus === "closed") return "closed";
   if (sessionStatus === "paused") return "paused";
-  if (!currentNumber && waitingCount === 0) return "empty";
+  if (!currentNumber && waitingCount === 0 && skippedCount === 0) return "empty";
   return "active";
 }
 

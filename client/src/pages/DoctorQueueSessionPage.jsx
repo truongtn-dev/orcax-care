@@ -2,16 +2,25 @@ import { useCallback, useEffect, useState } from "react";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import { QueueApiClient } from "../services/queueApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { getQueueSocket, joinQueueSession } from "../services/queueSocket.js";
 import "./DoctorQueueSessionPage.css";
+
+const UPCOMING_PREVIEW_LIMIT = 5;
 
 function sessionStatusLabel(status) {
   if (status === "open") return "Open";
   if (status === "paused") return "Paused";
   if (status === "closed") return "Closed";
   return status;
+}
+
+function ticketPatientLabel(ticket) {
+  if (!ticket) return "";
+  const name = ticket.patientName || "Patient";
+  return ticket.birthYear ? `${name} · ${ticket.birthYear}` : name;
 }
 
 export default function DoctorQueueSessionPage() {
@@ -22,6 +31,7 @@ export default function DoctorQueueSessionPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const loadRooms = useCallback(async () => {
     const { data } = await QueueApiClient.listDoctorRooms();
@@ -85,7 +95,12 @@ export default function DoctorQueueSessionPage() {
         setMessage(data.message);
       }
     } catch (err) {
-      setError(getApiErrorMessage(err));
+      const apiMessage = getApiErrorMessage(err);
+      if (apiMessage.includes("No skipped patient to recall")) {
+        setMessage(apiMessage);
+      } else {
+        setError(apiMessage);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -98,7 +113,27 @@ export default function DoctorQueueSessionPage() {
     setMessage("Queue session opened. Patients can check in at reception.");
   };
 
+  const handleConfirmDialog = async () => {
+    if (!confirmDialog || !session) return;
+
+    if (confirmDialog.type === "skip") {
+      await runAction(() =>
+        QueueApiClient.markSkipped(session._id, confirmDialog.ticketId)
+      );
+    } else if (confirmDialog.type === "close") {
+      await runAction(() => QueueApiClient.closeSession(session._id));
+    }
+
+    setConfirmDialog(null);
+  };
+
   const nowServing = session?.currentNumber || 0;
+  const waitingTickets = session?.waitingTickets || [];
+  const skippedTickets = session?.skippedTickets || [];
+  const upcomingTickets = waitingTickets.slice(0, UPCOMING_PREVIEW_LIMIT);
+  const hiddenWaitingCount = Math.max(waitingTickets.length - UPCOMING_PREVIEW_LIMIT, 0);
+  const canRecallSkipped = skippedTickets.length > 0 && session?.status === "open";
+  const mustSkipBeforeNext = Boolean(session?.calledTicket) && session?.status === "open";
 
   return (
     <PageLayout dashboard>
@@ -146,6 +181,9 @@ export default function DoctorQueueSessionPage() {
                   <div>
                     <p className="doctor-queue-kicker">Now serving</p>
                     <p className="doctor-queue-current">{nowServing > 0 ? nowServing : "—"}</p>
+                    {session.calledTicket && (
+                      <p className="doctor-queue-patient">{ticketPatientLabel(session.calledTicket)}</p>
+                    )}
                   </div>
                   <div className="doctor-queue-room-block">
                     <span className={`status-pill status-${session.status === "open" ? "active" : session.status === "paused" ? "pending" : "cancelled"}`}>
@@ -158,8 +196,13 @@ export default function DoctorQueueSessionPage() {
                 <div className="doctor-queue-actions">
                   <button
                     type="button"
-                    className="btn btn-primary btn-lg"
-                    disabled={submitting || session.status !== "open"}
+                    className="btn btn-primary"
+                    disabled={submitting || session.status !== "open" || mustSkipBeforeNext}
+                    title={
+                      mustSkipBeforeNext
+                        ? "Skip or finish with the current patient before calling the next one"
+                        : "Call the next waiting patient"
+                    }
                     onClick={() => runAction(() => QueueApiClient.callNext(session._id))}
                   >
                     Call next
@@ -167,7 +210,12 @@ export default function DoctorQueueSessionPage() {
                   <button
                     type="button"
                     className="btn btn-outline"
-                    disabled={submitting || session.status !== "open"}
+                    disabled={submitting || session.status !== "open" || !canRecallSkipped}
+                    title={
+                      canRecallSkipped
+                        ? "Call back the most recently skipped patient"
+                        : "Skip a patient first before using recall"
+                    }
                     onClick={() => runAction(() => QueueApiClient.recallTicket(session._id))}
                   >
                     Recall skipped
@@ -195,11 +243,7 @@ export default function DoctorQueueSessionPage() {
                     type="button"
                     className="btn btn-danger"
                     disabled={submitting || session.status === "closed"}
-                    onClick={() => {
-                      if (window.confirm("Close this queue session? No new tickets will be issued.")) {
-                        runAction(() => QueueApiClient.closeSession(session._id));
-                      }
-                    }}
+                    onClick={() => setConfirmDialog({ type: "close" })}
                   >
                     Close session
                   </button>
@@ -215,17 +259,23 @@ export default function DoctorQueueSessionPage() {
                   <div className="doctor-queue-called-row">
                     <div>
                       <strong>#{session.calledTicket.number}</strong>
-                      <span className="status-pill status-active">Called</span>
+                      <div className="doctor-queue-called-meta">
+                        <span className="doctor-queue-patient">{ticketPatientLabel(session.calledTicket)}</span>
+                        <span className="status-pill status-active">Called</span>
+                      </div>
                     </div>
                     <button
                       type="button"
-                      className="btn btn-outline btn-sm"
+                      className="btn btn-outline"
                       disabled={submitting}
-                      onClick={() => {
-                        if (window.confirm(`Skip ticket #${session.calledTicket.number}? You can recall it later.`)) {
-                          runAction(() => QueueApiClient.markSkipped(session._id, session.calledTicket._id));
-                        }
-                      }}
+                      onClick={() =>
+                        setConfirmDialog({
+                          type: "skip",
+                          ticketId: session.calledTicket._id,
+                          ticketNumber: session.calledTicket.number,
+                          patientLabel: ticketPatientLabel(session.calledTicket),
+                        })
+                      }
                     >
                       Skip patient
                     </button>
@@ -233,20 +283,63 @@ export default function DoctorQueueSessionPage() {
                 </section>
               )}
 
-              <section className="card doctor-queue-waiting">
-                <header className="doctor-queue-panel-head">
-                  <h2>Waiting tickets</h2>
-                  <span>{session.waitingTickets?.length || 0} in queue</span>
-                </header>
-                {session.waitingTickets?.length ? (
+              {skippedTickets.length > 0 && (
+                <section className="card doctor-queue-skipped">
+                  <header className="doctor-queue-panel-head">
+                    <h2>Skipped patients</h2>
+                    <span>{skippedTickets.length} can be recalled</span>
+                  </header>
                   <ul className="doctor-queue-ticket-list">
-                    {session.waitingTickets.map((ticket) => (
+                    {skippedTickets.map((ticket) => (
                       <li key={ticket._id}>
-                        <strong>#{ticket.number}</strong>
-                        <span className="status-pill status-pending">Waiting</span>
+                        <div className="doctor-queue-ticket-main">
+                          <div>
+                            <strong>#{ticket.number}</strong>
+                            <span className="doctor-queue-patient">{ticketPatientLabel(ticket)}</span>
+                          </div>
+                        </div>
+                        <span className="status-pill status-cancelled">Skipped</span>
                       </li>
                     ))}
                   </ul>
+                  <p className="doctor-queue-recall-hint">
+                    Use <strong>Recall skipped</strong> to call the most recent skipped patient back.
+                  </p>
+                </section>
+              )}
+
+              <section className="card doctor-queue-waiting">
+                <header className="doctor-queue-panel-head">
+                  <h2>Up next</h2>
+                  <span>
+                    Showing {upcomingTickets.length} of {waitingTickets.length} waiting
+                  </span>
+                </header>
+                {upcomingTickets.length ? (
+                  <>
+                    <ul className="doctor-queue-ticket-list">
+                      {upcomingTickets.map((ticket, index) => (
+                        <li
+                          key={ticket._id}
+                          className={index === 0 ? "is-next-up" : ""}
+                        >
+                          <div className="doctor-queue-ticket-main">
+                            <span className="doctor-queue-position">{index + 1}</span>
+                            <div>
+                              <strong>#{ticket.number}</strong>
+                              <span className="doctor-queue-patient">{ticketPatientLabel(ticket)}</span>
+                            </div>
+                          </div>
+                          <span className={`status-pill ${index === 0 ? "status-active" : "status-pending"}`}>
+                            {index === 0 ? "Next up" : "Waiting"}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    {hiddenWaitingCount > 0 && (
+                      <p className="doctor-queue-more">+ {hiddenWaitingCount} more patient(s) in queue</p>
+                    )}
+                  </>
                 ) : (
                   <p className="doctor-queue-empty">No patients waiting.</p>
                 )}
@@ -264,6 +357,32 @@ export default function DoctorQueueSessionPage() {
           )}
         </div>
       </DoctorLayout>
+
+      <ConfirmDialog
+        open={confirmDialog?.type === "skip"}
+        title="Skip this patient?"
+        description={
+          confirmDialog?.type === "skip"
+            ? `Ticket #${confirmDialog.ticketNumber} · ${confirmDialog.patientLabel} will be marked absent. You can recall them later from the queue session.`
+            : ""
+        }
+        confirmText="Skip patient"
+        variant="danger"
+        loading={submitting}
+        onConfirm={handleConfirmDialog}
+        onCancel={() => !submitting && setConfirmDialog(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmDialog?.type === "close"}
+        title="Close queue session?"
+        description="No new tickets will be issued after closing. Patients already in the queue will stop receiving updates on the waiting room board."
+        confirmText="Close session"
+        variant="danger"
+        loading={submitting}
+        onConfirm={handleConfirmDialog}
+        onCancel={() => !submitting && setConfirmDialog(null)}
+      />
     </PageLayout>
   );
 }

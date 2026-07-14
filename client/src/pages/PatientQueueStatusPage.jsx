@@ -56,6 +56,7 @@ export default function PatientQueueStatusPage() {
         session: payload.session,
         peopleAhead: prev?.peopleAhead ?? 0,
         isCalled: payload.ticket?.status === "called" || payload.ticket?.status === "serving",
+        isSkipped: payload.ticket?.status === "skipped",
       }));
       loadStatus();
     };
@@ -70,6 +71,7 @@ export default function PatientQueueStatusPage() {
   const peopleAhead = status?.peopleAhead ?? 0;
   const currentServing = status?.session?.currentNumber ?? 0;
   const isCalled = status?.isCalled;
+  const isSkipped = status?.isSkipped;
 
   return (
     <PageLayout dashboard>
@@ -96,11 +98,15 @@ export default function PatientQueueStatusPage() {
         )}
 
         {status && (
-          <div className={`patient-queue-grid${isCalled ? " is-called" : ""}`}>
+          <div className={`patient-queue-grid${isCalled ? " is-called" : ""}${isSkipped ? " is-skipped" : ""}`}>
             <section className="card patient-queue-ticket-card">
               <p className="patient-queue-label">Your ticket</p>
               <p className="patient-queue-number">{ticketNumber}</p>
-              {isCalled ? (
+              {isSkipped ? (
+                <p className="patient-queue-skipped">
+                  You were temporarily skipped. Please stay nearby — the clinic may recall you soon.
+                </p>
+              ) : isCalled ? (
                 <p className="patient-queue-called">Please proceed to {status.session?.room?.name || "the clinic room"} now.</p>
               ) : (
                 <p className="patient-queue-waiting">Please wait in the waiting area.</p>

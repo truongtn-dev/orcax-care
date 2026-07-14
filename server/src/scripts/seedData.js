@@ -284,7 +284,12 @@ export async function runSeed() {
   }
   await Patient.findOneAndUpdate(
     { userId: patientUser._id },
-    { userId: patientUser._id, isActive: true },
+    {
+      userId: patientUser._id,
+      isActive: true,
+      dateOfBirth: new Date("1995-08-15T00:00:00.000Z"),
+      gender: "other",
+    },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 

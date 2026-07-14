@@ -2,16 +2,30 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { QueueApiClient } from "../services/queueApi.js";
 import { getQueueSocket, joinQueueRoom } from "../services/queueSocket.js";
-import { deriveQueueBoardState, nextNumbersFromWaitingTickets } from "../utils/queueBoardState.js";
+import { deriveQueueBoardState } from "../utils/queueBoardState.js";
 import "./QueueBoardPage.css";
 
 const POLL_MS = 5000;
 
-function boardMessage(state) {
+function boardMessage(state, hasCalled) {
   if (state === "paused") return "Queue paused — please wait";
   if (state === "closed") return "Clinic session ended";
   if (state === "empty") return "Waiting for patients";
+  if (!hasCalled) return "Waiting for the next patient to be called";
   return "Please listen for your number";
+}
+
+function patientCaption(patient) {
+  if (!patient?.patientName) return "";
+  return patient.birthYear ? `${patient.patientName} · ${patient.birthYear}` : patient.patientName;
+}
+
+function mapBoardPatients(tickets = []) {
+  return tickets.map((ticket) => ({
+    number: ticket.number,
+    patientName: ticket.patientName || "",
+    birthYear: ticket.birthYear ?? null,
+  }));
 }
 
 export default function QueueBoardPage() {
@@ -45,7 +59,10 @@ export default function QueueBoardPage() {
     const onDisconnect = () => setConnected(false);
     const onUpdate = (payload) => {
       const waitingTickets = payload.waitingTickets || [];
-      const currentNumber = payload.currentNumber || 0;
+      const calledTicket = payload.calledTicket || null;
+      const skippedTickets = payload.skippedTickets || [];
+      const currentNumber = calledTicket?.number || 0;
+
       setBoard((prev) => ({
         ...(prev || {}),
         room: payload.room || prev?.room,
@@ -55,8 +72,21 @@ export default function QueueBoardPage() {
           currentNumber,
         },
         currentNumber,
-        nextNumbers: nextNumbersFromWaitingTickets(waitingTickets),
-        state: deriveQueueBoardState(payload.status, currentNumber, waitingTickets.length),
+        currentPatient: calledTicket
+          ? {
+              number: calledTicket.number,
+              patientName: calledTicket.patientName || "",
+              birthYear: calledTicket.birthYear ?? null,
+            }
+          : null,
+        nextPatients: mapBoardPatients(waitingTickets),
+        skippedPatients: mapBoardPatients(skippedTickets),
+        state: deriveQueueBoardState(
+          payload.status,
+          currentNumber,
+          waitingTickets.length,
+          skippedTickets.length
+        ),
       }));
     };
 
@@ -72,8 +102,11 @@ export default function QueueBoardPage() {
   }, [roomId]);
 
   const currentNumber = board?.currentNumber || 0;
-  const nextNumbers = board?.nextNumbers || [];
+  const currentPatient = board?.currentPatient;
+  const nextPatients = board?.nextPatients || [];
+  const skippedPatients = board?.skippedPatients || [];
   const state = board?.state || "empty";
+  const hasCalled = Boolean(currentPatient);
 
   return (
     <div className={`queue-board-page state-${state}`}>
@@ -91,22 +124,52 @@ export default function QueueBoardPage() {
       <main className="queue-board-main">
         <section className="queue-board-current">
           <p>Now serving</p>
-          <p className="queue-board-current-number">{currentNumber > 0 ? currentNumber : "—"}</p>
-          <p className="queue-board-message">{boardMessage(state)}</p>
+          <p className="queue-board-current-number">{hasCalled ? currentNumber : "—"}</p>
+          {patientCaption(currentPatient) ? (
+            <p className="queue-board-current-patient">{patientCaption(currentPatient)}</p>
+          ) : null}
+          <p className="queue-board-message">{boardMessage(state, hasCalled)}</p>
         </section>
 
-        <section className="queue-board-next">
-          <h2>Next</h2>
-          {nextNumbers.length ? (
-            <ul>
-              {nextNumbers.map((number) => (
-                <li key={number}>{number}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="queue-board-next-empty">—</p>
-          )}
-        </section>
+        <div className="queue-board-side">
+          <section className="queue-board-next">
+            <h2>Up next</h2>
+            <p className="queue-board-next-caption">Next {Math.min(nextPatients.length, 5)} patient(s)</p>
+            {nextPatients.length ? (
+              <ul>
+                {nextPatients.map((patient) => (
+                  <li key={patient.number}>
+                    <span className="queue-board-next-number">{patient.number}</span>
+                    {patientCaption(patient) ? (
+                      <span className="queue-board-next-patient">{patientCaption(patient)}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="queue-board-next-empty">—</p>
+            )}
+          </section>
+
+          <section className="queue-board-skipped">
+            <h2>Skipped</h2>
+            <p className="queue-board-next-caption">May be recalled ({skippedPatients.length})</p>
+            {skippedPatients.length ? (
+              <ul>
+                {skippedPatients.map((patient) => (
+                  <li key={patient.number}>
+                    <span className="queue-board-skipped-number">{patient.number}</span>
+                    {patientCaption(patient) ? (
+                      <span className="queue-board-skipped-patient">{patientCaption(patient)}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="queue-board-next-empty">—</p>
+            )}
+          </section>
+        </div>
       </main>
     </div>
   );

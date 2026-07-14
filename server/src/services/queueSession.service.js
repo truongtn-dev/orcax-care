@@ -1,13 +1,65 @@
 import mongoose from "mongoose";
 import { ClinicRoom } from "../models/ClinicRoom.js";
 import { Doctor } from "../models/Doctor.js";
+import { Patient } from "../models/Patient.js";
 import { QueueAuditLog } from "../models/QueueAuditLog.js";
 import { QueueSession } from "../models/QueueSession.js";
 import { QueueTicket } from "../models/QueueTicket.js";
+import { User } from "../models/User.js";
 import { emitQueueEvent } from "../realtime/socket.js";
 import { endOfToday, startOfToday } from "../utils/queueDate.js";
 
 const ACTIVE_SESSION_STATUSES = ["open", "paused"];
+
+function birthYearFromDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.getFullYear();
+}
+
+async function patientInfoByUserIds(userIds) {
+  const uniqueIds = [...new Set((userIds || []).filter(Boolean).map((id) => id.toString()))];
+  if (!uniqueIds.length) return new Map();
+
+  const [users, patients] = await Promise.all([
+    User.find({ _id: { $in: uniqueIds } }).select("fullName").lean(),
+    Patient.find({ userId: { $in: uniqueIds } }).select("userId dateOfBirth").lean(),
+  ]);
+
+  const nameById = new Map(users.map((user) => [user._id.toString(), user.fullName || ""]));
+  const birthById = new Map(
+    patients.map((patient) => [patient.userId.toString(), birthYearFromDate(patient.dateOfBirth)])
+  );
+
+  return new Map(
+    uniqueIds.map((id) => [
+      id,
+      {
+        patientName: nameById.get(id) || "",
+        birthYear: birthById.get(id) ?? null,
+      },
+    ])
+  );
+}
+
+async function attachPatientInfo(tickets) {
+  const list = Array.isArray(tickets) ? tickets.filter(Boolean) : tickets ? [tickets] : [];
+  if (!list.length) return tickets;
+
+  const infoById = await patientInfoByUserIds(list.map((ticket) => ticket.patientUserId));
+  const enrich = (ticket) => {
+    if (!ticket) return null;
+    const info = infoById.get(ticket.patientUserId?.toString()) || {};
+    return {
+      ...ticket,
+      patientName: info.patientName || "",
+      birthYear: info.birthYear ?? null,
+    };
+  };
+
+  return Array.isArray(tickets) ? tickets.map(enrich) : enrich(tickets);
+}
 
 async function resolveDoctorForUser(userId) {
   return Doctor.findOne({ userId, isActive: true }).lean();
@@ -51,6 +103,8 @@ function serializeTicket(ticket) {
     patientUserId: ticket.patientUserId.toString(),
     number: ticket.number,
     status: ticket.status,
+    patientName: ticket.patientName || "",
+    birthYear: ticket.birthYear ?? null,
     calledAt: ticket.calledAt,
     skippedAt: ticket.skippedAt,
     servedAt: ticket.servedAt,
@@ -58,7 +112,13 @@ function serializeTicket(ticket) {
   };
 }
 
-export async function serializeSession(session, { waitingTickets = null, calledTicket = null, includeRoom = true } = {}) {
+async function serializeTicketWithPatient(ticket) {
+  if (!ticket) return null;
+  const plain = typeof ticket.toObject === "function" ? ticket.toObject() : ticket;
+  return serializeTicket(await attachPatientInfo(plain));
+}
+
+export async function serializeSession(session, { waitingTickets = null, calledTicket = null, skippedTickets = null, includeRoom = true } = {}) {
   if (!session) return null;
 
   let room = session.roomId;
@@ -82,9 +142,17 @@ export async function serializeSession(session, { waitingTickets = null, calledT
     waitingCount: waitingTickets?.length ?? null,
     waitingTickets: waitingTickets?.map(serializeTicket) ?? null,
     calledTicket: calledTicket ? serializeTicket(calledTicket) : null,
+    skippedTickets: skippedTickets?.map(serializeTicket) ?? null,
+    skippedCount: skippedTickets?.length ?? null,
   };
 
   return payload;
+}
+
+async function loadSkippedTickets(sessionId) {
+  return QueueTicket.find({ sessionId, status: "skipped" })
+    .sort({ skippedAt: -1, number: -1 })
+    .lean();
 }
 
 async function loadWaitingTickets(sessionId) {
@@ -100,17 +168,27 @@ async function loadCalledTicket(sessionId) {
 }
 
 async function loadSessionTickets(sessionId) {
-  const [waitingTickets, calledTicket] = await Promise.all([
+  const [waitingTickets, calledTicket, skippedTickets] = await Promise.all([
     loadWaitingTickets(sessionId),
     loadCalledTicket(sessionId),
+    loadSkippedTickets(sessionId),
   ]);
-  return { waitingTickets, calledTicket };
+  const [enrichedWaiting, enrichedCalled, enrichedSkipped] = await Promise.all([
+    attachPatientInfo(waitingTickets),
+    attachPatientInfo(calledTicket),
+    attachPatientInfo(skippedTickets),
+  ]);
+  return {
+    waitingTickets: enrichedWaiting,
+    calledTicket: enrichedCalled,
+    skippedTickets: enrichedSkipped,
+  };
 }
 
 export async function broadcastSessionUpdate(session, extra = {}) {
-  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
+  const { waitingTickets, calledTicket, skippedTickets } = await loadSessionTickets(session._id);
   const payload = {
-    ...(await serializeSession(session, { waitingTickets, calledTicket })),
+    ...(await serializeSession(session, { waitingTickets, calledTicket, skippedTickets })),
     ...extra,
   };
 
@@ -167,11 +245,11 @@ export async function getDoctorActiveSession(userId) {
     return { status: 404, body: { message: "No active queue session today." } };
   }
 
-  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
+  const { waitingTickets, calledTicket, skippedTickets } = await loadSessionTickets(session._id);
   return {
     status: 200,
     body: {
-      session: await serializeSession(session, { waitingTickets, calledTicket }),
+      session: await serializeSession(session, { waitingTickets, calledTicket, skippedTickets }),
     },
   };
 }
@@ -275,11 +353,11 @@ export async function getSessionById(userId, sessionId, role) {
     }
   }
 
-  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
+  const { waitingTickets, calledTicket, skippedTickets } = await loadSessionTickets(session._id);
   return {
     status: 200,
     body: {
-      session: await serializeSession(session, { waitingTickets, calledTicket }),
+      session: await serializeSession(session, { waitingTickets, calledTicket, skippedTickets }),
     },
   };
 }
@@ -300,6 +378,18 @@ export async function callNextTicket(userId, sessionId) {
 
   if (session.status !== "open") {
     return { status: 409, body: { message: "Queue session is not accepting calls." } };
+  }
+
+  const activeCalled = await QueueTicket.findOne({
+    sessionId: session._id,
+    status: { $in: ["called", "serving"] },
+  }).lean();
+
+  if (activeCalled) {
+    return {
+      status: 409,
+      body: { message: "Skip or finish with the current patient before calling next." },
+    };
   }
 
   const ticket = await QueueTicket.findOneAndUpdate(
@@ -327,13 +417,14 @@ export async function callNextTicket(userId, sessionId) {
     .populate("roomId", "name roomCode roomNumber floor")
     .lean();
 
-  const sessionPayload = await broadcastSessionUpdate(populated, { calledTicket: serializeTicket(ticket) });
+  const sessionPayload = await broadcastSessionUpdate(populated);
+  const ticketPayload = sessionPayload.calledTicket || (await serializeTicketWithPatient(ticket));
 
   emitQueueEvent(
     { patientUserId: ticket.patientUserId.toString() },
     "queue:patient-update",
     {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     }
   );
@@ -341,7 +432,7 @@ export async function callNextTicket(userId, sessionId) {
   return {
     status: 200,
     body: {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     },
   };
@@ -380,7 +471,7 @@ export async function recallLastSkipped(userId, sessionId) {
   }
 
   if (!ticket) {
-    return { status: 404, body: { message: "No skipped ticket to recall." } };
+    return { status: 404, body: { message: "No skipped patient to recall. Skip a called patient first if they are absent." } };
   }
 
   ticket.status = "called";
@@ -404,13 +495,14 @@ export async function recallLastSkipped(userId, sessionId) {
     .populate("roomId", "name roomCode roomNumber floor")
     .lean();
 
-  const sessionPayload = await broadcastSessionUpdate(populated, { recalledTicket: serializeTicket(ticket) });
+  const sessionPayload = await broadcastSessionUpdate(populated);
+  const ticketPayload = sessionPayload.calledTicket || (await serializeTicketWithPatient(ticket));
 
   emitQueueEvent(
     { patientUserId: ticket.patientUserId.toString() },
     "queue:patient-update",
     {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     }
   );
@@ -418,7 +510,7 @@ export async function recallLastSkipped(userId, sessionId) {
   return {
     status: 200,
     body: {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     },
   };
@@ -468,11 +560,21 @@ export async function markTicketSkipped(userId, sessionId, ticketId) {
     .lean();
 
   const sessionPayload = await broadcastSessionUpdate(populated);
+  const ticketPayload = await serializeTicketWithPatient(ticket);
+
+  emitQueueEvent(
+    { patientUserId: ticket.patientUserId.toString() },
+    "queue:patient-update",
+    {
+      ticket: ticketPayload,
+      session: sessionPayload,
+    }
+  );
 
   return {
     status: 200,
     body: {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     },
   };
@@ -600,7 +702,7 @@ export async function getPatientQueueStatus(patientUserId) {
 
   const ticket = await QueueTicket.findOne({
     patientUserId,
-    status: { $in: ["waiting", "called", "serving"] },
+    status: { $in: ["waiting", "called", "serving", "skipped"] },
     createdAt: { $gte: todayStart, $lt: todayEnd },
   })
     .sort({ createdAt: -1 })
@@ -618,19 +720,23 @@ export async function getPatientQueueStatus(patientUserId) {
     return { status: 404, body: { message: "Queue session not found." } };
   }
 
-  const peopleAhead = await QueueTicket.countDocuments({
-    sessionId: session._id,
-    status: "waiting",
-    number: { $lt: ticket.number },
-  });
+  const peopleAhead =
+    ticket.status === "waiting"
+      ? await QueueTicket.countDocuments({
+          sessionId: session._id,
+          status: "waiting",
+          number: { $lt: ticket.number },
+        })
+      : 0;
 
   return {
     status: 200,
     body: {
-      ticket: serializeTicket(ticket),
+      ticket: await serializeTicketWithPatient(ticket),
       session: await serializeSession(session),
       peopleAhead,
       isCalled: ticket.status === "called" || ticket.status === "serving",
+      isSkipped: ticket.status === "skipped",
     },
   };
 }
@@ -657,22 +763,50 @@ export async function getQueueBoard(roomId) {
         room: serializeRoom(room),
         session: null,
         currentNumber: 0,
+        currentPatient: null,
         nextNumbers: [],
+        nextPatients: [],
+        skippedPatients: [],
         state: "empty",
       },
     };
   }
 
-  const waitingTickets = await QueueTicket.find({ sessionId: session._id, status: "waiting" })
-    .sort({ number: 1 })
-    .limit(5)
-    .select("number")
-    .lean();
+  const [waitingTickets, calledTicket, skippedTickets] = await Promise.all([
+    QueueTicket.find({ sessionId: session._id, status: "waiting" })
+      .sort({ number: 1 })
+      .limit(5)
+      .select("number patientUserId")
+      .lean(),
+    QueueTicket.findOne({ sessionId: session._id, status: { $in: ["called", "serving"] } })
+      .sort({ calledAt: -1 })
+      .lean(),
+    QueueTicket.find({ sessionId: session._id, status: "skipped" })
+      .sort({ skippedAt: -1, number: -1 })
+      .limit(5)
+      .select("number patientUserId skippedAt")
+      .lean(),
+  ]);
+
+  const [enrichedWaiting, enrichedCalled, enrichedSkipped] = await Promise.all([
+    attachPatientInfo(waitingTickets),
+    attachPatientInfo(calledTicket),
+    attachPatientInfo(skippedTickets),
+  ]);
+
+  const displayNumber = enrichedCalled?.number ?? session.currentNumber ?? 0;
+  const displayPatient = enrichedCalled
+    ? {
+        number: enrichedCalled.number,
+        patientName: enrichedCalled.patientName || "",
+        birthYear: enrichedCalled.birthYear ?? null,
+      }
+    : null;
 
   let state = "active";
   if (session.status === "closed") state = "closed";
   else if (session.status === "paused") state = "paused";
-  else if (session.currentNumber === 0 && waitingTickets.length === 0) state = "empty";
+  else if (!displayNumber && waitingTickets.length === 0 && skippedTickets.length === 0) state = "empty";
 
   return {
     status: 200,
@@ -681,13 +815,24 @@ export async function getQueueBoard(roomId) {
       session: {
         _id: session._id.toString(),
         status: session.status,
-        currentNumber: session.currentNumber,
+        currentNumber: displayNumber,
       },
-      currentNumber: session.currentNumber,
-      nextNumbers: waitingTickets.map((item) => item.number),
+      currentNumber: displayNumber,
+      currentPatient: displayPatient,
+      nextNumbers: enrichedWaiting.map((item) => item.number),
+      nextPatients: enrichedWaiting.map((item) => ({
+        number: item.number,
+        patientName: item.patientName || "",
+        birthYear: item.birthYear ?? null,
+      })),
+      skippedPatients: enrichedSkipped.map((item) => ({
+        number: item.number,
+        patientName: item.patientName || "",
+        birthYear: item.birthYear ?? null,
+      })),
       state,
     },
   };
 }
 
-export { serializeTicket };
+export { serializeTicket, serializeTicketWithPatient };

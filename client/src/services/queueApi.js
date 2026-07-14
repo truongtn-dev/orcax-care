@@ -49,8 +49,20 @@ export const QueueApiClient = {
     return api.get(`/api/queue/board/${roomId}`);
   },
 
+  listTodayCheckinAppointments() {
+    return api.get("/api/staff/checkin/today");
+  },
+
+  getTodayCheckinOverview(query) {
+    return api.get("/api/staff/checkin/today", { params: query ? { q: query } : {} });
+  },
+
   searchCheckinAppointments(query) {
     return api.get("/api/staff/checkin/search", { params: { q: query } });
+  },
+
+  issueAllTickets() {
+    return api.post("/api/staff/checkin/issue-all");
   },
 
   issueTicket(appointmentId) {

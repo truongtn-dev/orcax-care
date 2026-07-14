@@ -10,6 +10,8 @@ export const staffRouter = Router();
 staffRouter.use(requireDatabase, authMiddleware, requireRole("staff", "admin"));
 
 staffRouter.get("/checkin/search", QueueCheckinController.searchCheckinAppointments);
+staffRouter.get("/checkin/today", QueueCheckinController.getTodayCheckinOverview);
+staffRouter.post("/checkin/issue-all", QueueCheckinController.issueAllTickets);
 staffRouter.post("/checkin/:appointmentId/issue-ticket", QueueCheckinController.issueTicket);
 
 staffRouter.get("/branch", StaffBranchController.getMyBranch);

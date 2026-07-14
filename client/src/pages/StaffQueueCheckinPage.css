@@ -1,10 +1,87 @@
-.staff-checkin-page {
-  gap: 1.25rem;
+.dash-page-stack.staff-checkin-page {
+  gap: 1.5rem;
 }
 
-.staff-checkin-results h2 {
-  margin: 0 0 1rem;
+.staff-checkin-page > .card {
+  margin: 0;
+}
+
+.staff-checkin-page > .alert {
+  margin: 0;
+}
+
+.staff-checkin-results h2,
+.staff-checkin-checked h2 {
+  margin: 0;
   font-size: 1.05rem;
+}
+
+.staff-checkin-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.staff-checkin-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.staff-checkin-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.staff-checkin-summary strong {
+  font-size: 1.75rem;
+  color: #0d9488;
+  line-height: 1;
+}
+
+.staff-checkin-summary span {
+  font-size: 0.92rem;
+  color: var(--text-muted, #64748b);
+}
+
+.staff-checkin-checked-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.staff-checkin-checked-list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.staff-checkin-checked-list strong {
+  font-size: 1.15rem;
+  color: #047857;
+}
+
+.staff-checkin-checked-list span:last-child {
+  color: var(--text-muted, #64748b);
+  font-size: 0.9rem;
+}
+
+.staff-checkin-loading,
+.staff-checkin-empty {
+  margin: 0;
+  color: var(--text-muted, #64748b);
 }
 
 .staff-checkin-list {
@@ -46,11 +123,22 @@
 }
 
 .staff-checkin-detail {
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
   border-top: 1px solid rgba(15, 23, 42, 0.08);
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
+}
+
+.staff-checkin-session-hint {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #92400e;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .staff-checkin-ticket {

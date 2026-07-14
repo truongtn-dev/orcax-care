@@ -1,5 +1,9 @@
-.doctor-queue-page {
-  gap: 1.25rem;
+.dash-page-stack.doctor-queue-page {
+  gap: 1.5rem;
+}
+
+.doctor-queue-page > .card {
+  margin: 0;
 }
 
 .doctor-queue-open-head h2 {
@@ -49,6 +53,24 @@
   color: var(--brand-teal, #0d9488);
 }
 
+.doctor-queue-patient {
+  margin: 0.35rem 0 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.doctor-queue-called-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.doctor-queue-called-meta .doctor-queue-patient {
+  margin: 0;
+}
+
 .doctor-queue-room-block {
   text-align: right;
 }
@@ -63,9 +85,29 @@
 }
 
 .doctor-queue-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+.doctor-queue-actions .btn {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.95rem;
+  justify-content: center;
+}
+
+.doctor-queue-skipped {
+  padding: 1.25rem 1.5rem;
+  border-color: rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.doctor-queue-recall-hint {
+  margin: 1rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-muted, #64748b);
 }
 
 .doctor-queue-waiting {
@@ -96,14 +138,67 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1rem;
   border-radius: 12px;
   background: rgba(13, 148, 136, 0.06);
   border: 1px solid rgba(13, 148, 136, 0.12);
 }
 
+.doctor-queue-ticket-list li.is-next-up {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: rgba(13, 148, 136, 0.28);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.08);
+}
+
+.doctor-queue-ticket-main {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.doctor-queue-position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(13, 148, 136, 0.2);
+  color: #0f766e;
+  font-size: 0.9rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.doctor-queue-ticket-list li.is-next-up .doctor-queue-position {
+  background: #0d9488;
+  border-color: #0d9488;
+  color: #ffffff;
+}
+
+.doctor-queue-ticket-list li > div,
+.doctor-queue-ticket-main > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.doctor-queue-more {
+  margin: 0.85rem 0 0;
+  font-size: 0.92rem;
+  color: var(--text-muted, #64748b);
+}
+
 .doctor-queue-ticket-list strong {
   font-size: 1.25rem;
+}
+
+.doctor-queue-ticket-list .doctor-queue-patient {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-muted, #64748b);
 }
 
 .doctor-queue-called {
@@ -131,7 +226,7 @@
 }
 
 .doctor-queue-board-link {
-  margin: 0;
+  margin: 0.25rem 0 0;
   font-size: 0.92rem;
   color: var(--text-muted, #64748b);
 }
@@ -141,12 +236,18 @@
   font-weight: 600;
 }
 
+@media (max-width: 900px) {
+  .doctor-queue-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .doctor-queue-room-block {
     text-align: left;
   }
 
-  .doctor-queue-actions .btn-lg {
-    width: 100%;
+  .doctor-queue-actions {
+    grid-template-columns: 1fr;
   }
 }

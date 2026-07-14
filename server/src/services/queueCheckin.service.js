@@ -7,7 +7,7 @@ import { QueueTicket } from "../models/QueueTicket.js";
 import { User } from "../models/User.js";
 import { emitQueueEvent } from "../realtime/socket.js";
 import { endOfToday, startOfToday } from "../utils/queueDate.js";
-import { broadcastSessionUpdate, serializeTicket } from "./queueSession.service.js";
+import { broadcastSessionUpdate, serializeTicketWithPatient } from "./queueSession.service.js";
 
 function formatReferenceCode(appointmentId) {
   const value = appointmentId?.toString() || "";
@@ -54,12 +54,8 @@ function matchesReferenceCode(appointmentId, query) {
   return formatReferenceCode(appointmentId).toUpperCase().includes(suffix);
 }
 
-export async function searchTodayAppointments(keyword) {
+async function findTodayConfirmedAppointments({ keyword, limit = 50 } = {}) {
   const query = (keyword || "").trim();
-  if (!query) {
-    return { status: 400, body: { message: "Search keyword is required." } };
-  }
-
   const todayStart = startOfToday();
   const todayEnd = endOfToday();
 
@@ -71,11 +67,30 @@ export async function searchTodayAppointments(keyword) {
 
   const slotIds = slotsToday.map((slot) => slot._id);
   if (!slotIds.length) {
-    return { status: 404, body: { message: "No confirmed appointment found for today." } };
+    return [];
+  }
+
+  const baseFilter = { status: "confirmed", slotId: { $in: slotIds } };
+  const populateOptions = [
+    { path: "patientUserId", select: "fullName email phone" },
+    {
+      path: "slotId",
+      select: "date startTime endTime roomId",
+      populate: { path: "roomId", select: "name roomCode roomNumber" },
+    },
+  ];
+
+  if (!query) {
+    const appointments = await Appointment.find(baseFilter)
+      .populate(populateOptions)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
+
+    return appointments.map(serializeAppointmentCard);
   }
 
   const phoneDigits = query.replace(/\D/g, "");
-  const filters = [{ status: "confirmed", slotId: { $in: slotIds } }];
   const patientFilters = [
     { fullName: { $regex: escapeRegex(query), $options: "i" } },
     { email: { $regex: escapeRegex(query), $options: "i" } },
@@ -97,29 +112,100 @@ export async function searchTodayAppointments(keyword) {
     orFilters.push({ patientUserId: { $in: patientUsers.map((user) => user._id) } });
   }
 
-  let appointments = await Appointment.find({ ...filters[0], $or: orFilters })
-    .populate("patientUserId", "fullName email phone")
-    .populate({
-      path: "slotId",
-      select: "date startTime endTime roomId",
-      populate: { path: "roomId", select: "name roomCode roomNumber" },
-    })
+  let appointments = await Appointment.find({ ...baseFilter, $or: orFilters })
+    .populate(populateOptions)
     .sort({ createdAt: -1 })
-    .limit(20)
+    .limit(limit)
     .lean();
 
   if (query.toUpperCase().startsWith("APT-")) {
     appointments = appointments.filter((item) => matchesReferenceCode(item._id, query));
   }
 
-  if (!appointments.length) {
-    return { status: 404, body: { message: "No confirmed appointment found for today." } };
+  return appointments.map(serializeAppointmentCard);
+}
+
+export async function searchTodayAppointments(keyword) {
+  const appointments = await findTodayConfirmedAppointments({ keyword });
+
+  return {
+    status: 200,
+    body: { appointments },
+  };
+}
+
+async function findTodayCheckedInTickets() {
+  const todayStart = startOfToday();
+  const todayEnd = endOfToday();
+
+  const tickets = await QueueTicket.find({
+    createdAt: { $gte: todayStart, $lt: todayEnd },
+  })
+    .populate({
+      path: "sessionId",
+      select: "roomId",
+      populate: { path: "roomId", select: "name roomCode roomNumber" },
+    })
+    .sort({ number: 1 })
+    .lean();
+
+  const checkedIn = [];
+  for (const ticket of tickets) {
+    const serialized = await serializeTicketWithPatient(ticket);
+    checkedIn.push({
+      ...serialized,
+      roomName: ticket.sessionId?.roomId?.name || "",
+    });
   }
+  return checkedIn;
+}
+
+export async function getTodayCheckinOverview(keyword) {
+  const pending = await findTodayConfirmedAppointments({ keyword });
+  const checkedIn = await findTodayCheckedInTickets();
 
   return {
     status: 200,
     body: {
-      appointments: appointments.map(serializeAppointmentCard),
+      pending,
+      checkedIn,
+      summary: {
+        pendingCount: pending.length,
+        checkedInCount: checkedIn.length,
+      },
+    },
+  };
+}
+
+export async function issueAllQueueTickets(staffUserId) {
+  const pending = await findTodayConfirmedAppointments({ limit: 50 });
+  if (!pending.length) {
+    return { status: 404, body: { message: "No confirmed appointments left to check in today." } };
+  }
+
+  const issued = [];
+  let errorMessage = "Could not issue tickets.";
+
+  for (const appointment of pending) {
+    const result = await issueQueueTicket(staffUserId, appointment._id);
+    if (result.status === 201) {
+      issued.push(result.body);
+      continue;
+    }
+    errorMessage = result.body?.message || errorMessage;
+    break;
+  }
+
+  if (!issued.length) {
+    return { status: 409, body: { message: errorMessage } };
+  }
+
+  return {
+    status: 201,
+    body: {
+      issuedCount: issued.length,
+      tickets: issued,
+      message: `Issued ${issued.length} queue ticket(s).`,
     },
   };
 }
@@ -181,7 +267,7 @@ export async function issueQueueTicket(staffUserId, appointmentId) {
     .lean();
 
   if (!session) {
-    return { status: 409, body: { message: "Queue session is not active for this room." } };
+    return { status: 409, body: { message: "Queue session is not active for this room. Ask the doctor to open the session first." } };
   }
 
   const ticket = await QueueTicket.create({
@@ -204,12 +290,13 @@ export async function issueQueueTicket(staffUserId, appointmentId) {
   });
 
   const sessionPayload = await broadcastSessionUpdate(session);
+  const ticketPayload = await serializeTicketWithPatient(ticket);
 
   emitQueueEvent(
     { patientUserId: ticket.patientUserId.toString() },
     "queue:patient-update",
     {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
     }
   );
@@ -217,7 +304,7 @@ export async function issueQueueTicket(staffUserId, appointmentId) {
   return {
     status: 201,
     body: {
-      ticket: serializeTicket(ticket),
+      ticket: ticketPayload,
       session: sessionPayload,
       appointment: serializeAppointmentCard(appointment.toObject()),
     },
