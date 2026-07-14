@@ -9,6 +9,7 @@ import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
 import { StaffApiClient } from "../services/staffApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import FilterFormField from "../components/FilterFormField.jsx";
+import AppModal from "../components/AppModal.jsx";
 import "./StaffPharmacyPage.css";
 
 const EMPTY_INBOUND = {
@@ -27,15 +28,29 @@ const EMPTY_OUTBOUND = {
   prescriptionId: "",
 };
 
+const EMPTY_MEDICINE = {
+  code: "",
+  name: "",
+  unit: "",
+  price: "",
+  minStockLevel: "",
+  initialQuantity: "",
+  batchNo: "",
+};
+
 export default function StaffPharmacyPage() {
   const [dashboard, setDashboard] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [movements, setMovements] = useState([]);
   const [form, setForm] = useState(EMPTY_INBOUND);
   const [outboundForm, setOutboundForm] = useState(EMPTY_OUTBOUND);
+  const [createForm, setCreateForm] = useState(EMPTY_MEDICINE);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -108,6 +123,34 @@ export default function StaffPharmacyPage() {
       setError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const onCreateFormChange = (event) => {
+    const { name, value } = event.target;
+    setCreateForm((current) => ({ ...current, [name]: value }));
+    setCreateError("");
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setCreateForm(EMPTY_MEDICINE);
+    setCreateError("");
+  };
+
+  const onCreateMedicine = async (event) => {
+    event.preventDefault();
+    setCreating(true);
+    setCreateError("");
+    try {
+      const { data } = await StaffApiClient.createMedicine(createForm);
+      setMessage(`Medicine ${data.name} created successfully.`);
+      closeCreateModal();
+      await loadData();
+    } catch (err) {
+      setCreateError(getApiErrorMessage(err));
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -302,14 +345,23 @@ export default function StaffPharmacyPage() {
               <section className="card staff-pharmacy-inventory">
                 <div className="staff-pharmacy-inventory-head">
                   <h3>Inventory</h3>
-                  <label className="staff-pharmacy-filter-toggle">
-                    <input
-                      type="checkbox"
-                      checked={lowStockOnly}
-                      onChange={(event) => setLowStockOnly(event.target.checked)}
-                    />
-                    Low stock only
-                  </label>
+                  <div className="staff-pharmacy-inventory-actions">
+                    <label className="staff-pharmacy-filter-toggle">
+                      <input
+                        type="checkbox"
+                        checked={lowStockOnly}
+                        onChange={(event) => setLowStockOnly(event.target.checked)}
+                      />
+                      Low stock only
+                    </label>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setShowCreateModal(true)}
+                    >
+                      + New medicine
+                    </button>
+                  </div>
                 </div>
                 <div className="table-wrap">
                   <table className="data-table">
@@ -327,7 +379,9 @@ export default function StaffPharmacyPage() {
                         <tr key={med._id} className={med.isLowStock ? "staff-pharmacy-row-low" : ""}>
                           <td>{med.code}</td>
                           <td>
-                            <strong>{med.name}</strong>
+                            <Link to={`/staff/pharmacy/medicines/${med._id}`} className="table-link">
+                              <strong>{med.name}</strong>
+                            </Link>
                             <div className="text-muted">Min {med.minStockLevel} {med.unit}</div>
                           </td>
                           <td>
@@ -371,7 +425,18 @@ export default function StaffPharmacyPage() {
                         {movements.map((row) => (
                           <tr key={row._id}>
                             <td>{new Date(row.createdAt).toLocaleString()}</td>
-                            <td>{row.medicine?.name || "—"}</td>
+                            <td>
+                              {row.medicine?._id ? (
+                                <Link
+                                  to={`/staff/pharmacy/medicines/${row.medicine._id}?tab=movements`}
+                                  className="table-link"
+                                >
+                                  {row.medicine.name}
+                                </Link>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
                             <td>{row.type}</td>
                             <td>{row.quantity}</td>
                             <td>{row.batchNo || "—"}</td>
@@ -384,6 +449,107 @@ export default function StaffPharmacyPage() {
                 )}
               </section>
             </>
+          )}
+          {showCreateModal && (
+            <AppModal
+              title="Add New Medicine"
+              description="Create a new SKU and optionally seed initial stock."
+              titleId="create-medicine-title"
+              onClose={closeCreateModal}
+            >
+              <form className="form form-compact" onSubmit={onCreateMedicine}>
+                {createError && <div className="alert alert-error">{createError}</div>}
+
+                <div className="form-grid">
+                  <FilterFormField
+                    id="medicine-code"
+                    label="Code"
+                    name="code"
+                    value={createForm.code}
+                    onChange={onCreateFormChange}
+                    placeholder="e.g. PARA500"
+                    required
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-name"
+                    label="Name"
+                    name="name"
+                    value={createForm.name}
+                    onChange={onCreateFormChange}
+                    placeholder="e.g. Paracetamol 500mg"
+                    required
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-unit"
+                    label="Unit"
+                    name="unit"
+                    value={createForm.unit}
+                    onChange={onCreateFormChange}
+                    placeholder="e.g. tablet"
+                    required
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-price"
+                    label="Price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    value={createForm.price}
+                    onChange={onCreateFormChange}
+                    required
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-min-stock"
+                    className="form-grid-span-2"
+                    label="Minimum stock level"
+                    name="minStockLevel"
+                    type="number"
+                    min="0"
+                    value={createForm.minStockLevel}
+                    onChange={onCreateFormChange}
+                    required
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-initial-qty"
+                    label="Initial quantity (optional)"
+                    name="initialQuantity"
+                    type="number"
+                    min="0"
+                    value={createForm.initialQuantity}
+                    onChange={onCreateFormChange}
+                    placeholder="e.g. 100"
+                    disabled={creating}
+                  />
+                  <FilterFormField
+                    id="medicine-batch-no"
+                    label="Initial batch no (optional)"
+                    name="batchNo"
+                    value={createForm.batchNo}
+                    onChange={onCreateFormChange}
+                    placeholder="e.g. BATCH-01"
+                    disabled={
+                      creating ||
+                      !createForm.initialQuantity ||
+                      createForm.initialQuantity === "0"
+                    }
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="btn btn-outline" onClick={closeCreateModal} disabled={creating}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={creating}>
+                    {creating ? "Saving…" : "Create Medicine"}
+                  </button>
+                </div>
+              </form>
+            </AppModal>
           )}
         </div>
       </StaffLayout>
