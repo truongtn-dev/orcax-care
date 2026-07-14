@@ -104,4 +104,12 @@ export const PatientApiClient = {
   extractInsuranceCardOcr(payload) {
     return api.post("/api/patient/insurance-cards/ocr", payload);
   },
+
+  listComplaints(params) {
+    return api.get("/api/patient/complaints", { params });
+  },
+
+  createComplaint(payload) {
+    return api.post("/api/patient/complaints", payload);
+  },
 };

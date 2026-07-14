@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import { DoctorApiClient } from "../services/doctorApi.js";
+import { UploadApiClient } from "../services/uploadApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./DoctorEncounterDetailPage.css";
 
@@ -31,6 +32,10 @@ export default function DoctorEncounterDetailPage() {
     bloodPressure: "",
     pulse: "",
   });
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadForm, setUploadForm] = useState({ title: "", type: "X-Ray", file: null });
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const loadEncounter = useCallback(async () => {
     setLoading(true);
@@ -135,6 +140,52 @@ export default function DoctorEncounterDetailPage() {
       setError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!uploadForm.file || !encounter || uploadingImage) return;
+
+    if (uploadForm.file.size > 10 * 1024 * 1024) {
+      setError("File size exceeds 10MB limit.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(uploadForm.file);
+      });
+
+      const uploadRes = await UploadApiClient.uploadImage({ image: base64, folder: "medical-images" });
+      const imageUrl = uploadRes.data.url;
+
+      const payload = {
+        title: uploadForm.title,
+        type: uploadForm.type,
+        url: imageUrl,
+        thumbnailUrl: imageUrl,
+        mimeType: uploadForm.file.type,
+        sizeBytes: uploadForm.file.size,
+      };
+
+      await DoctorApiClient.uploadMedicalImage(encounter._id, payload);
+      
+      setMessage("Medical image uploaded successfully.");
+      setShowUploadModal(false);
+      setUploadForm({ title: "", type: "X-Ray", file: null });
+      loadEncounter();
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -286,7 +337,19 @@ export default function DoctorEncounterDetailPage() {
               </section>
 
               <section className="doctor-encounter-section">
-                <h3>Medical images</h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                  <h3 style={{ margin: 0 }}>Medical images</h3>
+                  {encounter.canSignOff && (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setShowUploadModal(true)}
+                      disabled={submitting || uploadingImage}
+                    >
+                      Add image
+                    </button>
+                  )}
+                </div>
                 {encounter.images?.length ? (
                   <div className="doctor-encounter-image-grid">
                     {encounter.images.map((image) => (
@@ -387,6 +450,57 @@ export default function DoctorEncounterDetailPage() {
                 </div>
               </dl>
             </aside>
+          </div>
+        )}
+
+        {showUploadModal && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+            <div className="card" style={{ width: "400px", padding: "20px", backgroundColor: "#fff" }}>
+              <h3>Upload Medical Image</h3>
+              <form onSubmit={handleUploadSubmit}>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px" }}>Title</label>
+                  <input
+                    required
+                    type="text"
+                    style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                    value={uploadForm.title}
+                    onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                  />
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px" }}>Type</label>
+                  <select
+                    style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
+                    value={uploadForm.type}
+                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
+                  >
+                    <option value="X-Ray">X-Ray</option>
+                    <option value="MRI">MRI</option>
+                    <option value="CT Scan">CT Scan</option>
+                    <option value="Ultrasound">Ultrasound</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ display: "block", marginBottom: "8px" }}>Image File (Max 10MB)</label>
+                  <input
+                    required
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                    onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files[0] })}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button type="submit" className="btn btn-primary" disabled={uploadingImage}>
+                    {uploadingImage ? "Uploading..." : "Upload"}
+                  </button>
+                  <button type="button" className="btn btn-outline" onClick={() => setShowUploadModal(false)} disabled={uploadingImage}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </DoctorLayout>

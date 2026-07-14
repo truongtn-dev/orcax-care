@@ -186,6 +186,19 @@ const DASHBOARD_SECTIONS = [
         ),
       },
       {
+        to: "/patient/complaints",
+        title: "Complaints",
+        description: "Submit support tickets and track status updates.",
+        badge: "Support",
+        theme: "amber",
+        cta: "View complaints",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        ),
+      },
+      {
         to: "/patient/notifications",
         title: "Notifications",
         description: "Read clinic updates, visit messages, and system notices.",
