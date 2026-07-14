@@ -26,19 +26,15 @@ export const PatientApiClient = {
   },
 
   confirmMockPayosTopup(payload) {
-    return api.post("/api/patient/wallet/payos/mock-confirm", payload);
+    return api.post("/api/patient/wallet/topups/payos/mock-confirm", payload);
   },
 
   confirmMockSepayTopup(payload) {
-    return api.post("/api/patient/wallet/sepay/mock-confirm", payload);
+    return api.post("/api/patient/wallet/topups/sepay/mock-confirm", payload);
   },
 
   getTopupCheckout(provider, ref) {
     return api.get(`/api/patient/wallet/topups/${provider}/${ref}/checkout`);
-  },
-
-  cancelTopup(provider, ref) {
-    return api.post(`/api/patient/wallet/topups/${provider}/${ref}/cancel`);
   },
 
   getTopupStatus(provider, ref) {
@@ -103,5 +99,13 @@ export const PatientApiClient = {
 
   extractInsuranceCardOcr(payload) {
     return api.post("/api/patient/insurance-cards/ocr", payload);
+  },
+
+  listComplaints(params) {
+    return api.get("/api/patient/complaints", { params });
+  },
+
+  createComplaint(payload) {
+    return api.post("/api/patient/complaints", payload);
   },
 };
