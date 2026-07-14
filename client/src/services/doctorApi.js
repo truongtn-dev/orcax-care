@@ -33,6 +33,10 @@ export const DoctorApiClient = {
     return api.delete(`/api/doctor/medical-images/${id}`);
   },
 
+  uploadMedicalImage(encounterId, payload) {
+    return api.post(`/api/doctor/encounters/${encounterId}/medical-images`, payload);
+  },
+
   listMedicines(params) {
     return api.get("/api/doctor/medicines", { params });
   },
