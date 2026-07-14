@@ -296,7 +296,7 @@ const ADMIN_SHORTCUTS = [
 
 export default function AdminDashboardPage() {
   const { fullName } = useAuth();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get("tab");
   const activeTab = rawTab || "overview";
 
@@ -306,9 +306,9 @@ export default function AdminDashboardPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
-  const [dashboardFrom, setDashboardFrom] = useState(DEFAULT_DASHBOARD_PERIOD.from);
-  const [dashboardTo, setDashboardTo] = useState(DEFAULT_DASHBOARD_PERIOD.to);
-  const [dashboardDoctorId, setDashboardDoctorId] = useState("");
+  const [dashboardFrom, setDashboardFrom] = useState(searchParams.get("from") || DEFAULT_DASHBOARD_PERIOD.from);
+  const [dashboardTo, setDashboardTo] = useState(searchParams.get("to") || DEFAULT_DASHBOARD_PERIOD.to);
+  const [dashboardDoctorId, setDashboardDoctorId] = useState(searchParams.get("doctorId") || "");
   const [doctorFilterOptions, setDoctorFilterOptions] = useState([]);
   const [allDoctorsForCount, setAllDoctorsForCount] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -367,6 +367,32 @@ export default function AdminDashboardPage() {
       setDashboardLoading(false);
     }
   }, [dashboardFrom, dashboardTo, dashboardDoctorId]);
+
+  const applyDashboardFilters = useCallback(() => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", "overview");
+    nextParams.set("from", dashboardFrom);
+    nextParams.set("to", dashboardTo);
+    if (dashboardDoctorId) {
+      nextParams.set("doctorId", dashboardDoctorId);
+    } else {
+      nextParams.delete("doctorId");
+    }
+    setSearchParams(nextParams);
+    loadDashboard();
+  }, [dashboardDoctorId, dashboardFrom, dashboardTo, loadDashboard, searchParams, setSearchParams]);
+
+  const resetDashboardFilters = useCallback(() => {
+    setDashboardFrom(DEFAULT_DASHBOARD_PERIOD.from);
+    setDashboardTo(DEFAULT_DASHBOARD_PERIOD.to);
+    setDashboardDoctorId("");
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("tab", "overview");
+    nextParams.delete("from");
+    nextParams.delete("to");
+    nextParams.delete("doctorId");
+    setSearchParams(nextParams);
+  }, [searchParams, setSearchParams]);
 
   const loadDoctorFilterOptions = useCallback(async () => {
     try {
@@ -508,7 +534,7 @@ export default function AdminDashboardPage() {
                   className="filters-toolbar admin-dashboard-filters"
                   onSubmit={(event) => {
                     event.preventDefault();
-                    loadDashboard();
+                    applyDashboardFilters();
                   }}
                 >
                   <div className="filters-toolbar-fields admin-filters-fields">
@@ -546,6 +572,9 @@ export default function AdminDashboardPage() {
                     />
                   </div>
                   <div className="filters-toolbar-actions admin-filters-actions">
+                    <button type="button" className="btn btn-outline btn-sm" onClick={resetDashboardFilters} disabled={dashboardLoading}>
+                      Reset 30 days
+                    </button>
                     <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
                       {dashboardLoading ? "Loading…" : "Apply"}
                     </button>
