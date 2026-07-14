@@ -58,7 +58,7 @@ function serializeTicket(ticket) {
   };
 }
 
-export async function serializeSession(session, { waitingTickets = null, includeRoom = true } = {}) {
+export async function serializeSession(session, { waitingTickets = null, calledTicket = null, includeRoom = true } = {}) {
   if (!session) return null;
 
   let room = session.roomId;
@@ -81,6 +81,7 @@ export async function serializeSession(session, { waitingTickets = null, include
     closedAt: session.closedAt,
     waitingCount: waitingTickets?.length ?? null,
     waitingTickets: waitingTickets?.map(serializeTicket) ?? null,
+    calledTicket: calledTicket ? serializeTicket(calledTicket) : null,
   };
 
   return payload;
@@ -92,10 +93,24 @@ async function loadWaitingTickets(sessionId) {
     .lean();
 }
 
+async function loadCalledTicket(sessionId) {
+  return QueueTicket.findOne({ sessionId, status: { $in: ["called", "serving"] } })
+    .sort({ calledAt: -1 })
+    .lean();
+}
+
+async function loadSessionTickets(sessionId) {
+  const [waitingTickets, calledTicket] = await Promise.all([
+    loadWaitingTickets(sessionId),
+    loadCalledTicket(sessionId),
+  ]);
+  return { waitingTickets, calledTicket };
+}
+
 export async function broadcastSessionUpdate(session, extra = {}) {
-  const waitingTickets = await loadWaitingTickets(session._id);
+  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
   const payload = {
-    ...(await serializeSession(session, { waitingTickets })),
+    ...(await serializeSession(session, { waitingTickets, calledTicket })),
     ...extra,
   };
 
@@ -152,11 +167,11 @@ export async function getDoctorActiveSession(userId) {
     return { status: 404, body: { message: "No active queue session today." } };
   }
 
-  const waitingTickets = await loadWaitingTickets(session._id);
+  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
   return {
     status: 200,
     body: {
-      session: await serializeSession(session, { waitingTickets }),
+      session: await serializeSession(session, { waitingTickets, calledTicket }),
     },
   };
 }
@@ -260,11 +275,11 @@ export async function getSessionById(userId, sessionId, role) {
     }
   }
 
-  const waitingTickets = await loadWaitingTickets(session._id);
+  const { waitingTickets, calledTicket } = await loadSessionTickets(session._id);
   return {
     status: 200,
     body: {
-      session: await serializeSession(session, { waitingTickets }),
+      session: await serializeSession(session, { waitingTickets, calledTicket }),
     },
   };
 }

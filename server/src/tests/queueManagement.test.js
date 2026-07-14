@@ -204,6 +204,14 @@ describe("Queue management", () => {
     assert.equal(boardRes.status, 200);
     const boardBody = await boardRes.json();
     assert.equal(boardBody.nextNumbers[0], 1);
+    assert.equal(boardBody.state, "active");
+
+    const sessionBeforeCall = await fetch(`${baseUrl}/api/queue/sessions/${sessionId}`, {
+      headers: { Authorization: doctorAuth },
+    });
+    assert.equal(sessionBeforeCall.status, 200);
+    const sessionBeforeCallBody = await sessionBeforeCall.json();
+    assert.equal(sessionBeforeCallBody.session.calledTicket, null);
 
     const callRes = await fetch(`${baseUrl}/api/queue/sessions/${sessionId}/call-next`, {
       method: "POST",
@@ -212,12 +220,15 @@ describe("Queue management", () => {
     assert.equal(callRes.status, 200);
     const callBody = await callRes.json();
     assert.equal(callBody.ticket.number, 1);
+    assert.equal(callBody.session.calledTicket.number, 1);
 
     const skipRes = await fetch(`${baseUrl}/api/queue/sessions/${sessionId}/tickets/${issueBody.ticket._id}/skip`, {
       method: "POST",
       headers: { Authorization: doctorAuth },
     });
     assert.equal(skipRes.status, 200);
+    const skipBody = await skipRes.json();
+    assert.equal(skipBody.session.calledTicket, null);
 
     const recallRes = await fetch(`${baseUrl}/api/queue/sessions/${sessionId}/recall`, {
       method: "POST",
@@ -232,6 +243,11 @@ describe("Queue management", () => {
     assert.equal(closeRes.status, 200);
     const closeBody = await closeRes.json();
     assert.equal(closeBody.session.status, "closed");
+
+    const activeAfterClose = await fetch(`${baseUrl}/api/queue/sessions/me`, {
+      headers: { Authorization: doctorAuth },
+    });
+    assert.equal(activeAfterClose.status, 404);
   });
 
   test("issue ticket fails when session is not open", async () => {

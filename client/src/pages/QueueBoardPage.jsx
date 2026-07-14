@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { QueueApiClient } from "../services/queueApi.js";
 import { getQueueSocket, joinQueueRoom } from "../services/queueSocket.js";
+import { deriveQueueBoardState, nextNumbersFromWaitingTickets } from "../utils/queueBoardState.js";
 import "./QueueBoardPage.css";
 
 const POLL_MS = 5000;
@@ -43,17 +44,19 @@ export default function QueueBoardPage() {
     const onConnect = () => setConnected(true);
     const onDisconnect = () => setConnected(false);
     const onUpdate = (payload) => {
+      const waitingTickets = payload.waitingTickets || [];
+      const currentNumber = payload.currentNumber || 0;
       setBoard((prev) => ({
         ...(prev || {}),
         room: payload.room || prev?.room,
         session: {
           _id: payload._id,
           status: payload.status,
-          currentNumber: payload.currentNumber,
+          currentNumber,
         },
-        currentNumber: payload.currentNumber,
-        nextNumbers: payload.waitingTickets?.map((ticket) => ticket.number) || prev?.nextNumbers || [],
-        state: payload.status === "closed" ? "closed" : payload.status === "paused" ? "paused" : payload.currentNumber ? "active" : "empty",
+        currentNumber,
+        nextNumbers: nextNumbersFromWaitingTickets(waitingTickets),
+        state: deriveQueueBoardState(payload.status, currentNumber, waitingTickets.length),
       }));
     };
 
