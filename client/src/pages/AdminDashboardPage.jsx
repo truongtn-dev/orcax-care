@@ -309,7 +309,10 @@ export default function AdminDashboardPage() {
   const [dashboardFrom, setDashboardFrom] = useState(searchParams.get("from") || DEFAULT_DASHBOARD_PERIOD.from);
   const [dashboardTo, setDashboardTo] = useState(searchParams.get("to") || DEFAULT_DASHBOARD_PERIOD.to);
   const [dashboardDoctorId, setDashboardDoctorId] = useState(searchParams.get("doctorId") || "");
+  const [dashboardGroupBy, setDashboardGroupBy] = useState(searchParams.get("groupBy") || "day");
+  const [dashboardPaymentMethod, setDashboardPaymentMethod] = useState(searchParams.get("paymentMethod") || "");
   const [doctorFilterOptions, setDoctorFilterOptions] = useState([]);
+  const [exportingRevenue, setExportingRevenue] = useState(false);
   const [allDoctorsForCount, setAllDoctorsForCount] = useState([]);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, type: "success", message: "" });
@@ -356,8 +359,9 @@ export default function AdminDashboardPage() {
   const loadDashboard = useCallback(async () => {
     setDashboardLoading(true);
     try {
-      const params = { from: dashboardFrom, to: dashboardTo };
+      const params = { from: dashboardFrom, to: dashboardTo, groupBy: dashboardGroupBy };
       if (dashboardDoctorId) params.doctorId = dashboardDoctorId;
+      if (dashboardPaymentMethod) params.paymentMethod = dashboardPaymentMethod;
       const { data } = await AdminApiClient.getDashboard(params);
       setDashboardData(data);
     } catch (err) {
@@ -366,33 +370,83 @@ export default function AdminDashboardPage() {
     } finally {
       setDashboardLoading(false);
     }
-  }, [dashboardFrom, dashboardTo, dashboardDoctorId]);
+  }, [dashboardFrom, dashboardTo, dashboardDoctorId, dashboardGroupBy, dashboardPaymentMethod]);
 
   const applyDashboardFilters = useCallback(() => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("tab", "overview");
     nextParams.set("from", dashboardFrom);
     nextParams.set("to", dashboardTo);
+    nextParams.set("groupBy", dashboardGroupBy);
     if (dashboardDoctorId) {
       nextParams.set("doctorId", dashboardDoctorId);
     } else {
       nextParams.delete("doctorId");
     }
+    if (dashboardPaymentMethod) {
+      nextParams.set("paymentMethod", dashboardPaymentMethod);
+    } else {
+      nextParams.delete("paymentMethod");
+    }
     setSearchParams(nextParams);
     loadDashboard();
-  }, [dashboardDoctorId, dashboardFrom, dashboardTo, loadDashboard, searchParams, setSearchParams]);
+  }, [
+    dashboardDoctorId,
+    dashboardFrom,
+    dashboardTo,
+    dashboardGroupBy,
+    dashboardPaymentMethod,
+    loadDashboard,
+    searchParams,
+    setSearchParams,
+  ]);
 
   const resetDashboardFilters = useCallback(() => {
     setDashboardFrom(DEFAULT_DASHBOARD_PERIOD.from);
     setDashboardTo(DEFAULT_DASHBOARD_PERIOD.to);
     setDashboardDoctorId("");
+    setDashboardGroupBy("day");
+    setDashboardPaymentMethod("");
     const nextParams = new URLSearchParams(searchParams);
     nextParams.set("tab", "overview");
     nextParams.delete("from");
     nextParams.delete("to");
     nextParams.delete("doctorId");
+    nextParams.delete("groupBy");
+    nextParams.delete("paymentMethod");
     setSearchParams(nextParams);
   }, [searchParams, setSearchParams]);
+
+  const downloadBlobResponse = (response, fallbackName) => {
+    const disposition = response.headers["content-disposition"] || "";
+    const match = disposition.match(/filename="([^"]+)"/i);
+    const filename = match?.[1] || fallbackName;
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const exportRevenueReport = useCallback(async () => {
+    setExportingRevenue(true);
+    try {
+      const params = { from: dashboardFrom, to: dashboardTo, groupBy: dashboardGroupBy };
+      if (dashboardDoctorId) params.doctorId = dashboardDoctorId;
+      if (dashboardPaymentMethod) params.paymentMethod = dashboardPaymentMethod;
+      const response = await AdminApiClient.exportRevenueReport(params);
+      downloadBlobResponse(response, "revenue-report.xlsx");
+      setSuccess("Revenue report downloaded.");
+    } catch (err) {
+      console.error("Failed to export revenue:", err);
+      setError("Could not export revenue report.");
+    } finally {
+      setExportingRevenue(false);
+    }
+  }, [dashboardFrom, dashboardTo, dashboardDoctorId, dashboardGroupBy, dashboardPaymentMethod]);
 
   const loadDoctorFilterOptions = useCallback(async () => {
     try {
@@ -570,10 +624,42 @@ export default function AdminDashboardPage() {
                         })),
                       ]}
                     />
+                    <CustomSelect
+                      className="filter-field"
+                      label="Group by"
+                      value={dashboardGroupBy}
+                      onChange={setDashboardGroupBy}
+                      options={[
+                        { value: "day", label: "Day" },
+                        { value: "week", label: "Week" },
+                        { value: "month", label: "Month" },
+                      ]}
+                    />
+                    <CustomSelect
+                      className="filter-field"
+                      label="Payment"
+                      value={dashboardPaymentMethod}
+                      onChange={setDashboardPaymentMethod}
+                      placeholder="All methods"
+                      options={[
+                        { value: "", label: "All methods" },
+                        { value: "wallet", label: "Wallet" },
+                        { value: "payos", label: "PayOS" },
+                        { value: "insurance", label: "Insurance" },
+                      ]}
+                    />
                   </div>
                   <div className="filters-toolbar-actions admin-filters-actions">
                     <button type="button" className="btn btn-outline btn-sm" onClick={resetDashboardFilters} disabled={dashboardLoading}>
                       Reset 30 days
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={exportRevenueReport}
+                      disabled={dashboardLoading || exportingRevenue}
+                    >
+                      {exportingRevenue ? "Exporting…" : "Export Excel"}
                     </button>
                     <button type="submit" className="btn btn-primary btn-sm" disabled={dashboardLoading}>
                       {dashboardLoading ? "Loading…" : "Apply"}
@@ -623,13 +709,13 @@ export default function AdminDashboardPage() {
 
               <DashboardBarChart
                 embedded
-                title="Revenue by day"
+                title={`Revenue by ${dashboardGroupBy}`}
                 description="Bookings in the selected period"
                 data={(dashboardData?.revenueChart || []).map((point) => ({
                   key: point.date,
-                  label: point.date.slice(5),
+                  label: point.label || point.date.slice(5),
                   value: point.revenue || 0,
-                  title: `${point.date}: ${formatCurrency(point.revenue)} (${point.appointments} appts)`,
+                  title: `${point.label || point.date}: ${formatCurrency(point.revenue)} (${point.appointments} appts)`,
                 }))}
                 loading={dashboardLoading}
                 emptyMessage="No bookings in this period."

@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
 import PortalShell from "./PortalShell.jsx";
+import { StaffApiClient } from "../services/staffApi.js";
 
-const STAFF_SECTIONS = [
+const BASE_SECTIONS = [
   {
     label: "Workspace",
     items: [
@@ -11,10 +13,11 @@ const STAFF_SECTIONS = [
         match: ["/staff"],
       },
       {
-        to: "/staff/pharmacy",
+        to: "/staff/pharmacy?lowStockOnly=1",
         label: "Pharmacy",
         icon: "layers",
         match: ["/staff/pharmacy"],
+        badgeKey: "lowStock",
       },
       {
         to: "/staff/prescriptions/verify",
@@ -62,11 +65,42 @@ const STAFF_SECTIONS = [
 ];
 
 export default function StaffLayout({ children, title, description, actions }) {
+  const [lowStockCount, setLowStockCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    StaffApiClient.getPharmacyDashboard()
+      .then(({ data }) => {
+        if (!cancelled) setLowStockCount(data.lowStockCount || 0);
+      })
+      .catch(() => {
+        if (!cancelled) setLowStockCount(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sections = useMemo(
+    () =>
+      BASE_SECTIONS.map((section) => ({
+        ...section,
+        items: section.items.map((item) => {
+          if (item.badgeKey === "lowStock") {
+            const { badgeKey, ...rest } = item;
+            return { ...rest, badge: lowStockCount };
+          }
+          return item;
+        }),
+      })),
+    [lowStockCount]
+  );
+
   return (
     <PortalShell
       portalLabel="Staff"
       homeLink="/staff"
-      sections={STAFF_SECTIONS}
+      sections={sections}
       title={title || "Staff overview"}
       description={description}
       actions={actions}

@@ -76,9 +76,14 @@ export default function PatientEmrTimelinePage() {
             </svg>
             My dashboard
           </Link>
-          <Link to="/patient/appointments" className="btn btn-secondary btn-sm">
-            Appointments
-          </Link>
+          <div className="patient-emr-toolbar-actions">
+            <Link to="/patient/prescriptions" className="btn btn-outline btn-sm">
+              My prescriptions
+            </Link>
+            <Link to="/patient/appointments" className="btn btn-secondary btn-sm">
+              Appointments
+            </Link>
+          </div>
         </div>
 
         <header className="patient-emr-header">

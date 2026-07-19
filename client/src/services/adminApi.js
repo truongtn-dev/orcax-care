@@ -5,6 +5,18 @@ export const AdminApiClient = {
     return api.get("/api/admin/dashboard", { params });
   },
 
+  exportRevenueReport(params) {
+    return api.get("/api/admin/dashboard/revenue-export", { params, responseType: "blob" });
+  },
+
+  getMedicine(id) {
+    return api.get(`/api/admin/medicines/${id}`);
+  },
+
+  updateMedicine(id, payload) {
+    return api.put(`/api/admin/medicines/${id}`, payload);
+  },
+
   listAccounts(params) {
     return api.get("/api/admin/accounts", { params });
   },

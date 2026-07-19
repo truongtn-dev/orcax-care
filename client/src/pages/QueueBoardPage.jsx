@@ -81,6 +81,8 @@ export default function QueueBoardPage() {
           : null,
         nextPatients: mapBoardPatients(waitingTickets),
         skippedPatients: mapBoardPatients(skippedTickets),
+        nextNumbers: waitingTickets.map((ticket) => ticket.number).slice(0, 5),
+        skippedNumbers: skippedTickets.map((ticket) => ticket.number).slice(0, 5),
         state: deriveQueueBoardState(
           payload.status,
           currentNumber,
@@ -134,7 +136,9 @@ export default function QueueBoardPage() {
         <div className="queue-board-side">
           <section className="queue-board-next">
             <h2>Up next</h2>
-            <p className="queue-board-next-caption">Next {Math.min(nextPatients.length, 5)} patient(s)</p>
+            <p className="queue-board-next-caption">
+              Next {Math.min(nextPatients.length, 5)} patient(s)
+            </p>
             {nextPatients.length ? (
               <ul>
                 {nextPatients.map((patient) => (

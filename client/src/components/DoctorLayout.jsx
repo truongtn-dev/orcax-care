@@ -28,6 +28,12 @@ const DOCTOR_SECTIONS = [
         match: ["/doctor/today-appointments"],
       },
       {
+        to: "/doctor/prescriptions",
+        label: "My prescriptions",
+        icon: "pill",
+        match: ["/doctor/prescriptions"],
+      },
+      {
         to: "/doctor/queue",
         label: "Queue session",
         icon: "list",

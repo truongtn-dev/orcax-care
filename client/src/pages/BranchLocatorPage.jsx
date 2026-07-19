@@ -82,13 +82,14 @@ export default function BranchLocatorPage() {
               <div className="branch-locator-map-stage">
                 <div className="branch-locator-map-head">
                   <h2>Clinic map</h2>
-                  <p>Click a pin for quick info, or select a card below to view full details.</p>
+                  <p>Click a pin to open the clinic detail page.</p>
                 </div>
                 <BranchMap
                   branches={branches}
                   selectedId={activeBranchId}
                   className="branch-map--locator"
                   onBranchSelect={highlightBranch}
+                  navigateOnMarkerClick
                 />
               </div>
 

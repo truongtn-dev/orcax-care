@@ -229,6 +229,7 @@ export default function StaffBranchPage() {
                   branches={[branch]}
                   selectedId={branch.slug || branch._id}
                   className="branch-map--detail staff-branch-map"
+                  navigateOnMarkerClick={false}
                 />
               </section>
             </>

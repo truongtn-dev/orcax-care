@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PageLayout from "../../components/PageLayout.jsx";
 import AdminLayout from "../../components/AdminLayout.jsx";
 import CustomSelect from "../../components/CustomSelect.jsx";
+import DatePicker from "../../components/DatePicker.jsx";
 import { AdminApiClient } from "../../services/adminApi.js";
 import { getApiErrorMessage } from "../../services/api.js";
 import "./AdminComplaintsPage.css";
@@ -22,6 +23,8 @@ function statusLabel(status) {
 export default function AdminComplaintsListPage() {
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -29,14 +32,18 @@ export default function AdminComplaintsListPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await AdminApiClient.listComplaints({ status: status || undefined });
+      const params = {};
+      if (status) params.status = status;
+      if (from) params.from = from;
+      if (to) params.to = to;
+      const { data } = await AdminApiClient.listComplaints(params);
       setItems(data.items || []);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, from, to]);
 
   useEffect(() => {
     loadComplaints();
@@ -47,14 +54,54 @@ export default function AdminComplaintsListPage() {
       <AdminLayout title="Complaints" description="Review patient feedback and service issues.">
         <div className="admin-complaints-page dash-page-stack">
           <div className="card filters-card">
-            <div className="filters-toolbar">
-              <CustomSelect
-                label="Status"
-                value={status}
-                onChange={setStatus}
-                options={STATUS_OPTIONS}
-              />
-            </div>
+            <form
+              className="filters-toolbar"
+              onSubmit={(event) => {
+                event.preventDefault();
+                loadComplaints();
+              }}
+            >
+              <div className="filters-toolbar-fields">
+                <CustomSelect
+                  label="Status"
+                  value={status}
+                  onChange={setStatus}
+                  options={STATUS_OPTIONS}
+                />
+                <DatePicker
+                  className="filter-field"
+                  label="From"
+                  name="complaintFrom"
+                  value={from}
+                  onChange={(event) => setFrom(event.target.value)}
+                  max={to || undefined}
+                />
+                <DatePicker
+                  className="filter-field"
+                  label="To"
+                  name="complaintTo"
+                  value={to}
+                  onChange={(event) => setTo(event.target.value)}
+                  min={from || undefined}
+                />
+              </div>
+              <div className="filters-toolbar-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    setStatus("");
+                    setFrom("");
+                    setTo("");
+                  }}
+                >
+                  Reset
+                </button>
+                <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>
+                  Apply
+                </button>
+              </div>
+            </form>
           </div>
 
           {error && <div className="alert alert-error">{error}</div>}
@@ -72,6 +119,7 @@ export default function AdminComplaintsListPage() {
                         <th>Subject</th>
                         <th>Patient</th>
                         <th>Status</th>
+                        <th>Assignee</th>
                         <th>Submitted</th>
                         <th />
                       </tr>
@@ -82,10 +130,19 @@ export default function AdminComplaintsListPage() {
                           <td>{item.subject}</td>
                           <td>{item.patientName}</td>
                           <td>
-                            <span className={`status-pill status-${item.status === "open" ? "pending" : item.status === "resolved" ? "active" : "cancelled"}`}>
+                            <span
+                              className={`status-pill status-${
+                                item.status === "open"
+                                  ? "pending"
+                                  : item.status === "resolved"
+                                    ? "active"
+                                    : "cancelled"
+                              }`}
+                            >
                               {statusLabel(item.status)}
                             </span>
                           </td>
+                          <td>{item.assigneeName || "—"}</td>
                           <td>{new Date(item.createdAt).toLocaleString()}</td>
                           <td>
                             <Link to={`/admin/complaints/${item._id}`} className="btn btn-outline btn-sm">

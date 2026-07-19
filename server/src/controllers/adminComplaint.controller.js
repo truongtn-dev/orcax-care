@@ -22,7 +22,11 @@ export async function getComplaint(req, res) {
 
 export async function updateComplaintStatus(req, res) {
   try {
-    const result = await AdminComplaintService.updateComplaintStatus(req.params.id, req.body.status);
+    const result = await AdminComplaintService.updateComplaintStatus(
+      req.params.id,
+      req.body.status,
+      req.user.userId
+    );
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);

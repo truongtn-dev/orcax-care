@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import { Doctor } from "../models/Doctor.js";
 import { Encounter } from "../models/Encounter.js";
 import { MedicalImage } from "../models/MedicalImage.js";
+import { User } from "../models/User.js";
+import { notifyPatientSafe } from "./notification.service.js";
+import { sendResultsReadyEmail } from "./mail.service.js";
 
 async function resolveDoctorForUser(userId) {
   const doctor = await Doctor.findOne({ userId, isActive: true }).lean();
@@ -84,6 +87,37 @@ export async function uploadMedicalImage(userId, encounterId, payload) {
     sizeBytes: sizeBytes || 0,
     uploadedBy: userId,
   });
+
+  const isPdfOrLab =
+    String(mimeType || "").toLowerCase() === "application/pdf" ||
+    /lab|result|report|pdf/i.test(String(type || "")) ||
+    /lab|result|report/i.test(String(title || ""));
+
+  if (isPdfOrLab && encounter.patientUserId) {
+    const detailLink = "/patient/emr";
+    const resultTitle = "Lab / imaging results ready";
+    const resultMessage = `"${image.title}" is ready to view in your medical records.`;
+    notifyPatientSafe(encounter.patientUserId, {
+      title: resultTitle,
+      message: resultMessage,
+      type: "results",
+      link: detailLink,
+    });
+    User.findById(encounter.patientUserId)
+      .select("fullName email")
+      .lean()
+      .then((patient) => {
+        if (!patient?.email) return null;
+        return sendResultsReadyEmail(patient, {
+          title: resultTitle,
+          message: resultMessage,
+          detailUrl: detailLink,
+        });
+      })
+      .catch((err) => {
+        console.error("[imaging] results email failed:", err?.message || err);
+      });
+  }
 
   return { status: 201, body: serializeMedicalImage(image) };
 }

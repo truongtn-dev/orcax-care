@@ -1,11 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
+import AppModal from "../components/AppModal.jsx";
+import ConfirmDialog from "../components/ConfirmDialog.jsx";
+import SearchableSelect from "../components/SearchableSelect.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
+import FilterFormField from "../components/FilterFormField.jsx";
 import { DoctorApiClient } from "../services/doctorApi.js";
 import { UploadApiClient } from "../services/uploadApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./DoctorEncounterDetailPage.css";
+import "./PrescriptionDetailPage.css";
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
 
 function formatVisitTime(appointment) {
   if (!appointment?.startTime) return "Time not assigned";
@@ -37,6 +51,26 @@ export default function DoctorEncounterDetailPage() {
   const [uploadForm, setUploadForm] = useState({ title: "", type: "X-Ray", file: null });
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  const [isAddDiagnosisOpen, setIsAddDiagnosisOpen] = useState(false);
+  const [isEditDiagnosisOpen, setIsEditDiagnosisOpen] = useState(false);
+  const [diagnosisToEdit, setDiagnosisToEdit] = useState(null);
+  const [selectedIcdCode, setSelectedIcdCode] = useState("");
+  const [diagnosisNote, setDiagnosisNote] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [modalSubmitting, setModalSubmitting] = useState(false);
+  const [diagnosisToRemove, setDiagnosisToRemove] = useState(null);
+  const [removingDiagnosis, setRemovingDiagnosis] = useState(false);
+  const [confirmSignOff, setConfirmSignOff] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
+  const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
+  const [lightboxDragging, setLightboxDragging] = useState(false);
+  const lightboxDragStart = useRef(null);
+
+  const [prescription, setPrescription] = useState(null);
+  const [rxLoading, setRxLoading] = useState(true);
+
   const loadEncounter = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -51,9 +85,26 @@ export default function DoctorEncounterDetailPage() {
     }
   }, [id]);
 
+  const loadPrescription = useCallback(async () => {
+    setRxLoading(true);
+    try {
+      const { data } = await DoctorApiClient.getPrescriptionForEncounter(id);
+      setPrescription(data);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setPrescription(null);
+      } else {
+        console.error(err);
+      }
+    } finally {
+      setRxLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     loadEncounter();
-  }, [loadEncounter]);
+    loadPrescription();
+  }, [loadEncounter, loadPrescription]);
 
   const handleEditClick = () => {
     setEditForm({
@@ -98,11 +149,11 @@ export default function DoctorEncounterDetailPage() {
 
   const handleSignOff = async () => {
     if (!encounter || submitting) return;
-    const confirmed = window.confirm(
-      "Sign off this encounter? After sign-off, clinical notes and diagnoses are finalized."
-    );
-    if (!confirmed) return;
+    setConfirmSignOff(true);
+  };
 
+  const handleConfirmSignOff = async () => {
+    if (!encounter || submitting) return;
     setSubmitting(true);
     setError("");
     setMessage("");
@@ -110,6 +161,7 @@ export default function DoctorEncounterDetailPage() {
       const { data } = await DoctorApiClient.signOffEncounter(encounter._id);
       setEncounter(data);
       setMessage("Encounter signed off successfully.");
+      setConfirmSignOff(false);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -117,31 +169,133 @@ export default function DoctorEncounterDetailPage() {
     }
   };
 
-  const handleDeleteImage = async (image) => {
-    if (!encounter || submitting) return;
-    const confirmed = window.confirm(`Delete medical image "${image.title}" from this encounter?`);
-    if (!confirmed) return;
+  const handleAddDiagnosisClick = () => {
+    setSelectedIcdCode("");
+    setDiagnosisNote("");
+    setModalError("");
+    setIsAddDiagnosisOpen(true);
+  };
 
+  const handleEditDiagnosisClick = (diagnosis) => {
+    setDiagnosisToEdit(diagnosis);
+    setSelectedIcdCode(diagnosis.code || "");
+    setDiagnosisNote(diagnosis.note || "");
+    setModalError("");
+    setIsEditDiagnosisOpen(true);
+  };
+
+  const loadIcdOptions = async (query) => {
+    try {
+      const { data } = await DoctorApiClient.searchIcd10({ q: query });
+      return (data.items || []).map((item) => ({
+        value: item.code,
+        label: `${item.code} - ${item.name}`,
+      }));
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
+  const handleSaveDiagnosis = async () => {
+    if (!selectedIcdCode) {
+      setModalError("Please select an ICD-10 code.");
+      return;
+    }
+    setModalSubmitting(true);
+    setModalError("");
+    try {
+      const { data } = await DoctorApiClient.addDiagnosis(encounter._id, {
+        code: selectedIcdCode,
+        note: diagnosisNote.trim(),
+      });
+      setEncounter(data);
+      setIsAddDiagnosisOpen(false);
+      setMessage("Diagnosis added successfully.");
+    } catch (err) {
+      setModalError(getApiErrorMessage(err));
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleUpdateDiagnosis = async () => {
+    if (!diagnosisToEdit) return;
+    if (!selectedIcdCode) {
+      setModalError("Please select an ICD-10 code.");
+      return;
+    }
+    setModalSubmitting(true);
+    setModalError("");
+    try {
+      const { data } = await DoctorApiClient.updateDiagnosis(encounter._id, diagnosisToEdit.code, {
+        code: selectedIcdCode,
+        note: diagnosisNote.trim(),
+      });
+      setEncounter(data);
+      setIsEditDiagnosisOpen(false);
+      setDiagnosisToEdit(null);
+      setMessage("Diagnosis updated successfully.");
+    } catch (err) {
+      setModalError(getApiErrorMessage(err));
+    } finally {
+      setModalSubmitting(false);
+    }
+  };
+
+  const handleConfirmRemoveDiagnosis = async () => {
+    if (!encounter || !diagnosisToRemove) return;
+    setRemovingDiagnosis(true);
+    setError("");
+    setMessage("");
+    try {
+      const { data } = await DoctorApiClient.removeDiagnosis(encounter._id, diagnosisToRemove.code);
+      setEncounter(data);
+      setMessage("Diagnosis removed successfully.");
+      setDiagnosisToRemove(null);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setRemovingDiagnosis(false);
+    }
+  };
+
+  const handleConfirmDeleteImage = async () => {
+    if (!encounter || !imageToDelete || submitting) return;
     setSubmitting(true);
     setError("");
     setMessage("");
     try {
-      await DoctorApiClient.deleteMedicalImage(image._id);
+      await DoctorApiClient.deleteMedicalImage(imageToDelete._id);
       setEncounter((current) =>
         current
           ? {
               ...current,
-              images: (current.images || []).filter((item) => item._id !== image._id),
+              images: (current.images || []).filter((item) => item._id !== imageToDelete._id),
             }
           : current
       );
       setMessage("Medical image deleted.");
+      setImageToDelete(null);
+      if (lightboxImage?._id === imageToDelete._id) setLightboxImage(null);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
   };
+
+  const imagesByDate = useMemo(() => {
+    const groups = new Map();
+    for (const image of encounter?.images || []) {
+      const key = image.createdAt
+        ? new Date(image.createdAt).toLocaleDateString()
+        : "Unknown date";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(image);
+    }
+    return [...groups.entries()];
+  }, [encounter?.images]);
 
   const handleUploadSubmit = async (e) => {
     e.preventDefault();
@@ -321,24 +475,117 @@ export default function DoctorEncounterDetailPage() {
               </section>
 
               <section className="doctor-encounter-section">
-                <h3>Diagnoses</h3>
+                <div className="doctor-encounter-section-head">
+                  <h3>Diagnoses</h3>
+                  {encounter.canSignOff && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={handleAddDiagnosisClick}
+                      disabled={submitting}
+                    >
+                      Add diagnosis
+                    </button>
+                  )}
+                </div>
                 {encounter.diagnoses?.length ? (
                   <ul className="doctor-encounter-diagnoses">
                     {encounter.diagnoses.map((diagnosis) => (
                       <li key={`${diagnosis.code}-${diagnosis.text}`}>
-                        <strong>{diagnosis.code || "N/A"}</strong>
-                        <span>{diagnosis.text}</span>
+                        <div className="doctor-encounter-diagnosis-main">
+                          <span className="doctor-encounter-diagnosis-code">{diagnosis.code || "N/A"}</span>
+                          <div className="doctor-encounter-diagnosis-copy">
+                            <strong>{diagnosis.text}</strong>
+                            {diagnosis.note && <span>{diagnosis.note}</span>}
+                          </div>
+                        </div>
+                        {encounter.canSignOff && (
+                          <div className="doctor-encounter-diagnosis-actions">
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              disabled={submitting || removingDiagnosis}
+                              onClick={() => handleEditDiagnosisClick(diagnosis)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              disabled={submitting || removingDiagnosis}
+                              onClick={() => setDiagnosisToRemove(diagnosis)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p>No diagnosis recorded.</p>
+                  <p className="doctor-encounter-empty">No diagnosis recorded.</p>
                 )}
               </section>
 
               <section className="doctor-encounter-section">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                  <h3 style={{ margin: 0 }}>Medical images</h3>
+                <div className="doctor-encounter-section-head">
+                  <h3>Prescription</h3>
+                  {encounter.canSignOff && (
+                    <Link to={`/doctor/encounters/${encounter._id}/prescriptions/new`} className="btn btn-outline btn-sm">
+                      Create prescription
+                    </Link>
+                  )}
+                </div>
+
+                {rxLoading ? (
+                  <p className="doctor-encounter-empty">Loading prescription…</p>
+                ) : !prescription || !prescription.lineItems?.length ? (
+                  <p className="doctor-encounter-empty">No prescription created for this encounter yet.</p>
+                ) : (
+                  <>
+                    <div className="prescription-detail-table-wrap">
+                      <table className="prescription-detail-table">
+                        <thead>
+                          <tr>
+                            <th>Medicine</th>
+                            <th>Qty</th>
+                            <th>Duration</th>
+                            <th>Dosage</th>
+                            <th>Instructions</th>
+                            <th className="prescription-detail-money">Line total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {prescription.lineItems.map((item) => (
+                            <tr key={item.medicineId}>
+                              <td>
+                                <strong>{item.medicineName}</strong>
+                                <span>{item.medicineCode}</span>
+                              </td>
+                              <td>
+                                {item.quantity} {item.unit}
+                              </td>
+                              <td>{item.durationDays} days</td>
+                              <td>{item.dosage || "-"}</td>
+                              <td>{item.instructions || "-"}</td>
+                              <td className="prescription-detail-money">{formatCurrency(item.lineTotal)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="doctor-encounter-section-foot">
+                      <Link to={`/doctor/prescriptions/${prescription._id}`} className="btn btn-primary btn-sm">
+                        View prescription
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </section>
+
+              <section className="doctor-encounter-section">
+                <div className="doctor-encounter-section-head">
+                  <h3>Medical images</h3>
                   {encounter.canSignOff && (
                     <button
                       type="button"
@@ -351,31 +598,44 @@ export default function DoctorEncounterDetailPage() {
                   )}
                 </div>
                 {encounter.images?.length ? (
-                  <div className="doctor-encounter-image-grid">
-                    {encounter.images.map((image) => (
-                      <article key={image._id} className="doctor-encounter-image-card">
-                        <a href={image.url} target="_blank" rel="noreferrer">
-                          <img src={image.thumbnailUrl || image.url} alt={image.title} />
-                        </a>
-                        <div>
-                          <strong>{image.title}</strong>
-                          <span>{image.type || "image"}</span>
+                  <div className="doctor-encounter-image-gallery">
+                    {imagesByDate.map(([dateLabel, images]) => (
+                      <div key={dateLabel} className="doctor-encounter-image-day">
+                        <h4 className="doctor-encounter-image-day-title">{dateLabel}</h4>
+                        <div className="doctor-encounter-image-grid">
+                          {images.map((image) => (
+                            <article key={image._id} className="doctor-encounter-image-card">
+                              <button
+                                type="button"
+                                className="doctor-encounter-image-thumb"
+                                onClick={() => setLightboxImage(image)}
+                                aria-label={`View ${image.title} fullscreen`}
+                              >
+                                <img src={image.thumbnailUrl || image.url} alt={image.title} />
+                                <span className="doctor-encounter-image-zoom">View</span>
+                              </button>
+                              <div className="doctor-encounter-image-meta">
+                                <strong>{image.title}</strong>
+                                <span>{image.type || "image"}</span>
+                              </div>
+                              {encounter.canSignOff && (
+                                <button
+                                  type="button"
+                                  className="btn btn-outline btn-sm"
+                                  disabled={submitting}
+                                  onClick={() => setImageToDelete(image)}
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </article>
+                          ))}
                         </div>
-                        {encounter.canSignOff && (
-                          <button
-                            type="button"
-                            className="btn btn-outline btn-sm"
-                            disabled={submitting}
-                            onClick={() => handleDeleteImage(image)}
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </article>
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <p>No medical images attached.</p>
+                  <p className="doctor-encounter-empty">No medical images attached.</p>
                 )}
               </section>
             </section>
@@ -453,55 +713,331 @@ export default function DoctorEncounterDetailPage() {
           </div>
         )}
 
-        {showUploadModal && (
-          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
-            <div className="card" style={{ width: "400px", padding: "20px", backgroundColor: "#fff" }}>
-              <h3>Upload Medical Image</h3>
-              <form onSubmit={handleUploadSubmit}>
-                <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px" }}>Title</label>
-                  <input
-                    required
-                    type="text"
-                    style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
-                    value={uploadForm.title}
-                    onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
-                  />
-                </div>
-                <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px" }}>Type</label>
-                  <select
-                    style={{ width: "100%", padding: "8px", border: "1px solid #ccc", borderRadius: "4px" }}
-                    value={uploadForm.type}
-                    onChange={(e) => setUploadForm({ ...uploadForm, type: e.target.value })}
-                  >
-                    <option value="X-Ray">X-Ray</option>
-                    <option value="MRI">MRI</option>
-                    <option value="CT Scan">CT Scan</option>
-                    <option value="Ultrasound">Ultrasound</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div style={{ marginBottom: "16px" }}>
-                  <label style={{ display: "block", marginBottom: "8px" }}>Image File (Max 10MB)</label>
-                  <input
-                    required
-                    type="file"
-                    accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-                    onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files[0] })}
-                  />
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button type="submit" className="btn btn-primary" disabled={uploadingImage}>
-                    {uploadingImage ? "Uploading..." : "Upload"}
-                  </button>
-                  <button type="button" className="btn btn-outline" onClick={() => setShowUploadModal(false)} disabled={uploadingImage}>
-                    Cancel
-                  </button>
-                </div>
-              </form>
+        {isAddDiagnosisOpen && (
+          <AppModal
+            title="Add diagnosis"
+            description="Search an ICD-10 code and add optional notes for this diagnosis."
+            onClose={() => setIsAddDiagnosisOpen(false)}
+          >
+            <form
+              className="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveDiagnosis();
+              }}
+            >
+              {modalError && <div className="alert alert-error">{modalError}</div>}
+
+              <SearchableSelect
+                label="ICD-10 code"
+                placeholder="Select or search ICD-10 code…"
+                searchPlaceholder="Type to search code or description…"
+                value={selectedIcdCode}
+                onChange={setSelectedIcdCode}
+                loadOptions={loadIcdOptions}
+                required
+              />
+
+              <label>
+                Diagnosis note
+                <textarea
+                  className="encounter-edit-textarea"
+                  value={diagnosisNote}
+                  onChange={(e) => setDiagnosisNote(e.target.value)}
+                  placeholder="Optional notes (e.g. primary, secondary, mild)…"
+                />
+              </label>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setIsAddDiagnosisOpen(false)}
+                  disabled={modalSubmitting}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={modalSubmitting || !selectedIcdCode}>
+                  {modalSubmitting ? "Saving…" : "Save diagnosis"}
+                </button>
+              </div>
+            </form>
+          </AppModal>
+        )}
+
+        {isEditDiagnosisOpen && diagnosisToEdit && (
+          <AppModal
+            title="Edit diagnosis"
+            description="Update ICD-10 code or clinical notes. Changes are audited."
+            onClose={() => {
+              if (!modalSubmitting) {
+                setIsEditDiagnosisOpen(false);
+                setDiagnosisToEdit(null);
+              }
+            }}
+          >
+            <form
+              className="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleUpdateDiagnosis();
+              }}
+            >
+              {modalError && <div className="alert alert-error">{modalError}</div>}
+
+              <SearchableSelect
+                label="ICD-10 code"
+                placeholder="Select or search ICD-10 code…"
+                searchPlaceholder="Type to search code or description…"
+                value={selectedIcdCode}
+                onChange={setSelectedIcdCode}
+                loadOptions={loadIcdOptions}
+                pinnedLabel={
+                  diagnosisToEdit
+                    ? `${diagnosisToEdit.code} - ${diagnosisToEdit.text}`
+                    : ""
+                }
+                required
+              />
+
+              <label>
+                Diagnosis note
+                <textarea
+                  className="encounter-edit-textarea"
+                  value={diagnosisNote}
+                  onChange={(e) => setDiagnosisNote(e.target.value)}
+                  placeholder="Optional notes (e.g. primary, secondary, mild)…"
+                />
+              </label>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setIsEditDiagnosisOpen(false);
+                    setDiagnosisToEdit(null);
+                  }}
+                  disabled={modalSubmitting}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={modalSubmitting || !selectedIcdCode}>
+                  {modalSubmitting ? "Saving…" : "Update diagnosis"}
+                </button>
+              </div>
+            </form>
+          </AppModal>
+        )}
+
+        <ConfirmDialog
+          open={Boolean(diagnosisToRemove)}
+          title="Remove diagnosis?"
+          description={
+            diagnosisToRemove
+              ? `Remove "${diagnosisToRemove.code} - ${diagnosisToRemove.text}" from this encounter?`
+              : ""
+          }
+          confirmText={removingDiagnosis ? "Removing…" : "Remove"}
+          variant="danger"
+          loading={removingDiagnosis}
+          onConfirm={handleConfirmRemoveDiagnosis}
+          onCancel={() => setDiagnosisToRemove(null)}
+        />
+
+        <ConfirmDialog
+          open={confirmSignOff}
+          title="Sign off encounter?"
+          description="After sign-off, clinical notes and diagnoses are finalized and can no longer be edited."
+          confirmText={submitting ? "Signing off…" : "Sign off"}
+          loading={submitting}
+          onConfirm={handleConfirmSignOff}
+          onCancel={() => setConfirmSignOff(false)}
+        />
+
+        <ConfirmDialog
+          open={Boolean(imageToDelete)}
+          title="Delete medical image?"
+          description={
+            imageToDelete ? `Delete "${imageToDelete.title}" from this encounter?` : ""
+          }
+          confirmText={submitting ? "Deleting…" : "Delete"}
+          variant="danger"
+          loading={submitting}
+          onConfirm={handleConfirmDeleteImage}
+          onCancel={() => setImageToDelete(null)}
+        />
+
+        {lightboxImage && (
+          <div
+            className="doctor-encounter-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label={lightboxImage.title}
+            onClick={() => {
+              setLightboxImage(null);
+              setLightboxZoom(1);
+              setLightboxPan({ x: 0, y: 0 });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") {
+                setLightboxImage(null);
+                setLightboxZoom(1);
+                setLightboxPan({ x: 0, y: 0 });
+              }
+            }}
+          >
+            <div className="doctor-encounter-lightbox-toolbar" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setLightboxZoom((z) => Math.max(1, Number((z - 0.25).toFixed(2))));
+                  if (lightboxZoom <= 1.25) setLightboxPan({ x: 0, y: 0 });
+                }}
+              >
+                Zoom out
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setLightboxZoom((z) => Math.min(4, Number((z + 0.25).toFixed(2))))}
+              >
+                Zoom in
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setLightboxZoom(1);
+                  setLightboxPan({ x: 0, y: 0 });
+                }}
+              >
+                Reset
+              </button>
+              <a
+                className="btn btn-primary btn-sm"
+                href={lightboxImage.url}
+                download={lightboxImage.title || "medical-image"}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Download
+              </a>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => {
+                  setLightboxImage(null);
+                  setLightboxZoom(1);
+                  setLightboxPan({ x: 0, y: 0 });
+                }}
+              >
+                Close
+              </button>
             </div>
+            <figure
+              className="doctor-encounter-lightbox-figure"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className={`doctor-encounter-lightbox-stage${lightboxZoom > 1 ? " is-zoomable" : ""}`}
+                onPointerDown={(e) => {
+                  if (lightboxZoom <= 1) return;
+                  setLightboxDragging(true);
+                  lightboxDragStart.current = {
+                    x: e.clientX - lightboxPan.x,
+                    y: e.clientY - lightboxPan.y,
+                  };
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (!lightboxDragging || !lightboxDragStart.current) return;
+                  setLightboxPan({
+                    x: e.clientX - lightboxDragStart.current.x,
+                    y: e.clientY - lightboxDragStart.current.y,
+                  });
+                }}
+                onPointerUp={() => {
+                  setLightboxDragging(false);
+                  lightboxDragStart.current = null;
+                }}
+              >
+                <img
+                  src={lightboxImage.url}
+                  alt={lightboxImage.title}
+                  style={{
+                    transform: `translate(${lightboxPan.x}px, ${lightboxPan.y}px) scale(${lightboxZoom})`,
+                  }}
+                  draggable={false}
+                />
+              </div>
+              <figcaption>
+                <strong>{lightboxImage.title}</strong>
+                <span>
+                  {lightboxImage.type || "image"}
+                  {lightboxImage.createdAt
+                    ? ` · ${new Date(lightboxImage.createdAt).toLocaleString()}`
+                    : ""}
+                  {` · ${Math.round(lightboxZoom * 100)}%`}
+                </span>
+              </figcaption>
+            </figure>
           </div>
+        )}
+
+        {showUploadModal && (
+          <AppModal
+            title="Upload medical image"
+            description="Attach an imaging study to this encounter. Max 10MB."
+            onClose={() => (!uploadingImage ? setShowUploadModal(false) : undefined)}
+          >
+            <form className="form" onSubmit={handleUploadSubmit}>
+              <FilterFormField
+                id="medical-image-title"
+                label="Title"
+                required
+                value={uploadForm.title}
+                onChange={(e) => setUploadForm({ ...uploadForm, title: e.target.value })}
+                placeholder="e.g. Chest X-Ray PA"
+              />
+              <CustomSelect
+                label="Type"
+                value={uploadForm.type}
+                onChange={(value) => setUploadForm({ ...uploadForm, type: value })}
+                options={[
+                  { value: "X-Ray", label: "X-Ray" },
+                  { value: "MRI", label: "MRI" },
+                  { value: "CT Scan", label: "CT Scan" },
+                  { value: "Ultrasound", label: "Ultrasound" },
+                  { value: "Other", label: "Other" },
+                ]}
+              />
+              <label className="doctor-encounter-file-field">
+                <span className="filter-field-label">Image file</span>
+                <input
+                  required
+                  type="file"
+                  className="filter-field-control"
+                  accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
+                  onChange={(e) => setUploadForm({ ...uploadForm, file: e.target.files[0] })}
+                />
+              </label>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() => setShowUploadModal(false)}
+                  disabled={uploadingImage}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={uploadingImage || !uploadForm.file}>
+                  {uploadingImage ? "Uploading…" : "Upload"}
+                </button>
+              </div>
+            </form>
+          </AppModal>
         )}
       </DoctorLayout>
     </PageLayout>

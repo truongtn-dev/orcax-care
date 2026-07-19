@@ -73,7 +73,12 @@ export default function PortalShell({
                         onClick={() => setSidebarOpen(false)}
                       >
                         <NavIcon name={item.icon} />
-                        {item.label}
+                        <span className="portal-sidebar-link-label">{item.label}</span>
+                        {item.badge != null && Number(item.badge) > 0 ? (
+                          <span className="portal-nav-badge" aria-label={`${item.badge} alerts`}>
+                            {Number(item.badge) > 99 ? "99+" : item.badge}
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );

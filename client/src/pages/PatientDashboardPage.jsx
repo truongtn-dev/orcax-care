@@ -119,6 +119,22 @@ const DASHBOARD_SECTIONS = [
           </svg>
         ),
       },
+      {
+        to: "/patient/prescriptions",
+        title: "My prescriptions",
+        description: "View past prescriptions and download PDF copies.",
+        badge: "Rx",
+        theme: "teal",
+        cta: "View prescriptions",
+        icon: (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M9 5h6" />
+            <path d="M9 9h6" />
+            <path d="M9 13h3" />
+            <path d="M6 3h9l3 3v15H6z" />
+          </svg>
+        ),
+      },
     ],
   },
   {

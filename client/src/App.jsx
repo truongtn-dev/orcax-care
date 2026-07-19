@@ -19,10 +19,12 @@ import PatientWalletMockCheckoutPage from "./pages/PatientWalletMockCheckoutPage
 import PatientWalletSepayMockCheckoutPage from "./pages/PatientWalletSepayMockCheckoutPage.jsx";
 import PatientInsuranceCardsPage from "./pages/PatientInsuranceCardsPage.jsx";
 import PatientEmrTimelinePage from "./pages/PatientEmrTimelinePage.jsx";
+import PatientPrescriptionsPage from "./pages/PatientPrescriptionsPage.jsx";
 import PatientFavoritesPage from "./pages/PatientFavoritesPage.jsx";
 import PatientNotificationsPage from "./pages/PatientNotificationsPage.jsx";
 import PatientSubmitComplaintPage from "./pages/PatientSubmitComplaintPage.jsx";
 import PatientComplaintsPage from "./pages/PatientComplaintsPage.jsx";
+import PatientComplaintDetailPage from "./pages/PatientComplaintDetailPage.jsx";
 import AdminAccountDetailPage from "./pages/AdminAccountDetailPage.jsx";
 import AdminAccountPage from "./pages/AdminAccountPage.jsx";
 import AdminClinicRoomPage from "./pages/AdminClinicRoomPage.jsx";
@@ -44,6 +46,7 @@ import DoctorScheduleCalendarPage from "./pages/DoctorScheduleCalendarPage.jsx";
 import DoctorTodayAppointmentsPage from "./pages/DoctorTodayAppointmentsPage.jsx";
 import DoctorEncounterDetailPage from "./pages/DoctorEncounterDetailPage.jsx";
 import DoctorPrescriptionCreatePage from "./pages/DoctorPrescriptionCreatePage.jsx";
+import DoctorPrescriptionsPage from "./pages/DoctorPrescriptionsPage.jsx";
 import PrescriptionDetailPage from "./pages/PrescriptionDetailPage.jsx";
 import StaffDashboardPage from "./pages/StaffDashboardPage.jsx";
 import StaffPharmacyPage from "./pages/StaffPharmacyPage.jsx";
@@ -193,6 +196,14 @@ export default function App() {
             }
           />
           <Route
+            path="/patient/prescriptions"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientPrescriptionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/patient/prescriptions/:id"
             element={
               <ProtectedRoute roles={["patient"]}>
@@ -229,6 +240,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["patient"]}>
                 <PatientSubmitComplaintPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patient/complaints/:id"
+            element={
+              <ProtectedRoute roles={["patient"]}>
+                <PatientComplaintDetailPage />
               </ProtectedRoute>
             }
           />
@@ -542,6 +561,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={["doctor"]}>
                 <DoctorPrescriptionCreatePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/doctor/prescriptions"
+            element={
+              <ProtectedRoute roles={["doctor"]}>
+                <DoctorPrescriptionsPage />
               </ProtectedRoute>
             }
           />

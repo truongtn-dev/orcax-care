@@ -59,34 +59,25 @@
 
 .doctor-rx-line {
   display: grid;
-  grid-template-columns: minmax(220px, 1.5fr) 100px 100px minmax(160px, 1fr);
+  grid-template-columns: minmax(240px, 1.6fr) 110px 110px minmax(160px, 1fr);
   gap: 0.75rem;
   align-items: end;
-  padding: 0.9rem;
+  padding: 0.95rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.doctor-rx-line label,
-.doctor-rx-notes {
-  display: grid;
-  gap: 0.35rem;
-  color: var(--color-text-secondary);
-  font-size: 0.78rem;
-  font-weight: 700;
+.doctor-rx-line--duplicate {
+  border-color: rgba(215, 0, 21, 0.28);
+  background: linear-gradient(180deg, #fff5f5 0%, #fff 100%);
 }
 
-.doctor-rx-line select,
-.doctor-rx-line input,
-.doctor-rx-notes textarea {
-  width: 100%;
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: var(--radius-md);
-  padding: 0.65rem 0.7rem;
-  font: inherit;
-  color: var(--color-navy);
-  background: #fff;
+.doctor-rx-line .filter-field,
+.doctor-rx-line .custom-select,
+.doctor-rx-line .searchable-select,
+.doctor-rx-line > div {
+  min-width: 0;
 }
 
 .doctor-rx-line-wide {
@@ -111,8 +102,24 @@
   font-size: 0.68rem;
 }
 
+.doctor-rx-line-total .doctor-rx-dup {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
 .doctor-rx-notes {
+  display: grid;
+  gap: 0.35rem;
   margin-top: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.doctor-rx-notes textarea.filter-field-control {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
 }
 
 .doctor-rx-footer {

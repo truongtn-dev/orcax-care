@@ -7,6 +7,7 @@ import { createApp } from "../app.js";
 import { connectDatabase, disconnectDatabase } from "../config/database.js";
 import { AuthToken } from "../models/AuthToken.js";
 import { Complaint } from "../models/Complaint.js";
+import { ComplaintReply } from "../models/ComplaintReply.js";
 import { Patient } from "../models/Patient.js";
 import { User } from "../models/User.js";
 import { issueAuthToken } from "../services/token.service.js";
@@ -44,8 +45,11 @@ describe("UC-11 Patient complaints", () => {
     baseUrl = `http://127.0.0.1:${server.address().port}`;
   });
 
+  let otherPatientUser;
+
   beforeEach(async () => {
     await AuthToken.deleteMany({});
+    await ComplaintReply.deleteMany({});
     await Complaint.deleteMany({});
     await Patient.deleteMany({});
     await User.deleteMany({});
@@ -59,6 +63,16 @@ describe("UC-11 Patient complaints", () => {
       isEmailVerified: true,
     });
     await Patient.create({ userId: patientUser._id, isActive: true });
+
+    otherPatientUser = await User.create({
+      email: "other.patient.complaint@orcaxcare.com",
+      passwordHash: "hash",
+      role: "patient",
+      fullName: "Other Patient",
+      isActive: true,
+      isEmailVerified: true,
+    });
+    await Patient.create({ userId: otherPatientUser._id, isActive: true });
   });
 
   after(async () => {
@@ -149,5 +163,52 @@ describe("UC-11 Patient complaints", () => {
     const openBody = await openRes.json();
     assert.equal(openBody.total, 1);
     assert.equal(openBody.items[0].ticketId, "CMP-TEST-OPEN");
+  });
+
+  test("owner views complaint detail with reply thread", async () => {
+    const complaint = await Complaint.create({
+      ticketId: "CMP-TEST-DETAIL",
+      patientUserId: patientUser._id,
+      category: "billing",
+      ticketType: "complaint",
+      subject: "[Billing] Detail ticket",
+      content: "Need help with a billing discrepancy.",
+      status: "in_progress",
+      statusUpdatedAt: new Date(),
+    });
+    await ComplaintReply.create({
+      complaintId: complaint._id,
+      repliedBy: patientUser._id,
+      content: "Our team is reviewing your billing statement.",
+    });
+
+    const res = await fetch(`${baseUrl}/api/patient/complaints/${complaint._id}`, {
+      headers: { Authorization: await authHeaderFor(patientUser) },
+    });
+
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.complaint.ticketId, "CMP-TEST-DETAIL");
+    assert.equal(body.replies.length, 1);
+    assert.equal(body.replies[0].content, "Our team is reviewing your billing statement.");
+  });
+
+  test("denies access to another patient's complaint", async () => {
+    const complaint = await Complaint.create({
+      ticketId: "CMP-TEST-PRIVATE",
+      patientUserId: patientUser._id,
+      category: "billing",
+      ticketType: "complaint",
+      subject: "[Billing] Private ticket",
+      content: "This belongs to the first patient only.",
+      status: "open",
+      statusUpdatedAt: new Date(),
+    });
+
+    const res = await fetch(`${baseUrl}/api/patient/complaints/${complaint._id}`, {
+      headers: { Authorization: await authHeaderFor(otherPatientUser) },
+    });
+
+    assert.equal(res.status, 403);
   });
 });

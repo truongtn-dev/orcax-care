@@ -7,6 +7,7 @@ import { ensureAllDoctorSlugs } from "./utils/doctorSlug.js";
 import { ensureAllUserSlugs } from "./utils/userSlug.js";
 import { verifyMailConnection } from "./services/mail.service.js";
 import { initSocket } from "./realtime/socket.js";
+import { startAppointmentReminderJob } from "./jobs/appointmentReminder.job.js";
 
 const port = Number(process.env.PORT) || 5000;
 
@@ -30,4 +31,7 @@ server.listen(port, async () => {
     console.warn("⚠ API chạy nhưng DB chưa kết nối — login sẽ lỗi 503.");
   }
   await verifyMailConnection();
+  if (connected) {
+    startAppointmentReminderJob();
+  }
 });

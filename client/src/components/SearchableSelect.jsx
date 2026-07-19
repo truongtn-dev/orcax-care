@@ -33,6 +33,7 @@ export default function SearchableSelect({
   disabled = false,
   required = false,
   emptyMessage = "No matches found.",
+  pinnedLabel: pinnedLabelProp = "",
 }) {
   const autoId = useId();
   const id = idProp || autoId;
@@ -46,10 +47,14 @@ export default function SearchableSelect({
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState(staticOptions);
   const [loading, setLoading] = useState(false);
-  const [pinnedLabel, setPinnedLabel] = useState("");
+  const [pinnedLabel, setPinnedLabel] = useState(pinnedLabelProp || "");
 
   const selected = options.find((o) => o.value === value) || staticOptions.find((o) => o.value === value);
-  const displayLabel = selected?.label ?? ((value ? pinnedLabel : "") || placeholder);
+  const displayLabel = selected?.label ?? ((value ? pinnedLabel || pinnedLabelProp : "") || placeholder);
+
+  useEffect(() => {
+    if (pinnedLabelProp) setPinnedLabel(pinnedLabelProp);
+  }, [pinnedLabelProp]);
 
   useEffect(() => {
     if (!value) {

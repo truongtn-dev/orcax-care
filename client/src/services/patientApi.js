@@ -85,6 +85,10 @@ export const PatientApiClient = {
     return api.get(`/api/patient/prescriptions/${id}`);
   },
 
+  listPrescriptions(params) {
+    return api.get("/api/patient/prescriptions", { params });
+  },
+
   listInsuranceCards() {
     return api.get("/api/patient/insurance-cards");
   },
@@ -111,5 +115,9 @@ export const PatientApiClient = {
 
   createComplaint(payload) {
     return api.post("/api/patient/complaints", payload);
+  },
+
+  getComplaint(id) {
+    return api.get(`/api/patient/complaints/${id}`);
   },
 };

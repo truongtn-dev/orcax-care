@@ -92,3 +92,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+.doctor-card-premium-footer.patient-favorites-footer {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}

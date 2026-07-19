@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import { Complaint } from "../models/Complaint.js";
+import { ComplaintReply } from "../models/ComplaintReply.js";
 
 const CATEGORY_LABELS = {
   service: "Service",
@@ -87,6 +89,45 @@ export async function createComplaint(patientUserId, payload = {}) {
   });
 
   return { status: 201, body: { item: serializeComplaint(complaint) } };
+}
+
+function serializeReply(row) {
+  const user = row.repliedBy || {};
+  return {
+    _id: row._id.toString(),
+    content: row.content,
+    createdAt: row.createdAt,
+    authorName: user.fullName || "Staff",
+    authorRole: user.role || "",
+  };
+}
+
+export async function getComplaintDetail(patientUserId, complaintId) {
+  if (!complaintId || !mongoose.Types.ObjectId.isValid(complaintId)) {
+    return { status: 400, body: { message: "Invalid complaint id." } };
+  }
+
+  const complaint = await Complaint.findById(complaintId).lean();
+  if (!complaint) {
+    return { status: 404, body: { message: "Complaint not found." } };
+  }
+
+  if (complaint.patientUserId.toString() !== patientUserId.toString()) {
+    return { status: 403, body: { message: "You do not have access to this complaint." } };
+  }
+
+  const replies = await ComplaintReply.find({ complaintId: complaint._id })
+    .populate("repliedBy", "fullName role")
+    .sort({ createdAt: 1 })
+    .lean();
+
+  return {
+    status: 200,
+    body: {
+      complaint: serializeComplaint(complaint),
+      replies: replies.map(serializeReply),
+    },
+  };
 }
 
 export async function listComplaints(patientUserId, query = {}) {

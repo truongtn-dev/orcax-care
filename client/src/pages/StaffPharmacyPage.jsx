@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import StaffLayout from "../components/StaffLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
@@ -7,7 +7,9 @@ import DatePicker from "../components/DatePicker.jsx";
 import DashboardKpiGrid from "../components/dashboard/DashboardKpiGrid.jsx";
 import DashboardBarChart from "../components/dashboard/DashboardBarChart.jsx";
 import { StaffApiClient } from "../services/staffApi.js";
+import { AdminApiClient } from "../services/adminApi.js";
 import { getApiErrorMessage } from "../services/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import FilterFormField from "../components/FilterFormField.jsx";
 import AppModal from "../components/AppModal.jsx";
 import "./StaffPharmacyPage.css";
@@ -38,7 +40,17 @@ const EMPTY_MEDICINE = {
   batchNo: "",
 };
 
+const EMPTY_EDIT = {
+  name: "",
+  unit: "",
+  price: "",
+  minStockLevel: "",
+  isActive: true,
+};
+
 export default function StaffPharmacyPage() {
+  const { role } = useAuth();
+  const [searchParams] = useSearchParams();
   const [dashboard, setDashboard] = useState(null);
   const [medicines, setMedicines] = useState([]);
   const [movements, setMovements] = useState([]);
@@ -46,13 +58,21 @@ export default function StaffPharmacyPage() {
   const [outboundForm, setOutboundForm] = useState(EMPTY_OUTBOUND);
   const [createForm, setCreateForm] = useState(EMPTY_MEDICINE);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [lowStockOnly, setLowStockOnly] = useState(
+    searchParams.get("lowStockOnly") === "1" || searchParams.get("lowStockOnly") === "true"
+  );
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  const [editTarget, setEditTarget] = useState(null);
+  const [editForm, setEditForm] = useState(EMPTY_EDIT);
+  const [updating, setUpdating] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [editSuccess, setEditSuccess] = useState("");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -76,6 +96,84 @@ export default function StaffPharmacyPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const openEditModal = (medicine) => {
+    setEditTarget(medicine);
+    setEditForm({
+      name: medicine.name || "",
+      unit: medicine.unit || "",
+      price: medicine.price ?? "",
+      minStockLevel: medicine.minStockLevel ?? 0,
+      isActive: medicine.isActive ?? true,
+    });
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const closeEditModal = () => {
+    if (updating) return;
+    setEditTarget(null);
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditFormChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+    setEditError("");
+    setEditSuccess("");
+  };
+
+  const onEditSubmit = async (event) => {
+    event.preventDefault();
+    if (!editTarget) return;
+
+    setEditError("");
+    setEditSuccess("");
+
+    if (!editForm.name.trim()) {
+      setEditError("Medicine name is required.");
+      return;
+    }
+    if (!editForm.unit.trim()) {
+      setEditError("Unit is required.");
+      return;
+    }
+    const threshold = Number(editForm.minStockLevel);
+    if (Number.isNaN(threshold) || threshold < 0) {
+      setEditError("Low stock threshold must be greater than or equal to 0.");
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const payload = {
+        name: editForm.name.trim(),
+        unit: editForm.unit.trim(),
+        minStockLevel: threshold,
+        isActive: editForm.isActive === true || editForm.isActive === "true",
+      };
+      if (editForm.price !== "") {
+        payload.price = Number(editForm.price);
+      }
+
+      if (role === "admin") {
+        await AdminApiClient.updateMedicine(editTarget._id, payload);
+      } else {
+        await StaffApiClient.updateMedicine(editTarget._id, payload);
+      }
+
+      setEditSuccess("Medicine updated successfully.");
+      await loadData();
+      setTimeout(() => {
+        closeEditModal();
+      }, 900);
+    } catch (err) {
+      setEditError(getApiErrorMessage(err));
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   const onSubmitOutbound = async (event) => {
     event.preventDefault();
@@ -372,11 +470,17 @@ export default function StaffPharmacyPage() {
                         <th>Qty</th>
                         <th>Nearest expiry</th>
                         <th>Status</th>
+                        <th className="table-actions-col">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {medicines.map((med) => (
-                        <tr key={med._id} className={med.isLowStock ? "staff-pharmacy-row-low" : ""}>
+                        <tr
+                          key={med._id}
+                          className={
+                            !med.isActive ? "row-inactive" : med.isLowStock ? "staff-pharmacy-row-low" : ""
+                          }
+                        >
                           <td>{med.code}</td>
                           <td>
                             <Link to={`/staff/pharmacy/medicines/${med._id}`} className="table-link">
@@ -389,13 +493,22 @@ export default function StaffPharmacyPage() {
                           </td>
                           <td>{med.nearestExpiry || "—"}</td>
                           <td>
-                            <span
-                              className={`status-badge ${
-                                med.isLowStock ? "status-badge-inactive" : "status-badge-active"
-                              }`}
+                            {!med.isActive ? (
+                              <span className="status-badge status-badge-inactive">Inactive</span>
+                            ) : med.isLowStock ? (
+                              <span className="status-badge status-badge-inactive">Low stock</span>
+                            ) : (
+                              <span className="status-badge status-badge-active">OK</span>
+                            )}
+                          </td>
+                          <td className="table-actions-col">
+                            <button
+                              type="button"
+                              className="btn btn-outline btn-sm"
+                              onClick={() => openEditModal(med)}
                             >
-                              {med.isLowStock ? "Low stock" : "OK"}
-                            </span>
+                              Edit
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -546,6 +659,81 @@ export default function StaffPharmacyPage() {
                   </button>
                   <button type="submit" className="btn btn-primary" disabled={creating}>
                     {creating ? "Saving…" : "Create Medicine"}
+                  </button>
+                </div>
+              </form>
+            </AppModal>
+          )}
+          {editTarget && (
+            <AppModal
+              title="Update medicine"
+              description={`Edit ${editTarget.name} (${editTarget.code}).`}
+              titleId="edit-medicine-title"
+              onClose={closeEditModal}
+            >
+              <form onSubmit={onEditSubmit} className="form form-compact">
+                {editError && <div className="alert alert-error">{editError}</div>}
+                {editSuccess && <div className="alert alert-success">{editSuccess}</div>}
+
+                <div className="form-grid">
+                  <FilterFormField
+                    id="edit-medicine-name"
+                    label="Medicine name"
+                    name="name"
+                    value={editForm.name}
+                    onChange={onEditFormChange}
+                    required
+                    disabled={updating}
+                  />
+                  <FilterFormField
+                    id="edit-medicine-unit"
+                    label="Unit"
+                    name="unit"
+                    value={editForm.unit}
+                    onChange={onEditFormChange}
+                    required
+                    disabled={updating}
+                  />
+                  <FilterFormField
+                    id="edit-medicine-price"
+                    label="Price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    value={editForm.price}
+                    onChange={onEditFormChange}
+                    disabled={updating}
+                  />
+                  <FilterFormField
+                    id="edit-medicine-min-stock"
+                    label="Low stock threshold"
+                    name="minStockLevel"
+                    type="number"
+                    min="0"
+                    value={editForm.minStockLevel}
+                    onChange={onEditFormChange}
+                    required
+                    disabled={updating}
+                  />
+                  <CustomSelect
+                    className="form-grid-span-2"
+                    label="Status"
+                    value={editForm.isActive ? "true" : "false"}
+                    onChange={(val) => setEditForm((current) => ({ ...current, isActive: val === "true" }))}
+                    options={[
+                      { value: "true", label: "Active" },
+                      { value: "false", label: "Inactive" },
+                    ]}
+                    disabled={updating}
+                  />
+                </div>
+
+                <div className="form-actions">
+                  <button type="button" className="btn btn-outline" onClick={closeEditModal} disabled={updating}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={updating}>
+                    {updating ? "Saving…" : "Save changes"}
                   </button>
                 </div>
               </form>

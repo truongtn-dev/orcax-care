@@ -11,6 +11,7 @@ import * as AdminController from "../controllers/admin.controller.js";
 import * as AdminDashboardController from "../controllers/adminDashboard.controller.js";
 import * as AdminComplaintController from "../controllers/adminComplaint.controller.js";
 import * as AdminBranchController from "../controllers/adminBranch.controller.js";
+import * as StaffPharmacyController from "../controllers/staffPharmacy.controller.js";
 import { authMiddleware, requireRole } from "../middlewares/auth.middleware.js";
 import { requireDatabase } from "../middlewares/requireDatabase.js";
 
@@ -23,6 +24,7 @@ adminRouter.get("/ping", (req, res) => {
 });
 
 adminRouter.get("/dashboard", AdminDashboardController.getDashboard);
+adminRouter.get("/dashboard/revenue-export", AdminDashboardController.exportRevenue);
 
 adminRouter.get("/complaints", AdminComplaintController.listComplaints);
 adminRouter.get("/complaints/:id", AdminComplaintController.getComplaint);
@@ -97,3 +99,6 @@ adminRouter.post(
   "/appointment-slots/generate",
   AdminAppointmentSlotController.generateAppointmentSlots
 );
+
+adminRouter.get("/medicines/:id", StaffPharmacyController.getMedicineDetail);
+adminRouter.put("/medicines/:id", StaffPharmacyController.updateMedicine);

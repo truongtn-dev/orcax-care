@@ -59,6 +59,7 @@ export default function BranchDetailPage() {
                 branches={[branch]}
                 selectedId={branch.slug || branch._id}
                 className="branch-map--detail"
+                navigateOnMarkerClick={false}
               />
             </section>
 

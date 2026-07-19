@@ -23,20 +23,27 @@
   width: 100%;
 }
 
-.branch-leaflet-marker {
-  display: block;
-  width: 28px;
-  height: 36px;
-  background: #0d9488;
-  border-radius: 50% 50% 50% 0;
-  transform: rotate(-45deg);
-  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.45);
-  border: 2px solid #fff;
+/* Google-style location pin */
+.branch-map-pin {
+  background: transparent !important;
+  border: none !important;
 }
 
-.branch-leaflet-marker.is-selected {
-  background: #f59e0b;
-  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.45);
+.branch-map-pin-svg {
+  display: block;
+  filter: drop-shadow(0 3px 6px rgba(15, 23, 42, 0.28));
+  transition: transform 0.18s ease;
+  transform-origin: 50% 100%;
+}
+
+.branch-map-pin.is-selected .branch-map-pin-svg,
+.leaflet-marker-icon:hover .branch-map-pin-svg {
+  transform: scale(1.08);
+}
+
+.branch-map .leaflet-marker-icon {
+  background: transparent;
+  border: none;
 }
 
 .branch-map .leaflet-control-attribution {
@@ -67,13 +74,6 @@
   font-size: 0.82rem;
 }
 
-.branch-map-popup-hint {
-  margin-top: 0.15rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #0d9488;
-}
-
 .branch-map-popup-actions {
   display: flex;
   gap: 0.5rem;
@@ -95,13 +95,13 @@
 
 .branch-map-popup-link {
   border: none;
-  background: #0d9488;
+  background: var(--color-primary, #0891b2);
   color: #fff;
 }
 
 .branch-map-popup-directions {
-  background: rgba(13, 148, 136, 0.1);
-  color: #0d9488;
+  background: var(--color-primary-light, rgba(8, 145, 178, 0.12));
+  color: var(--color-primary-hover, #0e7490);
 }
 
 .branch-detail-map {

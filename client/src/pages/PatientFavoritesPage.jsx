@@ -216,8 +216,14 @@ export default function PatientFavoritesPage() {
                         {doctor.bio || "Experienced physician dedicated to patient care."}
                       </p>
 
-                      <div className="doctor-card-premium-footer">
-                        <Link to={getDoctorProfilePath(doctor)} className="btn btn-primary btn-sm doctor-card-cta">
+                      <div className="doctor-card-premium-footer patient-favorites-footer">
+                        <Link
+                          to={`/patient/book?doctorId=${doctor._id}`}
+                          className="btn btn-primary btn-sm doctor-card-cta"
+                        >
+                          Book appointment
+                        </Link>
+                        <Link to={getDoctorProfilePath(doctor)} className="btn btn-outline btn-sm">
                           View profile
                         </Link>
                         <button

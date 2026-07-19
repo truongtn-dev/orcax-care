@@ -215,6 +215,49 @@ describe("UC-31 Admin Dashboard", () => {
     assert.equal(body.appointmentsToday.total, 0);
   });
 
+  test("groups revenue chart by week", async () => {
+    const from = formatDateOnly(startOfToday());
+    const toDate = new Date(startOfToday());
+    toDate.setDate(toDate.getDate() + 1);
+    const to = formatDateOnly(toDate);
+
+    const res = await fetch(`${baseUrl}/api/admin/dashboard?from=${from}&to=${to}&groupBy=week`, {
+      headers: { Authorization: await authHeaderFor(adminUser) },
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.period.groupBy, "week");
+    assert.ok(body.revenueChart.length > 0);
+    assert.ok(body.revenueChart.every((point) => point.label.startsWith("Wk of ")));
+    const totalFromChart = body.revenueChart.reduce((sum, point) => sum + point.revenue, 0);
+    assert.equal(totalFromChart, body.kpis.totalRevenue);
+  });
+
+  test("groups revenue chart by month", async () => {
+    const from = formatDateOnly(startOfToday());
+    const toDate = new Date(startOfToday());
+    toDate.setDate(toDate.getDate() + 1);
+    const to = formatDateOnly(toDate);
+
+    const res = await fetch(`${baseUrl}/api/admin/dashboard?from=${from}&to=${to}&groupBy=month`, {
+      headers: { Authorization: await authHeaderFor(adminUser) },
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.period.groupBy, "month");
+    assert.ok(body.revenueChart.length > 0);
+    assert.ok(body.revenueChart.every((point) => /^[A-Za-z]{3} \d{4}$/.test(point.label)));
+    const totalFromChart = body.revenueChart.reduce((sum, point) => sum + point.revenue, 0);
+    assert.equal(totalFromChart, body.kpis.totalRevenue);
+  });
+
+  test("rejects invalid groupBy", async () => {
+    const res = await fetch(`${baseUrl}/api/admin/dashboard?groupBy=year`, {
+      headers: { Authorization: await authHeaderFor(adminUser) },
+    });
+    assert.equal(res.status, 400);
+  });
+
   test("rejects invalid date filters", async () => {
     const res = await fetch(`${baseUrl}/api/admin/dashboard?from=bad-date`, {
       headers: { Authorization: await authHeaderFor(adminUser) },

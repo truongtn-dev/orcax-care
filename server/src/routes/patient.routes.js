@@ -63,7 +63,9 @@ patientRouter.get("/emr/timeline", PatientEmrController.listTimeline);
 
 patientRouter.get("/complaints", PatientComplaintController.listComplaints);
 patientRouter.post("/complaints", PatientComplaintController.createComplaint);
+patientRouter.get("/complaints/:id", PatientComplaintController.getComplaint);
 
+patientRouter.get("/prescriptions", PatientPrescriptionController.listPrescriptions);
 patientRouter.get("/prescriptions/:id", PatientPrescriptionController.getPrescription);
 
 patientRouter.get("/notifications", PatientNotificationController.listNotifications);

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
+import SearchableSelect from "../components/SearchableSelect.jsx";
+import FilterFormField from "../components/FilterFormField.jsx";
 import { DoctorApiClient } from "../services/doctorApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./DoctorPrescriptionCreatePage.css";
@@ -61,26 +63,38 @@ export default function DoctorPrescriptionCreatePage() {
     [medicines]
   );
 
+  const medicineOptions = useMemo(
+    () =>
+      medicines.map((medicine) => ({
+        value: medicine._id,
+        label: `${medicine.name} (${medicine.code}) · stock ${medicine.stockQty}`,
+      })),
+    [medicines]
+  );
+
   const previewRows = lineItems.map((item) => {
     const medicine = medicineById.get(item.medicineId);
     const quantity = Math.max(1, Number.parseInt(item.quantity, 10) || 1);
     const lineTotal = (medicine?.price || 0) * quantity;
+    const duplicate =
+      Boolean(item.medicineId) &&
+      lineItems.filter((row) => row.medicineId === item.medicineId).length > 1;
     return {
       ...item,
       medicine,
       quantity,
       lineTotal,
       stockWarning: medicine ? quantity > medicine.stockQty : false,
+      duplicate,
     };
   });
 
+  const hasDuplicate = previewRows.some((row) => row.duplicate);
   const totalAmount = previewRows.reduce((sum, item) => sum + item.lineTotal, 0);
 
   const updateLineItem = (index, field, value) => {
     setLineItems((current) =>
-      current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+      current.map((item, itemIndex) => (itemIndex === index ? { ...item, [field]: value } : item))
     );
   };
 
@@ -96,6 +110,10 @@ export default function DoctorPrescriptionCreatePage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (hasDuplicate) {
+      setError("Duplicate medicine selected. Each drug can only appear once.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     setCreatedPrescription(null);
@@ -168,66 +186,62 @@ export default function DoctorPrescriptionCreatePage() {
               </div>
 
               {previewRows.map((item, index) => (
-                <div key={index} className="doctor-rx-line">
-                  <label>
-                    Medicine
-                    <select
-                      value={item.medicineId}
-                      onChange={(event) => updateLineItem(index, "medicineId", event.target.value)}
-                      required
-                    >
-                      <option value="">Select medicine</option>
-                      {medicines.map((medicine) => (
-                        <option key={medicine._id} value={medicine._id}>
-                          {medicine.name} ({medicine.code}) - stock {medicine.stockQty}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                <div
+                  key={index}
+                  className={`doctor-rx-line${item.duplicate ? " doctor-rx-line--duplicate" : ""}`}
+                >
+                  <SearchableSelect
+                    label="Medicine"
+                    placeholder="Select medicine…"
+                    searchPlaceholder="Search name or code…"
+                    value={item.medicineId}
+                    onChange={(value) => updateLineItem(index, "medicineId", value)}
+                    options={medicineOptions}
+                    required
+                  />
 
-                  <label>
-                    Quantity
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(event) => updateLineItem(index, "quantity", event.target.value)}
-                      required
-                    />
-                  </label>
+                  <FilterFormField
+                    id={`rx-qty-${index}`}
+                    label="Quantity"
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(event) => updateLineItem(index, "quantity", event.target.value)}
+                    required
+                  />
 
-                  <label>
-                    Duration
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.durationDays}
-                      onChange={(event) => updateLineItem(index, "durationDays", event.target.value)}
-                      required
-                    />
-                  </label>
+                  <FilterFormField
+                    id={`rx-days-${index}`}
+                    label="Duration"
+                    type="number"
+                    min="1"
+                    value={item.durationDays}
+                    onChange={(event) => updateLineItem(index, "durationDays", event.target.value)}
+                    required
+                  />
 
-                  <label>
-                    Dosage
-                    <input
-                      value={item.dosage}
-                      onChange={(event) => updateLineItem(index, "dosage", event.target.value)}
-                      placeholder="1 tablet twice daily"
-                    />
-                  </label>
+                  <FilterFormField
+                    id={`rx-dosage-${index}`}
+                    label="Dosage"
+                    value={item.dosage}
+                    onChange={(event) => updateLineItem(index, "dosage", event.target.value)}
+                    placeholder="1 tablet twice daily"
+                  />
 
-                  <label className="doctor-rx-line-wide">
-                    Instructions
-                    <input
+                  <div className="doctor-rx-line-wide">
+                    <FilterFormField
+                      id={`rx-instr-${index}`}
+                      label="Instructions"
                       value={item.instructions}
                       onChange={(event) => updateLineItem(index, "instructions", event.target.value)}
                       placeholder="After meals"
                     />
-                  </label>
+                  </div>
 
                   <div className="doctor-rx-line-total">
                     <span>{formatCurrency(item.lineTotal)}</span>
                     {item.stockWarning && <strong>Stock warning</strong>}
+                    {item.duplicate && <strong className="doctor-rx-dup">Duplicate drug</strong>}
                   </div>
 
                   <button
@@ -245,6 +259,7 @@ export default function DoctorPrescriptionCreatePage() {
             <label className="doctor-rx-notes">
               Notes
               <textarea
+                className="filter-field-control"
                 rows="3"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
@@ -254,7 +269,11 @@ export default function DoctorPrescriptionCreatePage() {
 
             <div className="doctor-rx-footer">
               <strong>Total {formatCurrency(totalAmount)}</strong>
-              <button type="submit" className="btn btn-primary" disabled={submitting || encounter.status === "signed"}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting || encounter.status === "signed" || hasDuplicate}
+              >
                 {submitting ? "Creating..." : "Create prescription"}
               </button>
             </div>

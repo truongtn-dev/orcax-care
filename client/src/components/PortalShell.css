@@ -98,6 +98,25 @@
   transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.portal-sidebar-link-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.portal-nav-badge {
+  flex-shrink: 0;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #fbbf24;
+  color: #78350f;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.35rem;
+  text-align: center;
+}
+
 .portal-nav-icon {
   flex-shrink: 0;
   opacity: 0.88;

@@ -1,26 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
+import CustomSelect from "../components/CustomSelect.jsx";
 import { PatientApiClient } from "../services/patientApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./PatientDashboardPage.css";
 import "./PatientComplaintPage.css";
 
-const statusOptions = [
-  ["all", "All statuses"],
-  ["open", "Open"],
-  ["in_progress", "In progress"],
-  ["resolved", "Resolved"],
+const STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
 ];
 
 const statusLabels = {
   open: "Open",
   in_progress: "In progress",
   resolved: "Resolved",
+  closed: "Closed",
 };
 
 function formatDate(value) {
-  if (!value) return "ΓÇö";
+  if (!value) return "—";
   return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
@@ -79,16 +82,16 @@ export default function PatientComplaintsPage() {
               <h2>Complaint tickets</h2>
               <p>{items.length} ticket{items.length === 1 ? "" : "s"} shown</p>
             </div>
-            <label>
-              Filter status
-              <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                {statusOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </label>
+            <CustomSelect
+              label="Filter status"
+              value={status}
+              onChange={setStatus}
+              options={STATUS_OPTIONS}
+            />
           </div>
 
           {loading ? (
-            <div className="patient-complaint-empty">Loading complaintsΓÇª</div>
+            <div className="patient-complaint-empty">Loading complaints…</div>
           ) : items.length === 0 ? (
             <div className="patient-complaint-empty">No complaints match this filter.</div>
           ) : (
@@ -107,7 +110,11 @@ export default function PatientComplaintsPage() {
                 <tbody>
                   {items.map((item) => (
                     <tr key={item._id}>
-                      <td><strong>{item.ticketId}</strong></td>
+                      <td>
+                        <Link to={`/patient/complaints/${item._id}`} className="table-link">
+                          <strong>{item.ticketId}</strong>
+                        </Link>
+                      </td>
                       <td>{item.ticketType}</td>
                       <td>{item.category}</td>
                       <td><span className={`patient-complaint-status patient-complaint-status--${item.status}`}>{statusLabels[item.status] || item.status}</span></td>

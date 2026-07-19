@@ -15,6 +15,7 @@ import { PublicApiClient } from "../services/publicApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import DoctorRatingDisplay from "../components/DoctorRatingDisplay.jsx";
+import AppIcon from "../components/icons/AppIcon.jsx";
 import { getDoctorProfilePath, isMongoObjectId } from "../utils/doctorUrls.js";
 
 function getInitials(name) {
@@ -189,15 +190,26 @@ export default function DoctorPublicProfilePage() {
                           </button>
                           <button
                             type="button"
-                            className="btn doctor-profile-favorite-btn"
+                            className={`btn doctor-profile-favorite-btn${isFavorite ? " is-active" : ""}`}
                             onClick={handleToggleFavorite}
                             disabled={favoriteLoading}
+                            aria-pressed={isFavorite}
+                            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                            title={isFavorite ? "Remove from favorites" : "Add to favorites"}
                           >
-                            {favoriteLoading
-                              ? "Updating..."
-                              : isFavorite
-                                ? "Remove from favorites"
-                                : "Add to favorites"}
+                            <AppIcon
+                              name="heart"
+                              size={18}
+                              className="doctor-profile-favorite-icon"
+                              fill={isFavorite ? "currentColor" : "none"}
+                            />
+                            <span>
+                              {favoriteLoading
+                                ? "Updating…"
+                                : isFavorite
+                                  ? "Favorited"
+                                  : "Add to favorites"}
+                            </span>
                           </button>
                         </div>
                       ) : (

@@ -211,6 +211,10 @@
 }
 
 .doctor-profile-favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
   min-width: 180px;
   border-radius: var(--radius-full);
   border-color: rgba(255, 255, 255, 0.42);
@@ -222,6 +226,21 @@
 .doctor-profile-favorite-btn:hover {
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
+}
+
+.doctor-profile-favorite-btn.is-active {
+  border-color: rgba(251, 113, 133, 0.75);
+  background: rgba(244, 63, 94, 0.22);
+  color: #fecdd3;
+}
+
+.doctor-profile-favorite-btn.is-active:hover {
+  background: rgba(244, 63, 94, 0.32);
+  color: #ffe4e6;
+}
+
+.doctor-profile-favorite-icon {
+  flex-shrink: 0;
 }
 
 .doctor-profile-signin-note {

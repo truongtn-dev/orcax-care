@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PageLayout from "../components/PageLayout.jsx";
 import DoctorLayout from "../components/DoctorLayout.jsx";
 import CustomSelect from "../components/CustomSelect.jsx";
@@ -39,6 +39,7 @@ function formatSlot(slot) {
 }
 
 export default function DoctorTodayAppointmentsPage() {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [status, setStatus] = useState("all");
@@ -77,6 +78,24 @@ export default function DoctorTodayAppointmentsPage() {
     try {
       const { data } = await DoctorApiClient.getAppointment(appointment._id);
       setSelectedAppointment(data);
+    } catch (err) {
+      setError(getApiErrorMessage(err));
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleStartConsultation = async () => {
+    if (!selectedAppointment) return;
+    if (selectedAppointment.encounterId) {
+      navigate(`/doctor/encounters/${selectedAppointment.encounterId}`);
+      return;
+    }
+    setDetailLoading(true);
+    setError("");
+    try {
+      const { data } = await DoctorApiClient.startConsultation(selectedAppointment._id);
+      navigate(`/doctor/encounters/${data._id}`);
     } catch (err) {
       setError(getApiErrorMessage(err));
     } finally {
@@ -236,16 +255,25 @@ export default function DoctorTodayAppointmentsPage() {
                   </div>
                 )}
               </dl>
-              {selectedAppointment.encounterId && (
-                <div className="form-actions">
+              <div className="form-actions" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                {selectedAppointment.encounterId ? (
                   <Link
                     to={`/doctor/encounters/${selectedAppointment.encounterId}`}
                     className="btn btn-primary btn-sm"
                   >
                     Open encounter
                   </Link>
-                </div>
-              )}
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={selectedAppointment.status !== "checked-in" || detailLoading}
+                    onClick={handleStartConsultation}
+                  >
+                    Start consultation
+                  </button>
+                )}
+              </div>
               </>
             )}
           </aside>

@@ -45,6 +45,7 @@ function bindPopupActions(marker, branchKey, navigate) {
       "click",
       (event) => {
         event.preventDefault();
+        event.stopPropagation();
         navigate(getBranchPath(branchKey));
       },
       { once: true }
@@ -57,6 +58,8 @@ export default function BranchMap({
   selectedId = "",
   className = "",
   onBranchSelect,
+  /** When true (default), clicking a pin navigates to branch detail. */
+  navigateOnMarkerClick = true,
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -121,13 +124,15 @@ export default function BranchMap({
       const marker = L.marker([lat, lng], {
         icon: createBranchMarkerIcon(isSelected),
         title: branch.name,
+        riseOnHover: true,
       });
 
       marker.bindPopup(buildPopupHtml(branch), { maxWidth: 280, closeButton: true });
       bindPopupActions(marker, branchKey, navigate);
       marker.on("click", () => {
-        if (onBranchSelect) {
-          onBranchSelect(branch);
+        onBranchSelect?.(branch);
+        if (navigateOnMarkerClick) {
+          navigate(getBranchPath(branchKey));
         }
       });
 
@@ -142,7 +147,7 @@ export default function BranchMap({
       map.fitBounds(bounds.pad(0.18), { maxZoom: 14 });
     }
 
-    if (selectedId) {
+    if (selectedId && !navigateOnMarkerClick) {
       const selected = markersRef.current.find(
         (item) => item.branchId === selectedId || item.branchSlug === selectedId
       );
@@ -150,7 +155,7 @@ export default function BranchMap({
     }
 
     window.requestAnimationFrame(() => map.invalidateSize());
-  }, [branches, selectedId, navigate, onBranchSelect, mapReady]);
+  }, [branches, selectedId, navigate, onBranchSelect, mapReady, navigateOnMarkerClick]);
 
   const mapClassName = ["branch-map", className].filter(Boolean).join(" ");
 

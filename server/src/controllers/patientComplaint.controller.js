@@ -19,3 +19,13 @@ export async function createComplaint(req, res) {
     return res.status(500).json({ message: "System error" });
   }
 }
+
+export async function getComplaint(req, res) {
+  try {
+    const result = await PatientComplaintService.getComplaintDetail(req.user.userId, req.params.id);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}

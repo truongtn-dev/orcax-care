@@ -30,6 +30,12 @@ const complaintSchema = new mongoose.Schema(
       index: true,
     },
     statusUpdatedAt: { type: Date, default: Date.now },
+    assignedAdminUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+      index: true,
+    },
   },
   { timestamps: true }
 );

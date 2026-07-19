@@ -29,12 +29,20 @@ export const StaffApiClient = {
     return api.post("/api/staff/pharmacy/prescriptions/verify", payload);
   },
 
+  lookupPrescription(id) {
+    return api.get(`/api/staff/pharmacy/prescriptions/${id}/lookup`);
+  },
+
   createMedicine(payload) {
     return api.post("/api/staff/pharmacy/medicines", payload);
   },
 
   stockOutbound(payload) {
     return api.post("/api/staff/pharmacy/stock-outbound", payload);
+  },
+
+  updateMedicine(id, payload) {
+    return api.put(`/api/staff/pharmacy/medicines/${id}`, payload);
   },
 
   getMyBranch() {

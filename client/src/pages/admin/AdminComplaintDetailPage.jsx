@@ -98,6 +98,11 @@ export default function AdminComplaintDetailPage() {
                   <div>
                     <h2>{complaint.subject}</h2>
                     <p>Submitted {new Date(complaint.createdAt).toLocaleString()}</p>
+                    {complaint.statusUpdatedAt && (
+                      <p className="admin-complaint-audit">
+                        Status last updated {new Date(complaint.statusUpdatedAt).toLocaleString()}
+                      </p>
+                    )}
                   </div>
                   <CustomSelect
                     label="Status"

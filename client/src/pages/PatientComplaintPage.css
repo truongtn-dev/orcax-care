@@ -65,6 +65,69 @@
   }
 }
 
+.patient-complaint-attachment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.patient-complaint-attachment-label {
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.patient-complaint-attachment-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.patient-complaint-attachment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.patient-complaint-attachment-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.patient-complaint-attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: #f8fafc;
+}
+
+.patient-complaint-attachment-preview img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.patient-complaint-attachment-preview span {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-navy);
+  word-break: break-all;
+}
+
 .patient-complaint-list-head {
   display: flex;
   justify-content: space-between;
@@ -155,4 +218,81 @@
   text-align: center;
   color: var(--color-text-secondary);
   background: #f8fafc;
+}
+
+.patient-complaint-thread {
+  padding: 1.25rem 1.5rem;
+}
+
+.patient-complaint-thread-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.patient-complaint-thread-head h2 {
+  margin: 0 0 0.35rem;
+  color: var(--color-navy);
+}
+
+.patient-complaint-thread-head p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.patient-complaint-message {
+  padding: 1rem;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.03);
+  margin-bottom: 0.85rem;
+}
+
+.patient-complaint-message.is-original {
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+}
+
+.patient-complaint-message strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--color-navy);
+}
+
+.patient-complaint-message p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.patient-complaint-message span {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.patient-complaint-status--closed {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.patient-complaint-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  font-weight: 700;
+  color: var(--color-cyan, #0891b2);
+}
+
+.patient-complaint-readonly-note {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  border: 1px dashed rgba(15, 23, 42, 0.14);
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
 }
