@@ -59,7 +59,7 @@ function emailLayout({ title, bodyHtml, actionUrl, actionLabel }) {
 </html>`;
 }
 
-async function deliverMail({ to, subject, text, html }) {
+async function deliverMail({ to, subject, text, html, attachments }) {
   const transport = getTransporter();
 
   if (!transport) {
@@ -67,6 +67,9 @@ async function deliverMail({ to, subject, text, html }) {
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
     console.log(`Body:\n${text}\n`);
+    if (attachments?.length) {
+      console.log(`[mail] Attachments: ${attachments.map((item) => item.filename || "file").join(", ")}`);
+    }
     return { sent: false, devFallback: true };
   }
 
@@ -76,6 +79,7 @@ async function deliverMail({ to, subject, text, html }) {
     subject,
     text,
     html,
+    attachments: attachments || undefined,
   });
 
   console.log(`[mail] Sent "${subject}" → ${to}`);
@@ -124,6 +128,88 @@ export async function sendResetPasswordEmail(user, token) {
       <p style="margin:12px 0 0;color:#475569;line-height:1.6;">If you did not request this, you can ignore this email.</p>`,
     actionUrl: link,
     actionLabel: "Reset password",
+  });
+
+  return deliverMail({ to: user.email, subject, text, html });
+}
+
+export async function sendAppointmentReminderEmail(user, { doctorName, visitLabel }) {
+  const link = `${CLIENT_ORIGIN}/patient/appointments`;
+  const subject = `[${APP_NAME}] Appointment reminder`;
+  const text = `Hello ${user.fullName},\n\nThis is a reminder that your visit with ${doctorName} is scheduled for ${visitLabel}.\n\nPlease arrive a few minutes early.\n\nView appointments: ${link}\n\n— ${APP_NAME}`;
+  const html = emailLayout({
+    title: "Appointment reminder",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">Reminder: your visit with <strong>${doctorName}</strong> is scheduled for <strong>${visitLabel}</strong>. Please arrive a few minutes early.</p>`,
+    actionUrl: link,
+    actionLabel: "View appointments",
+  });
+
+  return deliverMail({ to: user.email, subject, text, html });
+}
+
+export async function sendBookingConfirmationEmail(user, { doctorName, visitLabel, reference, qrPayload }) {
+  const QRCode = (await import("qrcode")).default;
+  const link = `${CLIENT_ORIGIN}/patient/appointments`;
+  const subject = `[${APP_NAME}] Booking confirmed — ${reference}`;
+  const text = `Hello ${user.fullName},\n\nYour appointment with ${doctorName} is confirmed for ${visitLabel}.\n\nBooking reference: ${reference}\nCheck-in QR payload: ${qrPayload}\n\nView appointments: ${link}\n\n— ${APP_NAME}`;
+
+  let attachments = [];
+  let qrBlock = `<p style="margin:16px 0 0;color:#475569;line-height:1.6;">Reference: <strong>${reference}</strong></p>`;
+  try {
+    const qrBuffer = await QRCode.toBuffer(qrPayload, { type: "png", width: 220, margin: 1 });
+    attachments = [
+      {
+        filename: "checkin-qr.png",
+        content: qrBuffer,
+        cid: "booking-qr",
+        contentType: "image/png",
+      },
+    ];
+    qrBlock += `<p style="margin:16px 0 8px;color:#475569;line-height:1.6;">Show this QR at check-in:</p>
+      <p style="margin:0;text-align:center;"><img src="cid:booking-qr" alt="Check-in QR" width="180" height="180" style="border:1px solid #e2e8f0;border-radius:8px;" /></p>`;
+  } catch (err) {
+    console.error("[mail] QR generation failed:", err?.message || err);
+    qrBlock += `<p style="margin:12px 0 0;color:#64748b;font-size:12px;">QR payload: ${qrPayload}</p>`;
+  }
+
+  const html = emailLayout({
+    title: "Booking confirmed",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">Your visit with <strong>${doctorName}</strong> is confirmed for <strong>${visitLabel}</strong>.</p>
+      ${qrBlock}`,
+    actionUrl: link,
+    actionLabel: "View appointments",
+  });
+
+  return deliverMail({ to: user.email, subject, text, html, attachments });
+}
+
+export async function sendQueueCalledEmail(user, { ticketNumber, roomLabel }) {
+  const link = `${CLIENT_ORIGIN}/patient/queue`;
+  const subject = `[${APP_NAME}] Your queue number ${ticketNumber} is called`;
+  const text = `Hello ${user.fullName},\n\nYour queue ticket #${ticketNumber} has been called${roomLabel ? ` at ${roomLabel}` : ""}.\nPlease proceed to the clinic room now.\n\nQueue status: ${link}\n\n— ${APP_NAME}`;
+  const html = emailLayout({
+    title: "You are being called",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">Your queue ticket <strong>#${ticketNumber}</strong> has been called${roomLabel ? ` at <strong>${roomLabel}</strong>` : ""}. Please proceed to the clinic room now.</p>`,
+    actionUrl: link,
+    actionLabel: "Open queue status",
+  });
+
+  return deliverMail({ to: user.email, subject, text, html });
+}
+
+export async function sendResultsReadyEmail(user, { title, message, detailUrl }) {
+  const link = detailUrl?.startsWith("http") ? detailUrl : `${CLIENT_ORIGIN}${detailUrl || "/patient/emr"}`;
+  const subject = `[${APP_NAME}] ${title || "Results ready"}`;
+  const text = `Hello ${user.fullName},\n\n${message}\n\nView details: ${link}\n\n— ${APP_NAME}`;
+  const html = emailLayout({
+    title: title || "Results ready",
+    bodyHtml: `<p style="margin:0 0 12px;color:#475569;line-height:1.6;">Hello <strong>${user.fullName}</strong>,</p>
+      <p style="margin:0;color:#475569;line-height:1.6;">${message}</p>`,
+    actionUrl: link,
+    actionLabel: "View details",
   });
 
   return deliverMail({ to: user.email, subject, text, html });

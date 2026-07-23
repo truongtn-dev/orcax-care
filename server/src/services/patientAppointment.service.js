@@ -19,6 +19,7 @@ import {
   formatWalletAmount,
   notifyPatientSafe,
 } from "./notification.service.js";
+import { sendBookingConfirmationEmail } from "./mail.service.js";
 
 function serializeAppointment(doc) {
   const doctor = doc.doctorId;
@@ -204,6 +205,7 @@ export async function createAppointment(userId, payload = {}) {
       discountAmount,
       status: "confirmed",
       insuranceCardId: insuranceCard?._id || null,
+      paymentMethod: insuranceCard ? "insurance" : "wallet",
     });
 
     const populated = await Appointment.findById(appointment._id)
@@ -226,6 +228,24 @@ export async function createAppointment(userId, payload = {}) {
       type: "appointment",
       link: "/patient/appointments",
     });
+
+    const reference = appointment._id.toString();
+    const qrPayload = `ORCAX-APPT:${reference}`;
+    User.findById(userId)
+      .select("fullName email")
+      .lean()
+      .then((patient) => {
+        if (!patient?.email) return null;
+        return sendBookingConfirmationEmail(patient, {
+          doctorName: doctor.userId.fullName,
+          visitLabel: buildAppointmentVisitLabel(populated.slotId),
+          reference,
+          qrPayload,
+        });
+      })
+      .catch((err) => {
+        console.error("[booking] confirmation email failed:", err?.message || err);
+      });
 
     return {
       status: 201,
