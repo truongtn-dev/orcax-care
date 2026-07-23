@@ -8,6 +8,8 @@ import { QueueTicket } from "../models/QueueTicket.js";
 import { User } from "../models/User.js";
 import { emitQueueEvent } from "../realtime/socket.js";
 import { endOfToday, startOfToday } from "../utils/queueDate.js";
+import { notifyPatientSafe } from "./notification.service.js";
+import { sendQueueCalledEmail } from "./mail.service.js";
 
 const ACTIVE_SESSION_STATUSES = ["open", "paused"];
 
@@ -429,6 +431,29 @@ export async function callNextTicket(userId, sessionId) {
     }
   );
 
+  const roomLabel =
+    populated?.roomId?.name ||
+    [populated?.roomId?.roomCode, populated?.roomId?.roomNumber].filter(Boolean).join(" ") ||
+    "";
+  const ticketNumber = ticket.number;
+  notifyPatientSafe(ticket.patientUserId, {
+    title: "Your queue number is called",
+    message: `Ticket #${ticketNumber} is now called${roomLabel ? ` at ${roomLabel}` : ""}. Please proceed to the room.`,
+    type: "queue",
+    link: "/patient/queue",
+  });
+
+  User.findById(ticket.patientUserId)
+    .select("fullName email")
+    .lean()
+    .then((patient) => {
+      if (!patient?.email) return null;
+      return sendQueueCalledEmail(patient, { ticketNumber, roomLabel });
+    })
+    .catch((err) => {
+      console.error("[queue] call notification email failed:", err?.message || err);
+    });
+
   return {
     status: 200,
     body: {
@@ -454,6 +479,18 @@ export async function recallLastSkipped(userId, sessionId) {
 
   if (session.status !== "open") {
     return { status: 409, body: { message: "Queue session is not accepting recalls." } };
+  }
+
+  const activeCalled = await QueueTicket.findOne({
+    sessionId: session._id,
+    status: { $in: ["called", "serving"] },
+  }).lean();
+
+  if (activeCalled) {
+    return {
+      status: 409,
+      body: { message: "Skip or finish with the current patient before recalling a skipped ticket." },
+    };
   }
 
   let ticket = null;
@@ -776,7 +813,6 @@ export async function getQueueBoard(roomId) {
     QueueTicket.find({ sessionId: session._id, status: "waiting" })
       .sort({ number: 1 })
       .limit(5)
-      .select("number patientUserId")
       .lean(),
     QueueTicket.findOne({ sessionId: session._id, status: { $in: ["called", "serving"] } })
       .sort({ calledAt: -1 })
@@ -784,7 +820,6 @@ export async function getQueueBoard(roomId) {
     QueueTicket.find({ sessionId: session._id, status: "skipped" })
       .sort({ skippedAt: -1, number: -1 })
       .limit(5)
-      .select("number patientUserId skippedAt")
       .lean(),
   ]);
 
@@ -795,18 +830,20 @@ export async function getQueueBoard(roomId) {
   ]);
 
   const displayNumber = enrichedCalled?.number ?? session.currentNumber ?? 0;
-  const displayPatient = enrichedCalled
-    ? {
-        number: enrichedCalled.number,
-        patientName: enrichedCalled.patientName || "",
-        birthYear: enrichedCalled.birthYear ?? null,
-      }
-    : null;
 
   let state = "active";
   if (session.status === "closed") state = "closed";
   else if (session.status === "paused") state = "paused";
-  else if (!displayNumber && waitingTickets.length === 0 && skippedTickets.length === 0) state = "empty";
+  else if (!displayNumber && enrichedWaiting.length === 0 && enrichedSkipped.length === 0) state = "empty";
+
+  const toBoardPatient = (ticket) =>
+    ticket
+      ? {
+          number: ticket.number,
+          patientName: ticket.patientName || "",
+          birthYear: ticket.birthYear ?? null,
+        }
+      : null;
 
   return {
     status: 200,
@@ -818,18 +855,11 @@ export async function getQueueBoard(roomId) {
         currentNumber: displayNumber,
       },
       currentNumber: displayNumber,
-      currentPatient: displayPatient,
+      currentPatient: toBoardPatient(enrichedCalled),
       nextNumbers: enrichedWaiting.map((item) => item.number),
-      nextPatients: enrichedWaiting.map((item) => ({
-        number: item.number,
-        patientName: item.patientName || "",
-        birthYear: item.birthYear ?? null,
-      })),
-      skippedPatients: enrichedSkipped.map((item) => ({
-        number: item.number,
-        patientName: item.patientName || "",
-        birthYear: item.birthYear ?? null,
-      })),
+      nextPatients: enrichedWaiting.map(toBoardPatient),
+      skippedNumbers: enrichedSkipped.map((item) => item.number),
+      skippedPatients: enrichedSkipped.map(toBoardPatient),
       state,
     },
   };
