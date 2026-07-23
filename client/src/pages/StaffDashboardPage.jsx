@@ -10,71 +10,85 @@ import { StaffApiClient } from "../services/staffApi.js";
 import { getApiErrorMessage } from "../services/api.js";
 import "./StaffDashboardPage.css";
 
+const REFRESH_MS = 60_000;
+
 export default function StaffDashboardPage() {
   const { fullName } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lastRefreshedAt, setLastRefreshedAt] = useState(null);
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const loadDashboard = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
       const { data } = await StaffApiClient.getDashboard();
       setDashboard(data);
+      setLastRefreshedAt(data?.operations?.refreshedAt || new Date().toISOString());
     } catch (err) {
-      setError(getApiErrorMessage(err));
-      setDashboard(null);
+      if (!silent) {
+        setError(getApiErrorMessage(err));
+        setDashboard(null);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     loadDashboard();
+    const timer = setInterval(() => {
+      loadDashboard({ silent: true });
+    }, REFRESH_MS);
+    return () => clearInterval(timer);
   }, [loadDashboard]);
+
+  const ops = dashboard?.operations;
 
   const kpis = useMemo(() => {
     if (!dashboard) return [];
     return [
       {
-        key: "medicines",
+        key: "checkins",
         tone: "cyan",
-        label: "Medicines",
-        value: dashboard.medicineCount ?? 0,
-        hint: "Active SKUs in inventory",
-        icon: <AppIcon name="pill" />,
+        label: "Today check-ins",
+        value: ops?.todayCheckIns ?? 0,
+        hint: "Patients checked in today",
+        icon: <AppIcon name="list" />,
       },
       {
-        key: "low-stock",
-        tone: dashboard.lowStockCount > 0 ? "amber" : "emerald",
-        label: "Low stock",
-        value: dashboard.lowStockCount ?? 0,
-        hint: dashboard.lowStockCount > 0 ? "Needs replenishment" : "All above minimum",
+        key: "waiting",
+        tone: (ops?.waitingQueueCount ?? 0) > 0 ? "amber" : "emerald",
+        label: "Waiting queue",
+        value: ops?.waitingQueueCount ?? 0,
+        hint: "Tickets waiting in open sessions",
+        icon: <AppIcon name="users" />,
+      },
+      {
+        key: "complaints",
+        tone: (ops?.openComplaints ?? 0) > 0 ? "amber" : "teal",
+        label: "Open complaints",
+        value: ops?.openComplaints ?? 0,
+        hint: "Open or in progress",
         icon: <AppIcon name="alert-triangle" />,
       },
       {
-        key: "inbound",
-        tone: "teal",
-        label: "Inbound today",
-        value: dashboard.inboundToday ?? 0,
-        hint: "Deliveries recorded today",
-        icon: <AppIcon name="package-plus" />,
-      },
-      {
-        key: "doctors",
-        tone: "violet",
-        label: "Doctor lookup",
-        value: "Search",
-        hint: "Assist patients at reception",
-        icon: <AppIcon name="stethoscope" />,
+        key: "low-stock",
+        tone: (ops?.lowStockCount ?? dashboard.lowStockCount ?? 0) > 0 ? "amber" : "emerald",
+        label: "Low stock",
+        value: ops?.lowStockCount ?? dashboard.lowStockCount ?? 0,
+        hint: "Below reorder level",
+        icon: <AppIcon name="pill" />,
       },
     ];
-  }, [dashboard]);
+  }, [dashboard, ops]);
 
   const pageDescription = loading
-    ? "Loading pharmacy and front-desk metrics…"
-    : `${dashboard?.medicineCount ?? 0} medicines tracked · ${dashboard?.lowStockCount ?? 0} low-stock alerts`;
+    ? "Loading front-desk and pharmacy operations…"
+    : `Ops widgets refresh every 60s${lastRefreshedAt ? ` · updated ${new Date(lastRefreshedAt).toLocaleTimeString()}` : ""}`;
 
   return (
     <PageLayout dashboard>
@@ -83,11 +97,14 @@ export default function StaffDashboardPage() {
         description={pageDescription}
         actions={
           <>
-            <Link to="/staff/pharmacy" className="btn btn-primary btn-sm">
-              Pharmacy
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => loadDashboard()} disabled={loading}>
+              Refresh
+            </button>
+            <Link to="/staff/checkin" className="btn btn-primary btn-sm">
+              Check-in
             </Link>
-            <Link to="/search-doctors" className="btn btn-outline btn-sm">
-              Find doctors
+            <Link to="/staff/pharmacy" className="btn btn-outline btn-sm">
+              Pharmacy
             </Link>
           </>
         }
@@ -99,23 +116,23 @@ export default function StaffDashboardPage() {
 
           <div className="dash-charts-row">
             <DashboardBarChart
-              title="Stock on hand"
-              description="Current quantity by medicine code"
+              title="Stock levels"
+              description="On-hand quantity by medicine code"
               data={dashboard?.stockChart || []}
               loading={loading}
               emptyMessage="No medicines in inventory."
-              valueFormatter={(value, point) => point.title || `${point.label}: ${value}`}
             />
             <DashboardBarChart
-              title="Inbound trend (7 days)"
-              description="Total units received per day"
+              title="Inbound (7 days)"
+              description="Units received per day"
               data={(dashboard?.inboundTrend || []).map((point) => ({
-                ...point,
-                title: `${point.date}: ${point.value} units · ${point.movements} movement${point.movements === 1 ? "" : "s"}`,
+                key: point.date,
+                label: point.label,
+                value: point.value,
+                title: `${point.date}: ${point.value} units · ${point.movements} movements`,
               }))}
               loading={loading}
-              emptyMessage="No inbound deliveries in the last 7 days."
-              barClassName="dash-chart-bar--cyan"
+              emptyMessage="No inbound movements yet."
             />
           </div>
 
@@ -123,21 +140,51 @@ export default function StaffDashboardPage() {
             <section className="card staff-dashboard-panel">
               <header className="staff-dashboard-panel-head">
                 <div>
-                  <h2>Low-stock watchlist</h2>
-                  <p>Medicines at or below minimum level.</p>
+                  <h2>Urgency alerts</h2>
+                  <p>Low stock and near-expiry ranked by urgency.</p>
                 </div>
-                <Link to="/staff/pharmacy" className="btn btn-outline btn-sm">
-                  Record inbound
+                <Link to="/staff/pharmacy?lowStockOnly=1" className="btn btn-outline btn-sm">
+                  Open pharmacy
                 </Link>
               </header>
               {loading ? (
                 <p className="staff-dashboard-empty">Loading inventory alerts…</p>
+              ) : dashboard?.urgencyAlerts?.length ? (
+                <ul className="staff-dashboard-alert-list">
+                  {dashboard.urgencyAlerts.slice(0, 12).map((alert, index) => (
+                    <li key={`${alert.type}-${alert.medicine?._id || index}-${alert.batchNo || ""}`}>
+                      <div>
+                        {alert.medicine?._id ? (
+                          <Link
+                            to={`/staff/pharmacy/medicines/${alert.medicine._id}`}
+                            className="table-link"
+                          >
+                            <strong>{alert.medicine?.name || "Medicine"}</strong>
+                          </Link>
+                        ) : (
+                          <strong>{alert.medicine?.name || "Medicine"}</strong>
+                        )}
+                        <span>
+                          {alert.type === "near_expiry" ? "Near expiry" : "Low stock"}
+                          {alert.batchNo ? ` · batch ${alert.batchNo}` : ""}
+                        </span>
+                      </div>
+                      <span className="staff-dashboard-alert-qty">
+                        {alert.type === "near_expiry"
+                          ? `Expires ${alert.expiryDate}`
+                          : `${alert.medicine?.stockQty} / min ${alert.medicine?.minStockLevel}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               ) : dashboard?.lowStockItems?.length ? (
                 <ul className="staff-dashboard-alert-list">
                   {dashboard.lowStockItems.map((medicine) => (
                     <li key={medicine._id}>
                       <div>
-                        <strong>{medicine.name}</strong>
+                        <Link to={`/staff/pharmacy/medicines/${medicine._id}`} className="table-link">
+                          <strong>{medicine.name}</strong>
+                        </Link>
                         <span>{medicine.code}</span>
                       </div>
                       <span className="staff-dashboard-alert-qty">
@@ -147,55 +194,27 @@ export default function StaffDashboardPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="staff-dashboard-empty">All medicines are above minimum stock levels.</p>
-              )}
-            </section>
-
-            <section className="card staff-dashboard-panel">
-              <header className="staff-dashboard-panel-head">
-                <div>
-                  <h2>Expiring soon</h2>
-                  <p>Batches expiring within the next 60 days.</p>
-                </div>
-              </header>
-              {loading ? (
-                <p className="staff-dashboard-empty">Loading expiry alerts…</p>
-              ) : dashboard?.expiringBatches?.length ? (
-                <ul className="staff-dashboard-alert-list">
-                  {dashboard.expiringBatches.map((item) => (
-                    <li key={`${item.medicine._id}-${item.batchNo}`}>
-                      <div>
-                        <strong>{item.medicine.name}</strong>
-                        <span>{item.medicine.code} - Batch: {item.batchNo}</span>
-                      </div>
-                      <span className="staff-dashboard-alert-qty" style={{ color: "#b91c1c" }}>
-                        Exp: {new Date(item.expiryDate).toLocaleDateString()}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="staff-dashboard-empty">No batches expiring soon.</p>
+                <p className="staff-dashboard-empty">No urgent stock or expiry alerts.</p>
               )}
             </section>
 
             <section className="card staff-dashboard-panel staff-dashboard-quick">
               <h2>Quick links</h2>
               <nav className="staff-dashboard-quick-nav" aria-label="Staff quick links">
+                <Link to="/staff/checkin" className="staff-dashboard-quick-link">
+                  <span>Queue check-in</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
                 <Link to="/staff/pharmacy" className="staff-dashboard-quick-link">
                   <span>Pharmacy inventory</span>
                   <span aria-hidden="true">→</span>
                 </Link>
+                <Link to="/staff/pharmacy?lowStockOnly=1" className="staff-dashboard-quick-link">
+                  <span>Low-stock alerts</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
                 <Link to="/search-doctors" className="staff-dashboard-quick-link">
                   <span>Find doctors</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-                <Link to="/profile" className="staff-dashboard-quick-link">
-                  <span>Edit profile</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-                <Link to="/change-password" className="staff-dashboard-quick-link">
-                  <span>Change password</span>
                   <span aria-hidden="true">→</span>
                 </Link>
               </nav>
