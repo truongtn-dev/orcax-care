@@ -70,6 +70,16 @@ export async function createMedicine(req, res) {
   }
 }
 
+export async function lookupPrescription(req, res) {
+  try {
+    const result = await StaffPharmacyService.lookupPrescription(req.params.id || req.query.prescriptionId);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
 export async function verifyPrescription(req, res) {
   try {
     const result = await StaffPharmacyService.verifyPrescription(req.user.userId, req.body);
@@ -83,6 +93,16 @@ export async function verifyPrescription(req, res) {
 export async function stockOutbound(req, res) {
   try {
     const result = await StaffPharmacyService.stockOutbound(req.user.userId, req.body);
+    return res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "System error" });
+  }
+}
+
+export async function updateMedicine(req, res) {
+  try {
+    const result = await StaffPharmacyService.updateMedicine(req.params.id, req.body);
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error(err);

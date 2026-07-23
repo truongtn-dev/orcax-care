@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
+import { Appointment } from "../models/Appointment.js";
+import { Complaint } from "../models/Complaint.js";
 import { Medicine } from "../models/Medicine.js";
-import { StockMovement } from "../models/StockMovement.js";
 import { Prescription } from "../models/Prescription.js";
+import { QueueSession } from "../models/QueueSession.js";
+import { QueueTicket } from "../models/QueueTicket.js";
+import { StockMovement } from "../models/StockMovement.js";
+import { endOfToday, startOfToday } from "../utils/queueDate.js";
 
 function serializeMedicine(medicine, extras = {}) {
   return {
@@ -87,7 +92,14 @@ export async function listMedicines({ q = "", lowStockOnly = false } = {}) {
 
   let items = await Medicine.find(filter).sort({ name: 1 }).lean();
   if (lowStockOnly === true || lowStockOnly === "true") {
-    items = items.filter((item) => item.stockQty <= item.minStockLevel);
+    items = items
+      .filter((item) => item.stockQty <= item.minStockLevel)
+      .sort((a, b) => {
+        const urgencyA = (a.minStockLevel || 0) - (a.stockQty || 0);
+        const urgencyB = (b.minStockLevel || 0) - (b.stockQty || 0);
+        if (urgencyB !== urgencyA) return urgencyB - urgencyA;
+        return (a.stockQty || 0) - (b.stockQty || 0);
+      });
   }
 
   const expiryMap = await loadNearestExpiries(items.map((item) => item._id));
@@ -319,7 +331,14 @@ async function buildPharmacyDashboardBody() {
       .lean(),
   ]);
 
-  const lowStockItems = medicineRows.filter((item) => item.stockQty <= item.minStockLevel);
+  const lowStockItems = medicineRows
+    .filter((item) => item.stockQty <= item.minStockLevel)
+    .sort((a, b) => {
+      const urgencyA = (a.minStockLevel || 0) - (a.stockQty || 0);
+      const urgencyB = (b.minStockLevel || 0) - (b.stockQty || 0);
+      if (urgencyB !== urgencyA) return urgencyB - urgencyA;
+      return (a.stockQty || 0) - (b.stockQty || 0);
+    });
   const trendDays = [];
   for (let offset = 6; offset >= 0; offset -= 1) {
     const day = new Date(today);
@@ -375,6 +394,25 @@ async function buildPharmacyDashboardBody() {
     })),
     lowStockItems: lowStockItems.map((medicine) => serializeMedicine(medicine)),
     expiringBatches: Array.from(expiringMap.values()).sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)),
+    urgencyAlerts: [
+      ...lowStockItems.map((medicine) => ({
+        type: "low_stock",
+        urgencyScore: (medicine.minStockLevel || 0) - (medicine.stockQty || 0),
+        medicine: serializeMedicine(medicine),
+        label: `${medicine.name} below threshold (${medicine.stockQty}/${medicine.minStockLevel})`,
+      })),
+      ...Array.from(expiringMap.values()).map((batch) => {
+        const daysLeft = Math.ceil((new Date(batch.expiryDate) - today) / (24 * 60 * 60 * 1000));
+        return {
+          type: "near_expiry",
+          urgencyScore: Math.max(0, 60 - daysLeft),
+          medicine: batch.medicine,
+          batchNo: batch.batchNo,
+          expiryDate: batch.expiryDate,
+          label: `${batch.medicine?.name || "Medicine"} batch ${batch.batchNo} expires ${batch.expiryDate}`,
+        };
+      }),
+    ].sort((a, b) => b.urgencyScore - a.urgencyScore),
   };
 }
 
@@ -427,6 +465,55 @@ export async function createMedicine(userId, payload = {}) {
   return { status: 201, body: serializeMedicine(medicine) };
 }
 
+export async function updateMedicine(medicineId, payload = {}) {
+  if (!medicineId || !mongoose.Types.ObjectId.isValid(medicineId)) {
+    return { status: 400, body: { message: "Invalid medicine ID" } };
+  }
+
+  const name = String(payload.name || "").trim();
+  const unit = String(payload.unit || "").trim();
+  const minStockLevel = Number(payload.minStockLevel);
+
+  if (!name) {
+    return { status: 400, body: { message: "Medicine name is required" } };
+  }
+  if (!unit) {
+    return { status: 400, body: { message: "Unit is required" } };
+  }
+  if (!Number.isFinite(minStockLevel) || minStockLevel < 0) {
+    return { status: 400, body: { message: "Low stock threshold must be greater than or equal to 0" } };
+  }
+
+  const medicine = await Medicine.findById(medicineId);
+  if (!medicine) {
+    return { status: 404, body: { message: "Medicine not found" } };
+  }
+
+  const duplicate = await Medicine.findOne({
+    name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    _id: { $ne: medicine._id },
+  });
+  if (duplicate) {
+    return { status: 409, body: { message: "Medicine name already exists" } };
+  }
+
+  medicine.name = name;
+  medicine.unit = unit;
+  medicine.minStockLevel = minStockLevel;
+  if (payload.price !== undefined) {
+    const price = Number(payload.price);
+    if (!Number.isFinite(price) || price < 0) {
+      return { status: 400, body: { message: "Price must be a valid positive number" } };
+    }
+    medicine.price = price;
+  }
+  if (payload.isActive !== undefined) medicine.isActive = Boolean(payload.isActive);
+
+  await medicine.save();
+
+  return { status: 200, body: serializeMedicine(medicine.toObject()) };
+}
+
 export async function getPharmacyDashboard() {
   return {
     status: 200,
@@ -435,42 +522,152 @@ export async function getPharmacyDashboard() {
 }
 
 export async function getStaffDashboard() {
+  const pharmacy = await buildPharmacyDashboardBody();
+  const dayStart = startOfToday();
+  const dayEnd = endOfToday();
+
+  const [todayCheckIns, sessionIds, openComplaints] = await Promise.all([
+    Appointment.countDocuments({
+      status: "checked-in",
+      updatedAt: { $gte: dayStart, $lt: dayEnd },
+    }),
+    QueueSession.find({
+      date: { $gte: dayStart, $lt: dayEnd },
+      status: { $in: ["open", "paused"] },
+    })
+      .select("_id")
+      .lean(),
+    Complaint.countDocuments({ status: { $in: ["open", "in_progress"] } }),
+  ]);
+
+  const waitingQueueCount = sessionIds.length
+    ? await QueueTicket.countDocuments({
+        sessionId: { $in: sessionIds.map((row) => row._id) },
+        status: "waiting",
+      })
+    : 0;
+
   return {
     status: 200,
-    body: await buildPharmacyDashboardBody(),
+    body: {
+      ...pharmacy,
+      operations: {
+        todayCheckIns,
+        waitingQueueCount,
+        openComplaints,
+        lowStockCount: pharmacy.lowStockCount || 0,
+        refreshedAt: new Date().toISOString(),
+      },
+    },
   };
 }
 
-export async function verifyPrescription(userId, payload) {
-  const prescriptionId = payload.prescriptionId;
+export async function lookupPrescription(prescriptionId) {
   if (!prescriptionId || !mongoose.Types.ObjectId.isValid(prescriptionId)) {
-    return { status: 400, body: { message: "Invalid prescription ID" } };
+    return {
+      status: 200,
+      body: {
+        validationStatus: "invalid",
+        message: "Invalid prescription ID",
+        canDispense: false,
+        prescription: null,
+      },
+    };
   }
 
   const prescription = await Prescription.findById(prescriptionId)
     .populate("patientUserId", "fullName phone email")
     .populate({
       path: "doctorId",
-      populate: { path: "userId", select: "fullName" }
+      populate: { path: "userId", select: "fullName" },
     })
-    .populate("encounterId", "visitDate diagnoses");
+    .populate("encounterId", "visitDate diagnoses")
+    .lean();
 
   if (!prescription) {
-    return { status: 404, body: { message: "Prescription not found" } };
+    return {
+      status: 200,
+      body: {
+        validationStatus: "invalid",
+        message: "Prescription not found",
+        canDispense: false,
+        prescription: null,
+      },
+    };
   }
 
-  if (prescription.status === "dispensed") {
-    return { status: 400, body: { message: "This prescription has already been dispensed" } };
+  const PRESCRIPTION_VALIDITY_DAYS = 30;
+  const issuedAt = prescription.issuedAt ? new Date(prescription.issuedAt) : null;
+  const expiresAt =
+    issuedAt && !Number.isNaN(issuedAt.getTime())
+      ? new Date(issuedAt.getTime() + PRESCRIPTION_VALIDITY_DAYS * 24 * 60 * 60 * 1000)
+      : null;
+  const now = new Date();
+
+  let validationStatus = "invalid";
+  let message = "Prescription cannot be dispensed";
+  let canDispense = false;
+
+  if (prescription.status === "cancelled") {
+    validationStatus = "invalid";
+    message = "Prescription was cancelled";
+  } else if (prescription.status === "draft") {
+    validationStatus = "invalid";
+    message = "Prescription is still a draft and has not been issued";
+  } else if (prescription.status === "dispensed") {
+    validationStatus = "already_dispensed";
+    message = "This prescription has already been dispensed";
+  } else if (prescription.status === "issued") {
+    if (expiresAt && expiresAt < now) {
+      validationStatus = "expired";
+      message = `Prescription expired on ${expiresAt.toLocaleDateString()} (valid ${PRESCRIPTION_VALIDITY_DAYS} days after issue)`;
+    } else {
+      validationStatus = "valid";
+      message = "Prescription is valid and ready to dispense";
+      canDispense = true;
+    }
   }
 
-  if (prescription.status !== "issued") {
-    return { status: 400, body: { message: `Prescription cannot be dispensed because its status is ${prescription.status}` } };
+  return {
+    status: 200,
+    body: {
+      validationStatus,
+      message,
+      canDispense,
+      expiresAt,
+      validityDays: PRESCRIPTION_VALIDITY_DAYS,
+      prescription,
+    },
+  };
+}
+
+export async function verifyPrescription(userId, payload) {
+  const prescriptionId = payload.prescriptionId;
+  const lookup = await lookupPrescription(prescriptionId);
+  const { validationStatus, message, canDispense, prescription: lookedUp } = lookup.body;
+
+  if (validationStatus === "invalid") {
+    return { status: 404, body: { validationStatus, message } };
+  }
+  if (validationStatus === "already_dispensed") {
+    return { status: 400, body: { validationStatus, message } };
+  }
+  if (validationStatus === "expired") {
+    return { status: 400, body: { validationStatus, message } };
+  }
+  if (!canDispense || !lookedUp) {
+    return { status: 400, body: { validationStatus, message } };
+  }
+
+  const prescription = await Prescription.findById(prescriptionId);
+  if (!prescription || prescription.status !== "issued") {
+    return { status: 409, body: { validationStatus: "invalid", message: "Prescription is no longer available to dispense" } };
   }
 
   // Check stock for all medicines
-  const medicineIds = prescription.lineItems.map(item => item.medicineId);
+  const medicineIds = prescription.lineItems.map((item) => item.medicineId);
   const medicines = await Medicine.find({ _id: { $in: medicineIds } });
-  const medicineMap = new Map(medicines.map(m => [m._id.toString(), m]));
+  const medicineMap = new Map(medicines.map((m) => [m._id.toString(), m]));
 
   const outOfStockItems = [];
   for (const item of prescription.lineItems) {
@@ -480,22 +677,22 @@ export async function verifyPrescription(userId, payload) {
         medicineCode: item.medicineCode,
         medicineName: item.medicineName,
         requested: item.quantity,
-        available: med ? med.stockQty : 0
+        available: med ? med.stockQty : 0,
       });
     }
   }
 
   if (outOfStockItems.length > 0) {
-    return { 
-      status: 400, 
-      body: { 
-        message: "Insufficient stock for some medicines", 
-        details: outOfStockItems 
-      } 
+    return {
+      status: 400,
+      body: {
+        validationStatus: "invalid",
+        message: "Insufficient stock for some medicines",
+        details: outOfStockItems,
+      },
     };
   }
 
-  // Deduct stock and create stock movements
   for (const item of prescription.lineItems) {
     const med = medicineMap.get(item.medicineId.toString());
     med.stockQty -= item.quantity;
@@ -510,17 +707,26 @@ export async function verifyPrescription(userId, payload) {
     });
   }
 
-  // Update prescription status
   prescription.status = "dispensed";
   prescription.dispensedAt = new Date();
   prescription.dispensedBy = userId;
   await prescription.save();
 
-  return { 
-    status: 200, 
-    body: { 
+  const refreshed = await Prescription.findById(prescription._id)
+    .populate("patientUserId", "fullName phone email")
+    .populate({
+      path: "doctorId",
+      populate: { path: "userId", select: "fullName" },
+    })
+    .populate("encounterId", "visitDate diagnoses")
+    .lean();
+
+  return {
+    status: 200,
+    body: {
+      validationStatus: "dispensed",
       message: "Prescription verified and medicines dispensed successfully",
-      prescription: prescription.toObject()
-    } 
+      prescription: refreshed,
+    },
   };
 }
